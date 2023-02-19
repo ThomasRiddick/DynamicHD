@@ -18,6 +18,8 @@ import HierarchicalStateMachineModule: handle_event
 import FieldModule: add_offset
 import Base.show, Base.iterate
 
+const debug = false
+
 abstract type Lake <: State end
 
 struct RunLakes <: Event end
@@ -887,6 +889,9 @@ function handle_event(lake::Lake,accept_merge::AcceptMerge)
   lake_parameters::LakeParameters = get_lake_parameters(lake)
   lake_variables::LakeVariables = get_lake_variables(lake)
   lake_fields::LakeFields = get_lake_fields(lake)
+  if debug
+    println("Lake $(lake_variables.lake_number) accepting merge")
+  end
   if ! (lake_fields.connected_lake_cells(lake_variables.current_cell_to_fill) ||
         lake_parameters.flood_only(lake_variables.current_cell_to_fill))
     set!(lake_fields.connected_lake_cells,lake_variables.current_cell_to_fill,true)
@@ -915,6 +920,9 @@ function handle_event(lake::SubsumedLake,accept_split::AcceptSplit)
   lake_parameters::LakeParameters = get_lake_parameters(lake)
   lake_variables::LakeVariables = get_lake_variables(lake)
   lake_fields::LakeFields = get_lake_fields(lake)
+  if debug
+    println("Lake $(lake_variables.lake_number) accepting split")
+  end
   if lake_fields.flooded_lake_cells(lake_variables.current_cell_to_fill)
       set!(lake_fields.flooded_lake_cells,lake_variables.current_cell_to_fill,false)
       lake_variables.number_of_flooded_cells -= 1
@@ -934,6 +942,9 @@ function change_to_overflowing_lake(lake::FillingLake,merge_indices::MergeAndRed
   lake_parameters::LakeParameters = get_lake_parameters(lake)
   lake_fields::LakeFields = get_lake_fields(lake)
   lake_variables::LakeVariables = get_lake_variables(lake)
+  if debug
+    println("Lake $(lake_variables.lake_number) changing from filling to overflowing lake ")
+  end
   outflow_redirect_coords,local_redirect =
     get_outflow_redirect_coords(merge_indices)
   next_merge_target_coords::Coords = get_merge_target_coords(merge_indices)
@@ -1167,6 +1178,9 @@ end
 function perform_primary_merge(lake::FillingLake,merge_indices::MergeAndRedirectIndices)
   lake_variables::LakeVariables = get_lake_variables(lake)
   lake_fields::LakeFields = get_lake_fields(lake)
+  if debug
+    println("Lake $(lake_variables.lake_number) performing primary merge")
+  end
   target_cell::Coords = get_merge_target_coords(merge_indices)
   merge_indices.merged = true
   other_lake_number::Integer = lake_fields.lake_numbers(target_cell)
@@ -1187,6 +1201,9 @@ function perform_secondary_merge(lake::FillingLake,merge_indices::MergeAndRedire
   lake_parameters::LakeParameters = get_lake_parameters(lake)
   lake_variables::LakeVariables = get_lake_variables(lake)
   lake_fields::LakeFields = get_lake_fields(lake)
+  if debug
+    println("Lake $(lake_variables.lake_number) performing secondary merge")
+  end
   target_cell::Coords = get_merge_target_coords(merge_indices)
   local surface_model_coords::Coords
   if ! (lake_fields.connected_lake_cells(lake_variables.current_cell_to_fill) ||
@@ -1223,16 +1240,22 @@ function perform_secondary_merge(lake::FillingLake,merge_indices::MergeAndRedire
   return handle_event(lake,accept_merge)
 end
 
-function conditionally_rollback_primary_merge(lake::FillingLake,merge_indices::MergeAndRedirectIndices,
+function conditionally_rollback_primary_merge(lake::Lake,merge_indices::MergeAndRedirectIndices,
                                               other_lake_outflow::Float64)
   lake_variables::LakeVariables = get_lake_variables(lake)
   lake_fields::LakeFields = get_lake_fields(lake)
   target_cell::Coords = get_merge_target_coords(merge_indices)
   other_lake_number::Integer = lake_fields.lake_numbers(target_cell)
   other_lake::Lake = lake_variables.other_lakes[other_lake_number]
+  if ! isa(other_lake,SubsumedLake)
+    return false
+  end
   other_lake = find_true_rolledback_primary_lake(other_lake)
   if find_true_primary_lake(other_lake).lake_variables.lake_number != lake_variables.lake_number
     return false
+  end
+  if debug
+    println("Lake $(lake_variables.lake_number) rolling back primary merge")
   end
   merge_indices.merged = false
   lake_variables.secondary_lake_volume -=
@@ -1243,9 +1266,25 @@ function conditionally_rollback_primary_merge(lake::FillingLake,merge_indices::M
      other_lake.lake_variables.secondary_number_of_flooded_cells)
   other_lake_number = other_lake.lake_variables.lake_number
   accept_split::AcceptSplit = AcceptSplit(lake_variables.lake_number)
-  lake_variables.other_lakes[other_lake_number] =
-    handle_event(other_lake,accept_split)
-  other_lake = lake_variables.other_lakes[other_lake_number]
+  other_lake = handle_event(other_lake,accept_split)
+  lake_variables.other_lakes[other_lake_number] = other_lake
+  merge_indices_index::Int64,is_flood_merge::Bool = get_merge_indices_index(other_lake)
+  if merge_indices_index != 0
+    merge_indices_collection::MergeAndRedirectIndicesCollection =
+      get_merge_indices_collection(other_lake,merge_indices_index,
+                                   is_flood_merge)
+    for merge_indices::MergeAndRedirectIndices in
+          Iterators.reverse(merge_indices_collection)
+      merge_type::MergeTypes = get_merge_type(merge_indices)
+      if merge_type == primary_merge
+        conditionally_rollback_primary_merge(other_lake,merge_indices,0.0)
+      elseif merge_type == secondary_merge
+        if merge_indices.merged
+          error("Merge logic failure")
+        end
+      end
+    end
+  end
   remove_water::RemoveWater = RemoveWater(other_lake_outflow)
   lake_variables.other_lakes[other_lake_number] =
     handle_event(other_lake,remove_water)

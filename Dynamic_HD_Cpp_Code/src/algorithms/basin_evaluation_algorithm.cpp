@@ -392,6 +392,7 @@ inline void basin_evaluation_algorithm::
 	        										level_cell_height_type == connection_height);
 		if (! already_in_basin ){
 			if ((*basin_numbers)(level_coords)  != 0 ) {
+				delete new_center_coords;
 				new_center_coords = level_coords->clone();
 				new_center_cell_height = level_cell_height;
 				new_center_cell_height_type = level_cell_height_type;
@@ -411,6 +412,7 @@ inline void basin_evaluation_algorithm::
 	}
 	if (secondary_merge_found){
 	//Reset values for secondary merge
+		delete new_center_coords;
 		new_center_coords = secondary_merge_new_center_coords;
 		new_center_cell_height =
 			secondary_merge_new_center_cell_height;
@@ -717,9 +719,10 @@ void basin_evaluation_algorithm::set_secondary_redirect(merge_and_redirect_indic
 		  working_redirect->set_redirect_indices(target_basin_center_coords);
 	} else {
  		find_and_set_previous_cells_non_local_redirect_index(working_redirect,
-		                                        						 first_cell_beyond_rim_coords,
+		                                        			 first_cell_beyond_rim_coords,
  		                                                     target_basin_center_coords);
 	}
+	delete first_cell_beyond_rim_coords;
 }
 
 void basin_evaluation_algorithm::
@@ -851,14 +854,15 @@ void basin_evaluation_algorithm::set_remaining_redirects() {
 			    	get_unmatched_secondary_merge())
 				throw runtime_error("Missing unmatched secondary merge when setting remaining redirects");
 			working_collected_merge_and_redirect_indices->set_unmatched_secondary_merge(false);
-			working_collected_merge_and_redirect_indices->set_secondary_merge_target_coords(null_coords);
+			working_collected_merge_and_redirect_indices->
+				set_secondary_merge_target_coords(first_cell_beyond_rim_coords);
 			merge_and_redirect_indices*  working_redirect =
 				working_collected_merge_and_redirect_indices->
 	        get_secondary_merge_and_redirect_indices();
 			find_and_set_non_local_redirect_index_from_coarse_catchment_num(working_redirect,
-					                                        						 				first_cell_beyond_rim_coords,
-                                                     							 		coarse_catchment_number);
-		delete first_cell_beyond_rim_coords;
+					                                        				first_cell_beyond_rim_coords,
+                                                     						coarse_catchment_number);
+		if (prior_fine_catchment_num == 0) delete catchment_outlet_coarse_coords;
 		}
 		delete coords_in;
 	});
@@ -974,14 +978,15 @@ priority_cell_queue latlon_basin_evaluation_algorithm::test_process_center_cell(
 	basin_connected_cells = new field<bool>(grid_params_in);
 	basin_connected_cells->set_all(false);
 	basin_connect_and_fill_order = new vector<pair<coords*,bool>*>();
+	basin_connect_and_fill_orders.push_back(basin_connect_and_fill_order);
 	center_cell_volume_threshold = center_cell_volume_threshold_in;
 	lake_area = lake_area_in;
 	basin_number = basin_number_in;
-  center_cell_height = center_cell_height_in;
-  previous_filled_cell_height = previous_filled_cell_height_in;
+  	center_cell_height = center_cell_height_in;
+  	previous_filled_cell_height = previous_filled_cell_height_in;
 	center_cell_height_type = center_cell->get_height_type();
 	previous_filled_cell_height_type = previous_filled_cell_height_type_in;
-  process_center_cell();
+  	process_center_cell();
 	center_cell_volume_threshold_in = center_cell_volume_threshold;
 	lake_area_in = lake_area;
 	previous_filled_cell_height_in = previous_filled_cell_height;
@@ -1050,15 +1055,17 @@ void latlon_basin_evaluation_algorithm::
 	process_primary_merge();
 }
 
-void latlon_basin_evaluation_algorithm::test_set_secondary_redirect(int* flood_next_cell_lat_index_in,
+void latlon_basin_evaluation_algorithm::test_set_secondary_redirect(double* prior_coarse_rdirs_in,
+                                                                    int* flood_next_cell_lat_index_in,
                                                                     int* flood_next_cell_lon_index_in,
                                                                     int* connect_next_cell_lat_index_in,
                                                                     int* connect_next_cell_lon_index_in,
+                                                                    int* coarse_catchment_nums_in,
                                                                     bool* requires_flood_redirect_indices_in,
                                                                     bool* requires_connect_redirect_indices_in,
                                                                     double* raw_orography_in,
-                    																								double* corrected_orography_in,
-                    																								coords* new_center_coords_in,
+                    												double* corrected_orography_in,
+                    												coords* new_center_coords_in,
                                                                   	coords* center_coords_in,
                                                                   	coords* previous_filled_cell_coords_in,
                                                                   	coords* target_basin_center_coords,
@@ -1069,21 +1076,46 @@ void latlon_basin_evaluation_algorithm::test_set_secondary_redirect(int* flood_n
 	_coarse_grid_params = coarse_grid_params_in;
 	center_coords = center_coords_in;
 	previous_filled_cell_coords = previous_filled_cell_coords_in;
+	coarse_catchment_nums = new field<int>(coarse_catchment_nums_in,coarse_grid_params_in);
+	prior_coarse_rdirs = new field<double>(prior_coarse_rdirs_in,coarse_grid_params_in);
 	flood_next_cell_lat_index = new field<int>(flood_next_cell_lat_index_in,grid_params_in);
 	flood_next_cell_lon_index = new field<int>(flood_next_cell_lon_index_in,grid_params_in);
 	connect_next_cell_lat_index = new field<int>(connect_next_cell_lat_index_in,grid_params_in);
 	connect_next_cell_lon_index = new field<int>(connect_next_cell_lon_index_in,grid_params_in);
-  requires_flood_redirect_indices = new field<bool>(requires_flood_redirect_indices_in,grid_params_in);
-  requires_connect_redirect_indices = new field<bool>(requires_connect_redirect_indices_in,grid_params_in);
-  raw_orography = new field<double>(raw_orography_in,grid_params_in);
-  corrected_orography = new field<double>(corrected_orography_in,grid_params_in);
-  previous_filled_cell_height_type = previous_filled_cell_height_type_in;
-  new_center_coords = new_center_coords_in;
-  merge_and_redirect_indices* working_redirect = new latlon_merge_and_redirect_indices(new_center_coords_in);
+	requires_flood_redirect_indices = new field<bool>(requires_flood_redirect_indices_in,grid_params_in);
+	requires_connect_redirect_indices = new field<bool>(requires_connect_redirect_indices_in,grid_params_in);
+	raw_orography = new field<double>(raw_orography_in,grid_params_in);
+	corrected_orography = new field<double>(corrected_orography_in,grid_params_in);
+	previous_filled_cell_height_type = previous_filled_cell_height_type_in;
+	new_center_coords = new_center_coords_in;
+	field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  	field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  	connect_merge_and_redirect_indices_index->set_all(-1);
+  	flood_merge_and_redirect_indices_index->set_all(-1);
+  	vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  	vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+	merge_and_redirect_indices* working_redirect = new latlon_merge_and_redirect_indices(new_center_coords_in);
+	vector<merge_and_redirect_indices*>* primary_merges =
+    	new vector<merge_and_redirect_indices*>;
+  	collected_merge_and_redirect_indices*
+  		collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                                     working_redirect,
+                                                                     latlon_merge_and_redirect_indices_factory);
+  	flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  	(*flood_merge_and_redirect_indices_index)(previous_filled_cell_coords) = 0;
+	basin_merges_and_redirects = new merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               						      flood_merge_and_redirect_indices_index,
+                               						      connect_merge_and_redirect_indices_vector,
+                               						      flood_merge_and_redirect_indices_vector,
+                               						      grid_params_in);
 	_coarse_grid = grid_factory(_coarse_grid_params);
-  set_secondary_redirect(working_redirect,previous_filled_cell_coords,target_basin_center_coords,
-                         previous_filled_cell_height_type_in);
-}
+	set_secondary_redirect(working_redirect,previous_filled_cell_coords,target_basin_center_coords,
+	                       previous_filled_cell_height_type_in);
+	}
 
 void latlon_basin_evaluation_algorithm::test_set_remaining_redirects(vector<coords*> basin_catchment_centers_in,
                                                                      double* prior_fine_rdirs_in,
@@ -1134,16 +1166,17 @@ void latlon_basin_evaluation_algorithm::test_set_remaining_redirects(vector<coor
                                              			   true);
 			working_collected_merge_and_redirect_indices->
 				set_unmatched_secondary_merge(coords_in);
-		} else if ((*requires_connect_redirect_indices)(coords_in)){
-			collected_merge_and_redirect_indices*
-				working_collected_merge_and_redirect_indices =
-					basin_merges_and_redirects->
-						get_collected_merge_and_redirect_indices(coords_in,
-                                             			   connection_height,
-                                             		     true);
-			working_collected_merge_and_redirect_indices->
-				set_unmatched_secondary_merge(coords_in);
-		}
+	}
+	if ((*requires_connect_redirect_indices)(coords_in)){
+		collected_merge_and_redirect_indices*
+			working_collected_merge_and_redirect_indices =
+				basin_merges_and_redirects->
+					get_collected_merge_and_redirect_indices(coords_in,
+                                         			   connection_height,
+                                         		     true);
+		working_collected_merge_and_redirect_indices->
+			set_unmatched_secondary_merge(coords_in);
+	}
   	delete coords_in;
   });
 	set_remaining_redirects();

@@ -17,17 +17,10 @@ bool disjoint_set_forest::link(disjoint_set* x, disjoint_set* y){
   disjoint_set* root_x = find_root(x);
   disjoint_set* root_y = find_root(y);
   if (root_x == root_y) return false;
-  if (root_x->get_size() < root_y->get_size()) {
-    root_x->set_root(root_y);
-    root_y->increase_size(root_x->get_size());
-    root_y->add_node(root_x);
-    root_y->add_nodes(root_x->get_nodes());
-  } else {
-    root_y->set_root(root_x);
-    root_x->increase_size(root_y->get_size());
-    root_x->add_node(root_y);
-    root_x->add_nodes(root_y->get_nodes());
-  }
+  root_y->set_root(root_x);
+  root_x->increase_size(root_y->get_size());
+  root_x->add_node(root_y);
+  root_x->add_nodes(root_y->get_nodes());
   return true;
 }
 

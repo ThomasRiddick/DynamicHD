@@ -43,6 +43,7 @@ $(FRUIT_LOC)/fruit.f90 \
 ../src/latlon_hd_and_lake_model/latlon_lake_model_retrieve_lake_numbers.f90 \
 ../src/testing/latlon_hd_and_lake_model_test_mod.f90 \
 ../src/testing/latlon_lake_model_tree_test_mod.f90 \
+../src/testing/latlon_lake_model_merges_io_test_mod.f90 \
 ../src/testing/icosohedral_hd_and_lake_model_test_mod.f90 \
 ../src/command_line_drivers/cotat_plus_latlon_to_icon_simple_interface.f90 \
 ../src/testing/map_non_coincident_grids_test_mod.f90 \
@@ -183,6 +184,7 @@ TEST_OBJS += \
 ./src/latlon_hd_and_lake_model/latlon_hd_model_interface_mod.o \
 ./src/testing/latlon_hd_and_lake_model_test_mod.o \
 ./src/testing/latlon_lake_model_tree_test_mod.o \
+./src/testing/latlon_lake_model_merges_io_test_mod.o \
 ./src/icosohedral_hd_and_lake_model/icosohedral_lake_model_mod.o \
 ./src/icosohedral_hd_and_lake_model/icosohedral_lake_model_interface_mod.o \
 ./src/icosohedral_hd_and_lake_model/icosohedral_lake_model_io_mod.o \
@@ -253,6 +255,7 @@ MODS += \
 ./cotat_plus_latlon_to_icon_simple_interface.mod \
 ./latlon_hd_and_lake_model_test_mod.mod \
 ./latlon_lake_model_tree_test_mod.mod \
+./latlon_lake_model_merges_io_test_mod.mod \
 ./icosohedral_hd_and_lake_model_test_mod.mod \
 ./icon_to_latlon_landsea_downscaler.mod \
 ./icon_to_latlon_landsea_downscaler_simple_interface.mod \
@@ -386,7 +389,7 @@ src/drivers/accumulate_flow_driver_mod.o: ../src/drivers/accumulate_flow_driver_
 
 src/testing/accumulate_flow_test_mod.o: ../src/testing/accumulate_flow_test_mod.f90 src/algorithms/accumulate_flow_mod.o src/testing/fruit.o
 
-src/testing/manual_fruit_basket.o: ../src/testing/manual_fruit_basket.f90 src/testing/area_test_mod.o src/testing/cotat_plus_test_mod.o src/testing/doubly_linked_list_test_module.o src/testing/field_section_test_mod.o src/testing/fruit.o src/testing/loop_breaker_test_mod.o src/testing/subfield_test_mod.o src/testing/latlon_hd_and_lake_model_test_mod.o src/testing/accumulate_flow_test_mod.o src/testing/icosohedral_hd_and_lake_model_test_mod.o src/testing/latlon_lake_model_tree_test_mod.o
+src/testing/manual_fruit_basket.o: ../src/testing/manual_fruit_basket.f90 src/testing/area_test_mod.o src/testing/cotat_plus_test_mod.o src/testing/doubly_linked_list_test_module.o src/testing/field_section_test_mod.o src/testing/fruit.o src/testing/loop_breaker_test_mod.o src/testing/subfield_test_mod.o src/testing/latlon_hd_and_lake_model_test_mod.o src/testing/accumulate_flow_test_mod.o src/testing/icosohedral_hd_and_lake_model_test_mod.o src/testing/latlon_lake_model_tree_test_mod.o src/testing/latlon_lake_model_merges_io_test_mod.o
 
 src/testing/manual_fruit_basket_driver.o: ../src/testing/manual_fruit_basket_driver.f90 src/testing/fruit.o src/testing/manual_fruit_basket.o
 
@@ -446,6 +449,8 @@ src/testing/latlon_hd_and_lake_model_test_mod.o: ../src/testing/latlon_hd_and_la
 endif
 
 src/testing/latlon_lake_model_tree_test_mod.o: ../src/testing/latlon_lake_model_tree_test_mod.f90 src/latlon_hd_and_lake_model/latlon_lake_model_tree_mod.o
+
+src/testing/latlon_lake_model_merges_io_test_mod.o: ../src/testing/latlon_lake_model_merges_io_test_mod.f90 src/latlon_hd_and_lake_model/latlon_hd_model_interface_mod.o src/parameters_mod.o
 
 src/latlon_hd_and_lake_model/latlon_hd_model_interface_mod.o: ../src/latlon_hd_and_lake_model/latlon_hd_model_interface_mod.f90 src/latlon_hd_and_lake_model/latlon_hd_model_mod.o
 

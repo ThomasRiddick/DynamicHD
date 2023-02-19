@@ -22,8 +22,11 @@ void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                                            int* flood_next_cell_lon_index_in,
                                            int* connect_next_cell_lat_index_in,
                                            int* connect_next_cell_lon_index_in,
+                                           int* connect_merge_and_redirect_indices_index_in,
+                                           int* flood_merge_and_redirect_indices_index_in,
                                            int nlat_fine, int nlon_fine,
                                            int nlat_coarse,int nlon_coarse,
+                                           string merges_filepath,
                                            int* basin_catchment_numbers_in=nullptr);
 
 void latlon_evaluate_basins(bool* minima_in,
@@ -40,8 +43,11 @@ void latlon_evaluate_basins(bool* minima_in,
                             int* flood_next_cell_lon_index_in,
                             int* connect_next_cell_lat_index_in,
                             int* connect_next_cell_lon_index_in,
+                            int* connect_merge_and_redirect_indices_index_in,
+                            int* flood_merge_and_redirect_indices_index_in,
                             int nlat_fine, int nlon_fine,
                             int nlat_coarse,int nlon_coarse,
+                            string merges_filepath,
                             int* basin_catchment_numbers_in=nullptr);
 
 void icon_single_index_evaluate_basins(bool* minima_in,

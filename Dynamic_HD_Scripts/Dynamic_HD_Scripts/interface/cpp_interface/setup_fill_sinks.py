@@ -35,9 +35,16 @@ if platform == "linux" or platform == "linux2":
 elif platform == "darwin":
     #specify gcc as the compiler (which is despite the name actually a version of clang on mac)
     os.environ["CC"] = "/usr/bin/gcc"
+    netcdfc = "/usr/local/Cellar/netcdf/4.9.0"
+    netcdfcxx = "/usr/local/Cellar/netcdf-cxx/4.3.1"
     os.environ["CFLAGS"]= "-stdlib=libc++"
-    extra_compile_args=['-DPROCESSED_CELL_COUNTER','-std=gnu++11','-stdlib=libc++','-mmacosx-version-min=10.7']
-    extra_links_args = ['-mmacosx-version-min=10.7']
+    extra_compile_args=['-DPROCESSED_CELL_COUNTER','-DUSE_NETCDFCPP',
+                        '-std=gnu++11','-stdlib=libc++','-mmacosx-version-min=10.7',
+                        "-isystem" + netcdfcxx + "/include",
+                        "-isystem" + netcdfc +"/include"]
+    extra_links_args = ['-mmacosx-version-min=10.7',
+                        "-L" + netcdfcxx + "/lib","-lnetcdf-cxx4",
+                        "-L" + netcdfc +"/lib","-lnetcdf"]
 else:
     raise RuntimeError("Invalid platform detected")
 
@@ -99,6 +106,7 @@ extensions=[Extension("libs.fill_sinks_wrapper",
                                  "lake_operators_wrapper.pyx"),
                        path.join(src,"base/grid.cpp"),
                        path.join(src,"base/cell.cpp"),
+                       path.join(src,"base/merges_and_redirects.cpp"),
                        path.join(src,"algorithms/"
                                  "lake_filling_algorithm.cpp"),
                        path.join(src,"algorithms/"
@@ -133,6 +141,8 @@ extensions=[Extension("libs.fill_sinks_wrapper",
                                  "evaluate_basins_wrapper.pyx"),
                        path.join(src,"base/grid.cpp"),
                        path.join(src,"base/cell.cpp"),
+                       path.join(src,"base/merges_and_redirects.cpp"),
+                       path.join(src,"base/disjoint_set.cpp"),
                        path.join(src,"algorithms/"
                                      "sink_filling_algorithm.cpp"),
                        path.join(src,"algorithms/"

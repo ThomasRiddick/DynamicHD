@@ -29,6 +29,8 @@ public:
   virtual void set_redirect_indices(coords* redirect_coords) = 0;
   virtual pair<int,int*>* get_indices_as_array() = 0;
   virtual ostream& print(ostream& out) = 0;
+  virtual void add_offsets_to_lat_indices(int offset_non_local,
+                                          int offset_local) = 0;
 protected:
   virtual bool equals(const merge_and_redirect_indices& rhs) const = 0;
   bool local_redirect;
@@ -48,6 +50,7 @@ public:
   const int get_merge_target_lon_index() const { return merge_target_lon_index; }
   const int get_redirect_lat_index() const { return redirect_lat_index; }
   const int get_redirect_lon_index() const { return redirect_lon_index; }
+  void add_offsets_to_lat_indices(int offset_non_local,int offset_local);
   pair<int,int*>* get_indices_as_array();
   ostream& print(ostream& out);
 protected:
@@ -59,6 +62,10 @@ protected:
 };
 
 merge_and_redirect_indices* latlon_merge_and_redirect_indices_factory(coords* target_coords);
+
+merge_and_redirect_indices* create_latlon_merge_and_redirect_indices_for_testing(coords* merge_target_coords,
+                                    					         coords* redirect_coords,
+                                    				                 bool is_local_redirect);
 
 class icon_single_index_merge_and_redirect_indices : public merge_and_redirect_indices {
 public:
@@ -72,6 +79,8 @@ public:
   const int get_redirect_cell_index() const { return redirect_cell_index; }
   pair<int,int*>* get_indices_as_array();
   ostream& print(ostream& out);
+  //Does nothing for ICON grid
+  void add_offsets_to_lat_indices(int offset_non_local,int offset_local){};
 protected:
   bool equals(const merge_and_redirect_indices& rhs) const;
   int merge_target_cell_index;
@@ -129,8 +138,9 @@ public:
   vector<merge_and_redirect_indices*>* get_primary_merge_and_redirect_indices() const {
     return primary_merge_and_redirect_indices;
   }
-
-  pair<tuple<int,int,int>*,int*>* get_collection_as_array();
+  void add_offsets_to_lat_indices(int offset_non_local,
+                                  int offset_local);
+  pair<pair<int,int>*,int*>* get_collection_as_array();
 
   //Note equality does not check the merge and redirect factories are equal
   friend bool operator== (const collected_merge_and_redirect_indices& lhs,
@@ -168,7 +178,10 @@ public:
   vector<collected_merge_and_redirect_indices*>*
     get_flood_merge_and_redirect_indices() const
     { return flood_merge_and_redirect_indices; }
-  pair<tuple<int,int,int>*,int*>* get_merges_and_redirects_as_array();
+  void add_offsets_to_lat_indices(int offset_non_local,
+                                  int offset_local);
+  pair<tuple<int,int,int>*,int*>*
+    get_merges_and_redirects_as_array(bool get_flood_merges_and_redirects);
   bool operator==(const merges_and_redirects& rhs);
   friend ostream& operator<<(ostream& out, merges_and_redirects& obj);
 protected:

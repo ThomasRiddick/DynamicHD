@@ -8,7 +8,13 @@
 #include "base/enums.hpp"
 #include "algorithms/basin_evaluation_algorithm.hpp"
 #include "drivers/evaluate_basins.hpp"
+#if USE_NETCDFCPP
+#include <netcdf>
+#endif
 using namespace std;
+#if USE_NETCDFCPP
+using namespace netCDF;
+#endif
 
 void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                                            double* raw_orography_in,
@@ -24,8 +30,11 @@ void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                                            int* flood_next_cell_lon_index_in,
                                            int* connect_next_cell_lat_index_in,
                                            int* connect_next_cell_lon_index_in,
+                                           int* connect_merge_and_redirect_indices_index_in,
+                                           int* flood_merge_and_redirect_indices_index_in,
                                            int nlat_fine, int nlon_fine,
                                            int nlat_coarse,int nlon_coarse,
+                                           string merges_filepath,
                                            int* basin_catchment_numbers_in){
   auto minima_in = new bool[nlat_fine*nlon_fine];
   for (int i = 0; i < nlat_fine*nlon_fine; i++) {
@@ -45,8 +54,11 @@ void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                          flood_next_cell_lon_index_in,
                          connect_next_cell_lat_index_in,
                          connect_next_cell_lon_index_in,
+                         connect_merge_and_redirect_indices_index_in,
+                         flood_merge_and_redirect_indices_index_in,
                          nlat_fine, nlon_fine,
                          nlat_coarse,nlon_coarse,
+                         merges_filepath,
                          basin_catchment_numbers_in);
 }
 
@@ -64,8 +76,11 @@ void latlon_evaluate_basins(bool* minima_in,
                             int* flood_next_cell_lon_index_in,
                             int* connect_next_cell_lat_index_in,
                             int* connect_next_cell_lon_index_in,
+                            int* connect_merge_and_redirect_indices_index_in,
+                            int* flood_merge_and_redirect_indices_index_in,
                             int nlat_fine, int nlon_fine,
                             int nlat_coarse,int nlon_coarse,
+                            string merges_filepath,
                             int* basin_catchment_numbers_in){
   cout << "Entering Basin Evaluation C++ Code" << endl;
   auto alg = latlon_basin_evaluation_algorithm();
@@ -190,6 +205,46 @@ void latlon_evaluate_basins(bool* minima_in,
                    coarse_grid_params_in);
   alg.setup_sink_filling_algorithm(sink_filling_alg_4);
   alg.evaluate_basins();
+  merges_and_redirects* merges_and_redirects_out =
+    alg.get_basin_merges_and_redirects();
+  merges_and_redirects_out->add_offsets_to_lat_indices(1,scale_factor);
+  int* flood_merge_and_redirect_indices_index_in_ext =
+    merges_and_redirects_out->get_flood_merge_and_redirect_indices_index()->get_array();
+  int* connect_merge_and_redirect_indices_index_in_ext =
+    merges_and_redirects_out->get_connect_merge_and_redirect_indices_index()->get_array();
+  #if USE_NETCDFCPP
+  pair<tuple<int,int,int>*,int*>* array_and_dimensions =
+    merges_and_redirects_out->get_merges_and_redirects_as_array(true);
+  NcFile merges_and_redirects_file(merges_filepath.c_str(), NcFile::newFile);
+  NcDim flood_first_index =
+    merges_and_redirects_file.addDim("flood_first_index",get<0>(*array_and_dimensions->first));
+  NcDim flood_second_index =
+    merges_and_redirects_file.addDim("flood_second_index",get<1>(*array_and_dimensions->first));
+  NcDim flood_third_index =
+    merges_and_redirects_file.addDim("flood_third_index",get<2>(*array_and_dimensions->first));
+  vector<NcDim> flood_dims;
+  flood_dims.push_back(flood_first_index);
+  flood_dims.push_back(flood_second_index);
+  flood_dims.push_back(flood_third_index);
+  NcVar flood_merges_and_redirects_out_var =
+    merges_and_redirects_file.addVar("flood_merges_and_redirects",ncInt,flood_dims);
+  flood_merges_and_redirects_out_var.putVar(array_and_dimensions->second);
+  array_and_dimensions =
+    merges_and_redirects_out->get_merges_and_redirects_as_array(false);
+  NcDim connect_first_index =
+    merges_and_redirects_file.addDim("connect_first_index",get<0>(*array_and_dimensions->first));
+  NcDim connect_second_index =
+    merges_and_redirects_file.addDim("connect_second_index",get<1>(*array_and_dimensions->first));
+  NcDim connect_third_index =
+    merges_and_redirects_file.addDim("connect_third_index",get<2>(*array_and_dimensions->first));
+  vector<NcDim> connect_dims;
+  connect_dims.push_back(connect_first_index);
+  connect_dims.push_back(connect_second_index);
+  connect_dims.push_back(connect_third_index);
+  NcVar connect_merges_and_redirects_out_var =
+    merges_and_redirects_file.addVar("connect_merges_and_redirects",ncInt,connect_dims);
+  connect_merges_and_redirects_out_var.putVar(array_and_dimensions->second);
+  #endif
   if(basin_catchment_numbers_in){
     basin_catchment_numbers_in_ext = alg.retrieve_lake_numbers();
   }
@@ -202,6 +257,10 @@ void latlon_evaluate_basins(bool* minima_in,
     connect_next_cell_lat_index_in[i-scale_factor*nlon_fine] =
       max(connect_next_cell_lat_index_in_ext[i] - scale_factor,-1);
     connect_next_cell_lon_index_in[i-scale_factor*nlon_fine] = connect_next_cell_lon_index_in_ext[i];
+    connect_merge_and_redirect_indices_index_in[i-scale_factor*nlon_fine] =
+      connect_merge_and_redirect_indices_index_in_ext[i];
+    flood_merge_and_redirect_indices_index_in[i-scale_factor*nlon_fine] =
+      flood_merge_and_redirect_indices_index_in_ext[i];
     if(basin_catchment_numbers_in){
       basin_catchment_numbers_in[i-scale_factor*nlon_fine] =
         basin_catchment_numbers_in_ext[i];

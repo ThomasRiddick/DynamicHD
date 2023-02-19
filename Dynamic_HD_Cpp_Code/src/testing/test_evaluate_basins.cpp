@@ -1328,6 +1328,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCell) {
   delete[] connected_cells_expected_out;
   delete[] cell_areas_in;
   delete center_cell_in;
+  delete previous_filled_cell_coords_in;
 }
 
 TEST_F(BasinEvaluationTest, TestProcessingCenterCellTwo) {
@@ -1957,6 +1958,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFour) {
   delete[] connected_cells_expected_out;
   delete[] cell_areas_in;
   delete center_cell_in;
+  delete previous_filled_cell_coords_in;
 }
 
 TEST_F(BasinEvaluationTest, TestProcessingCenterCellFive) {
@@ -2587,6 +2589,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSeven) {
   delete[] connected_cells_expected_out;
   delete[] cell_areas_in;
   delete center_cell_in;
+  delete previous_filled_cell_coords_in;
 }
 
 TEST_F(BasinEvaluationTest, TestProcessingCenterCellEight) {
@@ -3217,6 +3220,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellTen) {
   delete[] connected_cells_expected_out;
   delete[] cell_areas_in;
   delete center_cell_in;
+  delete previous_filled_cell_coords_in;
 }
 
 TEST_F(BasinEvaluationTest, TestProcessingCenterCellEleven) {
@@ -3442,6 +3446,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellEleven) {
   delete[] connected_cells_expected_out;
   delete[] cell_areas_in;
   delete center_cell_in;
+  delete previous_filled_cell_coords_in;
 }
 
 TEST_F(BasinEvaluationTest, TestProcessingCenterCellTwelve) {
@@ -3885,6 +3890,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellThirteen) {
   delete[] connected_cells_expected_out;
   delete[] cell_areas_in;
   delete center_cell_in;
+  delete previous_filled_cell_coords_in;
 }
 
 TEST_F(BasinEvaluationTest, TestProcessingCenterCellFourteen) {
@@ -4328,6 +4334,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFifteen) {
   delete[] connected_cells_expected_out;
   delete[] cell_areas_in;
   delete center_cell_in;
+  delete previous_filled_cell_coords_in;
 }
 
 TEST_F(BasinEvaluationTest, TestProcessingCenterCellSixteen) {
@@ -4979,6 +4986,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellEighteen) {
   delete[] connected_cells_expected_out;
   delete[] cell_areas_in;
   delete center_cell_in;
+  delete previous_filled_cell_coords_in;
 }
 
 TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectOne) {
@@ -5017,8 +5025,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectOne) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(8,4),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,4),
                                                 new latlon_coords(8,4),
                                                 true);
   primary_merges =
@@ -5027,10 +5036,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectOne) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,6)) = flood_index;
+  working_coords = new latlon_coords(8,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(8,6),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,6),
                                                 new latlon_coords(2,1),
                                                 false);
   secondary_merge = nullptr;
@@ -5041,8 +5052,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectOne) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,3)) = flood_index;
+  working_coords = new latlon_coords(8,3);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -5125,8 +5138,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTwo) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,8),
                                                 new latlon_coords(1,2),
                                                 false);
   primary_merges =
@@ -5135,10 +5149,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,5)) = flood_index;
+  working_coords = new latlon_coords(1,5);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,5),
                                                 new latlon_coords(1,5),
                                                 true);
   secondary_merge = nullptr;
@@ -5150,8 +5166,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(0,7)) = flood_index;
+  working_coords = new latlon_coords(0,7);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -5234,8 +5252,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectThree) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,5),
                                                 new latlon_coords(0,1),
                                                 false);
   primary_merges =
@@ -5244,10 +5263,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,8)) = flood_index;
+  working_coords = new latlon_coords(4,8);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,8),
                                                 new latlon_coords(4,8),
                                                 true);
   secondary_merge = nullptr;
@@ -5259,8 +5280,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,1)) = flood_index;
+  working_coords = new latlon_coords(4,1);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
@@ -5344,8 +5367,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFour) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,5),
                                                 new latlon_coords(0,2),
                                                 false);
   primary_merges =
@@ -5354,10 +5378,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,8)) = flood_index;
+  working_coords = new latlon_coords(4,8);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,8),
                                                 new latlon_coords(4,8),
                                                 true);
   secondary_merge = nullptr;
@@ -5369,8 +5395,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(0,6)) = flood_index;
+  working_coords = new latlon_coords(0,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -5453,8 +5481,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFive) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,5),
                                                 new latlon_coords(0,1),
                                                 false);
   primary_merges =
@@ -5463,10 +5492,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFive) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,1)) = flood_index;
+  working_coords = new latlon_coords(1,1);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,1),
                                                 new latlon_coords(1,1),
                                                 true);
   secondary_merge = nullptr;
@@ -5478,8 +5509,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFive) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(3,1)) = flood_index;
+  working_coords = new latlon_coords(3,1);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -5562,8 +5595,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSix) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,1),
                                                 new latlon_coords(1,0),
                                                 false);
   primary_merges =
@@ -5572,10 +5606,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,6)) = flood_index;
+  working_coords = new latlon_coords(8,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(8,6),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,6),
                                                 new latlon_coords(2,1),
                                                 false);
   secondary_merge = nullptr;
@@ -5587,8 +5623,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,1)) = flood_index;
+  working_coords = new latlon_coords(8,1);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -5671,8 +5709,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSeven) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,1),
                                                 new latlon_coords(1,0),
                                                 false);
   primary_merges =
@@ -5681,10 +5720,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSeven) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,6)) = flood_index;
+  working_coords = new latlon_coords(8,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(8,6),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,6),
                                                 new latlon_coords(2,2),
                                                 false);
   secondary_merge = nullptr;
@@ -5696,8 +5737,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSeven) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(0,3)) = flood_index;
+  working_coords = new latlon_coords(0,3);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -5780,8 +5823,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEight) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,8),
                                                 new latlon_coords(1,2),
                                                 false);
   primary_merges =
@@ -5790,10 +5834,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEight) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,5)) = flood_index;
+  working_coords = new latlon_coords(1,5);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,5),
                                                 new latlon_coords(0,1),
                                                 false);
   secondary_merge = nullptr;
@@ -5805,8 +5851,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEight) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,7)) = flood_index;
+  working_coords = new latlon_coords(6,7);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -5889,8 +5937,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectNine) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(8,4),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,4),
                                                 new latlon_coords(2,1),
                                                 false);
   primary_merges =
@@ -5899,10 +5948,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectNine) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,6)) = flood_index;
+  working_coords = new latlon_coords(8,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(8,6),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,6),
                                                 new latlon_coords(2,1),
                                                 false);
   secondary_merge = nullptr;
@@ -5914,8 +5965,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectNine) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,2)) = flood_index;
+  working_coords = new latlon_coords(8,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -5998,8 +6051,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTen) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,1),
                                                 new latlon_coords(1,1),
                                                 true);
   primary_merges =
@@ -6008,10 +6062,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,5)) = flood_index;
+  working_coords = new latlon_coords(1,5);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,5),
                                                 new latlon_coords(1,5),
                                                 true);
   secondary_merge = nullptr;
@@ -6023,8 +6079,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(0,0)) = flood_index;
+  working_coords = new latlon_coords(0,0);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -6107,8 +6165,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEleven) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,5),
                                                 new latlon_coords(0,2),
                                                 false);
   primary_merges =
@@ -6117,10 +6176,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEleven) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,8)) = flood_index;
+  working_coords = new latlon_coords(4,8);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,8),
                                                 new latlon_coords(4,8),
                                                 true);
   secondary_merge = nullptr;
@@ -6132,8 +6193,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEleven) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,4)) = flood_index;
+  working_coords = new latlon_coords(4,4);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -6216,8 +6279,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTwelve) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,5),
                                                 new latlon_coords(0,2),
                                                 false);
   primary_merges =
@@ -6226,10 +6290,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTwelve) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,8)) = flood_index;
+  working_coords = new latlon_coords(4,8);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,8),
                                                 new latlon_coords(4,8),
                                                 true);
   secondary_merge = nullptr;
@@ -6240,8 +6306,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTwelve) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(0,6)) = flood_index;
+  working_coords = new latlon_coords(0,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -6324,8 +6392,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectThirteen) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,5),
                                                 new latlon_coords(0,2),
                                                 false);
   primary_merges =
@@ -6334,10 +6403,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectThirteen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,1)) = flood_index;
+  working_coords = new latlon_coords(1,1);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,1),
                                                 new latlon_coords(1,0),
                                                 false);
   secondary_merge = nullptr;
@@ -6349,8 +6420,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectThirteen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(5,6)) = flood_index;
+  working_coords = new latlon_coords(5,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -6433,8 +6506,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFourteen) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,1),
                                                 new latlon_coords(1,0),
                                                 false);
   primary_merges =
@@ -6443,10 +6517,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFourteen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,6)) = flood_index;
+  working_coords = new latlon_coords(8,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(8,6),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,6),
                                                 new latlon_coords(2,1),
                                                 false);
   secondary_merge = nullptr;
@@ -6458,8 +6534,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFourteen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,0)) = flood_index;
+  working_coords = new latlon_coords(7,0);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -6542,8 +6620,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFifteen) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,1),
                                                 new latlon_coords(1,0),
                                                 false);
   primary_merges =
@@ -6552,10 +6631,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFifteen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,6)) = flood_index;
+  working_coords = new latlon_coords(8,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(8,6),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,6),
                                                 new latlon_coords(2,2),
                                                 false);
   secondary_merge = nullptr;
@@ -6567,8 +6648,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFifteen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,3)) = flood_index;
+  working_coords = new latlon_coords(1,3);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -6651,8 +6734,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSixteen) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,8),
                                                 new latlon_coords(1,2),
                                                 false);
   primary_merges =
@@ -6661,10 +6745,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSixteen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,5)) = flood_index;
+  working_coords = new latlon_coords(1,5);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,5),
                                                 new latlon_coords(0,2),
                                                 false);
   secondary_merge = nullptr;
@@ -6675,8 +6761,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSixteen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,8)) = flood_index;
+  working_coords = new latlon_coords(6,8);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -6760,8 +6848,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSeventeen) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,4),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,4),
                                                 new latlon_coords(2,2),
                                                 false);
   primary_merges =
@@ -6770,10 +6859,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSeventeen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,7)) = flood_index;
+  working_coords = new latlon_coords(1,7);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,7),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,7),
                                                 new latlon_coords(1,7),
                                                 true);
   secondary_merge = nullptr;
@@ -6785,8 +6876,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSeventeen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(5,7)) = flood_index;
+  working_coords = new latlon_coords(5,7);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -6865,8 +6958,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEighteen) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,4),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,4),
                                                 new latlon_coords(2,1),
                                                 false);
   primary_merges =
@@ -6875,10 +6969,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEighteen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,1)) = flood_index;
+  working_coords = new latlon_coords(1,1);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,1),
                                                 new latlon_coords(1,0),
                                                 false);
   secondary_merge = nullptr;
@@ -6890,8 +6986,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEighteen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(5,1)) = flood_index;
+  working_coords = new latlon_coords(5,1);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -6933,785 +7031,679 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEighteen) {
 }
 
 TEST_F(BasinEvaluationTest,TestSettingSecondaryRedirect) {
-  EXPECT_TRUE(false);
-//   auto grid_params_in = new latlon_grid_params(9,9,true);
-//   auto coarse_grid_params_in = new latlon_grid_params(3,3,true);
-//   int* flood_next_cell_lat_index_in = new int[9*9];
-//   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
-//   int* flood_next_cell_lon_index_in = new int[9*9];
-//   std::fill_n(flood_next_cell_lon_index_in,9*9,-1);
-//   int* connect_next_cell_lat_index_in = new int[9*9];
-//   std::fill_n(connect_next_cell_lat_index_in,9*9,-1);
-//   int* connect_next_cell_lon_index_in = new int[9*9];
-//   std::fill_n(connect_next_cell_lon_index_in,9*9,-1);
-//   bool* requires_flood_redirect_indices_in = new bool[9*9];
-//   std::fill_n(requires_flood_redirect_indices_in,9*9,false);
-//   bool* requires_connect_redirect_indices_in = new bool[9*9];
-//   std::fill_n(requires_connect_redirect_indices_in,9*9,false);
-//   double* raw_orography_in = new double[9*9];
-//   std::fill_n(raw_orography_in,9*9,10.0);
-//   double* corrected_orography_in = new double[9*9];
-//   std::fill_n(corrected_orography_in,9*9, 9.0);
-//   int* flood_next_cell_lat_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,2,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* flood_next_cell_lon_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1, 7,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* connect_next_cell_lat_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* connect_next_cell_lon_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* flood_redirect_lat_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,2,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* flood_redirect_lon_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,7,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* connect_redirect_lat_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* connect_redirect_lon_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   bool* requires_flood_redirect_indices_expected_out = new bool[9*9]
-//                                      {false,false,false, false, true,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-// //
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-// //
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false};
-//   bool* requires_connect_redirect_indices_expected_out = new bool[9*9]
-//                                      {false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-// //
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-// //
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false};
-//   coords* new_center_coords_in = new latlon_coords(2,7);
-//   coords* center_coords_in = new latlon_coords(5,1);
-//   coords* previous_filled_cell_coords_in = new latlon_coords(0,4);
-//   coords* target_basin_center_coords = new latlon_coords(2,7);
-//   height_types previous_filled_cell_height_type_in = flood_height;
-//   auto basin_eval = latlon_basin_evaluation_algorithm();
-//   basin_eval.test_set_secondary_redirect(flood_next_cell_lat_index_in,
-//                                          flood_next_cell_lon_index_in,
-//                                          connect_next_cell_lat_index_in,
-//                                          connect_next_cell_lon_index_in,
-//                                          requires_flood_redirect_indices_in,
-//                                          requires_connect_redirect_indices_in,
-//                                          raw_orography_in,
-//                                          corrected_orography_in,new_center_coords_in,
-//                                          center_coords_in,previous_filled_cell_coords_in,
-//                                          target_basin_center_coords,
-//                                          previous_filled_cell_height_type_in,
-//                                          grid_params_in,coarse_grid_params_in);
-//   EXPECT_TRUE(field<int>(flood_next_cell_lat_index_in,grid_params_in)
-//               == field<int>(flood_next_cell_lat_index_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<int>(flood_next_cell_lon_index_in,grid_params_in)
-//               == field<int>(flood_next_cell_lon_index_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<int>(connect_next_cell_lat_index_in,grid_params_in)
-//               == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
-//               == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<bool>(requires_flood_redirect_indices_in,grid_params_in)
-//               == field<bool>(requires_flood_redirect_indices_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<bool>(requires_connect_redirect_indices_in,grid_params_in)
-//               == field<bool>(requires_connect_redirect_indices_expected_out,grid_params_in));
-//   EXPECT_TRUE(false);
-//   delete grid_params_in;
-//   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
-//   delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
-//   delete[] requires_flood_redirect_indices_in;
-//   delete[] requires_connect_redirect_indices_in;
-//   delete[] raw_orography_in; delete[] corrected_orography_in;
-//   delete[] flood_next_cell_lat_index_expected_out;
-//   delete[] flood_next_cell_lon_index_expected_out;
-//   delete[] connect_next_cell_lat_index_expected_out;
-//   delete[] connect_next_cell_lon_index_expected_out;
-//   delete[] flood_redirect_lat_index_expected_out;
-//   delete[] flood_redirect_lon_index_expected_out;
-//   delete[] connect_redirect_lat_index_expected_out;
-//   delete[] connect_redirect_lon_index_expected_out;
-//   delete[] requires_flood_redirect_indices_expected_out;
-//   delete[] requires_connect_redirect_indices_expected_out;
-//   delete new_center_coords_in; delete center_coords_in;
-//   delete previous_filled_cell_coords_in;
+  auto grid_params_in = new latlon_grid_params(9,9,true);
+  auto coarse_grid_params_in = new latlon_grid_params(3,3,true);
+  double* raw_orography_in = new double[9*9];
+  std::fill_n(raw_orography_in,9*9,10.0);
+  double* corrected_orography_in = new double[9*9];
+  std::fill_n(corrected_orography_in,9*9, 9.0);
+  double* prior_coarse_rdirs_in = new double[3*3]
+                                        { 5.0,5.0,5.0,
+                                          5.0,5.0,5.0,
+                                          5.0,5.0,5.0 };
+  bool* requires_flood_redirect_indices_in = new bool[9*9]
+                                     {false,false,false, false, true,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+//
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+//
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false};
+  bool* requires_connect_redirect_indices_in = new bool[9*9]
+                                     {false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+//
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+//
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false};
+  int* flood_next_cell_lat_index_in = new int[9*9]
+                                              {-1,-1,-1, -1,2,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+  int* flood_next_cell_lon_index_in = new int[9*9]
+                                              {-1,-1,-1, -1, 7,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+  int* connect_next_cell_lat_index_in = new int[9*9]
+                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+  int* connect_next_cell_lon_index_in = new int[9*9]
+                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1,  -1,-1,-1, -1,-1,1};
+  int*  coarse_catchment_nums_in = new int[3*3]
+                                             { 1, 1, 1,
+                                               1, 1, 1,
+                                               1, 1, 1 };
+  int flood_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
+  secondary_merge =
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(2,7),
+                                                new latlon_coords(2,7),
+                                                true);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(0,4); 
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
+  delete working_coords;
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
+
+  bool* requires_flood_redirect_indices_expected_out = new bool[9*9];
+  std::fill_n(requires_flood_redirect_indices_expected_out,9*9,false);
+  bool* requires_connect_redirect_indices_expected_out = new bool[9*9];
+  std::fill_n(requires_connect_redirect_indices_expected_out,9*9,false);
+  coords* new_center_coords_in = new latlon_coords(2,7);
+  coords* center_coords_in = new latlon_coords(5,1);
+  coords* previous_filled_cell_coords_in = new latlon_coords(0,4);
+  coords* target_basin_center_coords = new latlon_coords(2,7);
+  height_types previous_filled_cell_height_type_in = flood_height;
+  auto basin_eval = latlon_basin_evaluation_algorithm();
+  basin_eval.test_set_secondary_redirect(prior_coarse_rdirs_in,
+                                         flood_next_cell_lat_index_in,
+                                         flood_next_cell_lon_index_in,
+                                         connect_next_cell_lat_index_in,
+                                         connect_next_cell_lon_index_in,
+                                         coarse_catchment_nums_in,
+                                         requires_flood_redirect_indices_in,
+                                         requires_connect_redirect_indices_in,
+                                         raw_orography_in,
+                                         corrected_orography_in,new_center_coords_in,
+                                         center_coords_in,previous_filled_cell_coords_in,
+                                         target_basin_center_coords,
+                                         previous_filled_cell_height_type_in,
+                                         grid_params_in,coarse_grid_params_in);
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
+  EXPECT_TRUE(field<bool>(requires_flood_redirect_indices_in,grid_params_in)
+               == field<bool>(requires_flood_redirect_indices_expected_out,grid_params_in));
+  EXPECT_TRUE(field<bool>(requires_connect_redirect_indices_in,grid_params_in)
+               == field<bool>(requires_connect_redirect_indices_expected_out,grid_params_in));
+  delete grid_params_in;
+  delete coarse_grid_params_in;
+  delete[] prior_coarse_rdirs_in;
+  delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
+  delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
+  delete[] requires_flood_redirect_indices_in;
+  delete[] requires_connect_redirect_indices_in;
+  delete[] raw_orography_in; delete[] corrected_orography_in;
+  delete[] requires_flood_redirect_indices_expected_out;
+  delete[] requires_connect_redirect_indices_expected_out;
+  delete[] coarse_catchment_nums_in;
+  delete new_center_coords_in; delete center_coords_in;
+  delete previous_filled_cell_coords_in;
+  delete target_basin_center_coords; 
 }
 
 TEST_F(BasinEvaluationTest,TestSettingSecondaryRedirectTwo) {
-  EXPECT_TRUE(false);
-//   auto grid_params_in = new latlon_grid_params(9,9,false);
-//   int* flood_next_cell_lat_index_in = new int[9*9];
-//   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
-//   int* flood_next_cell_lon_index_in = new int[9*9];
-//   std::fill_n(flood_next_cell_lon_index_in,9*9,-1);
-//   int* connect_next_cell_lat_index_in = new int[9*9];
-//   std::fill_n(connect_next_cell_lat_index_in,9*9,-1);
-//   int* connect_next_cell_lon_index_in = new int[9*9];
-//   std::fill_n(connect_next_cell_lon_index_in,9*9,-1);
-//   bool* requires_flood_redirect_indices_in = new bool[9*9];
-//   std::fill_n(requires_flood_redirect_indices_in,9*9,false);
-//   bool* requires_connect_redirect_indices_in = new bool[9*9];
-//   std::fill_n(requires_connect_redirect_indices_in,9*9,false);
-//   double* raw_orography_in = new double[9*9];
-//   std::fill_n(raw_orography_in,9*9,10.0);
-//   double* corrected_orography_in = new double[9*9];
-//   std::fill_n(corrected_orography_in,9*9, 9.0);
-//   int* flood_next_cell_lat_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1, 5,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* flood_next_cell_lon_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,8,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* connect_next_cell_lat_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* connect_next_cell_lon_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* flood_redirect_lat_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,5,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* flood_redirect_lon_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,8,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* connect_redirect_lat_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* connect_redirect_lon_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   bool* requires_flood_redirect_indices_expected_out = new bool[9*9]
-//                                      {false,false,false, false, true,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-// //
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-// //
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false};
-//   bool* requires_connect_redirect_indices_expected_out = new bool[9*9]
-//                                      {false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-// //
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-// //
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false};
-//   coords* new_center_coords_in = new latlon_coords(5,8);
-//   coords* center_coords_in = new latlon_coords(5,1);
-//   coords* previous_filled_cell_coords_in = new latlon_coords(0,4);
-//   height_types previous_filled_cell_height_type_in = flood_height;
-//   auto basin_eval = latlon_basin_evaluation_algorithm();
-//   basin_eval.test_set_secondary_redirect(flood_next_cell_lat_index_in,flood_next_cell_lon_index_in,
-//                                          connect_next_cell_lat_index_in,connect_next_cell_lon_index_in,
-//                                          requires_flood_redirect_indices_in,
-//                                          requires_connect_redirect_indices_in,
-//                                          raw_orography_in,
-//                                          corrected_orography_in,new_center_coords_in,
-//                                          center_coords_in,previous_filled_cell_coords_in,
-//                                          previous_filled_cell_height_type_in,
-//                                          grid_params_in);
-//   EXPECT_TRUE(field<int>(flood_next_cell_lat_index_in,grid_params_in)
-//               == field<int>(flood_next_cell_lat_index_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<int>(flood_next_cell_lon_index_in,grid_params_in)
-//               == field<int>(flood_next_cell_lon_index_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<int>(connect_next_cell_lat_index_in,grid_params_in)
-//               == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
-//               == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<bool>(requires_flood_redirect_indices_in,grid_params_in)
-//               == field<bool>(requires_flood_redirect_indices_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<bool>(requires_connect_redirect_indices_in,grid_params_in)
-//               == field<bool>(requires_connect_redirect_indices_expected_out,grid_params_in));
-//   delete grid_params_in;
-//   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
-//   delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
-//   delete[] requires_flood_redirect_indices_in;
-//   delete[] requires_connect_redirect_indices_in;
-//   delete[] raw_orography_in; delete[] corrected_orography_in;
-//   delete[] flood_next_cell_lat_index_expected_out;
-//   delete[] flood_next_cell_lon_index_expected_out;
-//   delete[] connect_next_cell_lat_index_expected_out;
-//   delete[] connect_next_cell_lon_index_expected_out;
-//   delete[] flood_redirect_lat_index_expected_out;
-//   delete[] flood_redirect_lon_index_expected_out;
-//   delete[] connect_redirect_lat_index_expected_out;
-//   delete[] connect_redirect_lon_index_expected_out;
-//   delete[] requires_flood_redirect_indices_expected_out;
-//   delete[] requires_connect_redirect_indices_expected_out;
-//   delete new_center_coords_in; delete center_coords_in;
-//   delete previous_filled_cell_coords_in;
+  auto grid_params_in = new latlon_grid_params(9,9,false);
+  auto coarse_grid_params_in = new latlon_grid_params(3,3,true);
+  double* raw_orography_in = new double[9*9];
+  std::fill_n(raw_orography_in,9*9,10.0);
+  double* corrected_orography_in = new double[9*9];
+  std::fill_n(corrected_orography_in,9*9, 9.0);
+  double* prior_coarse_rdirs_in = new double[3*3]
+                                        { 5.0,5.0,5.0,
+                                          5.0,5.0,5.0,
+                                          5.0,5.0,5.0 };
+  int* flood_next_cell_lat_index_in = new int[9*9]
+                                              {-1,-1,-1, -1, 5,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+  int* flood_next_cell_lon_index_in = new int[9*9]
+                                              {-1,-1,-1, -1,8,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+  int* connect_next_cell_lat_index_in = new int[9*9]
+                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+  int* connect_next_cell_lon_index_in = new int[9*9]
+                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+  int*  coarse_catchment_nums_in = new int[3*3]
+                                             { 1, 1, 1,
+                                               1, 1, 1,
+                                               1, 1, 1 };
+  bool* requires_flood_redirect_indices_expected_out = new bool[9*9];
+  std::fill_n(requires_flood_redirect_indices_expected_out,9*9,false);
+  bool* requires_connect_redirect_indices_expected_out = new bool[9*9];
+  std::fill_n(requires_connect_redirect_indices_expected_out,9*9,false);
+  bool* requires_flood_redirect_indices_in = new bool[9*9]
+                                     {false,false,false, false, true,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+//
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+//
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false};
+  bool* requires_connect_redirect_indices_in = new bool[9*9]
+                                     {false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+//
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+//
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false};
+                                        int flood_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
+  secondary_merge =
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(5,8),
+                                                new latlon_coords(5,8),
+                                                true);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(0,4); 
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
+  delete working_coords;
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
+
+  coords* new_center_coords_in = new latlon_coords(5,8);
+  coords* center_coords_in = new latlon_coords(5,1);
+  coords* previous_filled_cell_coords_in = new latlon_coords(0,4);
+  coords* target_basin_center_coords = new latlon_coords(5,8);
+  height_types previous_filled_cell_height_type_in = flood_height;
+  auto basin_eval = latlon_basin_evaluation_algorithm();
+  basin_eval.test_set_secondary_redirect(prior_coarse_rdirs_in,
+                                         flood_next_cell_lat_index_in,
+                                         flood_next_cell_lon_index_in,
+                                         connect_next_cell_lat_index_in,
+                                         connect_next_cell_lon_index_in,
+                                         coarse_catchment_nums_in,
+                                         requires_flood_redirect_indices_in,
+                                         requires_connect_redirect_indices_in,
+                                         raw_orography_in,
+                                         corrected_orography_in,new_center_coords_in,
+                                         center_coords_in,previous_filled_cell_coords_in,
+                                         target_basin_center_coords,
+                                         previous_filled_cell_height_type_in,
+                                         grid_params_in,coarse_grid_params_in);
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
+  EXPECT_TRUE(field<bool>(requires_flood_redirect_indices_in,grid_params_in)
+              == field<bool>(requires_flood_redirect_indices_expected_out,grid_params_in));
+  EXPECT_TRUE(field<bool>(requires_connect_redirect_indices_in,grid_params_in)
+              == field<bool>(requires_connect_redirect_indices_expected_out,grid_params_in));
+  delete grid_params_in;
+  delete coarse_grid_params_in;
+  delete[] prior_coarse_rdirs_in;
+  delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
+  delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
+  delete[] requires_flood_redirect_indices_in;
+  delete[] requires_connect_redirect_indices_in;
+  delete[] raw_orography_in; delete[] corrected_orography_in;
+  delete[] requires_flood_redirect_indices_expected_out;
+  delete[] requires_connect_redirect_indices_expected_out;
+  delete[] coarse_catchment_nums_in;
+  delete new_center_coords_in; delete center_coords_in;
+  delete previous_filled_cell_coords_in;
+  delete target_basin_center_coords;
 }
 
 TEST_F(BasinEvaluationTest,TestSettingSecondaryRedirectEqualHeights) {
-  EXPECT_TRUE(false);
-//   auto grid_params_in = new latlon_grid_params(9,9,true);
-//   int* flood_next_cell_lat_index_in = new int[9*9];
-//   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
-//   int* flood_next_cell_lon_index_in = new int[9*9];
-//   std::fill_n(flood_next_cell_lon_index_in,9*9,-1);
-//   int* connect_next_cell_lat_index_in = new int[9*9];
-//   std::fill_n(connect_next_cell_lat_index_in,9*9,-1);
-//   int* connect_next_cell_lon_index_in = new int[9*9];
-//   std::fill_n(connect_next_cell_lon_index_in,9*9,-1);
-//   int* flood_redirect_lat_index_in = new int[9*9];
-//   std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-//   int* flood_redirect_lon_index_in = new int[9*9];
-//   std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-//   int* connect_redirect_lat_index_in = new int[9*9];
-//   std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-//   int* connect_redirect_lon_index_in = new int[9*9];
-//   std::fill_n(connect_redirect_lon_index_in,9*9,-1);
-//   bool* requires_flood_redirect_indices_in = new bool[9*9];
-//   std::fill_n(requires_flood_redirect_indices_in,9*9,false);
-//   bool* requires_connect_redirect_indices_in = new bool[9*9];
-//   std::fill_n(requires_connect_redirect_indices_in,9*9,false);
-//   double* raw_orography_in = new double[9*9];
-//   std::fill_n(raw_orography_in,9*9,10.0);
-//   double* corrected_orography_in = new double[9*9];
-//   std::fill_n(corrected_orography_in,9*9,10.0);
-//   int* flood_next_cell_lat_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,7,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* flood_next_cell_lon_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,5,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* connect_next_cell_lat_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* connect_next_cell_lon_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* flood_redirect_lat_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,7,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* flood_redirect_lon_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,5,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* connect_redirect_lat_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* connect_redirect_lon_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   bool* requires_flood_redirect_indices_expected_out = new bool[9*9]
-//                                      {false,false,false, false, true,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-// //
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-// //
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false};
-//   bool* requires_connect_redirect_indices_expected_out = new bool[9*9]
-//                                      {false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-// //
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-// //
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false};
-//   coords* new_center_coords_in = new latlon_coords(7,5);
-//   coords* center_coords_in = new latlon_coords(5,1);
-//   coords* previous_filled_cell_coords_in = new latlon_coords(0,4);
-//   height_types previous_filled_cell_height_type_in = flood_height;
-//   auto basin_eval = latlon_basin_evaluation_algorithm();
-//   basin_eval.test_set_secondary_redirect(flood_next_cell_lat_index_in,flood_next_cell_lon_index_in,
-//                                          connect_next_cell_lat_index_in,connect_next_cell_lon_index_in,
-//                                          requires_flood_redirect_indices_in,
-//                                          requires_connect_redirect_indices_in,
-//                                          raw_orography_in,
-//                                          corrected_orography_in,new_center_coords_in,
-//                                          center_coords_in,previous_filled_cell_coords_in,
-//                                          previous_filled_cell_height_type_in,
-//                                          grid_params_in);
-//   EXPECT_TRUE(field<int>(flood_next_cell_lat_index_in,grid_params_in)
-//               == field<int>(flood_next_cell_lat_index_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<int>(flood_next_cell_lon_index_in,grid_params_in)
-//               == field<int>(flood_next_cell_lon_index_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<int>(connect_next_cell_lat_index_in,grid_params_in)
-//               == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
-//               == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<bool>(requires_flood_redirect_indices_in,grid_params_in)
-//               == field<bool>(requires_flood_redirect_indices_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<bool>(requires_connect_redirect_indices_in,grid_params_in)
-//               == field<bool>(requires_connect_redirect_indices_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-//               == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-//               == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-//               == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-//               == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-//   delete grid_params_in;
-//   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
-//   delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
-//   delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-//   delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-//   delete[] requires_flood_redirect_indices_in;
-//   delete[] requires_connect_redirect_indices_in;
-//   delete[] raw_orography_in; delete[] corrected_orography_in;
-//   delete[] flood_next_cell_lat_index_expected_out;
-//   delete[] flood_next_cell_lon_index_expected_out;
-//   delete[] connect_next_cell_lat_index_expected_out;
-//   delete[] connect_next_cell_lon_index_expected_out;
-//   delete[] flood_redirect_lat_index_expected_out;
-//   delete[] flood_redirect_lon_index_expected_out;
-//   delete[] connect_redirect_lat_index_expected_out;
-//   delete[] connect_redirect_lon_index_expected_out;
-//   delete[] requires_flood_redirect_indices_expected_out;
-//   delete[] requires_connect_redirect_indices_expected_out;
-//   delete new_center_coords_in; delete center_coords_in;
-//   delete previous_filled_cell_coords_in;
+  auto grid_params_in = new latlon_grid_params(9,9,true);
+  auto coarse_grid_params_in = new latlon_grid_params(3,3,true);
+  double* raw_orography_in = new double[9*9];
+  std::fill_n(raw_orography_in,9*9,10.0);
+  double* corrected_orography_in = new double[9*9];
+  std::fill_n(corrected_orography_in,9*9,10.0);
+  double* prior_coarse_rdirs_in = new double[3*3]
+                                        { 5.0,5.0,5.0,
+                                          5.0,5.0,5.0,
+                                          5.0,5.0,5.0 };
+  int* flood_next_cell_lat_index_in = new int[9*9]
+                                              {-1,-1,-1, -1,7,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+  int* flood_next_cell_lon_index_in = new int[9*9]
+                                              {-1,-1,-1, -1,5,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+  int* connect_next_cell_lat_index_in = new int[9*9]
+                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+  int* connect_next_cell_lon_index_in = new int[9*9]
+                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+  int*  coarse_catchment_nums_in = new int[3*3]
+                                             { 1, 1, 1,
+                                               1, 1, 1,
+                                               1, 1, 1 };
+  bool* requires_flood_redirect_indices_in = new bool[9*9]
+                                     {false,false,false, false, true,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+//
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+//
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false};
+  bool* requires_connect_redirect_indices_in = new bool[9*9]
+                                     {false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+//
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+//
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false};
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
+  secondary_merge =
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(7,5),
+                                                new latlon_coords(7,5),
+                                                true);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(0,4); 
+  (*flood_merge_and_redirect_indices_index)(working_coords) = 0;
+  delete working_coords;
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
+  bool* requires_flood_redirect_indices_expected_out = new bool[9*9];
+  std::fill_n(requires_flood_redirect_indices_expected_out,9*9,false);
+  bool* requires_connect_redirect_indices_expected_out = new bool[9*9];
+  std::fill_n(requires_connect_redirect_indices_expected_out,9*9,false);
+  coords* new_center_coords_in = new latlon_coords(7,5);
+  coords* center_coords_in = new latlon_coords(5,1);
+  coords* previous_filled_cell_coords_in = new latlon_coords(0,4);
+  coords* target_basin_center_coords = new latlon_coords(7,5);
+  height_types previous_filled_cell_height_type_in = flood_height;
+  auto basin_eval = latlon_basin_evaluation_algorithm();
+  basin_eval.test_set_secondary_redirect(prior_coarse_rdirs_in,
+                                         flood_next_cell_lat_index_in,
+                                         flood_next_cell_lon_index_in,
+                                         connect_next_cell_lat_index_in,
+                                         connect_next_cell_lon_index_in,
+                                         coarse_catchment_nums_in,
+                                         requires_flood_redirect_indices_in,
+                                         requires_connect_redirect_indices_in,
+                                         raw_orography_in,
+                                         corrected_orography_in,new_center_coords_in,
+                                         center_coords_in,previous_filled_cell_coords_in,
+                                         target_basin_center_coords,
+                                         previous_filled_cell_height_type_in,
+                                         grid_params_in,coarse_grid_params_in);
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
+  EXPECT_TRUE(field<bool>(requires_flood_redirect_indices_in,grid_params_in)
+              == field<bool>(requires_flood_redirect_indices_expected_out,grid_params_in));
+  EXPECT_TRUE(field<bool>(requires_connect_redirect_indices_in,grid_params_in)
+              == field<bool>(requires_connect_redirect_indices_expected_out,grid_params_in));
+  delete grid_params_in;
+  delete coarse_grid_params_in;
+  delete[] coarse_catchment_nums_in;
+  delete[] prior_coarse_rdirs_in;
+  delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
+  delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
+  delete[] requires_flood_redirect_indices_in;
+  delete[] requires_connect_redirect_indices_in;
+  delete[] raw_orography_in; delete[] corrected_orography_in;
+  delete[] requires_flood_redirect_indices_expected_out;
+  delete[] requires_connect_redirect_indices_expected_out;
+  delete new_center_coords_in; delete center_coords_in;
+  delete previous_filled_cell_coords_in;
+  delete target_basin_center_coords;
 }
 
 TEST_F(BasinEvaluationTest,TestSettingSecondaryRedirectCorrectedHigher) {
-  EXPECT_TRUE(false);
-//   auto grid_params_in = new latlon_grid_params(9,9,true);
-//   int* flood_next_cell_lat_index_in = new int[9*9];
-//   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
-//   int* flood_next_cell_lon_index_in = new int[9*9];
-//   std::fill_n(flood_next_cell_lon_index_in,9*9,-1);
-//   int* connect_next_cell_lat_index_in = new int[9*9];
-//   std::fill_n(connect_next_cell_lat_index_in,9*9,-1);
-//   int* connect_next_cell_lon_index_in = new int[9*9];
-//   std::fill_n(connect_next_cell_lon_index_in,9*9,-1);
-//   int* flood_redirect_lat_index_in = new int[9*9];
-//   std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-//   int* flood_redirect_lon_index_in = new int[9*9];
-//   std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-//   int* connect_redirect_lat_index_in = new int[9*9];
-//   std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-//   int* connect_redirect_lon_index_in = new int[9*9];
-//   std::fill_n(connect_redirect_lon_index_in,9*9,-1);
-//   bool* requires_flood_redirect_indices_in = new bool[9*9];
-//   std::fill_n(requires_flood_redirect_indices_in,9*9,false);
-//   bool* requires_connect_redirect_indices_in = new bool[9*9];
-//   std::fill_n(requires_connect_redirect_indices_in,9*9,false);
-//   double* raw_orography_in = new double[9*9];
-//   std::fill_n(raw_orography_in,9*9,10.0);
-//   double* corrected_orography_in = new double[9*9];
-//   std::fill_n(corrected_orography_in,9*9,11.0);
-//   int* flood_next_cell_lat_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1, 3,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* flood_next_cell_lon_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1, 2,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* connect_next_cell_lat_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* connect_next_cell_lon_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* flood_redirect_lat_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,3,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* flood_redirect_lon_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,2,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* connect_redirect_lat_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   int* connect_redirect_lon_index_expected_out = new int[9*9]
-//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-// //
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-//   bool* requires_flood_redirect_indices_expected_out = new bool[9*9]
-//                                      {false,false,false, false, true,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-// //
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-// //
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false};
-//   bool* requires_connect_redirect_indices_expected_out = new bool[9*9]
-//                                      {false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-// //
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-// //
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false,
-//                                       false,false,false, false,false,false, false,false,false};
-//   coords* new_center_coords_in = new latlon_coords(3,2);
-//   coords* center_coords_in = new latlon_coords(5,1);
-//   coords* previous_filled_cell_coords_in = new latlon_coords(0,4);
-//   height_types previous_filled_cell_height_type_in = flood_height;
-//   auto basin_eval = latlon_basin_evaluation_algorithm();
-//   basin_eval.test_set_secondary_redirect(flood_next_cell_lat_index_in,flood_next_cell_lon_index_in,
-//                                          connect_next_cell_lat_index_in,connect_next_cell_lon_index_in,
-//                                          requires_flood_redirect_indices_in,
-//                                          requires_connect_redirect_indices_in,
-//                                          raw_orography_in,
-//                                          corrected_orography_in,new_center_coords_in,
-//                                          center_coords_in,previous_filled_cell_coords_in,
-//                                          previous_filled_cell_height_type_in,
-//                                          grid_params_in);
-//   EXPECT_TRUE(field<int>(flood_next_cell_lat_index_in,grid_params_in)
-//               == field<int>(flood_next_cell_lat_index_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<int>(flood_next_cell_lon_index_in,grid_params_in)
-//               == field<int>(flood_next_cell_lon_index_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<int>(connect_next_cell_lat_index_in,grid_params_in)
-//               == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
-//               == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<bool>(requires_flood_redirect_indices_in,grid_params_in)
-//               == field<bool>(requires_flood_redirect_indices_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<bool>(requires_connect_redirect_indices_in,grid_params_in)
-//               == field<bool>(requires_connect_redirect_indices_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-//               == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-//               == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-//               == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-//   EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-//               == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-//   delete grid_params_in;
-//   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
-//   delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
-//   delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-//   delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-//   delete[] requires_flood_redirect_indices_in;
-//   delete[] requires_connect_redirect_indices_in;
-//   delete[] raw_orography_in; delete[] corrected_orography_in;
-//   delete[] flood_next_cell_lat_index_expected_out;
-//   delete[] flood_next_cell_lon_index_expected_out;
-//   delete[] connect_next_cell_lat_index_expected_out;
-//   delete[] connect_next_cell_lon_index_expected_out;
-//   delete[] flood_redirect_lat_index_expected_out;
-//   delete[] flood_redirect_lon_index_expected_out;
-//   delete[] connect_redirect_lat_index_expected_out;
-//   delete[] connect_redirect_lon_index_expected_out;
-//   delete[] requires_flood_redirect_indices_expected_out;
-//   delete[] requires_connect_redirect_indices_expected_out;
-//   delete new_center_coords_in; delete center_coords_in;
-//   delete previous_filled_cell_coords_in;
+  auto grid_params_in = new latlon_grid_params(9,9,true);
+  auto coarse_grid_params_in = new latlon_grid_params(3,3,true);
+  double* raw_orography_in = new double[9*9];
+  std::fill_n(raw_orography_in,9*9,10.0);
+  double* corrected_orography_in = new double[9*9];
+  std::fill_n(corrected_orography_in,9*9,11.0);
+  double* prior_coarse_rdirs_in = new double[3*3]
+                                        { 5.0,5.0,5.0,
+                                          5.0,5.0,5.0,
+                                          5.0,5.0,5.0 };
+  int* flood_next_cell_lat_index_in = new int[9*9]
+                                              {-1,-1,-1, -1, 3,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+  int* flood_next_cell_lon_index_in = new int[9*9]
+                                              {-1,-1,-1, -1, 2,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+  int* connect_next_cell_lat_index_in = new int[9*9]
+                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+  int* connect_next_cell_lon_index_in = new int[9*9]
+                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+  int*  coarse_catchment_nums_in = new int[3*3]
+                                             { 1, 1, 1,
+                                               1, 1, 1,
+                                               1, 1, 1 };
+  bool* requires_flood_redirect_indices_in = new bool[9*9]
+                                     {false,false,false, false, true,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+//
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+//
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false};
+  bool* requires_connect_redirect_indices_in = new bool[9*9]
+                                     {false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+//
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+//
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false,
+                                      false,false,false, false,false,false, false,false,false};
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
+  secondary_merge =
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(3,2),
+                                                new latlon_coords(3,2),
+                                                true);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(0,4); 
+  (*flood_merge_and_redirect_indices_index)(working_coords) = 0;
+  delete working_coords;
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
+  bool* requires_flood_redirect_indices_expected_out = new bool[9*9];
+  std::fill_n(requires_flood_redirect_indices_expected_out,9*9,false);
+  bool* requires_connect_redirect_indices_expected_out = new bool[9*9];
+  std::fill_n(requires_connect_redirect_indices_expected_out,9*9,false);
+  coords* new_center_coords_in = new latlon_coords(3,2);
+  coords* center_coords_in = new latlon_coords(5,1);
+  coords* previous_filled_cell_coords_in = new latlon_coords(0,4);
+  coords* target_basin_center_coords = new latlon_coords(3,2);
+  height_types previous_filled_cell_height_type_in = flood_height;
+  auto basin_eval = latlon_basin_evaluation_algorithm();
+  basin_eval.test_set_secondary_redirect(prior_coarse_rdirs_in,
+                                         flood_next_cell_lat_index_in,
+                                         flood_next_cell_lon_index_in,
+                                         connect_next_cell_lat_index_in,
+                                         connect_next_cell_lon_index_in,
+                                         coarse_catchment_nums_in,
+                                         requires_flood_redirect_indices_in,
+                                         requires_connect_redirect_indices_in,
+                                         raw_orography_in,
+                                         corrected_orography_in,new_center_coords_in,
+                                         center_coords_in,previous_filled_cell_coords_in,
+                                         target_basin_center_coords,
+                                         previous_filled_cell_height_type_in,
+                                         grid_params_in,coarse_grid_params_in);
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
+  EXPECT_TRUE(field<bool>(requires_flood_redirect_indices_in,grid_params_in)
+              == field<bool>(requires_flood_redirect_indices_expected_out,grid_params_in));
+  EXPECT_TRUE(field<bool>(requires_connect_redirect_indices_in,grid_params_in)
+              == field<bool>(requires_connect_redirect_indices_expected_out,grid_params_in));
+  delete grid_params_in;
+  delete coarse_grid_params_in;
+  delete[] prior_coarse_rdirs_in;
+  delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
+  delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
+  delete[] requires_flood_redirect_indices_in;
+  delete[] requires_connect_redirect_indices_in;
+  delete[] raw_orography_in; delete[] corrected_orography_in;
+  delete[] requires_flood_redirect_indices_expected_out;
+  delete[] requires_connect_redirect_indices_expected_out;
+  delete[] coarse_catchment_nums_in;
+  delete new_center_coords_in; delete center_coords_in;
+  delete previous_filled_cell_coords_in;
+  delete target_basin_center_coords; 
 }
 
 TEST_F(BasinEvaluationTest,TestSettingRemainingRedirects) {
@@ -7877,7 +7869,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirects) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1, 3,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  delete[] flood_redirect_lat_index_expected_out; 
+  delete[] flood_redirect_lat_index_expected_out;
   int* flood_redirect_lon_index_expected_out = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1,  3,-1,-1,
@@ -7894,7 +7886,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirects) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1, 3,-1
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  delete[] flood_redirect_lon_index_expected_out; 
+  delete[] flood_redirect_lon_index_expected_out;
   int* connect_redirect_lat_index_expected_out = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
@@ -7911,7 +7903,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirects) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  delete[] connect_redirect_lat_index_expected_out; 
+  delete[] connect_redirect_lat_index_expected_out;
   int* connect_redirect_lon_index_expected_out = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
@@ -7928,7 +7920,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirects) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  delete[] connect_redirect_lon_index_expected_out; 
+  delete[] connect_redirect_lon_index_expected_out;
   bool* flood_local_redirect_expected_out  = new bool[12*12]
                                     {false,false,false, false,false,false, false,false,false, false,false,false,
                                      false,false,false, false,false,false, false,false,false, false,false,false,
@@ -7963,6 +7955,97 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirects) {
                                      false,false,false, false,false,false, false,false,false, false,false,false,
                                      false,false,false, false,false,false, false,false,false, false,false,false};
   delete[] connect_local_redirect_expected_out;
+  int flood_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_redirects =
+      new vector<merge_and_redirect_indices*>();
+  merge_and_redirect_indices* secondary_redirect;
+  collected_merge_and_redirect_indices* collected_indices;
+  coords* working_coords = nullptr;
+  secondary_redirect =
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(2,11),
+                                                new latlon_coords(1,3),
+                                                false);
+  collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
+                                                               secondary_redirect,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(1,9); 
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
+  delete working_coords;
+  flood_index++;
+
+  secondary_redirect =
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(2,3),
+                                                new latlon_coords(1,0),
+                                                false);
+  primary_redirects = new vector<merge_and_redirect_indices*>();
+  collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
+                                                               secondary_redirect,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(2,4); 
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
+  delete working_coords;
+  flood_index++;
+
+  secondary_redirect =
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(2,1),
+                                                new latlon_coords(0,0),
+                                                false);
+  primary_redirects = new vector<merge_and_redirect_indices*>();
+  collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
+                                                               secondary_redirect,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(3,1); 
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
+  delete working_coords;
+  flood_index++;
+
+  secondary_redirect =
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(5,2),
+                                                new latlon_coords(1,0),
+                                                false);
+  primary_redirects = new vector<merge_and_redirect_indices*>();
+  collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
+                                                               secondary_redirect,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(6,6); 
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
+  delete working_coords;
+  flood_index++;
+
+  secondary_redirect =
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(9,11),
+                                                new latlon_coords(3,3),
+                                                false);
+  primary_redirects = new vector<merge_and_redirect_indices*>();
+  collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
+                                                               secondary_redirect,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(9,10); 
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
+  delete working_coords;
+  flood_index++;
+
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   int* coarse_catchment_nums_in = new int[4*4]
                                      {11,11,14,14,
                                       12,11,14,13,
@@ -7996,17 +8079,18 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirects) {
                                           coarse_grid_params_in);
   merges_and_redirects* merges_and_redirects_out =
     basin_eval.get_basin_merges_and_redirects();
-  // cout << *merges_and_redirects_out << endl;
-  EXPECT_TRUE(false);
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
+  delete[] coarse_catchment_nums_in;
   delete[] flood_next_cell_lat_index_in;
   delete[] connect_next_cell_lat_index_in;
   delete[] flood_next_cell_lon_index_in;
   delete[] connect_next_cell_lon_index_in;
   delete[] prior_fine_catchments_in;
+  delete[] prior_coarse_rdirs_in;
   delete[] prior_fine_rdirs_in;
   delete[] requires_flood_redirect_indices_in; delete[] requires_connect_redirect_indices_in;
-  delete[] prior_coarse_rdirs_in;
   delete[] basin_catchment_numbers_in;
   while (! basin_catchment_centers_in.empty()){
     coords* center_coords = basin_catchment_centers_in.back();
@@ -8082,10 +8166,6 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsTwo) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1, 8,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_in = new bool[12*12];
-  std::fill_n(flood_local_redirect_in,12*12,false);
-  bool* connect_local_redirect_in = new bool[12*12];
-  std::fill_n(connect_local_redirect_in,12*12,false);
   int* prior_fine_catchments_in = new int[12*12]
                                     {21,21,21, 21,21,21, 24,24,24, 24,24,24,
                                      21,21,21, 21,21,24, 24,24,24, 24,24,24,
@@ -8152,18 +8232,18 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsTwo) {
                                      false,false,false, false,false,false, false,false,false, false,false,false};
   bool* requires_connect_redirect_indices_in = new bool[12*12]
                                     {false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
+                                     false,false,false, false,false,false, false,false,false,  true,false,false,
+                                     false,false,false, false, true,false, false,false,false, false,false,false,
 //
                                      false,false,false, false,false,false, false,false,false, false,false,false,
                                      false,false,false, false,false,false, false,false,false, false,false,false,
                                      false,false,false, false,false,false, false,false,false, false,false,false,
 //
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
+                                     false,false,false, false,false,false,  true,false,false, false,false,false,
                                      false,false,false, false,false,false, false,false,false, false,false,false,
                                      false,false,false, false,false,false, false,false,false, false,false,false,
 //
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
+                                     false,false,false, false,false,false, false,false,false, false, true,false,
                                      false,false,false, false,false,false, false,false,false, false,false,false,
                                      false,false,false, false,false,false, false,false,false, false,false,false};
   int* flood_redirect_lat_index_expected_out = new int[12*12]
@@ -8268,6 +8348,141 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsTwo) {
                                      false,false,false, false,false,false, false,false,false, false,false,false,
                                      false,false,false, false,false,false, false,false,false, false,false,false};
   delete[] connect_local_redirect_expected_out;
+  int flood_index = 0;
+  int connect_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_redirects =
+      new vector<merge_and_redirect_indices*>();
+  merge_and_redirect_indices* secondary_redirect;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
+
+  secondary_redirect =
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(2,11),
+                                                new latlon_coords(0,3),
+                                                false);
+  collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
+                                                               secondary_redirect,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(1,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
+  delete working_coords;
+  flood_index++;
+
+  secondary_redirect =
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,2),
+                                                new latlon_coords(1,0),
+                                                false);
+  primary_redirects = new vector<merge_and_redirect_indices*>();
+  collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
+                                                               secondary_redirect,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(2,4); 
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
+  delete working_coords;
+  flood_index++;
+
+  secondary_redirect =
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(5,2),
+                                                new latlon_coords(1,0),
+                                                false);
+  primary_redirects = new vector<merge_and_redirect_indices*>();
+  collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
+                                                               secondary_redirect,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(6,6); 
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
+  delete working_coords;
+  flood_index++;
+
+  secondary_redirect =
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,8),
+                                                new latlon_coords(2,2),
+                                                false);
+  primary_redirects = new vector<merge_and_redirect_indices*>();
+  collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
+                                                               secondary_redirect,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(9,10); 
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
+  delete working_coords;
+  flood_index++;
+
+  secondary_redirect =
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(2,11),
+                                                new latlon_coords(0,3),
+                                                false);
+  primary_redirects = new vector<merge_and_redirect_indices*>();
+  collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
+                                                               secondary_redirect,
+                                                               latlon_merge_and_redirect_indices_factory);
+  connect_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(1,9); 
+  (*connect_merge_and_redirect_indices_index)(working_coords) = connect_index;
+  delete working_coords;
+  connect_index++;
+
+  secondary_redirect =
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,2),
+                                                new latlon_coords(1,0),
+                                                false);
+  primary_redirects = new vector<merge_and_redirect_indices*>();
+  collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
+                                                               secondary_redirect,
+                                                               latlon_merge_and_redirect_indices_factory);
+  connect_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(2,4); 
+  (*connect_merge_and_redirect_indices_index)(working_coords) = connect_index;
+  delete working_coords;
+  connect_index++;
+
+  secondary_redirect =
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(5,2),
+                                                new latlon_coords(1,0),
+                                                false);
+  primary_redirects = new vector<merge_and_redirect_indices*>();
+  collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
+                                                               secondary_redirect,
+                                                               latlon_merge_and_redirect_indices_factory);
+  connect_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(6,6); 
+  (*connect_merge_and_redirect_indices_index)(working_coords) = connect_index;
+  delete working_coords;
+  connect_index++;
+
+  secondary_redirect =
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,8),
+                                                new latlon_coords(2,2),
+                                                false);
+  primary_redirects = new vector<merge_and_redirect_indices*>();
+  collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
+                                                               secondary_redirect,
+                                                               latlon_merge_and_redirect_indices_factory);
+  connect_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(9,10); 
+  (*connect_merge_and_redirect_indices_index)(working_coords) = connect_index;
+  delete working_coords;
+  connect_index++;
+
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   int* coarse_catchment_nums_in = new int[4*4]
                                      {11,11,14,14,
                                       12,11,14,13,
@@ -8300,8 +8515,8 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsTwo) {
                                           coarse_grid_params_in);
   merges_and_redirects* merges_and_redirects_out =
     basin_eval.get_basin_merges_and_redirects();
-  // cout << *merges_and_redirects_out << endl;
-  EXPECT_TRUE(false);
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
   delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
@@ -8384,10 +8599,6 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsThree) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_in = new bool[12*12];
-  std::fill_n(flood_local_redirect_in,12*12,false);
-  bool* connect_local_redirect_in = new bool[12*12];
-  std::fill_n(connect_local_redirect_in,12*12,false);
   int* prior_fine_catchments_in = new int[12*12]
                                     {1,1,1, 1,1,1, 1,1,1, 1,1,1,
                                      1,1,1, 2,2,1, 1,1,1, 1,1,1,
@@ -8483,17 +8694,20 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsThree) {
       new vector<merge_and_redirect_indices*>();
   merge_and_redirect_indices* secondary_redirect;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
 
   secondary_redirect =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,4),
                                                 new latlon_coords(1,1),
                                                 false);
   collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
                                                                secondary_redirect,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,4)) = flood_index;
+  working_coords = new latlon_coords(7,4);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
@@ -8616,10 +8830,6 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsFour) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_in = new bool[12*12];
-  std::fill_n(flood_local_redirect_in,12*12,false);
-  bool* connect_local_redirect_in = new bool[12*12];
-  std::fill_n(connect_local_redirect_in,12*12,false);
   int* prior_fine_catchments_in = new int[12*12]
                                     {1,1,1, 1,1,1, 1,1,1, 1,1,1,
                                      1,1,1, 2,2,1, 1,1,1, 1,1,1,
@@ -8715,17 +8925,20 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsFour) {
       new vector<merge_and_redirect_indices*>();
   merge_and_redirect_indices* secondary_redirect;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
 
   secondary_redirect =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,4),
                                                 new latlon_coords(1,1),
                                                 false);
   collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
                                                                secondary_redirect,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,4)) = flood_index;
+  working_coords = new latlon_coords(7,4);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
@@ -8847,10 +9060,6 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsFive) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_in = new bool[12*12];
-  std::fill_n(flood_local_redirect_in,12*12,false);
-  bool* connect_local_redirect_in = new bool[12*12];
-  std::fill_n(connect_local_redirect_in,12*12,false);
   int* prior_fine_catchments_in = new int[12*12]
                                     {1,1,1, 1,1,1, 1,1,1, 1,1,1,
                                      1,1,1, 2,2,1, 1,1,1, 1,1,1,
@@ -8946,17 +9155,20 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsFive) {
       new vector<merge_and_redirect_indices*>();
   merge_and_redirect_indices* secondary_redirect;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
 
   secondary_redirect =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,4),
                                                 new latlon_coords(1,1),
                                                 false);
   collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
                                                                secondary_redirect,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,4)) = flood_index;
+  working_coords = new latlon_coords(7,4);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
@@ -9078,10 +9290,6 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsSix) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_in = new bool[12*12];
-  std::fill_n(flood_local_redirect_in,12*12,false);
-  bool* connect_local_redirect_in = new bool[12*12];
-  std::fill_n(connect_local_redirect_in,12*12,false);
   int* prior_fine_catchments_in = new int[12*12]
                                     {1,1,1, 1,1,1, 1,1,1, 1,1,1,
                                      1,1,1, 2,2,1, 1,1,1, 1,1,1,
@@ -9177,17 +9385,20 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsSix) {
     new vector<merge_and_redirect_indices*>();
   merge_and_redirect_indices* secondary_redirect;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
 
   secondary_redirect =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,4),
                                                 new latlon_coords(1,1),
                                                 false);
   collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
                                                                secondary_redirect,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,4)) = flood_index;
+  working_coords = new latlon_coords(7,4);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
@@ -9283,8 +9494,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectWrap) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,8),
                                                 new latlon_coords(1,2),
                                                 false);
   primary_merges =
@@ -9293,10 +9505,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectWrap) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,2)) = flood_index;
+  working_coords = new latlon_coords(6,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(6,2),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(6,2),
                                                 new latlon_coords(0,0),
                                                 false);
   secondary_merge = nullptr;
@@ -9308,8 +9522,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectWrap) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,8)) = flood_index;
+  working_coords = new latlon_coords(7,8);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -9398,8 +9614,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectNoWrap) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,8),
                                                 new latlon_coords(1,2),
                                                 false);
   primary_merges =
@@ -9408,10 +9625,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectNoWrap) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,2)) = flood_index;
+  working_coords = new latlon_coords(6,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(6,2),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(6,2),
                                                 new latlon_coords(2,2),
                                                 false);
   secondary_merge = nullptr;
@@ -9422,8 +9641,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectNoWrap) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,8)) = flood_index;
+  working_coords = new latlon_coords(7,8);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -9773,8 +9994,9 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1.0,-1.0),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(17,3),
                                                 new latlon_coords(3,0),
                                                 false);
   primary_merges = new vector<merge_and_redirect_indices*>;
@@ -9782,11 +10004,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(15,3)) = flood_index;
+  working_coords = new latlon_coords(15,3);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(7,14),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(7,14),
                                                 new latlon_coords(2,3),
                                                 false);
   primary_merges = new vector<merge_and_redirect_indices*>;
@@ -9795,11 +10019,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,1)) = flood_index;
+  working_coords = new latlon_coords(7,1);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(7,14),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(7,14),
                                                 new latlon_coords(7,14),
                                                 true);
   primary_merges = new vector<merge_and_redirect_indices*>;
@@ -9808,11 +10034,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,7)) = flood_index;
+  working_coords = new latlon_coords(4,7);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(7,14),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(7,14),
                                                 new latlon_coords(7,14),
                                                 true);
   primary_merges = new vector<merge_and_redirect_indices*>;
@@ -9821,11 +10049,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(5,11)) = flood_index;
+  working_coords = new latlon_coords(5,11);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(5,13),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(5,13),
                                                 new latlon_coords(5,13),
                                                 true);
   secondary_merge = nullptr;
@@ -9837,10 +10067,12 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,14)) = flood_index;
+  working_coords = new latlon_coords(8,14);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
    primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(6,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(6,5),
                                                 new latlon_coords(6,5),
                                                 true);
   secondary_merge = nullptr;
@@ -9852,11 +10084,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,16)) = flood_index;
+  working_coords = new latlon_coords(7,16);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(2,0),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(2,0),
                                                 new latlon_coords(1,0),
                                                 false);
   secondary_merge = nullptr;
@@ -9868,11 +10102,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(2,15)) = flood_index;
+  working_coords = new latlon_coords(2,15);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1.0,-1.0),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,18),
                                                 new latlon_coords(1,3),
                                                 false);
   primary_merges = new vector<merge_and_redirect_indices*>;
@@ -9881,11 +10117,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(3,5)) = flood_index;
+  working_coords = new latlon_coords(3,5);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1.0,-1.0),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(16,15),
                                                 new latlon_coords(3,3),
                                                 false);
   primary_merges = new vector<merge_and_redirect_indices*>;
@@ -9894,7 +10132,9 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(13,18)) = flood_index;
+  working_coords = new latlon_coords(13,18);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -9996,6 +10236,7 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;
+  delete[] prior_coarse_rdirs_in;
   delete[] prior_fine_rdirs_in; delete[] prior_fine_catchments_in;
   delete[] connection_volume_thresholds_in; delete[] flood_volume_thresholds_in;
   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
@@ -10334,9 +10575,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(13,13),
                                                 new latlon_coords(2,3),
                                                 false);
   primary_merges =
@@ -10345,11 +10587,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(11,14)) = flood_index;
+  working_coords = new latlon_coords(11,14);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,12),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,12),
                                                 new latlon_coords(1,12),
                                                 true);
   primary_merges =
@@ -10358,11 +10602,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,9)) = flood_index;
+  working_coords = new latlon_coords(6,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,8),
                                                 new latlon_coords(1,1),
                                                 false);
   secondary_merge = nullptr;
@@ -10374,11 +10620,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,12)) = flood_index;
+  working_coords = new latlon_coords(8,12);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(3,14),
                                                 new latlon_coords(0,2),
                                                 false);
   primary_merges =
@@ -10387,11 +10635,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,9)) = flood_index;
+  working_coords = new latlon_coords(1,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(11,4),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(11,4),
                                                 new latlon_coords(11,4),
                                                 true);
   primary_merges =
@@ -10400,11 +10650,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(16,2)) = flood_index;
+  working_coords = new latlon_coords(16,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(11,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(11,1),
                                                 new latlon_coords(3,0),
                                                 false);
   secondary_merge = nullptr;
@@ -10416,11 +10668,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(18,4)) = flood_index;
+  working_coords = new latlon_coords(18,4);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(18,6),
                                                 new latlon_coords(3,1),
                                                 false);
   primary_merges =
@@ -10429,11 +10683,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(11,2)) = flood_index;
+  working_coords = new latlon_coords(11,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(13,7),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(13,7),
                                                 new latlon_coords(13,7),
                                                 true);
   primary_merges =
@@ -10442,11 +10698,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(14,9)) = flood_index;
+  working_coords = new latlon_coords(14,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(16,9),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(16,9),
                                                 new latlon_coords(2,1),
                                                 false);
   secondary_merge = nullptr;
@@ -10458,11 +10716,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(15,7)) = flood_index;
+  working_coords = new latlon_coords(15,7);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(18,7),
                                                 new latlon_coords(3,1),
                                                 false);
   primary_merges =
@@ -10471,11 +10731,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(13,9)) = flood_index;
+  working_coords = new latlon_coords(13,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,1),
                                                 new latlon_coords(1,1),
                                                 true);
   primary_merges =
@@ -10484,11 +10746,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,4)) = flood_index;
+  working_coords = new latlon_coords(1,4);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(8,4),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,4),
                                                 new latlon_coords(0,0),
                                                 false);
   secondary_merge = nullptr;
@@ -10500,11 +10764,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(2,2)) = flood_index;
+  working_coords = new latlon_coords(2,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(3,19),
                                                 new latlon_coords(1,0),
                                                 false);
   primary_merges =
@@ -10513,8 +10779,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,2)) = flood_index;
+  working_coords = new latlon_coords(8,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
@@ -10617,6 +10885,7 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;
+  delete[] prior_coarse_rdirs_in;
   delete[] prior_fine_rdirs_in; delete[] prior_fine_catchments_in;
   delete[] connection_volume_thresholds_in; delete[] flood_volume_thresholds_in;
   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
@@ -10978,9 +11247,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(13,13),
                                                 new latlon_coords(2,3),
                                                 false);
   primary_merges =
@@ -10989,11 +11259,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(11,14)) = flood_index;
+  working_coords = new latlon_coords(11,14);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,12),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,12),
                                                 new latlon_coords(1,12),
                                                 true);
   primary_merges =
@@ -11002,11 +11274,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,9)) = flood_index;
+  working_coords = new latlon_coords(6,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,8),
                                                 new latlon_coords(1,1),
                                                 false);
   secondary_merge = nullptr;
@@ -11018,11 +11292,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,12)) = flood_index;
+  working_coords = new latlon_coords(8,12);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(3,14),
                                                 new latlon_coords(0,2),
                                                 false);
   primary_merges =
@@ -11031,11 +11307,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,9)) = flood_index;
+  working_coords = new latlon_coords(1,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(11,4),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(11,4),
                                                 new latlon_coords(11,4),
                                                 true);
   primary_merges =
@@ -11044,11 +11322,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(16,2)) = flood_index;
+  working_coords = new latlon_coords(16,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(11,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(11,1),
                                                 new latlon_coords(3,0),
                                                 false);
   secondary_merge = nullptr;
@@ -11060,11 +11340,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(18,4)) = flood_index;
+  working_coords = new latlon_coords(18,4);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(18,6),
                                                 new latlon_coords(3,1),
                                                 false);
   primary_merges =
@@ -11073,11 +11355,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(11,2)) = flood_index;
+  working_coords = new latlon_coords(11,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(13,7),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(13,7),
                                                 new latlon_coords(13,7),
                                                 true);
   primary_merges =
@@ -11086,11 +11370,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(14,9)) = flood_index;
+  working_coords = new latlon_coords(14,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(16,9),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(16,9),
                                                 new latlon_coords(2,1),
                                                 false);
   secondary_merge = nullptr;
@@ -11102,11 +11388,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(15,7)) = flood_index;
+  working_coords = new latlon_coords(15,7);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(18,7),
                                                 new latlon_coords(3,1),
                                                 false);
   primary_merges =
@@ -11115,11 +11403,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(13,9)) = flood_index;
+  working_coords = new latlon_coords(13,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,1),
                                                 new latlon_coords(1,1),
                                                 true);
   primary_merges =
@@ -11128,11 +11418,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,4)) = flood_index;
+  working_coords = new latlon_coords(1,4);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(8,4),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,4),
                                                 new latlon_coords(0,0),
                                                 false);
   secondary_merge = nullptr;
@@ -11144,11 +11436,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(2,2)) = flood_index;
+  working_coords = new latlon_coords(2,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(3,19),
                                                 new latlon_coords(1,0),
                                                 false);
   primary_merges =
@@ -11157,8 +11451,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,2)) = flood_index;
+  working_coords = new latlon_coords(8,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
@@ -11261,6 +11557,7 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;
+  delete[] prior_coarse_rdirs_in;
   delete[] prior_fine_rdirs_in; delete[] prior_fine_catchments_in;
   delete[] connection_volume_thresholds_in; delete[] flood_volume_thresholds_in;
   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
@@ -11498,7 +11795,7 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
      -1,  -1,  -1,  -1,  -1,   0,   2,  -1,  -1,  -1,   1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
 //
      -1,  -1,  -1,   6,  -1,  -1,  -1,  -1,   6,  -1,  -1,   6,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
-     -1,  -1,  -1,   5,  -1,   5,  -1,  -1,  -1,  -1,   3,  -1,  -1,   6,   6,   5,  -1,  -1,  -1,  -1,
+     -1,  -1,  -1,   5,  -1,   4,  -1,  -1,  -1,  -1,   3,  -1,  -1,   6,   6,   5,  -1,  -1,  -1,  -1,
      -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,   5,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
      -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,   9,  -1,  -1,   6,  -1,  -1,  -1,  -1,
      -1,  -1,  -1,  -1,  -1,  -1,  -1,  11,  -1,  -1,  11,  10,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
@@ -11522,7 +11819,7 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
      -1,  -1,  -1,  -1,  -1,   6,   5,  -1,  -1,  -1,   8,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
 //
      -1,  -1,  -1,   3,  -1,  -1,  -1,  -1,  10,  -1,  -1,  10,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
-     -1,  -1,  -1,   1,  -1,   3,  -1,  -1,  -1,  -1,   9,  -1,  -1,  15,  13,  11,  -1,  -1,  -1,  -1,
+     -1,  -1,  -1,   1,  -1,   5,  -1,  -1,  -1,  -1,   9,  -1,  -1,  15,  13,  11,  -1,  -1,  -1,  -1,
      -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  11,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
      -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  11,  -1,  -1,  14,  -1,  -1,  -1,  -1,
      -1,  -1,  -1,  -1,  -1,  -1,  -1,   7,  -1,  -1,   7,   9,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
@@ -11588,409 +11885,6 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
     -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
-  int* flood_redirect_lat_index_expected_out = new int[20*20]{
-     -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,   4,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,   1,  -1,  -1,   0,  -1,  -1,   0,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,   0,   2,  -1,  -1,  -1,   0,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,   5,  -1,  -1,   7,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,   1,  -1,   5,  -1,  -1,  -1,  -1,   3,  -1,  -1,  -1,  -1,   5,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,   5,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,   6,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  11,  -1,  -1,  11,  10,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,   2,  -1,  -1,  -1,  15,  -1,  -1,   8,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  13,  -1,   1,  -1,  -1,  -1,  -1,  -1,  -1,  11,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,   2,  -1,  -1,  -1,  13,  -1,  -1,  -1,  -1,  -1,  -1,   1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  13,  -1,  11,  -1,  11,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,   3,  -1,  -1,  -1,  -1,   3,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,   3,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  16,   3,  -1,  -1,  15,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  16,  -1,  -1,   3,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1 };
-delete[] flood_redirect_lat_index_expected_out;
-  int* flood_redirect_lon_index_expected_out = new int[20*20]{
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,   6,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,   2,  -1,  -1,   2,  -1,  -1,   3,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,   1,   5,  -1,  -1,  -1,   1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  11,  -1,  -1,  10,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,   0,  -1,   3,  -1,  -1,  -1,  -1,   9,  -1,  -1,  -1,  -1,  11,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  11,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  14,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,   7,  -1,  -1,   7,   9,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,   0,  -1,  -1,  -1,   5,  -1,  -1,  12,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,   4,  -1,   1,  -1,  -1,  -1,  -1,  -1,  -1,  17,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,   2,  -1,  -1,  -1,   7,  -1,  -1,  -1,  -1,  -1,  -1,   3,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,   7,  -1,   5,  -1,   7,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,   0,  -1,  -1,  -1,  -1,   1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,   3,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,   7,   1,  -1,  -1,   5,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,   7,  -1,  -1,   2,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1 };
-delete[] flood_redirect_lon_index_expected_out;
-  int* connect_redirect_lat_index_expected_out = new int[20*20]{
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
-delete[] connect_redirect_lat_index_expected_out;
-  int* connect_redirect_lon_index_expected_out = new int[20*20]{
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
-delete[] connect_redirect_lon_index_expected_out;
-  bool* flood_local_redirect_expected_out = new bool[20*20]{
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, true, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, true, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, true, false, false, true, false, false, false, false, false, false, false, false,
-false, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false, false,
-false, false, false, false, false, false, false, true, false, false, true, true, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, true, false, false, true, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, true, false, false, false, false, false, false, false, false, true, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, true, false, true, false, true, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, true, false, false, false, true, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
- };
-delete[] flood_local_redirect_expected_out;
-  bool* connect_local_redirect_expected_out = new bool[20*20]{
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-//
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-//
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-//
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false };
-delete[] connect_local_redirect_expected_out;
-  int* additional_flood_redirect_lat_index_expected_out = new int[20*20]{
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, 13, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
-delete[] additional_flood_redirect_lat_index_expected_out;
-  int* additional_flood_redirect_lon_index_expected_out = new int[20*20]{
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,   5,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,   4,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1 };
-delete[] additional_flood_redirect_lon_index_expected_out;
-  int* additional_connect_redirect_lat_index_expected_out = new int[20*20]{
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
-delete[] additional_connect_redirect_lat_index_expected_out;
-  int* additional_connect_redirect_lon_index_expected_out = new int[20*20]{
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
-delete[] additional_connect_redirect_lon_index_expected_out;
-  bool* additional_flood_local_redirect_expected_out = new bool[20*20]{
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, true, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, true, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false };
-delete[] additional_flood_local_redirect_expected_out;
-  bool* additional_connect_local_redirect_expected_out = new bool[20*20]{
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-//
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-//
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-//
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false,
-   false,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,false };
-delete[] additional_connect_local_redirect_expected_out;
-  merge_types* merge_points_expected_out = new merge_types[20*20]{
-  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
-  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
-  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   connection_merge_not_set_flood_merge_as_primary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
-  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   connection_merge_not_set_flood_merge_as_primary,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,   no_merge,
-  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
-  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   connection_merge_not_set_flood_merge_as_primary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
-  no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,   no_merge,
-  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
-  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,   no_merge,
-  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
-  no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   connection_merge_not_set_flood_merge_as_primary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
-  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,  connection_merge_not_set_flood_merge_as_both,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
-  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   connection_merge_not_set_flood_merge_as_primary,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,
-  no_merge,   no_merge,   no_merge,   no_merge,   connection_merge_not_set_flood_merge_as_primary,   no_merge,  connection_merge_not_set_flood_merge_as_both,   no_merge,   connection_merge_not_set_flood_merge_as_primary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
-  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
-  no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,   no_merge,   connection_merge_not_set_flood_merge_as_primary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,
-  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   connection_merge_not_set_flood_merge_as_primary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
-  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
-  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
-  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge
-   };
-delete[] merge_points_expected_out;
-  int* flood_force_merge_lat_index_expected_out = new int[20*20] {
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,   4,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,   5,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,   7,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,   8,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,   9,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  13,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  13,  -1,  11,  -1,  11,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  17,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  15,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1 };
-delete[] flood_force_merge_lat_index_expected_out;
-  int* flood_force_merge_lon_index_expected_out = new int[20*20] {
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,   6,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  11,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  10,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  12,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,   7,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  11,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,   7,  -1,   5,  -1,   7,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  10,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,   5,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
- -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1 };
-delete[] flood_force_merge_lon_index_expected_out;
-  int* connect_force_merge_lat_index_expected_out = new int[20*20] {
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
-delete[] connect_force_merge_lat_index_expected_out;
-  int* connect_force_merge_lon_index_expected_out = new int[20*20] {
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
-delete[] connect_force_merge_lon_index_expected_out;
 
   int flood_index = 0;
   field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
@@ -12007,10 +11901,11 @@ delete[] connect_force_merge_lon_index_expected_out;
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
 
   //0
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(17,0),
                                                 new latlon_coords(3,0),
                                                 false);
   primary_merges =
@@ -12019,12 +11914,14 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(15,2)) = flood_index;
+  working_coords = new latlon_coords(15,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //1
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(12,0),
                                                 new latlon_coords(2,0),
                                                 false);
   primary_merges =
@@ -12033,12 +11930,14 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(10,2)) = flood_index;
+  working_coords = new latlon_coords(10,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //2
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(19,14),
                                                 new latlon_coords(3,2),
                                                 false);
   primary_merges =
@@ -12047,12 +11946,14 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(17,13)) = flood_index;
+  working_coords = new latlon_coords(17,13);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //3
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,16),
                                                 new latlon_coords(0,3),
                                                 false);
   primary_merges =
@@ -12061,12 +11962,14 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(3,15)) = flood_index;
+  working_coords = new latlon_coords(3,15);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //4
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,11),
                                                 new latlon_coords(0,2),
                                                 false);
   primary_merges =
@@ -12075,12 +11978,14 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(3,12)) = flood_index;
+  working_coords = new latlon_coords(3,12);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //5
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(5,1),
                                                 new latlon_coords(1,0),
                                                 false);
   primary_merges =
@@ -12089,26 +11994,30 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,3)) = flood_index;
+  working_coords = new latlon_coords(6,3);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //6
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(12,16),
-                                                new latlon_coords(11,17),
-                                                true);
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(12,16),
+                                                new latlon_coords(2,3),
+                                                false);
   primary_merges =
     new vector<merge_and_redirect_indices*>;
   collected_indices = new collected_merge_and_redirect_indices(primary_merges,
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(11,14)) = flood_index;
+  working_coords = new latlon_coords(11,14);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //7
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(9,17),
                                                 new latlon_coords(1,3),
                                                 false);
   primary_merges =
@@ -12117,29 +12026,33 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(12,16)) = flood_index;
+  working_coords = new latlon_coords(12,16);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //8
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(5,3),
-                                                new latlon_coords(5,3),
-                                                true);
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,5),
+                                                new latlon_coords(0,1),
+                                                false);
   primary_merges =
     new vector<merge_and_redirect_indices*>;
   collected_indices = new collected_merge_and_redirect_indices(primary_merges,
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,5)) = flood_index;
+  working_coords = new latlon_coords(6,5);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
 
 
   //9
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(2,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(2,5),
                                                 new latlon_coords(2,5),
                                                 true);
   primary_merges =
@@ -12148,12 +12061,14 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,6)) = flood_index;
+  working_coords = new latlon_coords(4,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //10
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,6),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,6),
                                                 new latlon_coords(4,6),
                                                 true);
   secondary_merge = nullptr;
@@ -12165,12 +12080,14 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(2,6)) = flood_index;
+  working_coords = new latlon_coords(2,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //11
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(0,6),
                                                 new latlon_coords(0,1),
                                                 false);
   primary_merges =
@@ -12179,54 +12096,62 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,5)) = flood_index;
+  working_coords = new latlon_coords(4,5);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //12
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(6,14),
-                                                new latlon_coords(6,14),
-                                                true);
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(6,14),
+                                                new latlon_coords(1,2),
+                                                false);
   primary_merges =
     new vector<merge_and_redirect_indices*>;
   collected_indices = new collected_merge_and_redirect_indices(primary_merges,
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,15)) = flood_index;
+  working_coords = new latlon_coords(8,15);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //13
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(6,10),
-                                                new latlon_coords(5,11),
-                                                true);
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(6,10),
+                                                new latlon_coords(1,2),
+                                                false);
   primary_merges =
     new vector<merge_and_redirect_indices*>;
   collected_indices = new collected_merge_and_redirect_indices(primary_merges,
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(5,8)) = flood_index;
+  working_coords = new latlon_coords(5,8);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //14
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(5,11),
-                                                new latlon_coords(5,11),
-                                                true);
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(5,11),
+                                                new latlon_coords(1,2),
+                                                false);
   primary_merges =
     new vector<merge_and_redirect_indices*>;
   collected_indices = new collected_merge_and_redirect_indices(primary_merges,
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,15)) = flood_index;
+  working_coords = new latlon_coords(6,15);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //15
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(5,11),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(5,11),
                                                 new latlon_coords(5,11),
                                                 true);
   primary_merges =
@@ -12235,12 +12160,14 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,10)) = flood_index;
+  working_coords = new latlon_coords(7,10);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //16
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(7,10),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(7,10),
                                                 new latlon_coords(7,10),
                                                 true);
   secondary_merge = nullptr;
@@ -12252,12 +12179,14 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(5,11)) = flood_index;
+  working_coords = new latlon_coords(5,11);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //17
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(3,9),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(3,9),
                                                 new latlon_coords(3,9),
                                                 true);
   primary_merges =
@@ -12266,12 +12195,14 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,10)) = flood_index;
+  working_coords = new latlon_coords(6,10);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //18
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(5,11),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(5,11),
                                                 new latlon_coords(1,2),
                                                 false);
   secondary_merge = nullptr;
@@ -12283,12 +12214,14 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(3,9)) = flood_index;
+  working_coords = new latlon_coords(3,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //19
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,8),
                                                 new latlon_coords(0,1),
                                                 false);
   primary_merges =
@@ -12297,12 +12230,14 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,10)) = flood_index;
+  working_coords = new latlon_coords(4,10);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //20
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(17,19),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(17,19),
                                                 new latlon_coords(3,3),
                                                 false);
   primary_merges =
@@ -12311,12 +12246,14 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(15,16)) = flood_index;
+  working_coords = new latlon_coords(15,16);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //21
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(10,9),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(10,9),
                                                 new latlon_coords(10,9),
                                                 true);
   primary_merges =
@@ -12325,12 +12262,14 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(9,11)) = flood_index;
+  working_coords = new latlon_coords(9,11);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //22
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(8,12),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,12),
                                                 new latlon_coords(8,12),
                                                 true);
   secondary_merge = nullptr;
@@ -12342,26 +12281,30 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(10,9)) = flood_index;
+  working_coords = new latlon_coords(10,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //23
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(11,7),
-                                                new latlon_coords(11,7),
-                                                true);
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(11,7),
+                                                new latlon_coords(2,1),
+                                                false);
   primary_merges =
     new vector<merge_and_redirect_indices*>;
   collected_indices = new collected_merge_and_redirect_indices(primary_merges,
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(9,10)) = flood_index;
+  working_coords = new latlon_coords(9,10);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //24
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(11,7),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(11,7),
                                                 new latlon_coords(11,7),
                                                 true);
   primary_merges =
@@ -12370,17 +12313,19 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(9,7)) = flood_index;
+  working_coords = new latlon_coords(9,7);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //25
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
-                                                new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(13,4),
+                                                new latlon_coords(3,2),
                                                 false);
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
-                                                new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(9,7),
+                                                new latlon_coords(1,1),
                                                 false);
   primary_merges =
     new vector<merge_and_redirect_indices*>;
@@ -12389,46 +12334,52 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(11,7)) = flood_index;
+  working_coords = new latlon_coords(11,7);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //26
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(13,7),
-                                                new latlon_coords(13,7),
-                                                true);
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(13,4),
+                                                new latlon_coords(3,2),
+                                                false);
   primary_merges =
     new vector<merge_and_redirect_indices*>;
   collected_indices = new collected_merge_and_redirect_indices(primary_merges,
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(12,9)) = flood_index;
+  working_coords = new latlon_coords(12,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //27
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(13,4),
-                                                new latlon_coords(13,4),
-                                                true);
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(13,7),
+                                                new latlon_coords(2,1),
+                                                false);
   primary_merges =
     new vector<merge_and_redirect_indices*>;
   collected_indices = new collected_merge_and_redirect_indices(primary_merges,
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(11,5)) = flood_index;
+  working_coords = new latlon_coords(11,5);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //28
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
-                                                new latlon_coords(-1,-1),
-                                                false);
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(13,4),
+                                                new latlon_coords(13,4),
+                                                true);
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
-                                                new latlon_coords(-1,-1),
-                                                false);
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(11,5),
+                                                new latlon_coords(11,5),
+                                                true);
   primary_merges =
     new vector<merge_and_redirect_indices*>;
   primary_merges->push_back(primary_merge);
@@ -12436,12 +12387,14 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(13,6)) = flood_index;
+  working_coords = new latlon_coords(13,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //29
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(13,7),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(13,7),
                                                 new latlon_coords(13,7),
                                                 true);
   secondary_merge = nullptr;
@@ -12453,12 +12406,14 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(13,4)) = flood_index;
+  working_coords = new latlon_coords(13,4);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //30
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(13,11),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(13,11),
                                                 new latlon_coords(2,2),
                                                 false);
   secondary_merge = nullptr;
@@ -12470,12 +12425,14 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(12,5)) = flood_index;
+  working_coords = new latlon_coords(12,5);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //31
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(11,7),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(11,7),
                                                 new latlon_coords(11,7),
                                                 true);
   secondary_merge = nullptr;
@@ -12487,26 +12444,30 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(13,8)) = flood_index;
+  working_coords = new latlon_coords(13,8);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //32
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(15,5),
-                                                new latlon_coords(15,5),
-                                                true);
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(15,5),
+                                                new latlon_coords(3,1),
+                                                false);
   primary_merges =
     new vector<merge_and_redirect_indices*>;
   collected_indices = new collected_merge_and_redirect_indices(primary_merges,
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(10,6)) = flood_index;
+  working_coords = new latlon_coords(10,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //33
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(16,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(16,7),
                                                 new latlon_coords(16,7),
                                                 true);
   primary_merges =
@@ -12515,12 +12476,14 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(17,10)) = flood_index;
+  working_coords = new latlon_coords(17,10);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //34
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(16,7),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(16,7),
                                                 new latlon_coords(16,7),
                                                 true);
   primary_merges =
@@ -12529,12 +12492,14 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(16,5)) = flood_index;
+  working_coords = new latlon_coords(16,5);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //35
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(17,10),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(17,10),
                                                 new latlon_coords(3,1),
                                                 false);
   secondary_merge = nullptr;
@@ -12546,12 +12511,14 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(15,7)) = flood_index;
+  working_coords = new latlon_coords(15,7);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //36
     primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(15,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(15,5),
                                                 new latlon_coords(15,5),
                                                 true);
   secondary_merge = nullptr;
@@ -12563,12 +12530,14 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(16,9)) = flood_index;
+  working_coords = new latlon_coords(16,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //37
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(18,6),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(18,6),
                                                 new latlon_coords(3,1),
                                                 false);
   primary_merges =
@@ -12577,8 +12546,10 @@ delete[] connect_force_merge_lon_index_expected_out;
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(16,6)) = flood_index;
+  working_coords = new latlon_coords(16,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
@@ -12658,14 +12629,12 @@ delete[] connect_force_merge_lon_index_expected_out;
               == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
   merges_and_redirects* merges_and_redirects_out =
     basin_eval.get_basin_merges_and_redirects();
-  // cout << merges_and_redirects_expected_out << endl;
-  // cout << "***************" << endl;
-  // cout << *merges_and_redirects_out << endl;
   EXPECT_TRUE(merges_and_redirects_expected_out ==
               *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;
+  delete[] prior_coarse_rdirs_in;
   delete[] prior_fine_rdirs_in; delete[] prior_fine_catchments_in;
   delete[] connection_volume_thresholds_in; delete[] flood_volume_thresholds_in;
   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
@@ -14959,9 +14928,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(14,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(14,1),
                                                 new latlon_coords(14,1),
                                                 true);
   primary_merges =
@@ -14970,11 +14940,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(12,1)) = flood_index;
+  working_coords = new latlon_coords(12,1);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(2,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(2,1),
                                                 new latlon_coords(2,0),
                                                 false);
   secondary_merge = nullptr;
@@ -14986,11 +14958,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(15,12)) = flood_index;
+  working_coords = new latlon_coords(15,12);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,7),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,7),
                                                 new latlon_coords(1,7),
                                                 true);
 
@@ -15000,11 +14974,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,5)) = flood_index;
+  working_coords = new latlon_coords(1,5);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,7),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,7),
                                                 new latlon_coords(0,1),
                                                 false);
 
@@ -15014,11 +14990,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(12,11)) = flood_index;
+  working_coords = new latlon_coords(12,11);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(7,11),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(7,11),
                                                 new latlon_coords(7,11),
                                                 true);
   secondary_merge = nullptr;
@@ -15030,11 +15008,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,13)) = flood_index;
+  working_coords = new latlon_coords(1,13);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,3),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,3),
                                                 new latlon_coords(1,1),
                                                 false);
   secondary_merge = nullptr;
@@ -15046,11 +15026,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,12)) = flood_index;
+  working_coords = new latlon_coords(6,12);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(7,16),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(7,16),
                                                 new latlon_coords(1,3),
                                                 false);
 
@@ -15060,11 +15042,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(2,14)) = flood_index;
+  working_coords = new latlon_coords(2,14);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(7,16),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(7,16),
                                                 new latlon_coords(7,16),
                                                 true);
 
@@ -15074,11 +15058,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,16)) = flood_index;
+  working_coords = new latlon_coords(4,16);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,16),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,16),
                                                 new latlon_coords(0,3),
                                                 false);
   secondary_merge = nullptr;
@@ -15090,11 +15076,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(12,16)) = flood_index;
+  working_coords = new latlon_coords(12,16);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,7),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,7),
                                                 new latlon_coords(0,1),
                                                 false);
   secondary_merge = nullptr;
@@ -15106,11 +15094,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(5,17)) = flood_index;
+  working_coords = new latlon_coords(5,17);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(14,19),
                                                 new latlon_coords(3,3),
                                                 false);
 
@@ -15120,11 +15110,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(2,15)) = flood_index;
+  working_coords = new latlon_coords(2,15);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(18,14),
                                                 new latlon_coords(3,3),
                                                 false);
 
@@ -15134,8 +15126,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   connect_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*connect_merge_and_redirect_indices_index)(new latlon_coords(13,1)) = connect_index;
+  working_coords = new latlon_coords(13,1);
+  (*connect_merge_and_redirect_indices_index)(working_coords) = connect_index;
   connect_index++;
+  delete working_coords;
 
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
@@ -15220,6 +15214,7 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;
+  delete[] prior_coarse_rdirs_in;
   delete[] prior_fine_rdirs_in; delete[] prior_fine_catchments_in;
   delete[] connection_volume_thresholds_in; delete[] flood_volume_thresholds_in;
   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
@@ -15237,6 +15232,230 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
   delete[] sinkless_rdirs_out;
   delete[] catchment_nums_in;
   delete[] cell_areas_in;
+}
+
+TEST_F(BasinEvaluationTest, TestConvertingMergesToArray) {
+  auto grid_params_in = new latlon_grid_params(20,20,false);
+  int flood_index = 0;
+  int connect_index = 0;
+  int* connect_merge_indices_as_array = new int[6] {1,0,61,62,63,64};
+  int* flood_merge_indices_as_array = new int[240]
+    { 1,1,1,2,3,4, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1, 1,0,5,6,7,8, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,
+      1,1,9,10,11,12, 1,0,13,14,15,16, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1, 1,1,17,18,19,20, 1,0,21,22,23,24, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1, 1,1,25,26,27,28, 1,0,29,30,31,32, 1,0,33,34,35,36,    1,0,37,38,39,40,
+      1,1,41,42,43,44, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1, 1,0,45,46,47,48, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,
+      1,1,49,50,51,52, 1,0,53,54,55,56, 1,0,57,58,59,60, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1 };
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* primary_merge;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
+
+  secondary_merge =
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,2),
+                                                               new latlon_coords(3,4),
+                                                               true);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(1,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
+  flood_index++;
+  delete working_coords;
+
+  secondary_merge = nullptr;
+  primary_merge =
+    create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(5,6),
+                                                         new latlon_coords(7,8),
+                                                         false);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(2,3);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
+  flood_index++;
+  delete working_coords;
+
+  secondary_merge =
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(9,10),
+                                                               new latlon_coords(11,12),
+                                                               true);
+  primary_merge =
+    create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(13,14),
+                                                         new latlon_coords(15,16),
+                                                         false);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(3,4);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
+  flood_index++;
+  delete working_coords;
+
+  secondary_merge = nullptr;
+  primary_merge =
+    create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(17,18),
+                                                         new latlon_coords(19,20),
+                                                         true);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  primary_merge =
+    create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(21,22),
+                                                         new latlon_coords(23,24),
+                                                         false);
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(4,5);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
+  flood_index++;
+  delete working_coords;
+
+  secondary_merge = nullptr;
+  primary_merge =
+    create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(25,26),
+                                                         new latlon_coords(27,28),
+                                                         true);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  primary_merge =
+    create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(29,30),
+                                                         new latlon_coords(31,32),
+                                                         false);
+  primary_merges->push_back(primary_merge);
+  primary_merge =
+    create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(33,34),
+                                                         new latlon_coords(35,36),
+                                                         false);
+  primary_merges->push_back(primary_merge);
+  primary_merge =
+    create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(37,38),
+                                                         new latlon_coords(39,40),
+                                                         false);
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(5,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
+  flood_index++;
+  delete working_coords;
+
+  secondary_merge =
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(41,42),
+                                                               new latlon_coords(43,44),
+                                                               true);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(6,7);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
+  flood_index++;
+  delete working_coords;
+
+    secondary_merge = nullptr;
+  primary_merge =
+    create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(45,46),
+                                                         new latlon_coords(47,48),
+                                                         false);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(7,8);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
+  flood_index++;
+  delete working_coords;
+
+  secondary_merge =
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(49,50),
+                                                               new latlon_coords(51,52),
+                                                               true);
+  primary_merge =
+    create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(53,54),
+                                                         new latlon_coords(55,56),
+                                                         false);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  primary_merge =
+    create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(57,58),
+                                                         new latlon_coords(59,60),
+                                                         false);
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(8,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
+  flood_index++;
+  delete working_coords;
+
+  secondary_merge =
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(61,62),
+                                                               new latlon_coords(63,64),
+                                                               false);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  connect_merge_and_redirect_indices_vector->push_back(collected_indices);
+  working_coords = new latlon_coords(2,1);
+  (*connect_merge_and_redirect_indices_index)(working_coords) = connect_index;
+  connect_index++;
+  delete working_coords;
+
+  merges_and_redirects working_merges_and_redirects =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
+  for (auto i =0; i < 240; i++){
+    EXPECT_EQ((working_merges_and_redirects.get_merges_and_redirects_as_array(true)->second)[i],
+               flood_merge_indices_as_array[i]);
+  }
+  for (auto i =0; i < 6; i++){
+    EXPECT_EQ((working_merges_and_redirects.get_merges_and_redirects_as_array(false)->second)[i],
+               connect_merge_indices_as_array[i]);
+  }
 }
 
 } //namespace

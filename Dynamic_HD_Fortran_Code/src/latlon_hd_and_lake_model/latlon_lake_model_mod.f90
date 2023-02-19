@@ -41,10 +41,12 @@ type :: mergeandredirectindices
     procedure :: get_merge_type
     procedure :: get_merge_target_coords
     procedure :: get_outflow_redirect_coords
+    procedure :: is_equal_to
 end type mergeandredirectindices
 
 interface mergeandredirectindices
   procedure :: mergeandredirectindicesconstructor
+  procedure :: mergeandredirectindicesconstructorfromarray
 end interface mergeandredirectindices
 
 type :: mergeandredirectindicespointer
@@ -277,6 +279,20 @@ function mergeandredirectindicesconstructor(is_primary_merge_in, &
                                                        redirect_lon_index_in)
 end function mergeandredirectindicesconstructor
 
+function mergeandredirectindicesconstructorfromarray(is_primary_merge,array_in) &
+    result(constructor)
+  type(mergeandredirectindices), pointer :: constructor
+  integer, dimension(:), pointer :: array_in
+  logical :: is_primary_merge
+    allocate(constructor)
+    call constructor%initialisemergeandredirectindices(is_primary_merge, &
+                                                       (array_in(2)==1), &
+                                                       array_in(3), &
+                                                       array_in(4), &
+                                                       array_in(5), &
+                                                       array_in(6))
+end function mergeandredirectindicesconstructorfromarray
+
 subroutine add_offset_to_merge_indices(this,offset)
   class(mergeandredirectindices) :: this
   integer, intent(in) :: offset
@@ -290,6 +306,19 @@ subroutine reset_merge_indices(this)
   class(mergeandredirectindices) :: this
     this%merged = .false.
 end subroutine reset_merge_indices
+
+function is_equal_to(this,rhs) result(equals)
+  class(mergeandredirectindices) :: this
+  type(mergeandredirectindices), pointer :: rhs
+  logical :: equals
+    equals = (this%is_primary_merge .eqv. rhs%is_primary_merge)
+    equals = equals .and. (this%local_redirect .eqv. rhs%local_redirect)
+    equals = equals .and. (this%merge_target_lat_index == rhs%merge_target_lat_index)
+    equals = equals .and. (this%merge_target_lon_index == rhs%merge_target_lon_index)
+    equals = equals .and. (this%redirect_lat_index == rhs%redirect_lat_index)
+    equals = equals .and. (this%redirect_lon_index == rhs%redirect_lon_index)
+end function is_equal_to
+
 
 subroutine add_offset_to_collection(this,offset)
   class(mergeandredirectindicescollection) :: this
@@ -371,6 +400,46 @@ subroutine mergeandredirectindicescollectiondestructor(this)
       deallocate(this%secondary_merge_and_redirect_indices)
     end if
 end subroutine mergeandredirectindicescollectiondestructor
+
+function createmergeindicescollectionsfromarray(array_in) &
+    result(merge_and_redirect_indices_collections)
+  integer, dimension(:,:,:), pointer :: array_in
+  type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+      merge_and_redirect_indices_collections
+  type(mergeandredirectindicescollection), pointer :: &
+      working_merge_and_redirect_indices_collection
+  type(mergeandredirectindices), pointer :: working_merge_and_redirect_indices
+  type(mergeandredirectindices), pointer :: secondary_merge_and_redirect_indices
+  type(mergeandredirectindicespointer), pointer, dimension(:) :: &
+    primary_merge_and_redirect_indices
+  integer, dimension(:), pointer :: array_slice
+  integer :: i,j
+    allocate(merge_and_redirect_indices_collections(size(array_in,1)))
+    do i = 1,size(array_in,1)
+      if (size(array_in,2)-1 > 0) then
+        allocate(primary_merge_and_redirect_indices(size(array_in,2)-1))
+      else
+        primary_merge_and_redirect_indices => null()
+      end if
+      do j = 1,size(array_in,2)
+        if (array_in(i,j,1) /= 0) then
+          array_slice => array_in(i,j,1:size(array_in,3))
+          working_merge_and_redirect_indices => &
+            mergeandredirectindices((j /= 1),array_slice)
+          if (j == 1) then
+            secondary_merge_and_redirect_indices => working_merge_and_redirect_indices
+          else
+            primary_merge_and_redirect_indices(j-1)%ptr => working_merge_and_redirect_indices
+          end if
+        end if
+      end do
+      working_merge_and_redirect_indices_collection => &
+        mergeandredirectindicescollection(primary_merge_and_redirect_indices, &
+                                          secondary_merge_and_redirect_indices)
+      merge_and_redirect_indices_collections(i)%ptr => &
+        working_merge_and_redirect_indices_collection
+    end do
+end function createmergeindicescollectionsfromarray
 
 subroutine initialiselake(this,center_cell_lat_in,center_cell_lon_in, &
                           current_cell_to_fill_lat_in, &
@@ -2018,21 +2087,30 @@ subroutine perform_secondary_merge(this,merge_indices)
                            other_lake%lake_number)
 end subroutine perform_secondary_merge
 
-function conditionally_rollback_primary_merge(this,merge_indices,&
-                                                other_lake_outflow) &
+recursive function conditionally_rollback_primary_merge(this,merge_indices,&
+                                                        other_lake_outflow) &
     result(rollback_performed)
   class(lake), intent(inout) :: this
   type(mergeandredirectindices), pointer, intent(inout) :: merge_indices
+  type(mergeandredirectindicescollection), pointer :: merge_indices_collection
   logical :: rollback_performed
   class(lake), pointer :: other_lake
   class(lake), pointer :: other_lake_true_primary_lake
   integer :: other_lake_number
   real(dp) :: other_lake_outflow
   integer :: target_cell_lat, target_cell_lon
+  logical :: is_flood_merge, dummy
+  integer :: i
+  integer :: merge_type
+  integer :: merge_indices_index
     call merge_indices%get_merge_target_coords(target_cell_lat,target_cell_lon)
     other_lake_number = this%lake_fields%lake_numbers(target_cell_lat, &
                                                       target_cell_lon)
     other_lake => this%lake_fields%other_lakes(other_lake_number)%lake_pointer
+    if (other_lake%lake_type /= subsumed_lake_type) then
+      rollback_performed = .false.
+      return
+    end if
     other_lake => find_true_rolledback_primary_lake(other_lake)
     other_lake_true_primary_lake => find_true_primary_lake(other_lake)
     if (other_lake_true_primary_lake%lake_number /= this%lake_number) then
@@ -2047,6 +2125,34 @@ function conditionally_rollback_primary_merge(this,merge_indices,&
       (other_lake%number_of_flooded_cells + &
        other_lake%secondary_number_of_flooded_cells)
     call other_lake%accept_split(this%lake_number)
+    merge_indices_index = other_lake%get_merge_indices_index(is_flood_merge)
+    if (merge_indices_index /= 0) then
+      merge_indices_collection => &
+            this%get_merge_indices_collection(merge_indices_index, &
+                                              is_flood_merge)
+      do i = merge_indices_collection%primary_merge_and_redirect_indices_count+1,1,-1
+        if (i <= merge_indices_collection%primary_merge_and_redirect_indices_count) then
+          merge_indices => &
+            merge_indices_collection%primary_merge_and_redirect_indices(i)%ptr
+        else
+          if(merge_indices_collection%secondary_merge) then
+            merge_indices => &
+              merge_indices_collection%secondary_merge_and_redirect_indices
+          else
+            cycle
+          end if
+        end if
+        merge_type = merge_indices%get_merge_type()
+        if (merge_type == primary_merge_mtype) then
+          dummy = conditionally_rollback_primary_merge(other_lake,merge_indices,0.0_dp)
+        else if(merge_type == secondary_merge_mtype) then
+          if (merge_indices%merged) then
+              write(*,*) "Merge logic failure"
+              stop
+          end if
+        end if
+      end do
+    end if
     call other_lake%remove_water(other_lake_outflow)
     rollback_performed = .true.
 end function conditionally_rollback_primary_merge

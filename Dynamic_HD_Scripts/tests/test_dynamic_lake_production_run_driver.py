@@ -9,7 +9,7 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
     """Test creating hdpara and hdrestart files for production runs"""
 
     lakepara_offline_run_result_for_comparison_deglac  = os.path.join(data_dir,"unit_test_data",
-                                                                      "lakeparas_trial_run_for_mid_deglaciation_20221116_113050_deglac.nc")
+                                                                      "lakeparas_trial_run_for_mid_deglaciation_20230218_010439_deglac.nc")
     lakestart_offline_run_result_for_comparison_deglac = os.path.join(data_dir,"unit_test_data",
                                                                       "lakestart_trial_run_for_mid_deglaciation_20221116_113050_deglac.nc")
     hdpara_offline_run_result_for_comparison_deglac  = os.path.join(data_dir,"unit_test_data",
@@ -17,7 +17,7 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
     hdstart_offline_run_result_for_comparison_deglac = os.path.join(data_dir,"unit_test_data",
                                                                     "hdstart_trial_run_for_mid_deglaciation_20221116_113050_deglac.nc")
     lakepara_offline_run_result_for_comparison_pd  = os.path.join(data_dir,"unit_test_data",
-                                                                  "lakeparas_trial_run_for_present_day_20221115_190605_pd.nc")
+                                                                  "lakeparas_trial_run_for_present_day_20230218_010605_pd.nc")
     lakestart_offline_run_result_for_comparison_pd = os.path.join(data_dir,"unit_test_data",
                                                                   "lakestart_trial_run_for_present_day_20221115_190605_pd.nc")
     hdpara_offline_run_result_for_comparison_pd  = os.path.join(data_dir,"unit_test_data",
@@ -62,6 +62,8 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
                            "30minute_ls_mask_temp.nc","30minute_river_dirs_temp.dat",
                            "30minute_river_dirs_temp.nc","30min_flowtocell_connected.nc",
                            "30min_flowtorivermouths_connected.nc",
+                           "merges_and_redirects_temp.nc",
+                           "fields_temp.nc",
                            "basin_catchment_numbers_temp.nc",
                            "loops_10min.log","loops_30min.log"]
         directories_to_remove = self.temp_dirs
