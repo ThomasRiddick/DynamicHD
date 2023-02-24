@@ -69,7 +69,7 @@ void icon_single_index_bifurcate_rivers_basic(map<int,vector<int>> river_mouths_
   alg.bifurcate_rivers();
   int* bifurcations_next_cell_index_out = alg.get_bifurcation_next_cell_index();
   copy(bifurcations_next_cell_index_out,
-       bifurcations_next_cell_index_out+(ncells_in*alg.get_maximum_bifurcations()),
+       bifurcations_next_cell_index_out+((long)ncells_in*(long)alg.get_maximum_bifurcations()),
        bifurcations_next_cell_index_in);
   delete[] secondary_neighboring_cell_indices_in;
   delete[] bifurcations_next_cell_index_out;
