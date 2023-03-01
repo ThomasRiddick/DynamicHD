@@ -3,6 +3,7 @@ program accumulate_flow_icon_simple_interface
 use netcdf
 use accumulate_flow_mod
 use check_return_code_netcdf_mod
+use iso_fortran_env
 implicit none
 
     integer, parameter :: MAX_NAME_LENGTH = 1000
@@ -15,6 +16,7 @@ implicit none
     integer :: ncells_dimid
     integer, dimension(2) :: dimids
     integer, dimension(:), pointer  :: rdirs
+    integer(int64), dimension(:,:), pointer  :: bifurcated_rdirs_int64
     integer, dimension(:,:), pointer  ::bifurcated_rdirs
     integer, dimension(:), pointer  :: cumulative_flow
     real(kind=double_precision), dimension(:), allocatable :: cell_lats
@@ -93,9 +95,11 @@ implicit none
           write(*,*) "Reading Bifurcated Icon River Directions"
           call check_return_code(nf90_open(input_bifurcated_rdirs_filename,nf90_nowrite,ncid))
           allocate(bifurcated_rdirs(ncells,11))
+          allocate(bifurcated_rdirs_int64(ncells,11))
           call check_return_code(nf90_inq_varid(ncid,input_bifurcated_rdirs_fieldname,varid))
-          call check_return_code(nf90_get_var(ncid,varid,bifurcated_rdirs))
+          call check_return_code(nf90_get_var(ncid,varid,bifurcated_rdirs_int64))
           call check_return_code(nf90_close(ncid))
+          bifurcated_rdirs =  int(bifurcated_rdirs_int64)
         end if
 
         write(*,*) "Generating Cumulative Flow"

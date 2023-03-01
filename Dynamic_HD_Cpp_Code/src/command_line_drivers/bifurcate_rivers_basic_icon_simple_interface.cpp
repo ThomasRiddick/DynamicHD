@@ -190,7 +190,7 @@ int main(int argc, char *argv[]){
   }
   delete[] landsea_mask_in_int;
   int* number_of_outflows_out = new int[ncells];
-  int* bifurcations_next_cell_index_out = new int[ncells*11];
+  int* bifurcations_next_cell_index_out = new int[(long)ncells*11l];
   icon_single_index_bifurcate_rivers_basic(river_mouths,
                                            next_cell_index_in,
                                            bifurcations_next_cell_index_out,
