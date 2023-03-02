@@ -9,6 +9,8 @@ using FieldModule: round,convert,invert,add_offset,get_data,maximum,equals
 using HDModule: RiverParameters,RiverPrognosticFields
 using LakeModule: LakeParameters,LatLonLakeParameters, UnstructuredLakeParameters
 using LakeModule: GridSpecificLakeParameters,LakeFields
+using LakeModule: create_merge_indices_collections_from_array
+using LakeModule: MergeAndRedirectIndicesCollection
 using MergeTypesModule
 
 import LakeModule: write_lake_numbers_field,write_lake_volumes_field
@@ -291,11 +293,27 @@ function load_lake_parameters(lake_para_filepath::AbstractString,grid::Grid,hd_g
       load_field(file_handle,grid,"connection_volume_thresholds",Float64)
     flood_volume_thresholds::Field{Float64} =
       load_field(file_handle,grid,"flood_volume_thresholds",Float64)
-    cell_areas_on_surface_model_grid:Field{Float64} =
-      load_field(file_handle,grid,"cell_areas_on_surface_model_grid",Float64)
+    connect_merge_and_redirect_indices_index::Field{Int64} =
+      load_field(file_handle,grid,"connect_merge_and_redirect_indices_index",Int64)
+    flood_merge_and_redirect_indices_index::Field{Int64} =
+      load_field(file_handle,grid,"flood_merge_and_redirect_indices_index",Int64)
+    cell_areas_on_surface_model_grid::Field{Float64} =
+      load_field(file_handle,surface_model_grid,"cell_areas_on_surface_model_grid",Float64)
+    variable::NcVar = file_handle["connect_merges_and_redirects"]
+    connect_merges_and_redirect_array::Array{Int64} = NetCDF.readvar(variable)
+    connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      create_merge_indices_collections_from_array(connect_merges_and_redirect_array)
+    variable = file_handle["flood_merges_and_redirects"]
+    flood_merges_and_redirect_array::Array{Int64} = NetCDF.readvar(variable)
+    flood_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      create_merge_indices_collections_from_array(flood_merges_and_redirect_array)
     return LakeParameters(lake_centers,
                           connection_volume_thresholds,
                           flood_volume_thresholds,
+                          connect_merge_and_redirect_indices_index,
+                          flood_merge_and_redirect_indices_index,
+                          connect_merge_and_redirect_indices_collections,
+                          flood_merge_and_redirect_indices_collections,
                           cell_areas_on_surface_model_grid,
                           grid,hd_grid,
                           surface_model_grid,
@@ -322,15 +340,13 @@ function load_grid_specific_lake_parameters(file_handle::NcFile,grid::LatLonGrid
   connect_next_cell_lon_index::Field{Int64} =
       load_field(file_handle,grid,"connect_next_cell_lon_index",Int64)
   corresponding_surface_cell_lat_index::Field{Int64} =
-      load_field(file_handle,surface_model_grid,"corresponding_surface_cell_lat_index",Int64)
+      load_field(file_handle,grid,"corresponding_surface_cell_lat_index",Int64)
   corresponding_surface_cell_lon_index::Field{Int64} =
-      load_field(file_handle,surface_model_grid,"corresponding_surface_cell_lon_index",Int64)
+      load_field(file_handle,grid,"corresponding_surface_cell_lon_index",Int64)
   add_offset(flood_next_cell_lat_index,1,Int64[-1])
   add_offset(flood_next_cell_lon_index,1,Int64[-1])
   add_offset(connect_next_cell_lat_index,1,Int64[-1])
   add_offset(connect_next_cell_lon_index,1,Int64[-1])
-  add_offset(corresponding_surface_cell_lat_index,1,Int64[-1])
-  add_offset(corresponding_surface_cell_lon_index,1,Int64[-1])
   return LatLonLakeParameters(flood_next_cell_lat_index,
                               flood_next_cell_lon_index,
                               connect_next_cell_lat_index,

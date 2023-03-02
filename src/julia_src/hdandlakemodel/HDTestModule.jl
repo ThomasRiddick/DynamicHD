@@ -17,6 +17,8 @@ using LakeModule: calculate_lake_fraction_on_surface_grid
 using LakeModule: calculate_effective_lake_height_on_surface_grid
 using LakeModule: MergeAndRedirectIndices,MergeAndRedirectIndicesCollection
 using LakeModule: LatLonMergeAndRedirectIndices,add_offset,reset
+using LakeModule: create_merge_indices_collections_from_array
+using IOModule: load_lake_parameters
 
 @testset "HD model tests" begin
   grid = LatLonGrid(4,4,true)
@@ -16190,6 +16192,446 @@ end
   @test isapprox(expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.01)
   @test expected_number_lake_cells == lake_fields.number_lake_cells
   @test expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
+end
+
+@testset "test reading merges from array" begin
+    array_of_connect_merges::Array{Int64,3} = reshape(Int64[1,0,61,62,63,64],(6,1,1))
+    array_of_flood_merges::Array{Int64,3} = reshape(Int64[ #=
+     =# 1,1,1,2,3,4, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1, #=
+     =# -1,-1,-1,-1,-1,-1, 1,0,5,6,7,8, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1, #=
+     =# 1,1,9,10,11,12, 1,0,13,14,15,16, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1, #=
+     =# -1,-1,-1,-1,-1,-1, 1,1,17,18,19,20, 1,0,21,22,23,24, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1, #=
+     =# -1,-1,-1,-1,-1,-1, 1,1,25,26,27,28, 1,0,29,30,31,32, 1,0,33,34,35,36,    1,0,37,38,39,40, #=
+     =# 1,1,41,42,43,44, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1, #=
+     =# -1,-1,-1,-1,-1,-1, 1,0,45,46,47,48, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1, #=
+     =# 1,1,49,50,51,52, 1,0,53,54,55,56, 1,0,57,58,59,60, -1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1 ],(6,5,8))
+    flood_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      create_merge_indices_collections_from_array(array_of_flood_merges)
+    connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      create_merge_indices_collections_from_array(array_of_connect_merges)
+    working_merge_and_redirect_indices =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        1,
+                                        2,
+                                        3,
+                                        4)
+    @test flood_merge_and_redirect_indices_collections[1].
+          secondary_merge_and_redirect_indices == working_merge_and_redirect_indices
+    @test ! flood_merge_and_redirect_indices_collections[1].primary_merge
+    @test flood_merge_and_redirect_indices_collections[1].secondary_merge
+    @test flood_merge_and_redirect_indices_collections[1].
+            primary_merge_and_redirect_indices_count == 0
+    @test length(flood_merge_and_redirect_indices_collections[1].
+                 primary_merge_and_redirect_indices) == 0
+    working_merge_and_redirect_indices =
+          LatLonMergeAndRedirectIndices(true,
+                                        false,
+                                        5,
+                                        6,
+                                        7,
+                                        8)
+    @test flood_merge_and_redirect_indices_collections[2].
+          primary_merge_and_redirect_indices[1] == working_merge_and_redirect_indices
+    @test flood_merge_and_redirect_indices_collections[2].
+          secondary_merge_and_redirect_indices === nothing
+    @test flood_merge_and_redirect_indices_collections[2].primary_merge
+    @test ! flood_merge_and_redirect_indices_collections[2].secondary_merge
+    @test flood_merge_and_redirect_indices_collections[2].
+            primary_merge_and_redirect_indices_count == 1
+    @test length(flood_merge_and_redirect_indices_collections[2].
+                 primary_merge_and_redirect_indices) == 1
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(false,
+                                          true,
+                                          9,
+                                          10,
+                                          11,
+                                          12)
+    @test flood_merge_and_redirect_indices_collections[3].secondary_merge
+    @test flood_merge_and_redirect_indices_collections[3].
+          secondary_merge_and_redirect_indices == working_merge_and_redirect_indices
+    working_merge_and_redirect_indices =
+           LatLonMergeAndRedirectIndices(true,
+                                         false,
+                                         13,
+                                         14,
+                                         15,
+                                         16)
+    @test flood_merge_and_redirect_indices_collections[3].
+          primary_merge_and_redirect_indices[1] == working_merge_and_redirect_indices
+    @test flood_merge_and_redirect_indices_collections[3].primary_merge
+    @test flood_merge_and_redirect_indices_collections[3].
+            primary_merge_and_redirect_indices_count == 1
+    @test length(flood_merge_and_redirect_indices_collections[3].
+                 primary_merge_and_redirect_indices) == 1
+    @test ! flood_merge_and_redirect_indices_collections[4].secondary_merge
+    @test flood_merge_and_redirect_indices_collections[4].
+          secondary_merge_and_redirect_indices === nothing
+    @test flood_merge_and_redirect_indices_collections[4].primary_merge
+    @test flood_merge_and_redirect_indices_collections[4].
+            primary_merge_and_redirect_indices_count == 2
+    @test length(flood_merge_and_redirect_indices_collections[4].
+                 primary_merge_and_redirect_indices) == 2
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(true,
+                                          true,
+                                          17,
+                                          18,
+                                          19,
+                                          20)
+    @test flood_merge_and_redirect_indices_collections[4].
+          primary_merge_and_redirect_indices[1] == working_merge_and_redirect_indices
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(true,
+                                          false,
+                                          21,
+                                          22,
+                                          23,
+                                          24)
+    @test flood_merge_and_redirect_indices_collections[4].
+          primary_merge_and_redirect_indices[2] == working_merge_and_redirect_indices
+    @test ! flood_merge_and_redirect_indices_collections[5].secondary_merge
+    @test flood_merge_and_redirect_indices_collections[5].
+          secondary_merge_and_redirect_indices === nothing
+    @test flood_merge_and_redirect_indices_collections[5].primary_merge
+    @test flood_merge_and_redirect_indices_collections[5].
+            primary_merge_and_redirect_indices_count == 4
+    @test length(flood_merge_and_redirect_indices_collections[5].
+                 primary_merge_and_redirect_indices) == 4
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(true,
+                                          true,
+                                          25,
+                                          26,
+                                          27,
+                                          28)
+    @test flood_merge_and_redirect_indices_collections[5].
+          primary_merge_and_redirect_indices[1] == working_merge_and_redirect_indices
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(true,
+                                          false,
+                                          29,
+                                          30,
+                                          31,
+                                          32)
+    @test flood_merge_and_redirect_indices_collections[5].
+          primary_merge_and_redirect_indices[2] == working_merge_and_redirect_indices
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(true,
+                                          false,
+                                          33,
+                                          34,
+                                          35,
+                                          36)
+    @test flood_merge_and_redirect_indices_collections[5].
+          primary_merge_and_redirect_indices[3] == working_merge_and_redirect_indices
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(true,
+                                          false,
+                                          37,
+                                          38,
+                                          39,
+                                          40)
+    @test flood_merge_and_redirect_indices_collections[5].
+          primary_merge_and_redirect_indices[4] == working_merge_and_redirect_indices
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(false,
+                                          true,
+                                          41,
+                                          42,
+                                          43,
+                                          44)
+    @test flood_merge_and_redirect_indices_collections[6].
+          secondary_merge_and_redirect_indices == working_merge_and_redirect_indices
+    @test ! flood_merge_and_redirect_indices_collections[6].primary_merge
+    @test flood_merge_and_redirect_indices_collections[6].secondary_merge
+    @test flood_merge_and_redirect_indices_collections[6].
+            primary_merge_and_redirect_indices_count == 0
+    @test length(flood_merge_and_redirect_indices_collections[6].
+                 primary_merge_and_redirect_indices) == 0
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(true,
+                                          false,
+                                          45,
+                                          46,
+                                          47,
+                                          48)
+    @test flood_merge_and_redirect_indices_collections[7].
+          primary_merge_and_redirect_indices[1] == working_merge_and_redirect_indices
+    @test flood_merge_and_redirect_indices_collections[7].primary_merge
+    @test ! flood_merge_and_redirect_indices_collections[7].secondary_merge
+    @test flood_merge_and_redirect_indices_collections[7].
+          secondary_merge_and_redirect_indices === nothing
+    @test flood_merge_and_redirect_indices_collections[7].
+            primary_merge_and_redirect_indices_count == 1
+    @test length(flood_merge_and_redirect_indices_collections[7].
+                 primary_merge_and_redirect_indices) == 1
+    @test flood_merge_and_redirect_indices_collections[8].primary_merge
+    @test flood_merge_and_redirect_indices_collections[8].secondary_merge
+    @test flood_merge_and_redirect_indices_collections[8].
+            primary_merge_and_redirect_indices_count == 2
+    @test length(flood_merge_and_redirect_indices_collections[8].
+                 primary_merge_and_redirect_indices) == 2
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(false,
+                                          true,
+                                          49,
+                                          50,
+                                          51,
+                                          52)
+    @test flood_merge_and_redirect_indices_collections[8].
+          secondary_merge_and_redirect_indices == working_merge_and_redirect_indices
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(true,
+                                          false,
+                                          53,
+                                          54,
+                                          55,
+                                          56)
+    @test flood_merge_and_redirect_indices_collections[8].
+          primary_merge_and_redirect_indices[1] == working_merge_and_redirect_indices
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(true,
+                                          false,
+                                          57,
+                                          58,
+                                          59,
+                                          60)
+    @test flood_merge_and_redirect_indices_collections[8].
+          primary_merge_and_redirect_indices[2] == working_merge_and_redirect_indices
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(false,
+                                          false,
+                                          61,
+                                          62,
+                                          63,
+                                          64)
+    @test connect_merge_and_redirect_indices_collections[1].
+          secondary_merge_and_redirect_indices == working_merge_and_redirect_indices
+    @test ! connect_merge_and_redirect_indices_collections[1].primary_merge
+    @test connect_merge_and_redirect_indices_collections[1].secondary_merge
+    @test connect_merge_and_redirect_indices_collections[1].
+            primary_merge_and_redirect_indices_count == 0
+    @test length(connect_merge_and_redirect_indices_collections[1].
+                 primary_merge_and_redirect_indices) == 0
+end
+
+@testset "test reading merges from file" begin
+    lake_para_filepath::String =
+      "/Users/thomasriddick/Documents/data/unit_test_data/lakepara_test_data.nc"
+    hd_grid = LatLonGrid(360,720,true)
+    lake_grid = LatLonGrid(1080,2160,true)
+    surface_model_grid = LatLonGrid(48,96,true)
+    lake_parameters::LakeParameters =
+      load_lake_parameters(lake_para_filepath,lake_grid,hd_grid,
+                           surface_model_grid)
+    working_merge_and_redirect_indices =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        1,
+                                        2,
+                                        3,
+                                        4)
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[1].
+          secondary_merge_and_redirect_indices == working_merge_and_redirect_indices
+    @test ! lake_parameters.flood_merge_and_redirect_indices_collections[1].primary_merge
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[1].secondary_merge
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[1].
+            primary_merge_and_redirect_indices_count == 0
+    @test length(lake_parameters.flood_merge_and_redirect_indices_collections[1].
+                 primary_merge_and_redirect_indices) == 0
+    working_merge_and_redirect_indices =
+          LatLonMergeAndRedirectIndices(true,
+                                        false,
+                                        5,
+                                        6,
+                                        7,
+                                        8)
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[2].
+          primary_merge_and_redirect_indices[1] == working_merge_and_redirect_indices
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[2].
+          secondary_merge_and_redirect_indices === nothing
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[2].primary_merge
+    @test ! lake_parameters.flood_merge_and_redirect_indices_collections[2].secondary_merge
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[2].
+            primary_merge_and_redirect_indices_count == 1
+    @test length(lake_parameters.flood_merge_and_redirect_indices_collections[2].
+                 primary_merge_and_redirect_indices) == 1
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(false,
+                                          true,
+                                          9,
+                                          10,
+                                          11,
+                                          12)
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[3].secondary_merge
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[3].
+          secondary_merge_and_redirect_indices == working_merge_and_redirect_indices
+    working_merge_and_redirect_indices =
+           LatLonMergeAndRedirectIndices(true,
+                                         false,
+                                         13,
+                                         14,
+                                         15,
+                                         16)
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[3].
+          primary_merge_and_redirect_indices[1] == working_merge_and_redirect_indices
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[3].primary_merge
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[3].
+            primary_merge_and_redirect_indices_count == 1
+    @test length(lake_parameters.flood_merge_and_redirect_indices_collections[3].
+                 primary_merge_and_redirect_indices) == 1
+    @test ! lake_parameters.flood_merge_and_redirect_indices_collections[4].secondary_merge
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[4].
+          secondary_merge_and_redirect_indices === nothing
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[4].primary_merge
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[4].
+            primary_merge_and_redirect_indices_count == 2
+    @test length(lake_parameters.flood_merge_and_redirect_indices_collections[4].
+                 primary_merge_and_redirect_indices) == 2
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(true,
+                                          true,
+                                          17,
+                                          18,
+                                          19,
+                                          20)
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[4].
+          primary_merge_and_redirect_indices[1] == working_merge_and_redirect_indices
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(true,
+                                          false,
+                                          21,
+                                          22,
+                                          23,
+                                          24)
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[4].
+          primary_merge_and_redirect_indices[2] == working_merge_and_redirect_indices
+    @test ! lake_parameters.flood_merge_and_redirect_indices_collections[5].secondary_merge
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[5].
+          secondary_merge_and_redirect_indices === nothing
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[5].primary_merge
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[5].
+            primary_merge_and_redirect_indices_count == 4
+    @test length(lake_parameters.flood_merge_and_redirect_indices_collections[5].
+                 primary_merge_and_redirect_indices) == 4
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(true,
+                                          true,
+                                          25,
+                                          26,
+                                          27,
+                                          28)
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[5].
+          primary_merge_and_redirect_indices[1] == working_merge_and_redirect_indices
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(true,
+                                          false,
+                                          29,
+                                          30,
+                                          31,
+                                          32)
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[5].
+          primary_merge_and_redirect_indices[2] == working_merge_and_redirect_indices
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(true,
+                                          false,
+                                          33,
+                                          34,
+                                          35,
+                                          36)
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[5].
+          primary_merge_and_redirect_indices[3] == working_merge_and_redirect_indices
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(true,
+                                          false,
+                                          37,
+                                          38,
+                                          39,
+                                          40)
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[5].
+          primary_merge_and_redirect_indices[4] == working_merge_and_redirect_indices
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(false,
+                                          true,
+                                          41,
+                                          42,
+                                          43,
+                                          44)
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[6].
+          secondary_merge_and_redirect_indices == working_merge_and_redirect_indices
+    @test ! lake_parameters.flood_merge_and_redirect_indices_collections[6].primary_merge
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[6].secondary_merge
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[6].
+            primary_merge_and_redirect_indices_count == 0
+    @test length(lake_parameters.flood_merge_and_redirect_indices_collections[6].
+                 primary_merge_and_redirect_indices) == 0
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(true,
+                                          false,
+                                          45,
+                                          46,
+                                          47,
+                                          48)
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[7].
+          primary_merge_and_redirect_indices[1] == working_merge_and_redirect_indices
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[7].primary_merge
+    @test ! lake_parameters.flood_merge_and_redirect_indices_collections[7].secondary_merge
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[7].
+          secondary_merge_and_redirect_indices === nothing
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[7].
+            primary_merge_and_redirect_indices_count == 1
+    @test length(lake_parameters.flood_merge_and_redirect_indices_collections[7].
+                 primary_merge_and_redirect_indices) == 1
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[8].primary_merge
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[8].secondary_merge
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[8].
+            primary_merge_and_redirect_indices_count == 2
+    @test length(lake_parameters.flood_merge_and_redirect_indices_collections[8].
+                 primary_merge_and_redirect_indices) == 2
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(false,
+                                          true,
+                                          49,
+                                          50,
+                                          51,
+                                          52)
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[8].
+          secondary_merge_and_redirect_indices == working_merge_and_redirect_indices
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(true,
+                                          false,
+                                          53,
+                                          54,
+                                          55,
+                                          56)
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[8].
+          primary_merge_and_redirect_indices[1] == working_merge_and_redirect_indices
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(true,
+                                          false,
+                                          57,
+                                          58,
+                                          59,
+                                          60)
+    @test lake_parameters.flood_merge_and_redirect_indices_collections[8].
+          primary_merge_and_redirect_indices[2] == working_merge_and_redirect_indices
+    working_merge_and_redirect_indices =
+            LatLonMergeAndRedirectIndices(false,
+                                          false,
+                                          61,
+                                          62,
+                                          63,
+                                          64)
+    @test lake_parameters.connect_merge_and_redirect_indices_collections[1].
+          secondary_merge_and_redirect_indices == working_merge_and_redirect_indices
+    @test ! lake_parameters.connect_merge_and_redirect_indices_collections[1].primary_merge
+    @test lake_parameters.connect_merge_and_redirect_indices_collections[1].secondary_merge
+    @test lake_parameters.connect_merge_and_redirect_indices_collections[1].
+            primary_merge_and_redirect_indices_count == 0
+    @test length(lake_parameters.connect_merge_and_redirect_indices_collections[1].
+                 primary_merge_and_redirect_indices) == 0
 end
 
 end

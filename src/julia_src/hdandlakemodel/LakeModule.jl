@@ -16,7 +16,7 @@ using SplittableRootedTree: RootedTreeForest,make_new_link,split_set,add_set,fin
 import HDModule: water_to_lakes,water_from_lakes
 import HierarchicalStateMachineModule: handle_event
 import FieldModule: add_offset
-import Base.show, Base.iterate
+import Base.show, Base.iterate, Base.==
 
 const debug = false
 
@@ -141,6 +141,19 @@ mutable struct UnstructuredMergeAndRedirectIndices <: MergeAndRedirectIndices
   redirect_cell_index::Int64
 end
 
+function ==(lhs::MergeAndRedirectIndices,rhs::MergeAndRedirectIndices)
+  throw(UserError())
+end
+
+function ==(lhs::LatLonMergeAndRedirectIndices,rhs::LatLonMergeAndRedirectIndices)
+  return ((lhs.is_primary_merge == rhs.is_primary_merge) &&
+          (lhs.local_redirect == rhs.local_redirect) &&
+          (lhs.merge_target_lat_index == rhs.merge_target_lat_index) &&
+          (lhs.merge_target_lon_index == rhs.merge_target_lon_index) &&
+          (lhs.redirect_lat_index == rhs.redirect_lat_index) &&
+          (lhs.redirect_lon_index == rhs.redirect_lon_index))
+end
+
 function add_offset(merge_indices::LatLonMergeAndRedirectIndices,
                     offset::Int64)
   merge_indices.merge_target_lat_index += offset
@@ -151,6 +164,16 @@ end
 
 function reset(merge_indices::LatLonMergeAndRedirectIndices)
   merge_indices.merged = false
+end
+
+function read_merge_and_redirect_indices_from_array(is_primary_merge::Bool,
+                                                    array_in::Array{Int64,1})
+  return LatLonMergeAndRedirectIndices(is_primary_merge,
+                                       (array_in[2]==1),
+                                       array_in[3],
+                                       array_in[4],
+                                       array_in[5],
+                                       array_in[6])
 end
 
 struct MergeAndRedirectIndicesCollection
@@ -166,7 +189,7 @@ struct MergeAndRedirectIndicesCollection
     primary_merge_and_redirect_indices_count::Int64 =
       length(primary_merge_and_redirect_indices)
     primary_merge::Bool = (primary_merge_and_redirect_indices_count > 0)
-    secondary_merge::Bool = secondary_merge_and_redirect_indices === nothing
+    secondary_merge::Bool = secondary_merge_and_redirect_indices !== nothing
     return new(primary_merge,secondary_merge,
                primary_merge_and_redirect_indices,
                primary_merge_and_redirect_indices_count,
@@ -222,6 +245,36 @@ function reset(collections::Vector{MergeAndRedirectIndicesCollection})
       reset(merge_indices)
     end
   end
+end
+
+function create_merge_indices_collections_from_array(array_in::Array{Int64,3})
+  merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+    Vector{MergeAndRedirectIndicesCollection}[]
+  permuted_array = permutedims(array_in,(3,2,1))
+  for i in axes(permuted_array,1)
+    primary_merge_and_redirect_indices::Vector{MergeAndRedirectIndices} =
+        Vector{MergeAndRedirectIndices}[]
+    local secondary_merge_and_redirect_indices::Union{MergeAndRedirectIndices,Nothing}
+    for j in axes(permuted_array,2)
+      if permuted_array[i,j,1] == 1
+        working_merge_and_redirect_indices::MergeAndRedirectIndices =
+          read_merge_and_redirect_indices_from_array((j != 1),permuted_array[i,j,:])
+        if j == 1
+          secondary_merge_and_redirect_indices = working_merge_and_redirect_indices
+        else
+          push!(primary_merge_and_redirect_indices,working_merge_and_redirect_indices)
+        end
+      elseif j == 1
+        secondary_merge_and_redirect_indices = nothing
+      end
+    end
+    working_merge_and_redirect_indices_collection =
+      MergeAndRedirectIndicesCollection(primary_merge_and_redirect_indices,
+                                        secondary_merge_and_redirect_indices)
+    push!(merge_and_redirect_indices_collections,
+          working_merge_and_redirect_indices_collection)
+  end
+  return merge_and_redirect_indices_collections
 end
 
 abstract type GridSpecificLakeParameters end
