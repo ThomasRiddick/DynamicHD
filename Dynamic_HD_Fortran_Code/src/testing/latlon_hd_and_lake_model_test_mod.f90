@@ -14981,13 +14981,13 @@ subroutine testLakeModel15
 
         0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
         0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
-        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
-        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
-        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 1,0,0,0,0,0,0,0,0,0,  &
 
-        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
-        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
-        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
         0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
         0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
 
@@ -15007,13 +15007,13 @@ subroutine testLakeModel15
 
         0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
         0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
-        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
-        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
-        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 1,0,0,0,0,0,0,0,0,0,  &
 
-        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
-        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
-        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
         0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
         0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
 
@@ -15049,13 +15049,13 @@ subroutine testLakeModel15
       allocate(expected_lake_fractions(3,3))
       expected_lake_fractions = transpose(reshape((/ &
           0.0, 0.0, 0.0, &
-         0.0, 0.5625,  0.0, &
+         0.0, 0.015625,  0.0, &
          0.0, 0.0, 0.0/), &
          (/3,3/)))
       allocate(expected_number_lake_cells(3,3))
       expected_number_lake_cells = transpose(reshape((/ &
            0, 0,  0, &
-         0, 36,  0, &
+         0, 1,  0, &
          0, 0,  0 /), &
          (/3,3/)))
       allocate(expected_number_fine_grid_cells(3,3))
@@ -17504,18 +17504,18 @@ subroutine testLakeModel17
       allocate(expected_lake_numbers(nlat,nlon))
       expected_lake_numbers = transpose(reshape((/ &
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 3, 0, 0, 0, 4, 4, 0, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
-         0, 1, 0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
-         0, 1, 0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
-         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
-         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, &
          0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 7, 0, 0, 0, &
-         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 7, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
          0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
@@ -17527,18 +17527,18 @@ subroutine testLakeModel17
       allocate(expected_lake_types(nlat,nlon))
       expected_lake_types = transpose(reshape((/ &
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
-         0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
-         0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
-         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
-         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, &
          0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, &
-         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
          0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
@@ -17572,14 +17572,14 @@ subroutine testLakeModel17
          (/nlon,nlat/)))
       allocate(expected_lake_fractions(3,3))
       expected_lake_fractions = transpose(reshape((/ &
-          0.1388888889,   0.5416666667,   0.3333333333, &
-         0.1458333333,   0.015625,   0.02083333333, &
+          0.05555555556,  0.020833333, 0.02777777778, &
+          0.0,   0.015625,   0.02083333333, &
          0.02777777778,   0.0,   0.0 /), &
          (/3,3/)))
       allocate(expected_number_lake_cells(3,3))
       expected_number_lake_cells = transpose(reshape((/ &
-           5,    26,   12, &
-           7,    1,    1, &
+           2,    1,    1, &
+           0,    1,    1, &
            1,    0,    0 /), &
          (/3,3/)))
       allocate(expected_number_fine_grid_cells(3,3))
@@ -19716,7 +19716,7 @@ subroutine testLakeModel18
       connect_merge_and_redirect_indices_index(:,:) =0
       allocate(flood_merge_and_redirect_indices_index(nlat,nlon))
       flood_merge_and_redirect_indices_index(:,:) = 0
-      allocate(flood_merge_and_redirect_indices_collections(37))
+      allocate(flood_merge_and_redirect_indices_collections(38))
       connect_merge_and_redirect_indices_collections=>null()
       flood_index = 1
       !0
@@ -20534,8 +20534,8 @@ subroutine testLakeModel18
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
 #ifdef TRANSPOSED_LAKE_MODEL
-      call renumber_lakes_two(lake_fields_out)
-      call reorder_lake_volumes_two(lake_volumes)
+      call renumber_lakes_three(lake_fields_out)
+      call reorder_lake_volumes_three(lake_volumes)
 #endif
       call assert_equals(intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
@@ -20597,8 +20597,8 @@ subroutine testLakeModel18
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
 #ifdef TRANSPOSED_LAKE_MODEL
-      call renumber_lakes_two(lake_fields_out)
-      call reorder_lake_volumes_two(lake_volumes)
+      call renumber_lakes_three(lake_fields_out)
+      call reorder_lake_volumes_three(lake_volumes)
 #endif
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
@@ -21194,16 +21194,14 @@ subroutine testReadMergesFromArray
                                     4)
     call assert_true(flood_merge_and_redirect_indices_collections(1)&
                      &%ptr%secondary_merge_and_redirect_indices%is_equal_to(working_merge_and_redirect_indices))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(1)&
-                                &%ptr%primary_merge_and_redirect_indices(1)%ptr))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(1)&
-                     &%ptr%primary_merge_and_redirect_indices(2)%ptr))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(1)&
-                     &%ptr%primary_merge_and_redirect_indices(3)%ptr))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(1)&
-                     &%ptr%primary_merge_and_redirect_indices(4)%ptr))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(2)&
-                     &%ptr%secondary_merge_and_redirect_indices))
+    call assert_true(flood_merge_and_redirect_indices_collections(1)&
+                     &%ptr%secondary_merge)
+    call assert_false(associated(flood_merge_and_redirect_indices_collections(1)&
+                     &%ptr%primary_merge_and_redirect_indices))
+    call assert_false(flood_merge_and_redirect_indices_collections(1)&
+                     &%ptr%primary_merge)
+    call assert_true(flood_merge_and_redirect_indices_collections(1)&
+                     &%ptr%primary_merge_and_redirect_indices_count == 0)
     working_merge_and_redirect_indices => &
             mergeandredirectindices(.true., &
                                     .false., &
@@ -21211,14 +21209,19 @@ subroutine testReadMergesFromArray
                                     6, &
                                     7, &
                                     8)
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(2)&
-                     &%ptr%primary_merge_and_redirect_indices(1)%ptr))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(2)&
-                     &%ptr%primary_merge_and_redirect_indices(2)%ptr))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(2)&
-                     &%ptr%primary_merge_and_redirect_indices(3)%ptr))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(2)&
-                     &%ptr%primary_merge_and_redirect_indices(4)%ptr))
+    call assert_true(flood_merge_and_redirect_indices_collections(2)&
+                     &%ptr%primary_merge_and_redirect_indices(1)%ptr%&
+                     &is_equal_to(working_merge_and_redirect_indices))
+    call assert_true(flood_merge_and_redirect_indices_collections(2)&
+                     &%ptr%primary_merge)
+    call assert_false(associated(flood_merge_and_redirect_indices_collections(2)&
+                     &%ptr%secondary_merge_and_redirect_indices))
+    call assert_false(flood_merge_and_redirect_indices_collections(2)&
+                     &%ptr%secondary_merge)
+    call assert_true(flood_merge_and_redirect_indices_collections(2)&
+                     &%ptr%primary_merge_and_redirect_indices_count == 1)
+    call assert_true(size(flood_merge_and_redirect_indices_collections(2)&
+                     &%ptr%primary_merge_and_redirect_indices) == 1)
     working_merge_and_redirect_indices => &
             mergeandredirectindices(.false., &
                                     .true., &
@@ -21227,7 +21230,10 @@ subroutine testReadMergesFromArray
                                     11, &
                                     12)
     call assert_true(flood_merge_and_redirect_indices_collections(3)&
-                     &%ptr%secondary_merge_and_redirect_indices%is_equal_to(working_merge_and_redirect_indices))
+                     &%ptr%secondary_merge)
+    call assert_true(flood_merge_and_redirect_indices_collections(3)&
+                     &%ptr%secondary_merge_and_redirect_indices%&
+                     &is_equal_to(working_merge_and_redirect_indices))
     working_merge_and_redirect_indices => &
             mergeandredirectindices(.true., &
                                     .false., &
@@ -21235,16 +21241,15 @@ subroutine testReadMergesFromArray
                                     14, &
                                     15, &
                                     16)
+
     call assert_true(flood_merge_and_redirect_indices_collections(3)&
-                     &%ptr%primary_merge_and_redirect_indices(1)%ptr%is_equal_to(working_merge_and_redirect_indices))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(3)&
-                     &%ptr%primary_merge_and_redirect_indices(2)%ptr))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(3)&
-                     &%ptr%primary_merge_and_redirect_indices(3)%ptr))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(3)&
-                     &%ptr%primary_merge_and_redirect_indices(4)%ptr))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(4)&
-                     &%ptr%secondary_merge_and_redirect_indices))
+                      &%ptr%primary_merge_and_redirect_indices(1)%ptr%is_equal_to(working_merge_and_redirect_indices))
+    call assert_true(flood_merge_and_redirect_indices_collections(3)&
+                     &%ptr%primary_merge)
+    call assert_true(flood_merge_and_redirect_indices_collections(3)&
+                     &%ptr%primary_merge_and_redirect_indices_count == 1)
+    call assert_true(size(flood_merge_and_redirect_indices_collections(3)&
+                     &%ptr%primary_merge_and_redirect_indices) == 1)
     working_merge_and_redirect_indices => &
             mergeandredirectindices(.true., &
                                     .true., &
@@ -21252,6 +21257,14 @@ subroutine testReadMergesFromArray
                                     18, &
                                     19, &
                                     20)
+    call assert_false(flood_merge_and_redirect_indices_collections(4)&
+                     &%ptr%secondary_merge)
+    call assert_true(flood_merge_and_redirect_indices_collections(4)&
+                     &%ptr%primary_merge_and_redirect_indices_count == 2)
+    call assert_true(size(flood_merge_and_redirect_indices_collections(4)&
+                     &%ptr%primary_merge_and_redirect_indices) == 2)
+    call assert_true(flood_merge_and_redirect_indices_collections(4)&
+                     &%ptr%primary_merge)
     call assert_true(flood_merge_and_redirect_indices_collections(4)&
                      &%ptr%primary_merge_and_redirect_indices(1)%ptr%is_equal_to(working_merge_and_redirect_indices))
     working_merge_and_redirect_indices => &
@@ -21263,12 +21276,14 @@ subroutine testReadMergesFromArray
                                     24)
     call assert_true(flood_merge_and_redirect_indices_collections(4)&
                      &%ptr%primary_merge_and_redirect_indices(2)%ptr%is_equal_to(working_merge_and_redirect_indices))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(4)&
-                     &%ptr%primary_merge_and_redirect_indices(3)%ptr))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(4)&
-                     &%ptr%primary_merge_and_redirect_indices(4)%ptr))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(5)&
-                     &%ptr%secondary_merge_and_redirect_indices))
+    call assert_false(flood_merge_and_redirect_indices_collections(5)&
+                     &%ptr%secondary_merge)
+    call assert_true(flood_merge_and_redirect_indices_collections(5)&
+                     &%ptr%primary_merge_and_redirect_indices_count == 4)
+    call assert_true(size(flood_merge_and_redirect_indices_collections(5)&
+                     &%ptr%primary_merge_and_redirect_indices) == 4)
+    call assert_true(flood_merge_and_redirect_indices_collections(5)&
+                     &%ptr%primary_merge)
     working_merge_and_redirect_indices => &
             mergeandredirectindices(.true., &
                                     .true., &
@@ -21314,16 +21329,12 @@ subroutine testReadMergesFromArray
                                     44)
     call assert_true(flood_merge_and_redirect_indices_collections(6)&
                      &%ptr%secondary_merge_and_redirect_indices%is_equal_to(working_merge_and_redirect_indices))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(6)&
-                     &%ptr%primary_merge_and_redirect_indices(1)%ptr))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(6)&
-                     &%ptr%primary_merge_and_redirect_indices(2)%ptr))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(6)&
-                     &%ptr%primary_merge_and_redirect_indices(3)%ptr))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(6)&
-                     &%ptr%primary_merge_and_redirect_indices(4)%ptr))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(7)&
-                     &%ptr%secondary_merge_and_redirect_indices))
+    call assert_true(flood_merge_and_redirect_indices_collections(6)&
+                     &%ptr%secondary_merge)
+    call assert_true(flood_merge_and_redirect_indices_collections(6)&
+                     &%ptr%primary_merge_and_redirect_indices_count == 0)
+    call assert_false(flood_merge_and_redirect_indices_collections(6)&
+                     &%ptr%primary_merge)
     working_merge_and_redirect_indices => &
             mergeandredirectindices(.true., &
                                     .false., &
@@ -21333,12 +21344,14 @@ subroutine testReadMergesFromArray
                                     48)
     call assert_true(flood_merge_and_redirect_indices_collections(7)&
                      &%ptr%primary_merge_and_redirect_indices(1)%ptr%is_equal_to(working_merge_and_redirect_indices))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(7)&
-                     &%ptr%primary_merge_and_redirect_indices(2)%ptr))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(7)&
-                     &%ptr%primary_merge_and_redirect_indices(3)%ptr))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(7)&
-                     &%ptr%primary_merge_and_redirect_indices(4)%ptr))
+    call assert_false(flood_merge_and_redirect_indices_collections(7)&
+                     &%ptr%secondary_merge)
+    call assert_true(flood_merge_and_redirect_indices_collections(7)&
+                     &%ptr%primary_merge_and_redirect_indices_count == 1)
+    call assert_true(size(flood_merge_and_redirect_indices_collections(7)&
+                     &%ptr%primary_merge_and_redirect_indices) == 1)
+    call assert_true(flood_merge_and_redirect_indices_collections(7)&
+                     &%ptr%primary_merge)
     working_merge_and_redirect_indices => &
             mergeandredirectindices(.false., &
                                     .true., &
@@ -21348,6 +21361,14 @@ subroutine testReadMergesFromArray
                                     52)
     call assert_true(flood_merge_and_redirect_indices_collections(8)&
                      &%ptr%secondary_merge_and_redirect_indices%is_equal_to(working_merge_and_redirect_indices))
+    call assert_true(flood_merge_and_redirect_indices_collections(8)&
+                     &%ptr%secondary_merge)
+    call assert_true(flood_merge_and_redirect_indices_collections(8)&
+                     &%ptr%primary_merge_and_redirect_indices_count == 2)
+    call assert_true(size(flood_merge_and_redirect_indices_collections(8)&
+                     &%ptr%primary_merge_and_redirect_indices) == 2)
+    call assert_true(flood_merge_and_redirect_indices_collections(8)&
+                     &%ptr%primary_merge)
     working_merge_and_redirect_indices => &
             mergeandredirectindices(.true., &
                                     .false., &
@@ -21366,10 +21387,6 @@ subroutine testReadMergesFromArray
                                     60)
     call assert_true(flood_merge_and_redirect_indices_collections(8)&
                      &%ptr%primary_merge_and_redirect_indices(2)%ptr%is_equal_to(working_merge_and_redirect_indices))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(8)&
-                     &%ptr%primary_merge_and_redirect_indices(3)%ptr))
-    call assert_true(associated(flood_merge_and_redirect_indices_collections(8)&
-                     &%ptr%primary_merge_and_redirect_indices(4)%ptr))
     working_merge_and_redirect_indices => &
             mergeandredirectindices(.false., &
                                     .false., &
@@ -21379,6 +21396,12 @@ subroutine testReadMergesFromArray
                                     64)
     call assert_true(connect_merge_and_redirect_indices_collections(1)&
                      &%ptr%secondary_merge_and_redirect_indices%is_equal_to(working_merge_and_redirect_indices))
+    call assert_true(flood_merge_and_redirect_indices_collections(1)&
+                     &%ptr%secondary_merge)
+    call assert_true(flood_merge_and_redirect_indices_collections(1)&
+                     &%ptr%primary_merge_and_redirect_indices_count == 0)
+    call assert_false(flood_merge_and_redirect_indices_collections(1)&
+                     &%ptr%primary_merge)
     deallocate(array_of_flood_merges)
     deallocate(array_of_connect_merges)
 end subroutine testReadMergesFromArray

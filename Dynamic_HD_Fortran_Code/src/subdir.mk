@@ -70,7 +70,8 @@ F90_SRCS += \
 ../src/icosohedral_hd_and_lake_model/latlon_lake_model_interface_switcher_mod.f90 \
 ${TRANSPOSED_SOURCE_CODE_LOC}/latlon_lake_model_interface_switched_mod.f90 \
 ${TRANSPOSED_SOURCE_CODE_LOC}/latlon_lake_model_switched_mod.f90 \
-${TRANSPOSED_SOURCE_CODE_LOC}/latlon_lake_model_init_switched_mod.f90
+${TRANSPOSED_SOURCE_CODE_LOC}/latlon_lake_model_init_switched_mod.f90 \
+${TRANSPOSED_SOURCE_CODE_LOC}/latlon_lake_model_tree_switched_mod.f90
 endif
 
 OBJS += \
@@ -136,7 +137,8 @@ LATLON_HD_AND_LAKE_MODEL_OBJS += \
 ./src/latlon_hd_and_lake_model/latlon_lake_model_interface_switcher_mod.o \
 ./src/latlon_hd_and_lake_model/latlon_lake_model_interface_switched_mod.o \
 ./src/latlon_hd_and_lake_model/latlon_lake_model_switched_mod.o \
-./src/latlon_hd_and_lake_model/latlon_lake_model_init_switched_mod.o
+./src/latlon_hd_and_lake_model/latlon_lake_model_init_switched_mod.o \
+./src/latlon_hd_and_lake_model/latlon_lake_model_tree_switched_mod.o
 endif
 
 LATLON_LAKE_NUMBER_RETRIEVAL_OBJS += \
@@ -202,7 +204,8 @@ TEST_OBJS += \
 ./src/latlon_hd_and_lake_model/latlon_lake_model_interface_switcher_mod.o \
 ./src/latlon_hd_and_lake_model/latlon_lake_model_interface_switched_mod.o \
 ./src/latlon_hd_and_lake_model/latlon_lake_model_switched_mod.o \
-./src/latlon_hd_and_lake_model/latlon_lake_model_init_switched_mod.o
+./src/latlon_hd_and_lake_model/latlon_lake_model_init_switched_mod.o \
+./src/latlon_hd_and_lake_model/latlon_lake_model_tree_switched_mod.o
 endif
 
 MODS += \
@@ -277,7 +280,8 @@ MODS += \
 ./latlon_lake_model_interface_switched.mod \
 ./latlon_lake_model_interface_switcher.mod \
 ./latlon_lake_model_switched.mod \
-./latlon_lake_model_init_switched_mod.mod
+./latlon_lake_model_init_switched_mod.mod \
+./latlon_lake_model_tree_switched_mod.mod
 endif
 
 # Each subdirectory must supply rules for building sources it contributes
@@ -312,6 +316,12 @@ src/latlon_hd_and_lake_model/latlon_lake_model_switched_mod.o: ${TRANSPOSED_SOUR
 	@echo 'Finished building: $<'
 	@echo ' '
 src/latlon_hd_and_lake_model/latlon_lake_model_init_switched_mod.o: ${TRANSPOSED_SOURCE_CODE_LOC}/latlon_lake_model_init_switched_mod.f90
+	@echo 'Building file: $<'
+	@echo 'Invoking: GNU Fortran Compiler'
+	$(FORTRAN) $(FLAGS) -funderscoring -cpp -O0 -g -Wall -c -fmessage-length=0 -fPIC -o "$@" "$<" "-I $(NETCDF_F)/include"
+	@echo 'Finished building: $<'
+	@echo ' '
+src/latlon_hd_and_lake_model/latlon_lake_model_tree_switched_mod.o: ${TRANSPOSED_SOURCE_CODE_LOC}/latlon_lake_model_tree_switched_mod.f90
 	@echo 'Building file: $<'
 	@echo 'Invoking: GNU Fortran Compiler'
 	$(FORTRAN) $(FLAGS) -funderscoring -cpp -O0 -g -Wall -c -fmessage-length=0 -fPIC -o "$@" "$<" "-I $(NETCDF_F)/include"
@@ -422,10 +432,11 @@ src/latlon_hd_and_lake_model/latlon_lake_model_tree_mod.o: ../src/latlon_hd_and_
 src/latlon_hd_and_lake_model/latlon_lake_model_mod.o: ../src/latlon_hd_and_lake_model/latlon_lake_model_mod.f90 src/latlon_hd_and_lake_model/latlon_lake_logger_mod.o src/latlon_hd_and_lake_model/latlon_lake_model_tree_mod.o
 
 ifeq ($(COMPILE_TRANSPOSED_LAKE_MODEL),True)
-src/latlon_hd_and_lake_model/latlon_lake_model_interface_switched_mod.o: ${TRANSPOSED_SOURCE_CODE_LOC}/latlon_lake_model_interface_switched_mod.f90 src/latlon_hd_and_lake_model/latlon_lake_model_switched_mod.o src/latlon_hd_and_lake_model/latlon_lake_model_io_mod.o src/latlon_hd_and_lake_model/latlon_lake_model_init_switched_mod.o
-src/latlon_hd_and_lake_model/latlon_lake_model_switched_mod.o: ${TRANSPOSED_SOURCE_CODE_LOC}/latlon_lake_model_switched_mod.f90
-src/latlon_hd_and_lake_model/latlon_lake_model_init_switched_mod.o: ${TRANSPOSED_SOURCE_CODE_LOC}/latlon_lake_model_init_switched_mod.f90 src/latlon_hd_and_lake_model/latlon_lake_model_switched_mod.o
-src/latlon_hd_and_lake_model/latlon_lake_model_interface_switcher_mod.o: ../src/latlon_hd_and_lake_model/latlon_lake_model_interface_switcher_mod.f90 src/latlon_hd_and_lake_model/latlon_lake_model_interface_switched_mod.o src/latlon_hd_and_lake_model/latlon_lake_model_switched_mod.o src/latlon_hd_and_lake_model/latlon_lake_model_io_mod.o src/base/precision_mod.o src/base/parameters_mod.o
+src/latlon_hd_and_lake_model/latlon_lake_model_interface_switched_mod.o: ${TRANSPOSED_SOURCE_CODE_LOC}/latlon_lake_model_interface_switched_mod.f90 src/latlon_hd_and_lake_model/latlon_lake_model_switched_mod.o src/latlon_hd_and_lake_model/latlon_lake_model_io_mod.o src/latlon_hd_and_lake_model/latlon_lake_model_init_switched_mod.o src/latlon_hd_and_lake_model/latlon_lake_model_tree_switched_mod.o
+src/latlon_hd_and_lake_model/latlon_lake_model_switched_mod.o: ${TRANSPOSED_SOURCE_CODE_LOC}/latlon_lake_model_switched_mod.f90 src/latlon_hd_and_lake_model/latlon_lake_model_tree_switched_mod.o
+src/latlon_hd_and_lake_model/latlon_lake_model_init_switched_mod.o: ${TRANSPOSED_SOURCE_CODE_LOC}/latlon_lake_model_init_switched_mod.f90 src/latlon_hd_and_lake_model/latlon_lake_model_switched_mod.o src/latlon_hd_and_lake_model/latlon_lake_model_tree_switched_mod.o
+src/latlon_hd_and_lake_model/latlon_lake_model_tree_switched_mod.o: ${TRANSPOSED_SOURCE_CODE_LOC}/latlon_lake_model_tree_switched_mod.f90
+src/latlon_hd_and_lake_model/latlon_lake_model_interface_switcher_mod.o: ../src/latlon_hd_and_lake_model/latlon_lake_model_interface_switcher_mod.f90 src/latlon_hd_and_lake_model/latlon_lake_model_interface_switched_mod.o src/latlon_hd_and_lake_model/latlon_lake_model_switched_mod.o src/latlon_hd_and_lake_model/latlon_lake_model_io_mod.o src/base/precision_mod.o src/base/parameters_mod.o src/latlon_hd_and_lake_model/latlon_lake_model_tree_switched_mod.o
 endif
 
 src/latlon_hd_and_lake_model/latlon_lake_model_interface_mod.o: ../src/latlon_hd_and_lake_model/latlon_lake_model_mod.f90 src/latlon_hd_and_lake_model/latlon_lake_model_mod.o src/latlon_hd_and_lake_model/latlon_lake_model_io_mod.o

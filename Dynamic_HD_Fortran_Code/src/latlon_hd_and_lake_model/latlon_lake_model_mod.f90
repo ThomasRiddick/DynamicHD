@@ -78,6 +78,7 @@ end type mergeandredirectindicescollectionpointer
 type :: lakeparameters
   logical :: instant_throughflow
   real(dp) :: lake_retention_coefficient
+  real(dp) :: minimum_lake_volume_threshold
   logical, pointer, dimension(:,:) :: lake_centers
   real(dp), pointer, dimension(:,:) :: connection_volume_thresholds
   real(dp), pointer, dimension(:,:) :: flood_volume_thresholds
@@ -414,15 +415,26 @@ function createmergeindicescollectionsfromarray(array_in) &
     primary_merge_and_redirect_indices
   integer, dimension(:), pointer :: array_slice
   integer :: i,j
+  integer :: primary_merge_count
     allocate(merge_and_redirect_indices_collections(size(array_in,1)))
     do i = 1,size(array_in,1)
-      if (size(array_in,2)-1 > 0) then
-        allocate(primary_merge_and_redirect_indices(size(array_in,2)-1))
+      if (size(array_in,2) > 1) then
+        primary_merge_count = 0
+        do j = 2,size(array_in,2)
+          if (array_in(i,j,1) == 1) then
+            primary_merge_count = j - 1
+          end if
+        end do
+        if (primary_merge_count > 0) then
+          allocate(primary_merge_and_redirect_indices(primary_merge_count))
+        else
+          primary_merge_and_redirect_indices => null()
+        end if
       else
         primary_merge_and_redirect_indices => null()
       end if
       do j = 1,size(array_in,2)
-        if (array_in(i,j,1) /= 0) then
+        if (array_in(i,j,1) == 1) then
           array_slice => array_in(i,j,1:size(array_in,3))
           working_merge_and_redirect_indices => &
             mergeandredirectindices((j /= 1),array_slice)
@@ -431,6 +443,8 @@ function createmergeindicescollectionsfromarray(array_in) &
           else
             primary_merge_and_redirect_indices(j-1)%ptr => working_merge_and_redirect_indices
           end if
+        else if (j == 1) then
+          secondary_merge_and_redirect_indices => null()
         end if
       end do
       working_merge_and_redirect_indices_collection => &
@@ -593,6 +607,7 @@ subroutine initialiselakeparameters(this,lake_centers_in, &
   integer :: surface_cell_to_fine_cell_map_number
   integer :: map_number,number_of_lake_cells
     number_of_basins_in_coarse_cell = 0
+    this%minimum_lake_volume_threshold = 0.0000001
     this%lake_centers => lake_centers_in
     this%connection_volume_thresholds => connection_volume_thresholds_in
     this%flood_volume_thresholds => flood_volume_thresholds_in
@@ -1497,16 +1512,17 @@ subroutine remove_water(this,outflow)
                              this%lake_volume,"remove_water")
 #endif
     if (this%lake_type == filling_lake_type) then
+      drained = .true.
       if (outflow <= this%unprocessed_water) then
         this%unprocessed_water = this%unprocessed_water - outflow
         return
       end if
       outflow_local = outflow - this%unprocessed_water
       this%unprocessed_water = 0.0_dp
-      do while (outflow_local > 0.0_dp)
+      do while (outflow_local > 0.0_dp .or. drained)
         outflow_local = this%drain_current_cell(outflow_local,drained)
         if (drained) then
-        call this%rollback_filling_cell()
+          call this%rollback_filling_cell()
           merge_indices_index = this%get_merge_indices_index(is_flood_merge)
           if (merge_indices_index /= 0) then
             merge_indices_collection => &
@@ -1888,7 +1904,22 @@ function drain_current_cell(this,outflow,drained) result(outflow_out)
         this%lake_parameters%connection_volume_thresholds(this%previous_cell_to_fill_lat, &
                                                           this%previous_cell_to_fill_lon)
     end if
-    if (new_lake_volume >= minimum_new_lake_volume) then
+
+    if (new_lake_volume <= 0.0_dp .and. minimum_new_lake_volume <= 0.0_dp) then
+      this%lake_volume = new_lake_volume
+      drained = .true.
+      outflow_out = 0.0_dp
+    else if (new_lake_volume <= this%lake_parameters%minimum_lake_volume_threshold &
+             .and. minimum_new_lake_volume <= 0.0_dp) then
+      this%lake_volume = 0.0_dp
+      drained = .true.
+      outflow_out = 0.0_dp
+      this%lake_fields%lake_water_from_ocean(this%center_cell_coarse_lat, &
+                                           this%center_cell_coarse_lon) = &
+        this%lake_fields%lake_water_from_ocean(this%center_cell_coarse_lat, &
+                                             this%center_cell_coarse_lon) - &
+        new_lake_volume
+    else if (new_lake_volume >= minimum_new_lake_volume) then
       this%lake_volume = new_lake_volume
       drained = .false.
       outflow_out = 0.0_dp
