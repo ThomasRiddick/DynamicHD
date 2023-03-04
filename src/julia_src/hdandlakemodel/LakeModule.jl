@@ -793,14 +793,15 @@ function handle_event(lake::FillingLake,add_water::AddWater)
 end
 
 function handle_event(lake::FillingLake,remove_water::RemoveWater)
+  drained::Bool = true
   if remove_water.outflow <= lake.lake_variables.unprocessed_water
     lake.lake_variables.unprocessed_water -= remove_water.outflow
     return lake
   end
   outflow::Float64 = remove_water.outflow - lake.lake_variables.unprocessed_water
   lake.lake_variables.unprocessed_water = 0.0
-  while outflow > 0.0
-    outflow,drained::Bool = drain_current_cell(lake,outflow)
+  while outflow > 0.0 || drained
+    outflow,drained = drain_current_cell(lake,outflow)
     if drained
       rollback_filling_cell(lake)
       merge_indices_index::Int64,is_flood_merge::Bool =
@@ -1155,7 +1156,19 @@ function drain_current_cell(lake::FillingLake,outflow::Float64)
     lake_fields.flooded_lake_cells(previous_cell_to_fill)  ?
     lake_parameters.flood_volume_thresholds(previous_cell_to_fill) :
     lake_parameters.connection_volume_thresholds(previous_cell_to_fill)
-  if new_lake_volume >= minimum_new_lake_volume
+  if new_lake_volume <= 0.0 && minimum_new_lake_volume <= 0.0
+    lake_variables.lake_volume = new_lake_volume
+    return 0.0,true
+  elseif (new_lake_volume <=
+          lake_parameters.lake_model_parameters.minimum_lake_volume_threshold) &&
+         (minimum_new_lake_volume <= 0.0)
+    lake_variables.lake_volume = 0.0
+    set!(lake_fields.lake_water_from_ocean,
+         lake_variables.center_cell_coarse_coords,
+         lake_fields.lake_water_from_ocean(lake_variables.center_cell_coarse_coords) -
+         new_lake_volume)
+    return 0.0,true
+  elseif new_lake_volume >= minimum_new_lake_volume
     lake_variables.lake_volume = new_lake_volume
     return 0.0,false
   else
