@@ -1229,6 +1229,9 @@ function check_if_merge_is_possible(lake::Lake,merge_indices::MergeAndRedirectIn
     return false,true,merge_type
   elseif isa(other_lake,OverflowingLake)
     other_lake_target_lake_number::Int64 = lake_fields.lake_numbers(other_lake.next_merge_target_coords)
+    if other_lake_target_lake_number == 0
+      return false,false,merge_type
+    end
     other_lake_target_lake::Lake = lake_variables.other_lakes[other_lake_target_lake_number]
     other_lake_target_lake = find_true_primary_lake(other_lake_target_lake)
     if (get_lake_variables(other_lake_target_lake)::LakeVariables).lake_number == lake_variables.lake_number

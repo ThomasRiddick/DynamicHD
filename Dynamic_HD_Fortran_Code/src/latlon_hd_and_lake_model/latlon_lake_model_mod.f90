@@ -2034,6 +2034,11 @@ function check_if_merge_is_possible(this,merge_indices,already_merged, &
       other_lake_target_lake_number = &
         this%lake_fields%lake_numbers(other_lake%next_merge_target_lat, &
                                       other_lake%next_merge_target_lon)
+      if (other_lake_target_lake_number == 0) then
+        merge_possible = .false.
+        already_merged = .false.
+        return
+      end if
       other_lake_target_lake => &
         this%lake_fields%other_lakes(other_lake_target_lake_number)%lake_pointer
       other_lake_target_lake => find_true_primary_lake(other_lake_target_lake)

@@ -64,11 +64,11 @@ function main()
     runoffs = deepcopy(drainages)
   end
   if args["lake-evaporation-file"] != nothing
-    lake_evaporations = load_lake_evaporation_fields(args["lake-evaporation-file"],grid,
+    lake_evaporations = load_lake_evaporation_fields(args["lake-evaporation-file"],surface_model_grid,
                                                      last_timestep=12)
     lake_evaporations = [divide(x,30.0) for x in lake_evaporations]
   else
-    lake_evaporation::Field{Float64} = LatLonField{Float64}(river_parameters.grid,0.0)
+    lake_evaporation::Field{Float64} = LatLonField{Float64}(surface_model_grid,0.0)
     lake_evaporations = repeat(lake_evaporation,12*51)
   end
   if args["lake-para-file"] != nothing
@@ -161,10 +161,10 @@ end
 #push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/transient_sim_1/results_for_1400/lake_model_start_1400.nc")
 #push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/transient_sim_1/results_for_1400/hdstart_1400.nc")
 # push!(ARGS,"-t6000")
-push!(ARGS,"-p/Users/thomasriddick/Documents/data/temp/8510/hdpara_8510k.nc")
-push!(ARGS,"-l/Users/thomasriddick/Documents/data/temp/8510/lakepara_8510k.nc")
-push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/8510/lakestart_8510k.nc")
-push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/8510/hdrestart_8510k.nc")
+push!(ARGS,"-p/Users/thomasriddick/Documents/data/temp/10070/hdpara_10070k.nc")
+push!(ARGS,"-l/Users/thomasriddick/Documents/data/temp/10070/lakepara_10070k.nc")
+push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/10070/lakestart_10070k.nc")
+push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/10070/restart_rid004_hd_29291231.nc")
 #push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/transient_sim_1/results_for_1400/lake_model_start_1400.nc")
 #push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/transient_sim_1/results_for_1400/hdstart_1400.nc")
 push!(ARGS,"-t1000")

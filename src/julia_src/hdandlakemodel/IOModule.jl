@@ -295,18 +295,24 @@ function load_lake_parameters(lake_para_filepath::AbstractString,grid::Grid,hd_g
       load_field(file_handle,grid,"flood_volume_thresholds",Float64)
     connect_merge_and_redirect_indices_index::Field{Int64} =
       load_field(file_handle,grid,"connect_merge_and_redirect_indices_index",Int64)
+    add_offset(connect_merge_and_redirect_indices_index,1,Int64[])
     flood_merge_and_redirect_indices_index::Field{Int64} =
       load_field(file_handle,grid,"flood_merge_and_redirect_indices_index",Int64)
+    add_offset(flood_merge_and_redirect_indices_index,1,Int64[])
     cell_areas_on_surface_model_grid::Field{Float64} =
       load_field(file_handle,surface_model_grid,"cell_areas_on_surface_model_grid",Float64)
-    variable::NcVar = file_handle["connect_merges_and_redirects"]
-    connect_merges_and_redirect_array::Array{Int64} = NetCDF.readvar(variable)
+    # variable::NcVar = file_handle["connect_merges_and_redirects"]
+    # connect_merges_and_redirect_array::Array{Int64} = NetCDF.readvar(variable)
+    # connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+    #   create_merge_indices_collections_from_array(connect_merges_and_redirect_array)
+    # add_offset(connect_merge_and_redirect_indices_collections,1)
     connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
-      create_merge_indices_collections_from_array(connect_merges_and_redirect_array)
+      Vector{MergeAndRedirectIndicesCollection}()
     variable = file_handle["flood_merges_and_redirects"]
     flood_merges_and_redirect_array::Array{Int64} = NetCDF.readvar(variable)
     flood_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
       create_merge_indices_collections_from_array(flood_merges_and_redirect_array)
+    add_offset(flood_merge_and_redirect_indices_collections,1)
     return LakeParameters(lake_centers,
                           connection_volume_thresholds,
                           flood_volume_thresholds,
