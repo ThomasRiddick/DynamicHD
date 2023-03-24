@@ -76,9 +76,6 @@ protected:
 	virtual bool check_for_sinks_and_set_downstream_coords(coords* coords_in) = 0;
   /// Check if given coords are sink in the coarse river directions
   virtual bool coarse_cell_is_sink(coords* coords_in) = 0;
-  /// If cell is already flooded simply return true, if it is connected push it as a
-  /// potential cell to flood and return true otherwise return false
-  bool skip_center_cell();
   /// Run algorithm over a single basin
 	void evaluate_basin();
   /// Initialize the necessary variables for running over a basin
@@ -101,14 +98,16 @@ protected:
   /// Process a given neighbor when searching for additional merges at a
   /// given level
   void process_level_neighbor();
+  void rebuild_center_cell(coords* coords_in,height_types height_type_in);
+  void process_neighbors_when_rebuilding_basin(coords* coords_in);
   void set_previous_filled_cell_basin_number();
   void read_new_center_cell_variables();
   void update_center_cell_variables();
   void update_previous_filled_cell_variables();
-  bool possible_merge_point_reached();
   void rebuild_secondary_basin(int root_secondary_basin_number);
-  void process_primary_merge();
-  void process_secondary_merge();
+  void process_primary_merge(int target_basin_number,
+                             int root_target_basin_number);
+  void process_secondary_merge(coords* other_basin_entry_coords);
   void reprocess_secondary_merge(int root_secondary_basin_number,
                                  int target_primary_basin_number);
   void set_primary_merge(merge_and_redirect_indices* working_redirect,
@@ -118,7 +117,7 @@ protected:
                               coords* redirect_coords,
                               coords* target_basin_center_coords,
                               height_types redirect_height_type);
-  void set_preliminary_secondary_redirect();
+  void set_preliminary_secondary_redirect(coords* other_basin_entry_coords);
 	void set_primary_redirect(merge_and_redirect_indices* working_redirect,
                             int target_basin_number_in);
 	void find_and_set_non_local_redirect_index_from_coarse_catchment_num(merge_and_redirect_indices*
@@ -127,7 +126,8 @@ protected:
                                                                        int coarse_catchment_number);
 	void search_process_neighbors();
 	void search_process_neighbor();
-  void process_additional_merges_at_same_level(bool look_for_primary_merge);
+  bool process_all_merges_at_given_level();
+  bool already_in_basin(coords* coords_in,height_types height_type_in);
 	void find_and_set_previous_cells_non_local_redirect_index(merge_and_redirect_indices* working_redirect,
                                                             coords* current_center_coords,
                                                             coords* target_basin_center_coords);
@@ -136,7 +136,8 @@ protected:
 	priority_cell_queue q;
 	queue<landsea_cell*> search_q;
   queue<basin_cell*> level_q;
-  queue<basin_cell*> level_nbr_q;
+  priority_cell_queue level_nbr_q;
+  queue<pair<int,int>*> primary_merge_q;
 	grid_params* _grid_params = nullptr;
 	grid_params* _coarse_grid_params = nullptr;
 	grid* _grid = nullptr;
@@ -183,7 +184,6 @@ protected:
   sink_filling_algorithm_4* sink_filling_alg;
 	int basin_number;
   int  catchments_from_sink_filling_catchment_num;
-  bool skipped_previous_center_cell;
   bool secondary_merge_found;
   double lake_area;
   double new_center_cell_height;
