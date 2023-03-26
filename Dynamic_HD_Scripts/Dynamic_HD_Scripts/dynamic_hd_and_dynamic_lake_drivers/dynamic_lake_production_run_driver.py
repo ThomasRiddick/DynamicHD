@@ -995,7 +995,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         water_to_redistribute = \
         iodriver.advanced_field_loader(self.input_water_to_redistribute_filepath,
                                        field_type='Generic',
-                                       fieldname="lake_field")
+                                       fieldname="lakevol")
         fine_grid = basin_catchment_numbers.get_grid()
         fine_shape = basin_catchment_numbers.get_data().shape
         coarse_grid = grid.makeGrid('HD')

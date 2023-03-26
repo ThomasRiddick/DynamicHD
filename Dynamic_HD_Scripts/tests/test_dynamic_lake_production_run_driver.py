@@ -11,7 +11,7 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
     lakepara_offline_run_result_for_comparison_deglac  = os.path.join(data_dir,"unit_test_data",
                                                                       "lakeparas_trial_run_for_mid_deglaciation_20230218_010439_deglac.nc")
     lakestart_offline_run_result_for_comparison_deglac = os.path.join(data_dir,"unit_test_data",
-                                                                      "lakestart_trial_run_for_mid_deglaciation_20221116_113050_deglac.nc")
+                                                                      "lakestart_trial_run_for_mid_deglaciation_20230326_152521_deglac.nc")
     hdpara_offline_run_result_for_comparison_deglac  = os.path.join(data_dir,"unit_test_data",
                                                                     "hdpara_trial_run_for_mid_deglaciation_20221116_113050_deglac.nc")
     hdstart_offline_run_result_for_comparison_deglac = os.path.join(data_dir,"unit_test_data",

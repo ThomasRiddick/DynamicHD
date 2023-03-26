@@ -17,21 +17,24 @@ import socket
 from sys import platform
 
 if platform == "linux" or platform == "linux2":
-    netcdfc = "/sw/stretch-x64/netcdf/netcdf_c-4.6.1"
-    netcdfcxx = "/sw/stretch-x64/netcdf/netcdf_cxx-4.3.0-gccsys"
-    extra_compile_args = ['-std=gnu++11',
-                          "-isystem" + netcdfcxx + "/include",
-                          "-isystem" + netcdfc +"/include"]
     if socket.getfqdn().endswith("lvt.dkrz.de"):
+        netcdfc = "/home/m/m300468/sw-spack/netcdf-c-4.8.1-khy3ru"
+        netcdfcxx = "/home/m/m300468/sw-spack/netcdf-cxx4-4.3.1-d54zya"
         extra_links_args = ["-shared",
-                            "-isystem" + netcdfcxx + "/include",
-                            "-isystem" + netcdfc +"/include"]
+                            "-L" + netcdfcxx + "/lib","-lnetcdf_c++4",
+                            "-L" + netcdfc +"/lib","-lnetcdf"]
+        extra_compile_args = ['-std=gnu++11','-DUSE_NETCDFCPP',
+                              "-isystem" + netcdfcxx + "/include",
+                              "-isystem" + netcdfc +"/include"]
     else:
+        netcdfc = "/sw/stretch-x64/netcdf/netcdf_c-4.6.1"
+        netcdfcxx = "/sw/stretch-x64/netcdf/netcdf_cxx-4.3.0-gccsys"
+        extra_compile_args = ['-std=gnu++11',
+                              "-isystem" + netcdfcxx + "/include",
+                              "-isystem" + netcdfc +"/include"]
         extra_links_args = ['-static-libstdc++',"-shared",
                             "-isystem" + netcdfcxx + "/include",
                             "-isystem" + netcdfc +"/include"]
-    if socket.getfqdn().endswith(".hpc.dkrz.de"):
-      os.environ["LDSHARED"] = "/sw/rhel6-x64/gcc/binutils-2.26-gccsys/bin/ld"
 elif platform == "darwin":
     #specify gcc as the compiler (which is despite the name actually a version of clang on mac)
     os.environ["CC"] = "/usr/bin/gcc"

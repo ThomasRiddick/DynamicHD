@@ -7,6 +7,8 @@
 
 #ifndef EVALUATE_BASINS_HPP_
 #define EVALUATE_BASINS_HPP_
+#include <iostream>
+using namespace std;
 
 void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                                            double* raw_orography_in,

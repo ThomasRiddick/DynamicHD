@@ -213,6 +213,7 @@ void latlon_evaluate_basins(bool* minima_in,
   int* connect_merge_and_redirect_indices_index_in_ext =
     merges_and_redirects_out->get_connect_merge_and_redirect_indices_index()->get_array();
   #if USE_NETCDFCPP
+  cout << "Writing merges to file: " << merges_filepath << endl;
   pair<tuple<int,int,int>*,int*>* array_and_dimensions =
     merges_and_redirects_out->get_merges_and_redirects_as_array(true);
   NcFile merges_and_redirects_file(merges_filepath.c_str(), NcFile::newFile);
@@ -265,6 +266,32 @@ void latlon_evaluate_basins(bool* minima_in,
       basin_catchment_numbers_in[i-scale_factor*nlon_fine] =
         basin_catchment_numbers_in_ext[i];
     }
+  }
+  //Consistency checks
+  for (int i = 0; i < nlat_fine*nlon_fine; i++){
+    int flood_volume_threshold = flood_volume_thresholds_in[i];
+    int connect_volume_threshold = connection_volume_thresholds_in[i];
+    int flood_next_cell_lat_index = flood_next_cell_lat_index_in[i];
+    int flood_next_cell_lon_index = flood_next_cell_lon_index_in[i];
+    int connect_next_cell_lat_index = connect_next_cell_lat_index_in[i];
+    int connect_next_cell_lon_index = connect_next_cell_lon_index_in[i];
+    int connect_merge_and_redirect_indices_index =
+      connect_merge_and_redirect_indices_index_in[i];
+    int flood_merge_and_redirect_indices_index =
+      flood_merge_and_redirect_indices_index_in[i];
+    if ((flood_next_cell_lat_index != -1 && flood_next_cell_lon_index == -1) ||
+        (flood_next_cell_lat_index == -1 && flood_next_cell_lon_index != -1) ||
+        (connect_next_cell_lat_index != -1 && connect_next_cell_lon_index == -1) ||
+        (connect_next_cell_lat_index == -1 && connect_next_cell_lon_index != -1) ||
+        (flood_next_cell_lat_index != -1 && flood_volume_threshold == -1.0) ||
+        (flood_next_cell_lat_index == -1 && flood_volume_threshold != -1.0)||
+        (connect_next_cell_lat_index != -1 && connect_volume_threshold == -1.0) ||
+        (connect_next_cell_lat_index == -1 && connect_volume_threshold != -1.0) ||
+        (connect_merge_and_redirect_indices_index != -1 &&
+         connect_next_cell_lat_index == -1) ||
+        (flood_merge_and_redirect_indices_index != -1 &&
+         flood_next_cell_lat_index == -1))
+      throw runtime_error("Inconsistent output data from basin evaluation");
   }
   delete grid_params_in;
   delete coarse_grid_params_in;
