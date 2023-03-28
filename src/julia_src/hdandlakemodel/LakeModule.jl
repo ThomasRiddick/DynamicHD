@@ -650,6 +650,7 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,run_lake::
   for_all(lake_parameters.surface_model_grid) do coords::Coords
     number_lake_cells::Int64 = lake_fields.number_lake_cells(coords)
     if evaporation_on_surface_grid(coords) != 0.0 && number_lake_cells > 0
+      cell_count_check::Int64 = 0
       map_index::Int64 = lake_parameters.surface_cell_to_fine_cell_map_numbers(coords)
       evaporation_per_lake_cell::Float64 = evaporation_on_surface_grid(coords)/number_lake_cells
       if map_index != 0
@@ -662,9 +663,13 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,run_lake::
                 (lake_parameters.flood_only(fine_coords) ||
                  lake_fields.connected_lake_cells(fine_coords)))
               lake_fields.evaporation_from_lakes[target_lake_index] += evaporation_per_lake_cell
+              cell_count_check += 1
             end
           end
         end
+      end
+      if cell_count_check != number_lake_cells
+        error("Inconsitent cell count when assigning evaporation")
       end
     end
   end
@@ -820,6 +825,8 @@ function handle_event(lake::FillingLake,remove_water::RemoveWater)
             end
           elseif merge_type == secondary_merge
             error("Merge logic failure")
+          else
+            error("Unrecognised merge type")
           end
         end
       end
@@ -892,6 +899,8 @@ function handle_event(lake::OverflowingLake,remove_water::RemoveWater)
         if merge_indices.merged
           error("Merge logic failure")
         end
+      else
+        error("Unrecognised merge type")
       end
     end
   end
@@ -1351,6 +1360,8 @@ function conditionally_rollback_primary_merge(lake::Lake,merge_indices::MergeAnd
         if merge_indices.merged
           error("Merge logic failure")
         end
+      else
+          error("Unrecognised merge type")
       end
     end
   end

@@ -33,12 +33,15 @@ end
 function load_field(file_handle::NcFile,grid::Grid,variable_name::AbstractString,
                     field_type::DataType,;timestep::Int64=-1)
   variable::NcVar = file_handle[variable_name]
-  values::Array{field_type,get_number_of_dimensions(grid)} = NetCDF.readvar(variable)
+  extra_dims = timestep == -1 ? 0 : 1
+  values_orig::Array{field_type,get_number_of_dimensions(grid)+extra_dims} =
+    NetCDF.readvar(variable)
+  local values::Array{field_type,get_number_of_dimensions(grid)}
   if isa(grid,LatLonGrid)
     if timestep == -1
-      values = permutedims(values, [2,1])
+      values = permutedims(values_orig, [2,1])
     else
-      values = permutedims(values, [2,1])[:,:,timestep]
+      values = permutedims(values_orig[:,:,timestep], [2,1])
     end
   end
   return Field{field_type}(grid,values)
@@ -423,8 +426,8 @@ function load_drainage_fields(drainages_filename::AbstractString,grid::Grid;
   drainages::Array{Field{Float64},1} = Field{Float64}[]
   try
     for i::Int64 = first_timestep:last_timestep
-      drainages[i] =  load_field(file_handle,grid,"drainages",
-                                 Float64;timestep=i)
+      push!(drainages,load_field(file_handle,grid,"drainage",
+                                 Float64;timestep=i))
     end
   finally
     NetCDF.close(file_handle)
@@ -439,8 +442,8 @@ function load_runoff_fields(runoffs_filename::AbstractString,grid::Grid;
   runoffs::Array{Field{Float64},1} = Field{Float64}[]
   try
     for i::Int64 = first_timestep:last_timestep
-      runoffs[i] = load_field(file_handle,grid,"runoffs",
-                              Float64;timestep=i)
+      push!(runoffs,load_field(file_handle,grid,"runoff",
+                               Float64;timestep=i))
     end
   finally
     NetCDF.close(file_handle)
@@ -456,8 +459,8 @@ function load_lake_evaporation_fields(lake_evaporations_filename::AbstractString
   lake_evaporations::Array{Field{Float64},1} = Field{Float64}[]
   try
     for i::Int64 = first_timestep:last_timestep
-      lake_evaporations[i] = load_field(file_handle,grid,"evaporation",
-                              Float64;timestep=i)
+      push!(lake_evaporations,load_field(file_handle,grid,"lake_height_change",
+                                         Float64;timestep=i))
     end
   finally
     NetCDF.close(file_handle)
