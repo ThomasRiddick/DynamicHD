@@ -14,6 +14,68 @@ from Dynamic_HD_Scripts.interface.cpp_interface.libs \
     import follow_streams_wrapper
 from Dynamic_HD_Scripts.tools import compute_catchments as cc
 
+class MergeAndRedirectIndices(object):
+    pass
+
+class LatLonMergeAndRedirectIndices(MergeAndRedirectIndices):
+
+    def __init__(self,
+                 is_primary_merge,
+                 local_redirect,
+                 merge_target_lat_index,
+                 merge_target_lon_index,
+                 redirect_lat_index,
+                 redirect_lon_index):
+        self.is_primary_merge = is_primary_merge
+        self.local_redirect = local_redirect
+        self.merge_target_lat_index = merge_target_lat_index
+        self.merge_target_lon_index = merge_target_lon_index
+        self.redirect_lat_index = redirect_lat_index
+        self.redirect_lon_index = redirect_lon_index
+
+    def read_merge_and_redirect_indices_from_array(is_primary_merge,array_in):
+        self.is_primary_merge = is_primary_merge
+        self.local_redirect =  (array_in[1]==1)
+        self.merge_target_lat_index = array_in[2]
+        self.merge_target_lon_index = array_in[3]
+        self.redirect_lat_index = array_in[4]
+        self.redirect_lon_index = array_in[5]
+
+class  MergeAndRedirectIndicesCollection(object):
+    def __init__(self,
+                 primary_merge_and_redirect_indices,
+                 secondary_merge_and_redirect_indices):
+      self.primary_merge = (primary_merge_and_redirect_indices is not None)
+      self.secondary_merge = (secondary_merge_and_redirect_indices is not None)
+      self.primary_merge_and_redirect_indices = \
+        primary_merge_and_redirect_indices
+      self.secondary_merge_and_redirect_indices = \
+        secondary_merge_and_redirect_indices
+
+def create_merge_indices_collections_from_array(array_in):
+    merge_and_redirect_indices_collections = []
+    permuted_array = np.swapaxes(array_in,0,2)
+    for row in permuted_array:
+        primary_merge_and_redirect_indices = []
+        for j in range(row.shape[0]):
+          if row[j,1] == 1:
+            working_merge_and_redirect_indices = \
+              read_merge_and_redirect_indices_from_array((j != 1),row[j,:])
+            if j == 1:
+              secondary_merge_and_redirect_indices = working_merge_and_redirect_indices
+            else:
+              primary_merge_and_redirect_indices.append(working_merge_and_redirect_indices)
+          elif j == 1:
+            secondary_merge_and_redirect_indices = None
+    primary_merge_and_redirect_indices = (primary_merge_and_redirect_indices
+                                          if len(primary_merge_and_redirect_indices) != 0
+                                          else None)
+    working_merge_and_redirect_indices_collection = \
+      MergeAndRedirectIndicesCollection(primary_merge_and_redirect_indices,
+                                        secondary_merge_and_redirect_indices)
+    merge_and_redirect_indices_collections.append(working_merge_and_redirect_indices_collection)
+    return merge_and_redirect_indices_collections
+
 class CatchmentTrees(object):
 
     def __init__(self):
@@ -130,34 +192,16 @@ def connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
                                                                field_type='Generic',
                                                                fieldname=
                                                                "flood_next_cell_lon_index")
-    flood_redirect_lat = iodriver.advanced_field_loader(lake_parameters_filepath,
-                                                        field_type='Generic',
-                                                        fieldname=
-                                                        "flood_redirect_lat_index")
-    flood_redirect_lon = iodriver.advanced_field_loader(lake_parameters_filepath,
-                                                        field_type='Generic',
-                                                        fieldname=
-                                                        "flood_redirect_lon_index")
-    additional_flood_redirect_lat = iodriver.advanced_field_loader(lake_parameters_filepath,
-                                                        field_type='Generic',
-                                                        fieldname=
-                                                        "additional_flood_redirect_lat_index")
-    additional_flood_redirect_lon = iodriver.advanced_field_loader(lake_parameters_filepath,
-                                                        field_type='Generic',
-                                                        fieldname=
-                                                        "additional_flood_redirect_lon_index")
-    local_redirect = iodriver.advanced_field_loader(lake_parameters_filepath,
-                                                    field_type='Generic',
-                                                    fieldname=\
-                                                    "flood_local_redirect")
-    additional_local_redirect = iodriver.advanced_field_loader(lake_parameters_filepath,
-                                                               field_type='Generic',
-                                                               fieldname=\
-                                                               "additional_flood_local_redirect")
-    merge_types = iodriver.advanced_field_loader(lake_parameters_filepath,
-                                                 field_type='Generic',
-                                                 fieldname=\
-                                                 "merge_points")
+    flood_merge_and_redirect_indices_index = \
+        iodriver.advanced_field_loader(lake_parameters_filepath,
+                                       field_type='Generic',
+                                       fieldname=
+                                       "flood_merge_and_redirect_indices_index")
+    with netCDF4.Dataset(lake_parameters_filepath,mode='r',format='NETCDF4') as dataset:
+        merges_and_redirects_array = \
+            np.array(dataset.variables["flood_merges_and_redirects"][:,:,:])
+    merges_and_redirects = \
+        create_merge_indices_collections_from_array(merges_and_redirects_array)
     river_directions = iodriver.advanced_field_loader(river_directions_filepath,
                                                       field_type='Generic',
                                                       fieldname=\
@@ -170,11 +214,8 @@ def connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
     catchments, corrected_cumulative_flow = \
         connect_coarse_lake_catchments(coarse_catchments,lake_centers,basin_catchment_numbers,
                                        flood_next_cell_index_lat,flood_next_cell_index_lon,
-                                       flood_redirect_lat,flood_redirect_lon,
-                                       additional_flood_redirect_lat,
-                                       additional_flood_redirect_lon,
-                                       local_redirect,additional_local_redirect,
-                                       merge_types,river_directions,scale_factor,
+                                       flood_merge_and_redirect_indices_index,
+                                       merges_and_redirects,river_directions,scale_factor,
                                        cumulative_flow=(cumulative_flow if cumulative_flow_filepath
                                                         is not None else None),
                                        correct_cumulative_flow=(True if cumulative_flow_filepath
@@ -191,10 +232,8 @@ def connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
 #Remember - Tuples trigger basic indexing, lists don't
 def connect_coarse_lake_catchments(coarse_catchments,lake_centers,basin_catchment_numbers,
                                    flood_next_cell_index_lat,flood_next_cell_index_lon,
-                                   flood_redirect_lat,flood_redirect_lon,
-                                   additional_flood_redirect_lat,additional_flood_redirect_lon,
-                                   local_redirect,additional_local_redirect,
-                                   merge_types,river_directions,scale_factor = 3,
+                                   flood_merge_and_redirect_indices_index,
+                                   merges_and_redirects,river_directions,scale_factor = 3,
                                    correct_cumulative_flow=False,
                                    cumulative_flow=None):
     if correct_cumulative_flow:
@@ -210,45 +249,41 @@ def connect_coarse_lake_catchments(coarse_catchments,lake_centers,basin_catchmen
                                                 grid_type=lake_centers.get_grid())
     overflow_coords_lons = field.makeEmptyField(field_type='Generic',dtype=np.int64,
                                                 grid_type=lake_centers.get_grid())
+    merge_coords_list = \
+        np.argwhere(flood_merge_and_redirect_indices_index.get_data() != -1).tolist()
+
+    secondary_merge_locations = field.makeEmptyField(field_type='Generic',dtype=np.bool_,
+                                                     grid_type=lake_centers.get_grid())
+    secondary_merge_locations.set_all(False)
+    for merge_coords in merge_coords_list:
+        working_index = flood_merge_and_redirect_indices_index.get_data()[tuple(merge_coords)]
+        if merges_and_redirects[working_index].secondary_merge:
+            secondary_merge_locations.data[tuple(merge_coords)] = True
     for lake_center_coords in lake_centers_list:
         basin_number = basin_catchment_numbers.get_data()[tuple(lake_center_coords)]
         while True:
             secondary_merge_coords = np.argwhere(
                                      np.logical_and(
-                                     np.logical_or(merge_types.get_data() == 10,
-                                                   merge_types.get_data() == 11),
+                                     secondary_merge_locations.get_data(),
                                      basin_catchment_numbers.get_data() == basin_number))[0,:].tolist()
-            double_merge = np.any(np.logical_and(merge_types.get_data() == 11,
-                                  basin_catchment_numbers.get_data() == basin_number))
-            basin_number = basin_catchment_numbers.get_data()[flood_next_cell_index_lat.get_data()[tuple(secondary_merge_coords)],
-                                                              flood_next_cell_index_lon.get_data()[tuple(secondary_merge_coords)]]
+            working_secondary_merge_index = flood_merge_and_redirect_indices_index.\
+                                            get_data()[tuple(secondary_merge_coords)]
+            working_secondary_merge = merges_and_redirects[working_secondary_merge_index].\
+                                      secondary_merge_and_redirect_indices
+            basin_number = basin_catchment_numbers.get_data()[working_secondary_merge.merge_target_lat_index,
+                                                              working_secondary_merge.merge_target_lon_index]
             if basin_number == 0:
-                is_local_redirect = ((local_redirect.get_data()[tuple(secondary_merge_coords)]) if not double_merge else
-                                     (additional_local_redirect.get_data()[tuple(secondary_merge_coords)]))
-                if is_local_redirect:
-                    if double_merge:
-                        basin_number = \
-                            basin_catchment_numbers.\
-                            get_data()[additional_flood_redirect_lat.get_data()[tuple(secondary_merge_coords)],
-                                       additional_flood_redirect_lon.get_data()[tuple(secondary_merge_coords)]]
-                    else:
-                        basin_number = \
-                            basin_catchment_numbers.\
-                            get_data()[flood_redirect_lat.get_data()[tuple(secondary_merge_coords)],
-                                       flood_redirect_lon.get_data()[tuple(secondary_merge_coords)]]
+                if working_secondary_merge.local_redirect:
+                    basin_number = \
+                        basin_catchment_numbers.\
+                        get_data()[working_secondary_merge.redirect_lat_index,
+                                   working_secondary_merge.redirect_lon_index]
                 else:
-                    if double_merge:
-                        overflow_catchment = \
-                            coarse_catchments.get_data()[additional_flood_redirect_lat.get_data()[tuple(secondary_merge_coords)],
-                                                         additional_flood_redirect_lon.get_data()[tuple(secondary_merge_coords)]]
-                        overflow_coords = (additional_flood_redirect_lat.get_data()[tuple(secondary_merge_coords)],
-                                           additional_flood_redirect_lon.get_data()[tuple(secondary_merge_coords)])
-                    else:
-                        overflow_catchment = \
-                            coarse_catchments.get_data()[flood_redirect_lat.get_data()[tuple(secondary_merge_coords)],
-                                                         flood_redirect_lon.get_data()[tuple(secondary_merge_coords)]]
-                        overflow_coords = (flood_redirect_lat.get_data()[tuple(secondary_merge_coords)],
-                                           flood_redirect_lon.get_data()[tuple(secondary_merge_coords)])
+                    overflow_catchment = \
+                        coarse_catchments.get_data()[working_secondary_merge.redirect_lat_index,
+                                                     working_secondary_merge.redirect_lon_index]
+                    overflow_coords = (working_secondary_merge.redirect_lat_index,
+                                       working_secondary_merge.redirect_lon_index)
                     break
         overflow_catchments.get_data()[tuple(lake_center_coords)] = overflow_catchment
         overflow_coords_lats.get_data()[tuple(lake_center_coords)] = overflow_coords[0]
