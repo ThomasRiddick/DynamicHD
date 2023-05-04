@@ -869,11 +869,17 @@ contains
                 write(*,*) "Error in loop breaking code"
                 stop
             end if
-            if (new_fine_coords%lat <= 0 .or. new_fine_coords%lon <= 0 .or. &
-                new_fine_coords%lat > nlat .or. new_fine_coords%lon > nlon ) then
-                write(*,*) "Error in loop breaking code"
-                write(*,*) "Wrapping for loop breaking has not been implemented!"
-                stop
+            if ( new_fine_coords%lat <= 0 ) then
+                new_fine_coords%lat = nlat + new_fine_coords%lat
+            end if
+            if ( new_fine_coords%lon <= 0 ) then
+                new_fine_coords%lon = nlon + new_fine_coords%lon
+            end if
+            if ( new_fine_coords%lat > nlat ) then
+                new_fine_coords%lat =  new_fine_coords%lat - nlat
+            end if
+            if ( new_fine_coords%lon > nlon ) then
+                new_fine_coords%lon = new_fine_coords%lon - nlon
             end if
             new_coarse_cell_index = this%expanded_cell_numbers_data(new_fine_coords%lat,&
                                                                     new_fine_coords%lon)
