@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "Running Version 3.11 of the Dynamic HD Parameters Generation Code"
+echo "Running Version 3.12 of the Dynamic HD Parameters Generation Code"
 start_time=$(date +%s%N)
 
 #Define module loading function
