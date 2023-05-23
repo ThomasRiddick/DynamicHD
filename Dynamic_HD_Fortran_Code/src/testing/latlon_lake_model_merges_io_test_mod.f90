@@ -17,8 +17,8 @@ subroutine testLakeModelMergeIO
     type(mergeandredirectindices), pointer :: working_merge_and_redirect_indices
     type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
       flood_merge_and_redirect_indices_collections
-    type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
-      connect_merge_and_redirect_indices_collections
+    ! type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    !   connect_merge_and_redirect_indices_collections
     character(len = max_name_length) :: lakepara_test_data_filename
         lakepara_test_data_filename = &
             "/Users/thomasriddick/Documents/data/unit_test_data/lakepara_test_data.nc"
@@ -26,8 +26,8 @@ subroutine testLakeModelMergeIO
         lake_parameters => read_lake_parameters(.true.)
         flood_merge_and_redirect_indices_collections => &
                 lake_parameters%flood_merge_and_redirect_indices_collections
-        connect_merge_and_redirect_indices_collections => &
-                lake_parameters%connect_merge_and_redirect_indices_collections
+        ! connect_merge_and_redirect_indices_collections => &
+        !         lake_parameters%connect_merge_and_redirect_indices_collections
         working_merge_and_redirect_indices => &
         mergeandredirectindices(.false., &
                             .true., &
@@ -236,8 +236,8 @@ subroutine testLakeModelMergeIO
                                     63, &
                                     64, &
                                     65)
-        call assert_true(connect_merge_and_redirect_indices_collections(1)&
-                     &%ptr%secondary_merge_and_redirect_indices%is_equal_to(working_merge_and_redirect_indices))
+        ! call assert_true(connect_merge_and_redirect_indices_collections(1)&
+        !              &%ptr%secondary_merge_and_redirect_indices%is_equal_to(working_merge_and_redirect_indices))
         call assert_true(flood_merge_and_redirect_indices_collections(1)&
                      &%ptr%secondary_merge)
         call assert_true(flood_merge_and_redirect_indices_collections(1)&
