@@ -29,6 +29,7 @@ using namespace std;
 basin_evaluation_algorithm::~basin_evaluation_algorithm() {
 	delete minima; delete raw_orography; delete corrected_orography;
 	delete connection_volume_thresholds; delete flood_volume_thresholds;
+	delete connection_heights; delete flood_heights;
 	delete basin_numbers; delete _grid; delete _coarse_grid;
 	delete prior_fine_catchments; delete coarse_catchment_nums;
 	delete level_completed_cells; delete requires_flood_redirect_indices;
@@ -68,10 +69,12 @@ void basin_evaluation_algorithm::setup_fields(bool* minima_in,
 		  	  	  	  	  	  	  	  	  				double* cell_areas_in,
 		  	  	  	  	  	  	  	  	  				double* connection_volume_thresholds_in,
 		  	  	  	  	  	  	  	  	  				double* flood_volume_thresholds_in,
+		  	  	  	  	  	  	  	  	  				double* connection_heights_in,
+		  	  	  	  	  	  	  	  	  				double* flood_heights_in,
 		  	  	  	  	  	  	  	  	  				int* prior_fine_catchments_in,
 		  	  	  	  	  	  	  	  	  				int* coarse_catchment_nums_in,
-										  												grid_params* grid_params_in,
-										  												grid_params* coarse_grid_params_in) {
+										  				grid_params* grid_params_in,
+										  				grid_params* coarse_grid_params_in) {
 	_grid_params = grid_params_in;
 	_coarse_grid_params = coarse_grid_params_in;
 	_grid = grid_factory(_grid_params);
@@ -85,6 +88,10 @@ void basin_evaluation_algorithm::setup_fields(bool* minima_in,
 	connection_volume_thresholds->set_all(-1.0);
 	flood_volume_thresholds = new field<double>(flood_volume_thresholds_in,_grid_params);
 	flood_volume_thresholds->set_all(-1.0);
+	connection_heights =  new field<double>(connection_heights_in,_grid_params);
+	connection_heights->set_all(0.0);
+	flood_heights = new field<double>(flood_heights_in,_grid_params);
+	flood_heights->set_all(0.0);
 	prior_fine_catchments = new field<int>(prior_fine_catchments_in,_grid_params);
 	coarse_catchment_nums = new field<int>(coarse_catchment_nums_in,_coarse_grid_params);
 	completed_cells = new field<bool>(_grid_params);
@@ -110,6 +117,8 @@ void latlon_basin_evaluation_algorithm::setup_fields(bool* minima_in,
   	  	  	  	  	  	  							 double* cell_areas_in,
   	  	  	  	  	  	  							 double* connection_volume_thresholds_in,
   	  	  	  	  	  	  							 double* flood_volume_thresholds_in,
+		  	  	  	  	  	  	  	  	  			 double* connection_heights_in,
+		  	  	  	  	  	  	  	  	  			 double* flood_heights_in,
   	  	  	  	  	  	  							 double* prior_fine_rdirs_in,
   	  	  	  	  	  	  							 double* prior_coarse_rdirs_in,
   	  	  	  	  	  	  							 int* prior_fine_catchments_in,
@@ -126,6 +135,8 @@ void latlon_basin_evaluation_algorithm::setup_fields(bool* minima_in,
 	                                         cell_areas_in,
 	                                         connection_volume_thresholds_in,
 	                                         flood_volume_thresholds_in,
+		  	  	  	  	  					 connection_heights_in,
+		  	  	  	  	  	  	  	  	  	 flood_heights_in,
 											 prior_fine_catchments_in,
 											 coarse_catchment_nums_in,
 	  	  	  	  	  	  	  	  	  		 grid_params_in,
@@ -153,6 +164,8 @@ void icon_single_index_basin_evaluation_algorithm::
 							                    double* cell_areas_in,
 							                    double* connection_volume_thresholds_in,
 							                    double* flood_volume_thresholds_in,
+		  	  	  	  	  	  	  	  	  		double* connection_heights_in,
+		  	  	  	  	  	  	  	  	  		double* flood_heights_in,
 							                    int* prior_fine_rdirs_in,
 							                    int* prior_coarse_rdirs_in,
 							                    int* prior_fine_catchments_in,
@@ -167,6 +180,8 @@ void icon_single_index_basin_evaluation_algorithm::
 	                                         cell_areas_in,
 	                                         connection_volume_thresholds_in,
 	                                         flood_volume_thresholds_in,
+		  	  	  	  	  	  	  	  	  	 connection_heights_in,
+		  	  	  	  	  	  	  	  	  	 flood_heights_in,
 											 prior_fine_catchments_in,
 											 coarse_catchment_nums_in,
 	  	  	  	  	  	  	  	  	  		 grid_params_in,
@@ -499,6 +514,8 @@ void basin_evaluation_algorithm::process_center_cell() {
 	if (previous_filled_cell_height_type == connection_height) {
 		(*connection_volume_thresholds)(previous_filled_cell_coords) =
 			center_cell_volume_threshold;
+		(*connection_heights)(previous_filled_cell_coords) =
+			center_cell_height;
 		q.push(new basin_cell((*raw_orography)(previous_filled_cell_coords),
 		                      flood_height,previous_filled_cell_coords->clone()));
 		set_previous_cells_connect_next_cell_index(center_coords);
@@ -507,6 +524,8 @@ void basin_evaluation_algorithm::process_center_cell() {
 	} else if (previous_filled_cell_height_type == flood_height) {
 		(*flood_volume_thresholds)(previous_filled_cell_coords) =
 			center_cell_volume_threshold;
+		(*flood_heights)(previous_filled_cell_coords) =
+			center_cell_height;
 		set_previous_cells_flood_next_cell_index(center_coords);
 		basin_connect_and_fill_order->
 			push_back(new pair<coords*,bool>(previous_filled_cell_coords->clone(),true));
@@ -949,6 +968,8 @@ priority_cell_queue latlon_basin_evaluation_algorithm::test_process_center_cell(
 	center_cell = center_cell_in;
 	flood_volume_thresholds = new field<double>(flood_volume_thresholds_in,grid_params_in);
 	connection_volume_thresholds = new field<double>(connection_volume_thresholds_in,grid_params_in);
+	flood_heights = new field<double>(grid_params_in);
+	connection_heights = new field<double>(grid_params_in);
 	raw_orography = new field<double>(raw_orography_in,grid_params_in);
 	cell_areas = new field<double>(cell_areas_in,grid_params_in);
 	flood_next_cell_lat_index = new field<int>(flood_next_cell_lat_index_in,grid_params_in);

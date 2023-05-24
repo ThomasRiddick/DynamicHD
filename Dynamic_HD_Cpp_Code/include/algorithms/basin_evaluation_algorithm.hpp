@@ -31,6 +31,8 @@ public:
                     double* cell_areas_in,
                     double* connection_volume_thresholds_in,
                     double* flood_volume_thresholds_in,
+                    double* connection_heights_in,
+                    double* flood_heights_in,
                     int* prior_fine_catchments_in,
                     int* coarse_catchment_nums_in,
                     grid_params* grid_params_in,
@@ -157,6 +159,8 @@ protected:
   field<double>* cell_areas = nullptr;
 	field<double>* connection_volume_thresholds = nullptr;
 	field<double>* flood_volume_thresholds = nullptr;
+  field<double>* connection_heights = nullptr;
+  field<double>* flood_heights = nullptr;
 	field<int>* basin_numbers = nullptr;
 	field<int>* coarse_catchment_nums = nullptr;
 	field<int>* prior_fine_catchments = nullptr;
@@ -203,6 +207,8 @@ public:
                     double* cell_areas_in,
                     double* connection_volume_thresholds_in,
                     double* flood_volume_thresholds_in,
+                    double* connection_heights_in,
+                    double* flood_heights_in,
                     double* prior_fine_rdirs_in,
                     double* prior_coarse_rdirs_in,
                     int* prior_fine_catchments_in,
@@ -301,6 +307,8 @@ public:
                     double* cell_areas_in,
                     double* connection_volume_thresholds_in,
                     double* flood_volume_thresholds_in,
+                    double* connection_heights_in,
+                    double* flood_heights_in,
                     int* prior_fine_rdirs_in,
                     int* prior_coarse_rdirs_in,
                     int* prior_fine_catchments_in,

@@ -22,6 +22,8 @@ void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                                            double* cell_areas_in,
                                            double* connection_volume_thresholds_in,
                                            double* flood_volume_thresholds_in,
+                                           double* connection_heights_in,
+                                           double* flood_heights_in,
                                            double* prior_fine_rdirs_in,
                                            double* prior_coarse_rdirs_in,
                                            int* prior_fine_catchments_in,
@@ -46,6 +48,8 @@ void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                          cell_areas_in,
                          connection_volume_thresholds_in,
                          flood_volume_thresholds_in,
+                         connection_heights_in,
+                         flood_heights_in,
                          prior_fine_rdirs_in,
                          prior_coarse_rdirs_in,
                          prior_fine_catchments_in,
@@ -68,6 +72,8 @@ void latlon_evaluate_basins(bool* minima_in,
                             double* cell_areas_in,
                             double* connection_volume_thresholds_in,
                             double* flood_volume_thresholds_in,
+                            double* connection_heights_in,
+                            double* flood_heights_in,
                             double* prior_fine_rdirs_in,
                             double* prior_coarse_rdirs_in,
                             int* prior_fine_catchments_in,
@@ -96,6 +102,10 @@ void latlon_evaluate_basins(bool* minima_in,
   fill_n(connection_volume_thresholds_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,0.0);
   double* flood_volume_thresholds_in_ext = new double[(nlat_fine+2*scale_factor)*nlon_fine];
   fill_n(flood_volume_thresholds_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,0.0);
+  double* connection_heights_in_ext = new double[(nlat_fine+2*scale_factor)*nlon_fine];
+  fill_n(connection_heights_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-99999.0);
+  double* flood_heights_in_ext = new double[(nlat_fine+2*scale_factor)*nlon_fine];
+  fill_n(flood_heights_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-99999.0);
   double* prior_fine_rdirs_in_ext = new double[(nlat_fine+2*scale_factor)*nlon_fine];
   int* prior_fine_catchments_in_ext = new int[(nlat_fine+2*scale_factor)*nlon_fine];
   int* coarse_catchment_nums_in_ext = new int[(nlat_coarse+2)*nlon_coarse];
@@ -193,6 +203,8 @@ void latlon_evaluate_basins(bool* minima_in,
                    cell_areas_in_ext,
                    connection_volume_thresholds_in_ext,
                    flood_volume_thresholds_in_ext,
+                   connection_heights_in_ext,
+                   flood_heights_in_ext,
                    prior_fine_rdirs_in_ext,
                    prior_coarse_rdirs_in_ext,
                    prior_fine_catchments_in_ext,
@@ -252,6 +264,8 @@ void latlon_evaluate_basins(bool* minima_in,
   for (int i = scale_factor*nlon_fine; i < (nlat_fine+scale_factor)*nlon_fine; i++) {
     connection_volume_thresholds_in[i-scale_factor*nlon_fine] = connection_volume_thresholds_in_ext[i];
     flood_volume_thresholds_in[i-scale_factor*nlon_fine] = flood_volume_thresholds_in_ext[i];
+    connection_heights_in[i-scale_factor*nlon_fine] = connection_heights_in_ext[i];
+    flood_heights_in[i-scale_factor*nlon_fine] = flood_heights_in_ext[i];
     flood_next_cell_lat_index_in[i-scale_factor*nlon_fine]  =
       max(flood_next_cell_lat_index_in_ext[i] - scale_factor,-1);
     flood_next_cell_lon_index_in[i-scale_factor*nlon_fine]  = flood_next_cell_lon_index_in_ext[i];
@@ -303,6 +317,8 @@ void icon_single_index_evaluate_basins(bool* minima_in,
                                        double* cell_areas_in,
                                        double* connection_volume_thresholds_in,
                                        double* flood_volume_thresholds_in,
+                                       double* connection_heights_in,
+                                       double* flood_heights_in,
                                        int* prior_fine_rdirs_in,
                                        int* prior_coarse_rdirs_in,
                                        int* prior_fine_catchments_in,
@@ -328,6 +344,8 @@ void icon_single_index_evaluate_basins(bool* minima_in,
   auto alg = icon_single_index_basin_evaluation_algorithm();
   fill_n(connection_volume_thresholds_in,ncells_fine_in,0.0);
   fill_n(flood_volume_thresholds_in,ncells_fine_in,0.0);
+  fill_n(connection_heights_in,ncells_fine_in,-99999.0);
+  fill_n(flood_heights_in,ncells_fine_in,-99999.0);
   fill_n(flood_next_cell_index_in,ncells_fine_in,-1);
   fill_n(connect_next_cell_index_in,ncells_fine_in,-1);
   auto sink_filling_alg_4 = new sink_filling_algorithm_4_icon_single_index();
@@ -354,6 +372,8 @@ void icon_single_index_evaluate_basins(bool* minima_in,
                    cell_areas_in,
                    connection_volume_thresholds_in,
                    flood_volume_thresholds_in,
+                   connection_heights_in,
+                   flood_heights_in,
                    prior_fine_rdirs_in,
                    prior_coarse_rdirs_in,
                    prior_fine_catchments_in,

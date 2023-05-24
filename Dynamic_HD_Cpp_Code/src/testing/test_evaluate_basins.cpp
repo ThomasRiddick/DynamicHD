@@ -9836,6 +9836,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
   std::fill_n(connection_volume_thresholds_in,20*20,0.0);
   double* flood_volume_thresholds_in = new double[20*20];
   std::fill_n(flood_volume_thresholds_in,20*20,0.0);
+  double* connection_heights_in = new double[20*20];
+  std::fill_n(connection_heights_in,20*20,0.0);
+  double* flood_heights_in = new double[20*20];
+  std::fill_n(flood_heights_in,20*20,0.0);
   int* flood_next_cell_lat_index_in = new int[20*20];
   std::fill_n(flood_next_cell_lat_index_in,20*20,-1);
   int* flood_next_cell_lon_index_in = new int[20*20];
@@ -9979,6 +9983,48 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
     -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,   -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,   -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,   -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1  };
+  double* connection_heights_expected_out = new double[20*20]{
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 7, 4 ,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  };
+  double* flood_heights_expected_out = new double[20*20]{
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
+     1, 8, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 5, 6, 0, 0, 0, 2,
+     0, 3, 3, 0, 0, 9, 8, 0, 0, 0, 0, 6, 3, 3, 5, 5, 0, 0, 0, 0,
+     0, 3, 3, 0, 0, 3, 3, 5, 3, 0, 0, 0, 2, 3, 3, 4, 5, 0, 0, 0,
+     0, 3, 3, 7, 2, 2, 0, 3, 3, 0, 3, 3, 3, 2, 3, 4, 4, 6, 0, 0,
+     4, 4, 4, 0, 2, 1, 2, 2, 3, 0, 3, 2, 2, 3, 3, 3, 4, 5, 0, 0,
+     0, 6, 4, 0, 0, 2, 0, 4, 0, 0, 0, 3, 2, 3, 3, 3, 5, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 3, 3, 3, 4, 5, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 3, 4, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 3, 0, 0,
+     0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
   int flood_index = 0;
   field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
   field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
@@ -10148,6 +10194,8 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                           cell_areas_in,
                           connection_volume_thresholds_in,
                           flood_volume_thresholds_in,
+                          connection_heights_in,
+                          flood_heights_in,
                           prior_fine_rdirs_in,
                           prior_coarse_rdirs_in,
                           prior_fine_catchments_in,
@@ -10231,6 +10279,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
               == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in));
   EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
               == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<double>(connection_heights_expected_out,grid_params_in)
+              == field<double>(connection_heights_in,grid_params_in));
+  EXPECT_TRUE(field<double>(flood_heights_expected_out,grid_params_in)
+              == field<double>(flood_heights_in,grid_params_in));
   EXPECT_TRUE(merges_and_redirects_expected_out ==
               *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
@@ -10239,6 +10291,7 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
   delete[] prior_coarse_rdirs_in;
   delete[] prior_fine_rdirs_in; delete[] prior_fine_catchments_in;
   delete[] connection_volume_thresholds_in; delete[] flood_volume_thresholds_in;
+  delete[] connection_heights_in; delete[] flood_heights_in;
   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
   delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
   delete[] flood_volume_thresholds_expected_out;
@@ -10408,6 +10461,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
   std::fill_n(connection_volume_thresholds_in,20*20,0.0);
   double* flood_volume_thresholds_in = new double[20*20];
   std::fill_n(flood_volume_thresholds_in,20*20,0.0);
+  double* connection_heights_in = new double[20*20];
+  std::fill_n(connection_heights_in,20*20,0.0);
+  double* flood_heights_in = new double[20*20];
+  std::fill_n(flood_heights_in,20*20,0.0);
   int* flood_next_cell_lat_index_in = new int[20*20];
   std::fill_n(flood_next_cell_lat_index_in,20*20,-1);
   int* flood_next_cell_lon_index_in = new int[20*20];
@@ -10560,6 +10617,48 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
     -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  double* connection_heights_expected_out = new double[20*20]{
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+  double* flood_heights_expected_out = new double[20*20]{
+     0,  0,  0, 0, 0, 0, 0, 0, 0,  0, 0, 0,  0, 0,  0, 0, 0, 0, 0, 0,
+     0,  2, 11, 0,12, 0, 0, 0, 2, 18, 0, 0,  2, 0,  0, 0, 0, 0, 0, 0,
+     0,  3, 12, 0, 9, 0, 0, 0, 3, 16, 0, 0,  3, 0,  0, 0, 0, 0, 0, 0,
+     0,  4, 13, 0, 8, 0, 0, 0, 4, 15, 0, 0,  4, 0,  0, 0, 0, 0, 0, 0,
+     0,  5, 14, 0, 6, 0, 0, 0, 5, 14, 6, 5,  5, 0,  0, 0, 0, 0, 0, 0,
+     0,  6, 15, 0, 5, 0, 0, 0, 6, 13, 0, 0,  7, 0,  0, 0, 0, 0, 0, 0,
+     0,  8, 16, 0, 4, 0, 0, 0, 7, 12, 0, 0,  8, 0,  0, 0, 0, 0, 0, 0,
+     0,  9, 17, 0, 3, 0, 0, 0, 8, 11, 0, 0,  9, 0,  0, 0, 0, 6, 0, 0,
+     0, 10, 18, 0, 2, 0, 0, 0, 9, 10, 0, 0, 12, 0,  0, 0, 5, 7, 0, 0,
+     0,  0,  0, 0, 0, 0, 0, 0, 0,  0, 0, 0,  0, 0,  0, 4, 8, 0, 0, 0,
+     0,  0,  0, 0, 0, 0, 0, 0, 0,  0, 0, 0,  0, 0,  3, 9, 0, 0, 0, 0,
+     0,  2, 18, 0, 3, 0, 0, 0, 0,  0, 0, 0,  0, 2, 10, 0, 0, 0, 0, 0,
+     0,  3, 16, 0, 4, 0, 0, 0, 0,  0, 0, 0,  0, 0,  0, 0, 0, 0, 0, 0,
+     0,  4, 15, 0, 5, 0, 0, 2, 0,  6, 0, 0,  0, 0,  0, 0, 0, 0, 0, 0,
+     0,  5, 14, 0, 6, 0, 0, 3, 4,  4, 0, 0,  0, 0,  0, 0, 0, 0, 0, 0,
+     0,  6, 13, 0, 8, 0, 0, 4, 0,  3, 0, 0,  0, 0,  0, 0, 0, 0, 0, 0,
+     0,  7, 12, 0, 9, 0, 0, 5, 0,  2, 0, 0,  0, 0,  0, 0, 0, 0, 0, 0,
+     0,  8, 11, 0,10, 0, 0, 0, 0,  0, 0, 0,  0, 0,  0, 0, 0, 0, 0, 0,
+     0,  9, 10, 0,12, 0, 0, 0, 0,  0, 0, 0,  0, 0,  0, 0, 0, 0, 0, 0,
+     0,  0,  0, 0, 0, 0, 0, 0, 0,  0, 0, 0,  0, 0,  0, 0, 0, 0, 0, 0 };
   int flood_index = 0;
   field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
   field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
@@ -10797,6 +10896,8 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                           cell_areas_in,
                           connection_volume_thresholds_in,
                           flood_volume_thresholds_in,
+                          connection_heights_in,
+                          flood_heights_in,
                           prior_fine_rdirs_in,
                           prior_coarse_rdirs_in,
                           prior_fine_catchments_in,
@@ -10880,6 +10981,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
               == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in));
   EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
               == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<double>(connection_heights_expected_out,grid_params_in)
+              == field<double>(connection_heights_in,grid_params_in));
+  EXPECT_TRUE(field<double>(flood_heights_expected_out,grid_params_in)
+              == field<double>(flood_heights_in,grid_params_in));
   EXPECT_TRUE(merges_and_redirects_expected_out ==
               *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
@@ -11079,6 +11184,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
   std::fill_n(connection_volume_thresholds_in,20*20,0.0);
   double* flood_volume_thresholds_in = new double[20*20];
   std::fill_n(flood_volume_thresholds_in,20*20,0.0);
+  double* connection_heights_in = new double[20*20];
+  std::fill_n(connection_heights_in,20*20,0.0);
+  double* flood_heights_in = new double[20*20];
+  std::fill_n(flood_heights_in,20*20,0.0);
   int* flood_next_cell_lat_index_in = new int[20*20];
   std::fill_n(flood_next_cell_lat_index_in,20*20,-1);
   int* flood_next_cell_lon_index_in = new int[20*20];
@@ -11231,7 +11340,48 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
     -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
-
+  double* connection_heights_expected_out = new double[20*20]{
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+  double* flood_heights_expected_out = new double[20*20]{
+     0,  0,  0, 0, 0, 0, 0, 0, 0,  0, 0, 0,  0, 0,  0, 0, 0, 0, 0, 0,
+     0,  2, 11, 0,12, 0, 0, 0, 2, 18, 0, 0,  2, 0,  0, 0, 0, 0, 0, 0,
+     0,  3, 12, 0, 9, 0, 0, 0, 3, 16, 0, 0,  3, 0,  0, 0, 0, 0, 0, 0,
+     0,  4, 13, 0, 8, 0, 0, 0, 4, 15, 0, 0,  4, 0,  0, 0, 0, 0, 0, 0,
+     0,  5, 14, 0, 6, 0, 0, 0, 5, 14, 6, 5,  5, 0,  0, 0, 0, 0, 0, 0,
+     0,  6, 15, 0, 5, 0, 0, 0, 6, 13, 0, 0,  7, 0,  0, 0, 0, 0, 0, 0,
+     0,  8, 16, 0, 4, 0, 0, 0, 7, 12, 0, 0,  8, 0,  0, 0, 0, 0, 0, 0,
+     0,  9, 17, 0, 3, 0, 0, 0, 8, 11, 0, 0,  9, 0,  0, 0, 0, 6, 0, 0,
+     0, 10, 18, 0, 2, 0, 0, 0, 9, 10, 0, 0, 12, 0,  0, 0, 5, 7, 0, 0,
+     0,  0,  0, 0, 0, 0, 0, 0, 0,  0, 0, 0,  0, 0,  0, 4, 8, 0, 0, 0,
+     0,  0,  0, 0, 0, 0, 0, 0, 0,  0, 0, 0,  0, 0,  3, 9, 0, 0, 0, 0,
+     0,  2, 18, 0, 3, 0, 0, 0, 0,  0, 0, 0,  0, 2, 10, 0, 0, 0, 0, 0,
+     0,  3, 16, 0, 4, 0, 0, 0, 0,  0, 0, 0,  0, 0,  0, 0, 0, 0, 0, 0,
+     0,  4, 15, 0, 5, 0, 0, 2, 0,  6, 0, 0,  0, 0,  0, 0, 0, 0, 0, 0,
+     0,  5, 14, 0, 6, 0, 0, 3, 4,  4, 0, 0,  0, 0,  0, 0, 0, 0, 0, 0,
+     0,  6, 13, 0, 8, 0, 0, 4, 0,  3, 0, 0,  0, 0,  0, 0, 0, 0, 0, 0,
+     0,  7, 12, 0, 9, 0, 0, 5, 0,  2, 0, 0,  0, 0,  0, 0, 0, 0, 0, 0,
+     0,  8, 11, 0,10, 0, 0, 0, 0,  0, 0, 0,  0, 0,  0, 0, 0, 0, 0, 0,
+     0,  9, 10, 0,12, 0, 0, 0, 0,  0, 0, 0,  0, 0,  0, 0, 0, 0, 0, 0,
+     0,  0,  0, 0, 0, 0, 0, 0, 0,  0, 0, 0,  0, 0,  0, 0, 0, 0, 0, 0 };
   int flood_index = 0;
   field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
   field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
@@ -11469,6 +11619,8 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                           cell_areas_in,
                           connection_volume_thresholds_in,
                           flood_volume_thresholds_in,
+                          connection_heights_in,
+                          flood_heights_in,
                           prior_fine_rdirs_in,
                           prior_coarse_rdirs_in,
                           prior_fine_catchments_in,
@@ -11550,6 +11702,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
               == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in));
   EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
               == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<double>(connection_heights_expected_out,grid_params_in)
+              == field<double>(connection_heights_in,grid_params_in));
+  EXPECT_TRUE(field<double>(flood_heights_expected_out,grid_params_in)
+              == field<double>(flood_heights_in,grid_params_in));
   merges_and_redirects* merges_and_redirects_out =
     basin_eval.get_basin_merges_and_redirects();
   EXPECT_TRUE(merges_and_redirects_expected_out ==
@@ -11730,6 +11886,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
   std::fill_n(connection_volume_thresholds_in,20*20,0.0);
   double* flood_volume_thresholds_in = new double[20*20];
   std::fill_n(flood_volume_thresholds_in,20*20,0.0);
+  double* connection_heights_in = new double[20*20];
+  std::fill_n(connection_heights_in,20*20,0.0);
+  double* flood_heights_in = new double[20*20];
+  std::fill_n(flood_heights_in,20*20,0.0);
   int* flood_next_cell_lat_index_in = new int[20*20];
   std::fill_n(flood_next_cell_lat_index_in,20*20,-1);
   int* flood_next_cell_lon_index_in = new int[20*20];
@@ -11885,7 +12045,48 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
     -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
-
+  double* connection_heights_expected_out = new double[20*20]{
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+  double* flood_heights_expected_out = new double[20*20]{
+     0, 0,  0,      0,      0,  0,      0,      0,    0,      0,      0,     0,     0,   0,      0,    0,      0,       0,     0,  0,
+     0, 0,  0,      0,      0,  0,      0,      0,    0,      0,      0,     0,     0,   0,      0,    0,      0,       0,     0,  0,
+     0, 0,  0,      0,      0,2536.99,2613.43,  0,    0,      0,      0,     0,     0,   0,      0,    0,      0,       0,     0,  0,
+     0, 0,  0,      0,      0,2668.57,  0,      0,    0,    2444.06,  0,     0,   2564.8,0,      0,   2529.42, 0,       0,     0,  0,
+     0, 0,  0,      0,      0,2683.13,2613.43,  0,    0,      0,   2468.33,  0,     0,   0,      0,    0,      0,       0,     0,  0,
+     0, 0,  0,2642.95,      0,  0,      0,      0,  2650.34,  0,      0,   2403.02, 0,   0,      0,    0,      0,       0,     0,  0,
+     0, 0,  0,2735.31,      0,2766.48,  0,      0,    0,      0,   2444.06,  0,     0, 2508.7,2271.61,2626.72, 0,       0,     0,  0,
+     0, 0,  0,      0,      0,  0,      0,      0,    0,      0,   2403.02,  0,     0,   0,      0,    0,      0,       0,     0,  0,
+     0, 0,  0,      0,      0,  0,      0,      0,    0,      0,      0,     0,  2887.21,0,      0,   2781.76, 0,       0,     0,  0,
+     0, 0,  0,      0,      0,  0,      0,   2767.04, 0,      0,   2892.49,2887.34, 0,   0,      0,    0,      0,       0,     0,  0,
+     0, 0,2488.32,  0,      0,  0,    2780.61,  0,    0,    2887.34,  0,     0,     0,   0,      0,    0,      0,       0,     0,  0,
+     0, 0,2415.13,  0,      0,2757.82,  0,   2767.04, 0,      0,      0,     0,     0,   0,   2746.64, 0,      0,      2664.91,0,  0,
+     0, 0,  0,      0,      0,2765.03,  0,      0,    0,    2765.03,  0,     0,     0,   0,      0,    0,     2706.25,  0,     0,  0,
+     0, 0,  0,      0,2757.82,  0,    2757.82,2486.66,2767.04,0,   2667.07,2653.15, 0,   0,      0,    0,      0,       0,     0,  0,
+     0, 0,  0,      0,      0,  0,      0,      0,    0,      0,      0,   2715.93, 0,   0,      0,    0,      0,       0,     0,  0,
+     0, 0,2414.69,  0,      0,2423.39,  0,    2584.66,0,      0,      0,     0,     0,   0,      0,    0,     2798.46, 2586.37,0,  0,
+     0, 0,  0,      0,      0,2608.3,2609.9,2485.98,2582.67,2608.3,   0,     0,     0,   0,      0,    0,      0,      2686.55,0,  0,
+     0, 0,  0,      0,      0,  0,      0,      0,    0,      0,   2584.66,  0,     0, 2497.78,  0,    0,      0,       0,     0,  0,
+     0, 0,  0,      0,      0,  0,      0,      0,    0,      0,      0,     0,     0,   0,      0,    0,      0,       0,     0,  0,
+     0, 0,  0,      0,      0,  0,      0,      0,    0,      0,      0,     0,     0,   0,      0,    0,      0,       0,     0,  0 };
   int flood_index = 0;
   field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
   field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
@@ -12564,6 +12765,8 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                           cell_areas_in,
                           connection_volume_thresholds_in,
                           flood_volume_thresholds_in,
+                          connection_heights_in,
+                          flood_heights_in,
                           prior_fine_rdirs_in,
                           prior_coarse_rdirs_in,
                           prior_fine_catchments_in,
@@ -12631,6 +12834,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
     basin_eval.get_basin_merges_and_redirects();
   EXPECT_TRUE(merges_and_redirects_expected_out ==
               *merges_and_redirects_out);
+  EXPECT_TRUE(field<double>(connection_heights_expected_out,grid_params_in)
+              == field<double>(connection_heights_in,grid_params_in));
+  EXPECT_TRUE(field<double>(flood_heights_expected_out,grid_params_in)
+              == field<double>(flood_heights_in,grid_params_in));
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;
@@ -14755,6 +14962,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
   std::fill_n(connection_volume_thresholds_in,20*20,0.0);
   double* flood_volume_thresholds_in = new double[20*20];
   std::fill_n(flood_volume_thresholds_in,20*20,0.0);
+  double* connection_heights_in = new double[20*20];
+  std::fill_n(connection_heights_in,20*20,0.0);
+  double* flood_heights_in = new double[20*20];
+  std::fill_n(flood_heights_in,20*20,0.0);
   int* flood_next_cell_lat_index_in = new int[20*20];
   std::fill_n(flood_next_cell_lat_index_in,20*20,-1);
   int* flood_next_cell_lon_index_in = new int[20*20];
@@ -14912,6 +15123,48 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+  double* connection_heights_expected_out = new double[20*20]{
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+  double* flood_heights_expected_out = new double[20*20]{
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 3, 3, 6, 0, 1, 1, 0, 1, 1, 1, 5, 0, 0, 2, 2, 2, 0,
+     0, 1, 0, 3, 3, 3, 7, 1, 1, 1, 1, 1, 1, 1, 8, 7, 2, 2, 2, 0,
+     0, 1, 0, 3, 3, 3, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 2, 2, 2, 0,
+     0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 6, 2, 2, 0,
+     0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 7, 0, 0,
+     0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 3, 3, 3, 0,
+     0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 3, 3, 3, 0,
+     0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 3, 3, 3, 0,
+     0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 3, 3, 3, 0,
+     0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 3, 3, 3, 0,
+     0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 3, 3, 3, 0,
+     0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 4, 4, 0, 0, 6, 3, 3, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 7, 0, 0, 0, 0, 0, 0, 0,
+     0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0,
+     0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
   int flood_index = 0;
   int connect_index = 0;
   field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
@@ -15144,6 +15397,8 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                           cell_areas_in,
                           connection_volume_thresholds_in,
                           flood_volume_thresholds_in,
+                          connection_heights_in,
+                          flood_heights_in,
                           prior_fine_rdirs_in,
                           prior_coarse_rdirs_in,
                           prior_fine_catchments_in,
@@ -15211,6 +15466,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
     basin_eval.get_basin_merges_and_redirects();
   EXPECT_TRUE(merges_and_redirects_expected_out ==
               *merges_and_redirects_out);
+  EXPECT_TRUE(field<double>(connection_heights_expected_out,grid_params_in)
+              == field<double>(connection_heights_in,grid_params_in));
+  EXPECT_TRUE(field<double>(flood_heights_expected_out,grid_params_in)
+              == field<double>(flood_heights_in,grid_params_in));
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;
