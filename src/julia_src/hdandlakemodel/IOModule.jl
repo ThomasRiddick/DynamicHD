@@ -304,11 +304,21 @@ function load_lake_parameters(lake_para_filepath::AbstractString,grid::Grid,hd_g
     add_offset(flood_merge_and_redirect_indices_index,1,Int64[])
     cell_areas_on_surface_model_grid::Field{Float64} =
       load_field(file_handle,surface_model_grid,"cell_areas_on_surface_model_grid",Float64)
+    raw_heights::Field{Float64} =
+      load_field(file_handle,grid,"raw_heights",Float64)
+    corrected_heights::Field{Float64} =
+      load_field(file_handle,grid,"corrected_heights",Float64)
+    flood_heights::Field{Float64} =
+      load_field(file_handle,grid,"flood_heights",Float64)
+    connection_heights::Field{Float64} =
+      load_field(file_handle,grid,"connection_heights",Float64)
     # variable::NcVar = file_handle["connect_merges_and_redirects"]
     # connect_merges_and_redirect_array::Array{Int64} = NetCDF.readvar(variable)
     # connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
     #   create_merge_indices_collections_from_array(connect_merges_and_redirect_array)
     # add_offset(connect_merge_and_redirect_indices_collections,1)
+    cell_areas::Field{Float64} =
+      load_field(file_handle,grid,"cell_areas",Float64)
     connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
       Vector{MergeAndRedirectIndicesCollection}()
     variable = file_handle["flood_merges_and_redirects"]
@@ -324,6 +334,11 @@ function load_lake_parameters(lake_para_filepath::AbstractString,grid::Grid,hd_g
                           connect_merge_and_redirect_indices_collections,
                           flood_merge_and_redirect_indices_collections,
                           cell_areas_on_surface_model_grid,
+                          cell_areas,
+                          raw_heights,
+                          corrected_heights,
+                          flood_heights,
+                          connection_heights,
                           grid,hd_grid,
                           surface_model_grid,
                           grid_specific_lake_parameters)

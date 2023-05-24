@@ -10,7 +10,7 @@ using FieldModule: Field,elementwise_multiple
 using LakeModule: LakeParameters,LakePrognostics,LakeFields,RiverAndLakePrognosticFields,RunLakes
 using LakeModule: PrintSection,WriteLakeNumbers,WriteLakeVolumes,SetupLakes,DistributeSpillover
 using LakeModule: WriteDiagnosticLakeVolumes,CheckWaterBudget,SetLakeEvaporation,Lake
-using LakeModule: SetRealisticLakeEvaporation,PrintSelectedLakes
+using LakeModule: SetRealisticLakeEvaporation,PrintSelectedLakes,CalculateTrueLakeDepths
 using LakeModule: water_to_lakes,handle_event,water_from_lakes
 using LakeModule: calculate_lake_fraction_on_surface_grid
 using GridModule: get_number_of_cells
@@ -150,6 +150,10 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
          end
       end
     end
+  end
+  if run_lakes_flag
+    calculate_true_lake_depths::CalculateTrueLakeDepths = CalculateTrueLakeDepths()
+    handle_event(hsm,calculate_true_lake_depths)
   end
   if write_output
     write_river_initial_values::WriteRiverInitialValues = WriteRiverInitialValues()
