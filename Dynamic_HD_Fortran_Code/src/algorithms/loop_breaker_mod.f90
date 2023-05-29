@@ -35,6 +35,9 @@ module loop_breaker_mod
             !> Find the value of the highest cumulative flow in a cell at a given
             !! set of coarse coordinates and return it as an integer
             procedure :: find_highest_cumulative_flow_of_cell
+            !> Find the set of cell downstream of a given cell in the current coarse river
+            !! directions tracing the path all the way to an outflow point
+            procedure :: find_cells_downstream
             !> Find which cells are in a given loop; input is the loop number of
             !! desired loop; output a list of the coarse coordinates of the cells
             !! in the loop
@@ -67,6 +70,7 @@ module loop_breaker_mod
             !> Return a suitable direction indicator to represent a no data flow
             !! direction.
             procedure(get_no_data_rdir_value), deferred :: get_no_data_rdir_value
+            procedure(find_next_cell_downstream), deferred :: find_next_cell_downstream
     end type loop_breaker
 
     abstract interface
@@ -115,7 +119,16 @@ module loop_breaker_mod
             import loop_breaker
             class(loop_breaker) :: this
             class(direction_indicator), pointer :: no_data_rdir_value
-        end function
+        end function get_no_data_rdir_value
+
+        subroutine find_next_cell_downstream(this,coords_inout,&
+                                             outflow_cell_reached)
+            import loop_breaker
+            import coords
+            class(loop_breaker) :: this
+            class(coords), intent(inout) :: coords_inout
+            logical, intent(out) :: outflow_cell_reached
+        end subroutine find_next_cell_downstream
 
     end interface
 
@@ -160,6 +173,9 @@ module loop_breaker_mod
             integer, dimension(:), pointer :: section_min_lons
             integer, dimension(:), pointer :: section_max_lats
             integer, dimension(:), pointer :: section_max_lons
+            integer :: index_for_sink = -5
+            integer :: index_for_outflow = -1
+            integer :: index_for_ocean_point = -2
         contains
             private
             procedure :: init_icon_icosohedral_cell_latlon_pixel_loop_breaker
@@ -195,6 +211,8 @@ module loop_breaker_mod
             !> Return a direction based direction indicator to represent a no data flow
             !! direction.
             procedure :: get_no_data_rdir_value => dir_based_rdirs_get_no_data_rdir_value
+            procedure :: find_next_cell_downstream => &
+                         latlon_dir_based_rdirs_find_next_cell_downstream
     end type latlon_dir_based_rdirs_loop_breaker
 
     interface latlon_dir_based_rdirs_loop_breaker
@@ -228,6 +246,8 @@ module loop_breaker_mod
             !! direction.
             procedure :: get_no_data_rdir_value => irregular_dir_based_rdirs_get_no_data_rdir_value
             procedure :: iic_llp_dir_based_rdirs_calculate_new_coarse_coords
+            procedure :: find_next_cell_downstream => &
+                         icon_icosohedral_cell_find_next_cell_downstream
     end type icon_icosohedral_cell_latlon_pixel_dir_based_rdirs_loop_breaker
 
     interface icon_icosohedral_cell_latlon_pixel_dir_based_rdirs_loop_breaker
@@ -264,8 +284,12 @@ contains
         integer :: loop_num
         integer :: current_highest_cumulative_flow
         type(doubly_linked_list), pointer :: cells_in_loop
+        type(doubly_linked_list), pointer :: downstream_cells
         class(coords),allocatable :: cell_coords
         class(coords),allocatable :: exit_coords
+        class(*), pointer :: catchment_value
+        logical :: new_path_reenters_catchment_downstream
+        logical :: outflow_cell_reached
             cells_in_loop => this%find_cells_in_loop(loop_num)
             if (cells_in_loop%get_length() <= 0) then
                 call cells_in_loop%destructor()
@@ -288,10 +312,40 @@ contains
                 end if
             end do
             call this%assign_rdir_of_highest_cumulative_flow_of_cell(exit_coords)
+            new_path_reenters_catchment_downstream = .false.
+            downstream_cells => this%find_cells_downstream(exit_coords)
+            do
+                if (downstream_cells%iterate_forward()) exit
+                select type (cell_coords_value => downstream_cells%get_value_at_iterator_position())
+                class is (coords)
+                    if (allocated(cell_coords)) deallocate(cell_coords)
+                    allocate(cell_coords,source=cell_coords_value)
+                end select
+                catchment_value => &
+                    this%coarse_catchment_field%get_value(cell_coords)
+                select type (catchment_value)
+                type is (integer)
+                    if (catchment_value == loop_num) then
+                        new_path_reenters_catchment_downstream = .true.
+                    end if
+                end select
+                deallocate(catchment_value)
+            end do
+            if (new_path_reenters_catchment_downstream) then
+                allocate(cell_coords,source=exit_coords)
+                do
+                    call this%find_next_cell_downstream(cell_coords,&
+                                                        outflow_cell_reached)
+                    if (outflow_cell_reached) exit
+                    call this%assign_rdir_of_highest_cumulative_flow_of_cell(cell_coords)
+                end do
+            end if
             deallocate(cell_coords)
             deallocate(exit_coords)
             call cells_in_loop%destructor()
+            call downstream_cells%destructor()
             deallocate(cells_in_loop)
+            deallocate(downstream_cells)
     end subroutine break_loop
 
     function find_highest_cumulative_flow_of_cell(this,coords_in) &
@@ -312,6 +366,22 @@ contains
             deallocate(highest_cumulative_flow_value)
             deallocate(highest_cumulative_flow_location)
     end function
+
+    function find_cells_downstream(this,coords_in) result(cells_downstream)
+        class(loop_breaker) :: this
+        class(coords), allocatable :: coords_in
+        class(coords), allocatable :: cell_coords
+        type(doubly_linked_list), pointer :: cells_downstream
+        logical :: outflow_cell_reached
+            allocate(cells_downstream)
+            allocate(cell_coords,source=coords_in)
+            do
+                call this%find_next_cell_downstream(cell_coords,&
+                                                    outflow_cell_reached)
+                if (outflow_cell_reached) exit
+                call cells_downstream%add_value_to_back(cell_coords)
+            end do
+    end function find_cells_downstream
 
     subroutine init_latlon_loop_breaker(this,coarse_catchments,coarse_cumulative_flow,coarse_rdirs,&
                                         fine_rdirs,fine_cumulative_flow)
@@ -885,5 +955,60 @@ contains
                                                                     new_fine_coords%lon)
             new_coarse_coords = generic_1d_coords(new_coarse_cell_index)
     end function iic_llp_dir_based_rdirs_calculate_new_coarse_coords
+
+    subroutine latlon_dir_based_rdirs_find_next_cell_downstream(this,coords_inout,&
+                                                                outflow_cell_reached)
+        class(latlon_dir_based_rdirs_loop_breaker) :: this
+        class(coords), intent(inout) :: coords_inout
+        logical, intent(out) :: outflow_cell_reached
+        class(*), pointer :: rdir
+        select type (coords_inout)
+        type is (latlon_coords)
+            rdir => this%coarse_rdirs_field%get_value(coords_inout)
+            select type (rdir)
+            type is (integer)
+                if ( rdir == 7 .or. rdir == 8 .or. rdir == 9) then
+                    coords_inout%lat = coords_inout%lat - 1
+                else if ( rdir == 1 .or. rdir == 2 .or. rdir == 3) then
+                    coords_inout%lat = coords_inout%lat + 1
+                end if
+                if ( rdir == 7 .or. rdir == 4 .or. rdir == 1 ) then
+                    coords_inout%lon = coords_inout%lon - 1
+                else if ( rdir == 9 .or. rdir == 6 .or. rdir == 3 ) then
+                    coords_inout%lon = coords_inout%lon + 1
+                end if
+                if ( rdir == 5 .or. rdir == 0 .or. rdir == -1 ) then
+                    outflow_cell_reached =  .true.
+                else
+                    outflow_cell_reached =  .false.
+                end if
+            end select
+            deallocate(rdir)
+        end select
+    end subroutine latlon_dir_based_rdirs_find_next_cell_downstream
+
+    subroutine icon_icosohedral_cell_find_next_cell_downstream(this,coords_inout,&
+                                                               outflow_cell_reached)
+        class(icon_icosohedral_cell_latlon_pixel_dir_based_rdirs_loop_breaker) :: this
+        class(coords), intent(inout) :: coords_inout
+        logical, intent(out) :: outflow_cell_reached
+        class(*), pointer :: next_cell_index
+        select type (coords_inout)
+        type is (generic_1d_coords)
+            next_cell_index => this%fine_rdirs_field%get_value(coords_inout)
+            select type (next_cell_index)
+            type is (integer)
+                if ( next_cell_index == this%index_for_sink .or. &
+                     next_cell_index == this%index_for_outflow .or. &
+                     next_cell_index == this%index_for_ocean_point ) then
+                    outflow_cell_reached =  .false.
+                else
+                    outflow_cell_reached =  .false.
+                    coords_inout%index = next_cell_index
+                end if
+            end select
+            deallocate(next_cell_index)
+        end select
+    end subroutine icon_icosohedral_cell_find_next_cell_downstream
 
 end module loop_breaker_mod
