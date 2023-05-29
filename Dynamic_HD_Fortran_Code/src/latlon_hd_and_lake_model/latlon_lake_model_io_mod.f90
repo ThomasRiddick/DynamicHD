@@ -65,6 +65,11 @@ function read_lake_parameters(instant_throughflow)&
   real(dp), pointer, dimension(:,:) :: connection_volume_thresholds
   real(dp), pointer, dimension(:,:) :: flood_volume_thresholds
   real(dp), pointer, dimension(:,:) :: cell_areas_on_surface_model_grid
+  real(dp), pointer, dimension(:,:) :: cell_areas
+  real(dp), pointer, dimension(:,:) :: raw_heights
+  real(dp), pointer, dimension(:,:) :: corrected_heights
+  real(dp), pointer, dimension(:,:) :: flood_heights
+  real(dp), pointer, dimension(:,:) :: connection_heights
   integer, pointer, dimension(:,:) :: flood_next_cell_lat_index
   integer, pointer, dimension(:,:) :: flood_next_cell_lon_index
   integer, pointer, dimension(:,:) :: connect_next_cell_lat_index
@@ -241,6 +246,11 @@ function read_lake_parameters(instant_throughflow)&
                                       connection_volume_thresholds, &
                                       flood_volume_thresholds, &
                                       cell_areas_on_surface_model_grid, &
+                                      cell_areas, &
+                                      raw_heights, &
+                                      corrected_heights, &
+                                      flood_heights, &
+                                      connection_heights, &
                                       flood_next_cell_lat_index, &
                                       flood_next_cell_lon_index, &
                                       connect_next_cell_lat_index, &
