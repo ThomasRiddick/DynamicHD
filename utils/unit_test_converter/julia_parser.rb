@@ -252,6 +252,9 @@ class JuliaToFortranConverter < JuliaParser
     array_statement.gsub!(/true,/,".True.,")
     array_statement.gsub!(/false,/,".False.,")
     array_statement.sub!(/\]\)/,"/), &\n         (/y,x/)))")
+    if type == :real
+      array_statement.gsub!(/ 0,/,"0.0,")
+    end
     return array_statement
   end
 
