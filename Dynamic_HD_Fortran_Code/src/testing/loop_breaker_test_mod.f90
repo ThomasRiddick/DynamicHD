@@ -28,8 +28,8 @@ contains
             allocate(fine_rdirs(15,15))
             allocate(fine_cumulative_flow(15,15))
             loop_nums_list = (/ 25,61,9,58,13 /)
-            coarse_rdirs = transpose(reshape((/ 6,1,6,6,1,&
-                                                8,4,4,8,7, &
+            coarse_rdirs = transpose(reshape((/ 6,1,7,6,1,&
+                                                8,-1,4,8,7, &
                                                 1,-1,5,0,6, &
                                                 2,4,9,8,8, &
                                                 9,6,8,7,6 /), &
@@ -40,8 +40,8 @@ contains
                                                           0,0,0,1,0, &
                                                           0,0,0,1,1 /), &
                                                           shape(transpose(coarse_cumulative_flow))))
-            coarse_catchments = transpose(reshape((/ 25,25,61,61,61, &
-                                                     25,25,25,61,61, &
+            coarse_catchments = transpose(reshape((/ 25,25,14,61,61, &
+                                                     25,14,14,61,61, &
                                                      13,0,14,58,13,  &
                                                      9,9,58,19,13, &
                                                      9,58,58,58,9 /), &
@@ -86,8 +86,8 @@ contains
                                                         1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
                                                         1,1,1, 1,1,1, 1,1,11, 1,1,1, 1,1,1 /),&
                                                         shape(transpose(fine_cumulative_flow))))
-            expected_results = transpose(reshape((/ 6,6,6,4,1,&
-                                                    8,4,4,8,7, &
+            expected_results = transpose(reshape((/ 6,6,7,4,1,&
+                                                    8,-1,4,8,7, &
                                                     1,-1,5,0,7, &
                                                     2,6,5,8,8, &
                                                     9,6,8,7,6 /), &
@@ -729,5 +729,108 @@ subroutine testLoopBreakerSeven
             deallocate(expected_results)
             deallocate(result0)
 end subroutine testLoopBreakerSeven
+
+subroutine testLoopBreakerEight
+        use loop_breaker_mod
+        integer, dimension(:,:), pointer :: coarse_rdirs
+        integer, dimension(:,:), pointer :: coarse_cumulative_flow
+        integer, dimension(:,:), pointer :: coarse_catchments
+        integer, dimension(:,:), pointer :: fine_rdirs
+        integer, dimension(:,:), pointer :: fine_cumulative_flow
+        integer, dimension(:,:), pointer :: expected_results
+        integer, dimension(1) :: loop_nums_list
+        integer, dimension(:,:), pointer :: result0
+        class(*), dimension(:,:), pointer :: result_ptr
+        type(latlon_dir_based_rdirs_loop_breaker) :: dir_based_rdirs_loop_breaker
+            allocate(coarse_rdirs(5,5))
+            allocate(coarse_cumulative_flow(5,5))
+            allocate(coarse_catchments(5,5))
+            allocate(expected_results(5,5))
+            allocate(fine_rdirs(15,15))
+            allocate(fine_cumulative_flow(15,15))
+            loop_nums_list = (/ 40 /)
+            coarse_rdirs = transpose(reshape((/ 5,5,5,5,5, &
+                                                5,5,5,5,5, &
+                                                5,5,5,8,5, &
+                                                5,5,5,2,2, &
+                                                5,5,5,9,4 /), &
+                                                shape(transpose(coarse_rdirs))))
+            coarse_cumulative_flow = transpose(reshape((/ 1,1,1,1,1, &
+                                                          1,1,1,1,1, &
+                                                          1,1,1,1,1, &
+                                                          1,1,1,1,0, &
+                                                          1,1,1,0,0 /), &
+                                                          shape(transpose(coarse_cumulative_flow))))
+            coarse_catchments = transpose(reshape((/  1, 1,1, 1, 1, &
+                                                      1, 1,1, 1, 1, &
+                                                      1, 1,1,30, 1,  &
+                                                      1, 1,1,40,40, &
+                                                      1, 1,1,40,40 /), &
+                                                     shape(transpose(coarse_catchments))))
+            fine_rdirs = transpose(reshape((/ 6,6,6, 6,6,2, 6,6,3, 6,6,6, 6,6,2, &
+                                              6,6,6, 6,6,6, 9,8,4, 4,6,6, 6,6,2, &
+                                              6,6,6, 6,3,6, 8,8,8,  6,6,6, 6,6,2, &
+!
+                                              6,6,6, 6,6,8, 8,8,8, 6,6,6, 6,6,2, &
+                                              6,6,6, 6,6,8, 8,8,8, 6,6,6, 1,6,2, &
+                                              6,6,6, 6,6,3, 8,8,8, 6,6,6, 6,6,6, &
+
+                                              4,4,4, 0,1,2, -1,-1,-1, 5,8,4, 7,6,8, &
+                                              4,4,4, 0,1,2, 5,6,2,    1,1,8, 8,6,6, &
+                                              4,4,4, 0,1,2, 1,5,2,    2,3,8, 8,6,6, &
+!
+                                              4,6,6, 6,9,6, 3,2,1, 1,2,8,  4,8,8, &
+                                              6,6,9, 6,8,4, 4,5,6, 4,5,6,  8,8,8, &
+                                              6,6,6, 6,8,4, 9,8,7, 7,8,9,  8,8,8, &
+!
+                                              8,8,8, 6,6,7, 8,8,8, 3,7,3,  1,2,2, &
+                                              8,8,8, 6,6,6, 8,8,8, 3,3,3,  2,2,2, &
+                                              8,8,8, 6,6,6, 8,8,6, 3,3,3,  2,2,2 /),&
+                                              shape(transpose(fine_rdirs))))
+            fine_cumulative_flow = transpose(reshape((/ 1,1,1, 1,1,1,  1,1,1, 1,1,1, 1,1,1, &
+                                                        1,1,1, 1,1,1,  1,1,1, 1,1,1, 1,1,1, &
+                                                        1,1,1, 1,1,1,  1,1,1, 1,1,1, 1,1,1, &
+!
+                                                        1,1,1, 1,1,1,  1,1,1, 1,1,1, 1,1,1, &
+                                                        1,1,1, 1,1,1,  1,1,1, 1,1,1, 1,1,1, &
+                                                        1,1,1, 1,1,1,  1,1,1, 1,1,1, 1,1,1, &
+!
+                                                        1,1,1, 1,1,1,  1,1,1, 1,105,104, 1,1,1, &
+                                                        1,1,1, 1,1,1,  1,1,1, 1,1,103, 1,1,1, &
+                                                        1,1,1, 1,1,1,  1,1,1, 1,1,102, 1,1,1, &
+!
+                                                        1,1,1, 1,1,1, 1,1,1, 1,1,101,  100,1,1, &
+                                                        1,1,1, 1,1,1, 1,1,1, 1,1,1,   1,1,1, &
+                                                        1,1,1, 1,1,1, 1,1,1, 1,1,1,   1,1,1, &
+!
+                                                        1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                        1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                        1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1 /),&
+                                                        shape(transpose(fine_cumulative_flow))))
+            expected_results = transpose(reshape((/ 5,5,5,5,5, &
+                                                    5,5,5,5,5, &
+                                                    5,5,5,8,5, &
+                                                    5,5,5,8,4, &
+                                                    5,5,5,9,4 /), &
+                                                    shape(transpose(coarse_rdirs))))
+            dir_based_rdirs_loop_breaker = &
+                latlon_dir_based_rdirs_loop_breaker(coarse_catchments,coarse_cumulative_flow,&
+                coarse_rdirs,fine_rdirs,fine_cumulative_flow)
+            call dir_based_rdirs_loop_breaker%break_loops(loop_nums_list)
+            result_ptr => dir_based_rdirs_loop_breaker%latlon_get_loop_free_rdirs()
+            call dir_based_rdirs_loop_breaker%destructor()
+            select type(result_ptr)
+            type is (integer)
+                result0 => result_ptr
+            end select
+            call assert_equals(expected_results,result0,5,5)
+            deallocate(coarse_rdirs)
+            deallocate(coarse_cumulative_flow)
+            deallocate(coarse_catchments)
+            deallocate(fine_rdirs)
+            deallocate(fine_cumulative_flow)
+            deallocate(expected_results)
+            deallocate(result0)
+end subroutine testLoopBreakerEight
 
 end module loop_breaker_test_mod

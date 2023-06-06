@@ -465,6 +465,8 @@ end function createmergeindicescollectionsfromarray
 subroutine initialiselake(this,center_cell_lat_in,center_cell_lon_in, &
                           current_cell_to_fill_lat_in, &
                           current_cell_to_fill_lon_in, &
+                          previous_cell_to_fill_lat_in, &
+                          previous_cell_to_fill_lon_in, &
                           center_cell_coarse_lat_in, &
                           center_cell_coarse_lon_in, &
                           lake_number_in,lake_volume_in,&
@@ -476,6 +478,8 @@ subroutine initialiselake(this,center_cell_lat_in,center_cell_lon_in, &
   integer, intent(in) :: center_cell_lon_in
   integer, intent(in) :: current_cell_to_fill_lat_in
   integer, intent(in) :: current_cell_to_fill_lon_in
+  integer, intent(in) :: previous_cell_to_fill_lat_in
+  integer, intent(in) :: previous_cell_to_fill_lon_in
   integer, intent(in) :: center_cell_coarse_lat_in
   integer, intent(in) :: center_cell_coarse_lon_in
   integer, intent(in) :: lake_number_in
@@ -499,6 +503,8 @@ subroutine initialiselake(this,center_cell_lat_in,center_cell_lon_in, &
     this%center_cell_coarse_lon = center_cell_coarse_lon_in
     this%current_cell_to_fill_lat = current_cell_to_fill_lat_in
     this%current_cell_to_fill_lon = current_cell_to_fill_lon_in
+    this%previous_cell_to_fill_lat = previous_cell_to_fill_lat_in
+    this%previous_cell_to_fill_lon = previous_cell_to_fill_lon_in
     this%unprocessed_water = unprocessed_water_in
     if (.not. associated(this%filled_lake_cell_lats)) then
       i = 0
@@ -1041,7 +1047,7 @@ subroutine initialiselakeprognostics(this,lake_parameters_in,lake_fields_in)
           lake_number = lake_number + 1
           call lake_fields_in%set_forest%add_set(lake_number)
           lake_temp => lake(lake_parameters_in,lake_fields_in,&
-                             i,j,i,j,center_cell_coarse_lat, &
+                             i,j,i,j,i,j,center_cell_coarse_lat, &
                              center_cell_coarse_lon, &
                              lake_number,0.0_dp,0.0_dp,0.0_dp)
           lakes_temp(lake_number) = lakepointer(lake_temp)
@@ -1093,6 +1099,8 @@ end subroutine lakeprognosticsdestructor
 subroutine initialisefillinglake(this,lake_parameters_in,lake_fields_in,center_cell_lat_in, &
                                  center_cell_lon_in,current_cell_to_fill_lat_in, &
                                  current_cell_to_fill_lon_in, &
+                                 previous_cell_to_fill_lat_in, &
+                                 previous_cell_to_fill_lon_in, &
                                  center_cell_coarse_lat_in, &
                                  center_cell_coarse_lon_in, &
                                  lake_number_in, &
@@ -1106,6 +1114,8 @@ subroutine initialisefillinglake(this,lake_parameters_in,lake_fields_in,center_c
   integer, intent(in) :: center_cell_lon_in
   integer, intent(in) :: current_cell_to_fill_lat_in
   integer, intent(in) :: current_cell_to_fill_lon_in
+  integer, intent(in) :: previous_cell_to_fill_lat_in
+  integer, intent(in) :: previous_cell_to_fill_lon_in
   integer, intent(in) :: center_cell_coarse_lat_in
   integer, intent(in) :: center_cell_coarse_lon_in
   integer, intent(in) :: lake_number_in
@@ -1115,6 +1125,8 @@ subroutine initialisefillinglake(this,lake_parameters_in,lake_fields_in,center_c
     call this%initialiselake(center_cell_lat_in,center_cell_lon_in, &
                              current_cell_to_fill_lat_in, &
                              current_cell_to_fill_lon_in, &
+                             previous_cell_to_fill_lat_in, &
+                             previous_cell_to_fill_lon_in, &
                              center_cell_coarse_lat_in, &
                              center_cell_coarse_lon_in, &
                              lake_number_in, &
@@ -1130,7 +1142,10 @@ end subroutine initialisefillinglake
 
 function lakeconstructor(lake_parameters_in,lake_fields_in,center_cell_lat_in, &
                          center_cell_lon_in,current_cell_to_fill_lat_in, &
-                         current_cell_to_fill_lon_in,center_cell_coarse_lat_in, &
+                         current_cell_to_fill_lon_in, &
+                         previous_cell_to_fill_lat_in, &
+                         previous_cell_to_fill_lon_in, &
+                         center_cell_coarse_lat_in, &
                          center_cell_coarse_lon_in, lake_number_in, &
                          lake_volume_in,secondary_lake_volume_in,&
                          unprocessed_water_in) result(constructor)
@@ -1141,6 +1156,8 @@ function lakeconstructor(lake_parameters_in,lake_fields_in,center_cell_lat_in, &
   integer, intent(in) :: center_cell_lon_in
   integer, intent(in) :: current_cell_to_fill_lat_in
   integer, intent(in) :: current_cell_to_fill_lon_in
+  integer, intent(in) :: previous_cell_to_fill_lat_in
+  integer, intent(in) :: previous_cell_to_fill_lon_in
   integer, intent(in) :: center_cell_coarse_lat_in
   integer, intent(in) :: center_cell_coarse_lon_in
   integer, intent(in) :: lake_number_in
@@ -1154,6 +1171,8 @@ function lakeconstructor(lake_parameters_in,lake_fields_in,center_cell_lat_in, &
                                          center_cell_lon_in, &
                                          current_cell_to_fill_lat_in, &
                                          current_cell_to_fill_lon_in, &
+                                         previous_cell_to_fill_lat_in, &
+                                         previous_cell_to_fill_lon_in, &
                                          center_cell_coarse_lat_in, &
                                          center_cell_coarse_lon_in, &
                                          lake_number_in, &
@@ -1171,6 +1190,8 @@ subroutine initialiseoverflowinglake(this,outflow_redirect_lat_in, &
                                      center_cell_lon_in,&
                                      current_cell_to_fill_lat_in, &
                                      current_cell_to_fill_lon_in, &
+                                     previous_cell_to_fill_lat_in, &
+                                     previous_cell_to_fill_lon_in, &
                                      center_cell_coarse_lat_in, &
                                      center_cell_coarse_lon_in, &
                                      next_merge_target_lat_in, &
@@ -1187,6 +1208,8 @@ subroutine initialiseoverflowinglake(this,outflow_redirect_lat_in, &
   integer, intent(in) :: center_cell_lon_in
   integer, intent(in) :: current_cell_to_fill_lat_in
   integer, intent(in) :: current_cell_to_fill_lon_in
+  integer, intent(in) :: previous_cell_to_fill_lat_in
+  integer, intent(in) :: previous_cell_to_fill_lon_in
   integer, intent(in) :: center_cell_coarse_lat_in
   integer, intent(in) :: center_cell_coarse_lon_in
   integer, intent(in) :: next_merge_target_lat_in
@@ -1200,6 +1223,8 @@ subroutine initialiseoverflowinglake(this,outflow_redirect_lat_in, &
     call this%initialiselake(center_cell_lat_in,center_cell_lon_in, &
                              current_cell_to_fill_lat_in, &
                              current_cell_to_fill_lon_in, &
+                             previous_cell_to_fill_lat_in, &
+                             previous_cell_to_fill_lon_in, &
                              center_cell_coarse_lat_in, &
                              center_cell_coarse_lon_in, &
                              lake_number_in,lake_volume_in, &
@@ -1233,6 +1258,8 @@ subroutine initialisesubsumedlake(this,lake_parameters_in,lake_fields_in, &
                                   primary_lake_number_in,center_cell_lat_in, &
                                   center_cell_lon_in,current_cell_to_fill_lat_in, &
                                   current_cell_to_fill_lon_in, &
+                                  previous_cell_to_fill_lat_in, &
+                                  previous_cell_to_fill_lon_in, &
                                   center_cell_coarse_lat_in, &
                                   center_cell_coarse_lon_in, &
                                   lake_number_in,&
@@ -1247,6 +1274,8 @@ subroutine initialisesubsumedlake(this,lake_parameters_in,lake_fields_in, &
   integer, intent(in) :: center_cell_lon_in
   integer, intent(in) :: current_cell_to_fill_lat_in
   integer, intent(in) :: current_cell_to_fill_lon_in
+  integer, intent(in) :: previous_cell_to_fill_lat_in
+  integer, intent(in) :: previous_cell_to_fill_lon_in
   integer, intent(in) :: center_cell_coarse_lat_in
   integer, intent(in) :: center_cell_coarse_lon_in
   integer, intent(in) :: lake_number_in
@@ -1256,6 +1285,8 @@ subroutine initialisesubsumedlake(this,lake_parameters_in,lake_fields_in, &
     call this%initialiselake(center_cell_lat_in,center_cell_lon_in, &
                              current_cell_to_fill_lat_in, &
                              current_cell_to_fill_lon_in, &
+                             previous_cell_to_fill_lat_in, &
+                             previous_cell_to_fill_lon_in, &
                              center_cell_coarse_lat_in, &
                              center_cell_coarse_lon_in, &
                              lake_number_in,lake_volume_in, &
@@ -1728,6 +1759,8 @@ subroutine accept_merge(this,redirect_coords_lat,redirect_coords_lon, &
                                      this%center_cell_lon, &
                                      this%current_cell_to_fill_lat, &
                                      this%current_cell_to_fill_lon, &
+                                     this%previous_cell_to_fill_lat, &
+                                     this%previous_cell_to_fill_lon, &
                                      this%center_cell_coarse_lat, &
                                      this%center_cell_coarse_lon, &
                                      this%lake_number,this%lake_volume,&
@@ -1761,6 +1794,8 @@ subroutine accept_split(this,primary_lake_number)
                                     this%center_cell_lon, &
                                     this%current_cell_to_fill_lat, &
                                     this%current_cell_to_fill_lon, &
+                                    this%previous_cell_to_fill_lat, &
+                                    this%previous_cell_to_fill_lon, &
                                     this%center_cell_coarse_lat, &
                                     this%center_cell_coarse_lon, &
                                     this%lake_number,this%lake_volume, &
@@ -1800,6 +1835,8 @@ subroutine change_to_overflowing_lake(this,merge_indices)
                                         this%center_cell_lon, &
                                         this%current_cell_to_fill_lat, &
                                         this%current_cell_to_fill_lon, &
+                                        this%previous_cell_to_fill_lat, &
+                                        this%previous_cell_to_fill_lon, &
                                         this%center_cell_coarse_lat, &
                                         this%center_cell_coarse_lon, &
                                         target_cell_lat, &
@@ -2483,6 +2520,8 @@ subroutine change_overflowing_lake_to_filling_lake(this)
                                     this%center_cell_lon, &
                                     this%current_cell_to_fill_lat, &
                                     this%current_cell_to_fill_lon,&
+                                    this%previous_cell_to_fill_lat, &
+                                    this%previous_cell_to_fill_lon, &
                                     this%center_cell_coarse_lat, &
                                     this%center_cell_coarse_lon, &
                                     this%lake_number,this%lake_volume,&
@@ -2497,6 +2536,8 @@ subroutine change_subsumed_lake_to_filling_lake(this)
                                     this%center_cell_lon, &
                                     this%current_cell_to_fill_lat, &
                                     this%current_cell_to_fill_lon,&
+                                    this%previous_cell_to_fill_lat, &
+                                    this%previous_cell_to_fill_lon, &
                                     this%center_cell_coarse_lat, &
                                     this%center_cell_coarse_lon, &
                                     this%lake_number,this%lake_volume, &

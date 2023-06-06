@@ -1268,6 +1268,17 @@ contains
         end if
         call teardown
 
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testLoopBreakerEight"
+        call set_unit_name('test_something')
+        call run_test_case(testLoopBreakerEight,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","double_loop_test")
+        else
+            call case_passed_xml("test_something","double_loop_test")
+        end if
+        call teardown
+
     end subroutine loop_breaker_all_tests
 
     subroutine latlon_hd_and_lake_model_all_tests
