@@ -36,9 +36,7 @@ module loop_breaker_mod
             !> Find the value of the highest cumulative flow in a cell at a given
             !! set of coarse coordinates and return it as an integer
             procedure :: find_highest_cumulative_flow_of_cell
-            !> Find the set of cell downstream of a given cell in the current coarse river
-            !! directions tracing the path all the way to an outflow point
-            procedure :: find_cells_downstream
+            procedure :: find_next_cell_downstream_and_check_for_end_of_flow
             !> Find which cells are in a given loop; input is the loop number of
             !! desired loop; output a list of the coarse coordinates of the cells
             !! in the loop
@@ -313,13 +311,11 @@ contains
         integer :: loop_num
         integer :: current_highest_cumulative_flow
         type(doubly_linked_list), pointer :: cells_in_loop
-        type(doubly_linked_list), pointer :: downstream_cells
         class(coords),pointer :: cell_coords
         class(coords),pointer :: new_cell_coords
         class(coords),pointer :: exit_coords
         class(*), pointer :: catchment_value
-        logical :: new_path_reenters_catchment_downstream
-        logical :: outflow_cell_reached
+        logical :: first_iteration
             nullify(cell_coords)
             nullify(exit_coords)
             call this%set_unprocessed_loops_value_for_cells_in_catchment(loop_num,.false.)
@@ -343,51 +339,37 @@ contains
                     if (associated(exit_coords)) deallocate(exit_coords)
                     allocate(exit_coords,source=cell_coords)
                 end if
+                deallocate(cell_coords)
             end do
             call this%assign_rdir_of_highest_cumulative_flow_of_cell(exit_coords)
-            new_path_reenters_catchment_downstream = .false.
-            downstream_cells => this%find_cells_downstream(exit_coords)
-            if (downstream_cells%get_length() > 0) then
-                do
-                    if (downstream_cells%iterate_forward()) exit
-                    select type (cell_coords_value => downstream_cells%get_value_at_iterator_position())
-                    class is (coords)
-                        if (associated(cell_coords)) deallocate(cell_coords)
-                        allocate(cell_coords,source=cell_coords_value)
-                    end select
+            allocate(cell_coords,source=exit_coords)
+            first_iteration = .true.
+            do
+                allocate(new_cell_coords,source=cell_coords)
+                if (this%find_next_cell_downstream_and_check_for_end_of_flow(new_cell_coords)) exit
+                if (first_iteration) then
+                    first_iteration = .false.
+                else
                     catchment_value => &
-                        this%coarse_catchment_field%get_value(cell_coords)
+                            this%coarse_catchment_field%get_value(cell_coords)
                     select type (catchment_value)
                     type is (integer)
                         if (catchment_value == loop_num) then
-                            new_path_reenters_catchment_downstream = .true.
+                            call this%assign_rdir_of_highest_cumulative_flow_of_cell(cell_coords)
+                            deallocate(new_cell_coords)
+                            allocate(new_cell_coords,source=cell_coords)
+                            if (this%find_next_cell_downstream_and_check_for_end_of_flow(&
+                                                                    new_cell_coords)) exit
                         end if
                     end select
                     deallocate(catchment_value)
-                    deallocate(cell_coords)
-                end do
-                if (new_path_reenters_catchment_downstream) then
-                    allocate(cell_coords,source=exit_coords)
-                    call this%find_next_cell_downstream(cell_coords,&
-                                                        outflow_cell_reached)
-                    do
-                        allocate(new_cell_coords,source=cell_coords)
-                        call this%find_next_cell_downstream(new_cell_coords,&
-                                                            outflow_cell_reached)
-                        if (outflow_cell_reached) exit
-                        deallocate(new_cell_coords)
-                        call this%assign_rdir_of_highest_cumulative_flow_of_cell(cell_coords)
-                        call this%find_next_cell_downstream(cell_coords,&
-                                                            outflow_cell_reached)
-                    end do
-                    deallocate(cell_coords)
                 end if
-            end if
+                deallocate(cell_coords)
+                cell_coords => new_cell_coords
+            end do
             deallocate(exit_coords)
             call cells_in_loop%destructor()
-            call downstream_cells%destructor()
             deallocate(cells_in_loop)
-            deallocate(downstream_cells)
     end subroutine break_loop
 
     function find_highest_cumulative_flow_of_cell(this,coords_in) &
@@ -409,28 +391,20 @@ contains
             deallocate(highest_cumulative_flow_location)
     end function
 
-    function find_cells_downstream(this,coords_in) result(cells_downstream)
+    function find_next_cell_downstream_and_check_for_end_of_flow(this,coords_in) &
+        result(end_of_flow)
         class(loop_breaker) :: this
-        class(coords), pointer :: coords_in
-        class(coords), pointer :: cell_coords
-        type(doubly_linked_list), pointer :: cells_downstream
+        class(coords), pointer, intent(inout) :: coords_in
         class(*), pointer :: unprocessed_loops_value
-        logical :: outflow_cell_reached
-            cells_downstream => doubly_linked_list()
-            allocate(cell_coords,source=coords_in)
-            do
-                call this%find_next_cell_downstream(cell_coords,&
-                                                    outflow_cell_reached)
-                if (outflow_cell_reached) exit
-                if (coords_in%are_equal_to(cell_coords)) exit
-                unprocessed_loops_value => this%unprocessed_loops%get_value(cell_coords)
-                select type (unprocessed_loops_value)
-                type is (logical)
-                    if (unprocessed_loops_value) exit
-                end select
-                call cells_downstream%add_value_to_back(cell_coords)
-            end do
-    end function find_cells_downstream
+        logical :: end_of_flow
+            call this%find_next_cell_downstream(coords_in,end_of_flow)
+            unprocessed_loops_value => this%unprocessed_loops%get_value(coords_in)
+            select type (unprocessed_loops_value)
+            type is (logical)
+                if (unprocessed_loops_value) end_of_flow = .true.
+            end select
+            deallocate(unprocessed_loops_value)
+    end function find_next_cell_downstream_and_check_for_end_of_flow
 
     subroutine init_latlon_loop_breaker(this,coarse_catchments,coarse_cumulative_flow,coarse_rdirs,&
                                         fine_rdirs,fine_cumulative_flow)
