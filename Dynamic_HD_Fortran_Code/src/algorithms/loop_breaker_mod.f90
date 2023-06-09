@@ -1057,7 +1057,7 @@ contains
                 if ( next_cell_index == this%index_for_sink .or. &
                      next_cell_index == this%index_for_outflow .or. &
                      next_cell_index == this%index_for_ocean_point ) then
-                    outflow_cell_reached =  .false.
+                    outflow_cell_reached =  .true.
                 else
                     outflow_cell_reached =  .false.
                     coords_inout%index = next_cell_index
