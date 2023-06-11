@@ -1472,10 +1472,12 @@ subroutine run_lakes(lake_parameters,lake_prognostics,lake_fields)
     end do
 end subroutine run_lakes
 
-subroutine calculate_true_lake_depths(lake_prognostics)
+subroutine calculate_true_lake_depths(lake_prognostics,lake_fields)
   type(lakeprognostics), intent(inout) :: lake_prognostics
+  type(lakefields), intent(inout) :: lake_fields
   type(lake), pointer :: working_lake
   integer :: i
+    lake_fields%true_lake_depths(:,:) = 0.0_dp
     do i = 1,size(lake_prognostics%lakes)
       working_lake => lake_prognostics%lakes(i)%lake_pointer
       if (working_lake%lake_type == overflowing_lake_type .or. &
@@ -1956,7 +1958,7 @@ subroutine calculate_true_lake_depth(this)
   integer :: secondary_lake_number
   integer :: working_cell_list_length
   integer :: working_cell_index
-  integer :: i
+  integer :: i,j
   integer :: lat,lon
     if (this%lake_type == filling_lake_type) then
       if (this%lake_fields%connected_lake_cells(this%current_cell_to_fill_lat, &
@@ -1995,7 +1997,8 @@ subroutine calculate_true_lake_depth(this)
       label_list => this%lake_fields%set_forest%get_all_node_labels_of_set(this%lake_number)
       working_cell_list_length = this%filled_lake_cell_index + 1
       if (size(label_list) > 0) then
-        do secondary_lake_number = 1,size(label_list)
+        do j = 1,size(label_list)
+          secondary_lake_number = label_list(j)
           if (.not. (secondary_lake_number == this%lake_number)) then
             working_cell_list_length = &
               working_cell_list_length + &
@@ -2021,7 +2024,8 @@ subroutine calculate_true_lake_depth(this)
       working_cell_lats(working_cell_index) = this%current_cell_to_fill_lat
       working_cell_lons(working_cell_index) = this%current_cell_to_fill_lon
       if (size(label_list) > 0) then
-        do secondary_lake_number = 1,size(label_list)
+        do j = 1,size(label_list)
+          secondary_lake_number = label_list(j)
           if (.not. (secondary_lake_number == this%lake_number)) then
             secondary_lake => this%lake_fields%&
                               &other_lakes(secondary_lake_number)%lake_pointer
@@ -2094,7 +2098,8 @@ subroutine calculate_true_lake_depth(this)
       label_list => this%lake_fields%set_forest%get_all_node_labels_of_set(this%lake_number)
       working_cell_list_length = this%filled_lake_cell_index + 1
       if (size(label_list) > 0) then
-        do secondary_lake_number = 1,size(label_list)
+        do j = 1,size(label_list)
+          secondary_lake_number = label_list(j)
           if (.not. (secondary_lake_number == this%lake_number)) then
             working_cell_list_length = &
               working_cell_list_length + &
@@ -2117,7 +2122,8 @@ subroutine calculate_true_lake_depth(this)
       working_cell_lats(working_cell_index) = this%current_cell_to_fill_lat
       working_cell_lons(working_cell_index) = this%current_cell_to_fill_lon
       if (size(label_list) > 0) then
-        do secondary_lake_number = 1,size(label_list)
+        do j = 1,size(label_list)
+          secondary_lake_number = label_list(j)
           if (.not. (secondary_lake_number == this%lake_number)) then
             secondary_lake => this%lake_fields%&
                               &other_lakes(secondary_lake_number)%lake_pointer
@@ -2748,6 +2754,11 @@ function calculate_diagnostic_lake_volumes(lake_parameters,&
       lake_volumes_by_lake_number(original_lake_index) = &
         working_lake%lake_volume + &
         working_lake%secondary_lake_volume
+      if (working_lake%lake_type == overflowing_lake_type) then
+        lake_volumes_by_lake_number(original_lake_index) = &
+          lake_volumes_by_lake_number(original_lake_index) + &
+          working_lake%excess_water
+      end if
     end do
     do j=1,lake_parameters%nlon
       do i=1,lake_parameters%nlat

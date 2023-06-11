@@ -1193,6 +1193,10 @@ function handle_event(lake::OverflowingLake,
      lake_parameters.connection_heights(lake_variables.current_cell_to_fill))
   volume_above_sill::Float64 = lake.overflowing_lake_variables.excess_water +
                                lake_variables.unprocessed_water
+  println("----------")
+  println(lake.overflowing_lake_variables.excess_water)
+  println(lake_variables.unprocessed_water)
+  println(volume_above_sill)
   working_cell_list::Vector{Coords} =
     lake_variables.filled_lake_cells
   push!(working_cell_list,lake_variables.current_cell_to_fill)
@@ -1217,6 +1221,7 @@ function handle_event(lake::OverflowingLake,
   end
   depth_above_sill::Float64 =
     volume_above_sill / total_lake_area
+  println(depth_above_sill)
   for coords::Coords in working_cell_list
     if lake_fields.flooded_lake_cells(coords) ||
        lake_parameters.flood_only(coords)
@@ -1812,7 +1817,12 @@ function calculate_diagnostic_lake_volumes_field(lake_parameters::LakeParameters
       lake = find_true_primary_lake(lake)
     end
     lake_volumes_by_lake_number[original_lake_index] =
-      lake.lake_variables.lake_volume + lake.lake_variables.secondary_lake_volume
+      lake.lake_variables.lake_volume + lake.lake_variables.secondary_lake_volume +
+      lake.lake_variables.unprocessed_water
+    if isa(lake,OverflowingLake)
+      lake_volumes_by_lake_number[original_lake_index] +=
+        lake.overflowing_lake_variables.excess_water
+    end
   end
   for_all(lake_parameters.grid) do coords::Coords
     lake_number = lake_fields.lake_numbers(coords)

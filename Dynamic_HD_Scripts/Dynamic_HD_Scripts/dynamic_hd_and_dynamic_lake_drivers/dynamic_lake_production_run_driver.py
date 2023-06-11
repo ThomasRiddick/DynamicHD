@@ -76,6 +76,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                     path.join(dest,"10min_corrected_orog.nc"))
         shutil.move(path.join(self.working_directory_path,"10min_rdirs.nc"),
                     path.join(dest,"10min_rdirs.nc"))
+        shutil.move(path.join(self.working_directory_path,"10min_filled_orog.nc"),
+                    path.join(dest,"10min_filled_orog.nc"))
         shutil.move(path.join(self.working_directory_path,"10min_catchments.nc"),
                     path.join(dest,"10min_catchments.nc"))
         shutil.move(path.join(self.working_directory_path,"10min_flowtorivermouths.nc"),
@@ -113,22 +115,20 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         shutil.move(path.join(self.working_directory_path,
                              "basin_catchment_numbers_temp.nc"),
                     path.join(dest,"basin_catchment_numbers.nc"))
-        shutil.move(path.join(self.working_directory_path,
-                             "10min_lake_volumes.nc"),
-                    path.join(dest,"10min_lake_volumes.nc"))
-        shutil.move(path.join(self.working_directory_path,
-                             "30min_flowtocell_connected.nc"),
-                    path.join(dest,"30min_flowtocell_connected.nc"))
-        shutil.move(path.join(self.working_directory_path,
-                             "30min_connected_catchments.nc"),
-                    path.join(dest,"30min_connected_catchments.nc"))
+        # shutil.move(path.join(self.working_directory_path,
+        #                      "10min_lake_volumes.nc"),
+        #             path.join(dest,"10min_lake_volumes.nc"))
+        #shutil.move(path.join(self.working_directory_path,
+        #                     "30min_flowtocell_connected.nc"),
+        #            path.join(dest,"30min_flowtocell_connected.nc"))
+        # shutil.move(path.join(self.working_directory_path,
+        #                      "30min_connected_catchments.nc"),
+        #             path.join(dest,"30min_connected_catchments.nc"))
         shutil.move(path.join(self.working_directory_path,
                              "30min_flowtorivermouths_connected.nc"),
                     path.join(dest,"30min_flowtorivermouths_connected.nc"))
 
     def clean_work_dir(self):
-        os.remove(path.join(self.working_directory_path,"merges_and_redirects_temp.nc"))
-        os.remove(path.join(self.working_directory_path,"fields_temp.nc"))
         os.remove(path.join(self.working_directory_path,"30minute_river_dirs_temp.nc"))
         os.remove(path.join(self.working_directory_path,"30minute_filled_orog_temp.nc"))
         os.remove(path.join(self.working_directory_path,"30minute_river_dirs_temp.dat"))
@@ -190,6 +190,9 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self._check_config_option_is_valid(config,
                                            "output_options",
                                            "output_corrected_orog")
+        self._check_config_option_is_valid(config,
+                                           "output_options",
+                                           "output_fine_filled_orog")
         self._check_config_option_is_valid(config,
                                            "output_options",
                                            "output_fine_rdirs")
@@ -269,6 +272,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             config.add_section("output_fieldname_options")
         if not config.has_option("output_fieldname_options","output_10min_corrected_orog_fieldname"):
             config.set("output_fieldname_options","output_10min_corrected_orog_fieldname","corrected_orog")
+        if not config.has_option("output_fieldname_options","output_10min_filled_orog_fieldname"):
+            config.set("output_fieldname_options","output_10min_filled_orog_fieldname","filled_orog")
         if not config.has_option("output_fieldname_options","output_10min_rdirs_fieldname"):
             config.set("output_fieldname_options","output_10min_rdirs_fieldname","rdirs")
         if not config.has_option("output_fieldname_options","output_10min_flow_to_cell"):
@@ -521,6 +526,12 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                true_sinks_in = np.ascontiguousarray(truesinks.get_data(),
                                                                                     dtype=np.int32),
                                                add_slope = False,epsilon = 0.0)
+        if config.getboolean("output_options","output_fine_filled_orog"):
+            iodriver.advanced_field_writer(path.join(self.working_directory_path,
+                                                     "10min_filled_orog.nc"),
+                                           orography_10min_filled,
+                                           fieldname=config.get("output_fieldname_options",
+                                                                "output_10min_filled_orog_fieldname"))
         #Filter unfilled orography
         if print_timing_info:
             time_before_filtering = timer()
@@ -995,7 +1006,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         water_to_redistribute = \
         iodriver.advanced_field_loader(self.input_water_to_redistribute_filepath,
                                        field_type='Generic',
-                                       fieldname="lakevol")
+                                       fieldname="lake_field")
         fine_grid = basin_catchment_numbers.get_grid()
         fine_shape = basin_catchment_numbers.get_data().shape
         coarse_grid = grid.makeGrid('HD')

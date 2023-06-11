@@ -580,7 +580,7 @@ subroutine testLakeModel1
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,3,3,0.0000000001_dp)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,3,3,0.0000000001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,3,3,0.00001_dp)
@@ -1505,7 +1505,7 @@ subroutine testLakeModel2
                                                                    lake_fields_out)
     call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-    call calculate_true_lake_depths(lake_prognostics_out)
+    call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
     call renumber_lakes(lake_fields_out)
     call reorder_lake_volumes(lake_volumes)
@@ -2584,7 +2584,7 @@ subroutine testLakeModel3
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes(lake_fields_out)
       call reorder_lake_volumes(lake_volumes)
@@ -2634,7 +2634,7 @@ subroutine testLakeModel3
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes(lake_fields_out)
       call reorder_lake_volumes(lake_volumes)
@@ -3572,7 +3572,7 @@ subroutine testLakeModel4
 
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -3627,7 +3627,7 @@ subroutine testLakeModel4
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(second_intermediate_expected_water_to_ocean,river_fields%water_to_ocean,&
                          3,3,0.00001_dp)
@@ -3683,7 +3683,7 @@ subroutine testLakeModel4
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(third_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(third_intermediate_expected_water_to_ocean, &
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -3739,7 +3739,7 @@ subroutine testLakeModel4
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(fourth_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(fourth_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -3793,7 +3793,7 @@ subroutine testLakeModel4
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(fifth_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(fifth_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -3847,7 +3847,7 @@ subroutine testLakeModel4
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,3,3,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,3,3)
@@ -4801,7 +4801,7 @@ subroutine testLakeModel5
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -4860,7 +4860,7 @@ subroutine testLakeModel5
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(second_intermediate_expected_water_to_ocean, &
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -4918,7 +4918,7 @@ subroutine testLakeModel5
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(third_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(third_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -4977,7 +4977,7 @@ subroutine testLakeModel5
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(fourth_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
       call assert_equals(fourth_intermediate_expected_water_to_ocean,&
@@ -5036,7 +5036,7 @@ subroutine testLakeModel5
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(fifth_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
       call assert_equals(fifth_intermediate_expected_water_to_ocean,&
@@ -5094,7 +5094,7 @@ subroutine testLakeModel5
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,3,3,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,3,3)
@@ -6740,7 +6740,7 @@ subroutine testLakeModel6
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -6799,7 +6799,7 @@ subroutine testLakeModel6
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(second_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -6858,7 +6858,7 @@ subroutine testLakeModel6
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(third_intermediate_expected_river_inflow, river_fields%river_inflow,3,3)
       call assert_equals(third_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -6917,7 +6917,7 @@ subroutine testLakeModel6
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(fourth_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(fourth_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -6976,7 +6976,7 @@ subroutine testLakeModel6
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(fifth_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(fifth_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -7035,7 +7035,7 @@ subroutine testLakeModel6
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(sixth_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
       call assert_equals(sixth_intermediate_expected_water_to_ocean,&
@@ -7095,7 +7095,7 @@ subroutine testLakeModel6
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(sixth_intermediate_expected_river_inflow, river_fields%river_inflow,3,3)
       call assert_equals(sixth_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -7154,7 +7154,7 @@ subroutine testLakeModel6
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(seven_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(seven_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -7213,7 +7213,7 @@ subroutine testLakeModel6
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(eight_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
       call assert_equals(eight_intermediate_expected_water_to_ocean,&
@@ -7273,7 +7273,7 @@ subroutine testLakeModel6
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(nine_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(nine_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -7332,7 +7332,7 @@ subroutine testLakeModel6
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(ten_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
       call assert_equals(ten_intermediate_expected_water_to_ocean,&
@@ -7392,7 +7392,7 @@ subroutine testLakeModel6
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(eleven_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(eleven_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -7452,7 +7452,7 @@ subroutine testLakeModel6
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(twelve_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(twelve_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -7512,7 +7512,7 @@ subroutine testLakeModel6
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(expected_river_inflow, river_fields%river_inflow,3,3)
       call assert_equals(expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -8343,7 +8343,7 @@ subroutine testLakeModel7
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -8403,7 +8403,7 @@ subroutine testLakeModel7
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(second_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
       call assert_equals(second_intermediate_expected_water_to_ocean,&
@@ -8465,7 +8465,7 @@ subroutine testLakeModel7
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,3,3,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,3,3)
@@ -9951,7 +9951,7 @@ subroutine testLakeModel8
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes(lake_fields_out)
       call reorder_lake_volumes(lake_volumes)
@@ -10013,7 +10013,7 @@ subroutine testLakeModel8
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes(lake_fields_out)
       call reorder_lake_volumes(lake_volumes)
@@ -10075,7 +10075,7 @@ subroutine testLakeModel8
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes(lake_fields_out)
       call reorder_lake_volumes(lake_volumes)
@@ -10137,7 +10137,7 @@ subroutine testLakeModel8
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes(lake_fields_out)
       call reorder_lake_volumes(lake_volumes)
@@ -11157,7 +11157,7 @@ subroutine testLakeModel9
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes(lake_fields_out)
       call reorder_lake_volumes(lake_volumes)
@@ -12128,7 +12128,7 @@ subroutine testLakeModel10
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes(lake_fields_out)
       call reorder_lake_volumes(lake_volumes)
@@ -12144,7 +12144,8 @@ subroutine testLakeModel10
       call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
-      call assert_equals(expected_true_lake_depths,lake_fields_out%true_lake_depths,nlat,nlon)
+      call assert_equals(expected_true_lake_depths,lake_fields_out%true_lake_depths, &
+                         nlat,nlon,0.000001_dp)
       deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       deallocate(lake_volumes)
@@ -13452,7 +13453,7 @@ subroutine testLakeModel11
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes(lake_fields_out)
       call reorder_lake_volumes(lake_volumes)
@@ -13515,7 +13516,7 @@ subroutine testLakeModel11
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes(lake_fields_out)
       call reorder_lake_volumes(lake_volumes)
@@ -13577,7 +13578,7 @@ subroutine testLakeModel11
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes(lake_fields_out)
       call reorder_lake_volumes(lake_volumes)
@@ -14589,7 +14590,7 @@ subroutine testLakeModel12
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes(lake_fields_out)
       call reorder_lake_volumes(lake_volumes)
@@ -15561,7 +15562,7 @@ subroutine testLakeModel13
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes(lake_fields_out)
       call reorder_lake_volumes(lake_volumes)
@@ -15577,7 +15578,8 @@ subroutine testLakeModel13
       call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
-      call assert_equals(expected_true_lake_depths,lake_fields_out%true_lake_depths,nlat,nlon)
+      call assert_equals(expected_true_lake_depths,lake_fields_out%true_lake_depths,&
+                         20,20,0.0000001_dp)
       deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       deallocate(lake_volumes)
@@ -16885,7 +16887,7 @@ subroutine testLakeModel14
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes(lake_fields_out)
       call reorder_lake_volumes(lake_volumes)
@@ -16949,7 +16951,7 @@ subroutine testLakeModel14
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes(lake_fields_out)
       call reorder_lake_volumes(lake_volumes)
@@ -17011,7 +17013,7 @@ subroutine testLakeModel14
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes(lake_fields_out)
       call reorder_lake_volumes(lake_volumes)
@@ -18651,7 +18653,7 @@ subroutine testLakeModel15
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
@@ -18712,7 +18714,7 @@ subroutine testLakeModel15
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(second_intermediate_expected_water_to_ocean,&
@@ -18728,7 +18730,7 @@ subroutine testLakeModel15
       call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
-      call assert_equals(second_intermediate_expected_true_lake_depths,lake_fields_out%true_lake_depths,nlat,nlon)
+      call assert_equals(second_intermediate_expected_true_lake_depths,lake_fields_out%true_lake_depths,nlat,nlon,0.1_dp)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -18773,7 +18775,7 @@ subroutine testLakeModel15
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(third_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(third_intermediate_expected_water_to_ocean,&
@@ -18789,7 +18791,7 @@ subroutine testLakeModel15
       call assert_equals(third_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(third_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
-      call assert_equals(third_intermediate_expected_true_lake_depths,lake_fields_out%true_lake_depths,nlat,nlon)
+      call assert_equals(third_intermediate_expected_true_lake_depths,lake_fields_out%true_lake_depths,nlat,nlon,0.1_dp)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -18834,7 +18836,7 @@ subroutine testLakeModel15
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(fourth_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(fourth_intermediate_expected_water_to_ocean,&
@@ -18850,7 +18852,7 @@ subroutine testLakeModel15
       call assert_equals(fourth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(fourth_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
-      call assert_equals(fourth_intermediate_expected_true_lake_depths,lake_fields_out%true_lake_depths,nlat,nlon)
+      call assert_equals(fourth_intermediate_expected_true_lake_depths,lake_fields_out%true_lake_depths,nlat,nlon,0.1_dp)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -19067,7 +19069,7 @@ subroutine testLakeModel15
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(expected_water_to_ocean,&
@@ -22293,7 +22295,7 @@ subroutine testLakeModel17
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes_two(lake_fields_out)
       call reorder_lake_volumes_two(lake_volumes)
@@ -22360,7 +22362,7 @@ subroutine testLakeModel17
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes_two(lake_fields_out)
       call reorder_lake_volumes_two(lake_volumes)
@@ -22380,7 +22382,7 @@ subroutine testLakeModel17
       call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
-      call assert_equals(second_intermediate_expected_true_lake_depths,lake_fields_out%true_lake_depths,nlat,nlon)
+      call assert_equals(second_intermediate_expected_true_lake_depths,lake_fields_out%true_lake_depths,nlat,nlon,0.1_dp)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -22427,7 +22429,7 @@ subroutine testLakeModel17
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes_two(lake_fields_out)
       call reorder_lake_volumes_two(lake_volumes)
@@ -22447,7 +22449,7 @@ subroutine testLakeModel17
       call assert_equals(third_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(third_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
-      call assert_equals(third_intermediate_expected_true_lake_depths,lake_fields_out%true_lake_depths,nlat,nlon)
+      call assert_equals(third_intermediate_expected_true_lake_depths,lake_fields_out%true_lake_depths,nlat,nlon,0.1_dp)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -22494,7 +22496,7 @@ subroutine testLakeModel17
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes_two(lake_fields_out)
       call reorder_lake_volumes_two(lake_volumes)
@@ -22514,7 +22516,7 @@ subroutine testLakeModel17
       call assert_equals(fourth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(fourth_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
-      call assert_equals(fourth_intermediate_expected_true_lake_depths,lake_fields_out%true_lake_depths,nlat,nlon)
+      call assert_equals(fourth_intermediate_expected_true_lake_depths,lake_fields_out%true_lake_depths,nlat,nlon,0.1_dp)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -22561,7 +22563,7 @@ subroutine testLakeModel17
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes_two(lake_fields_out)
       call reorder_lake_volumes_two(lake_volumes)
@@ -22581,7 +22583,7 @@ subroutine testLakeModel17
       call assert_equals(fifth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(fifth_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
-      call assert_equals(fifth_intermediate_expected_true_lake_depths,lake_fields_out%true_lake_depths,nlat,nlon)
+      call assert_equals(fifth_intermediate_expected_true_lake_depths,lake_fields_out%true_lake_depths,nlat,nlon,0.1_dp)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -22628,7 +22630,7 @@ subroutine testLakeModel17
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes_two(lake_fields_out)
       call reorder_lake_volumes_two(lake_volumes)
@@ -22648,7 +22650,7 @@ subroutine testLakeModel17
       call assert_equals(sixth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(sixth_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
-      call assert_equals(sixth_intermediate_expected_true_lake_depths,lake_fields_out%true_lake_depths,nlat,nlon)
+      call assert_equals(sixth_intermediate_expected_true_lake_depths,lake_fields_out%true_lake_depths,nlat,nlon,0.1_dp)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -22695,7 +22697,7 @@ subroutine testLakeModel17
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes_two(lake_fields_out)
       call reorder_lake_volumes_two(lake_volumes)
@@ -22715,7 +22717,7 @@ subroutine testLakeModel17
       call assert_equals(seventh_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(seventh_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
-      call assert_equals(seventh_intermediate_expected_true_lake_depths,lake_fields_out%true_lake_depths,nlat,nlon)
+      call assert_equals(seventh_intermediate_expected_true_lake_depths,lake_fields_out%true_lake_depths,nlat,nlon,0.1_dp)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -22766,7 +22768,7 @@ subroutine testLakeModel17
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes_two(lake_fields_out)
       call reorder_lake_volumes_two(lake_volumes)
@@ -23346,135 +23348,151 @@ subroutine testLakeModel18
          (/20,20/)))
       allocate(raw_heights(20,20))
       raw_heights = transpose(reshape((/ &
-         9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0, &
-         9.0, 9.0, 9.0, 3.0, 3.0,  3.0, 9.0, 1.0, 1.0, 9.0,  1.0, 1.0, 1.0, 1.0, 9.0,  9.0, 2.0, 2.0, 2.0, 9.0, &
-         9.0, 1.0, 9.0, 3.0, 3.0,  3.0, 6.0, 1.0, 1.0, 1.0,  1.0, 1.0, 1.0, 1.0, 7.0,  7.0, 2.0, 2.0, 2.0, 9.0, &
-         9.0, 1.0, 9.0, 3.0, 3.0,  3.0, 9.0, 1.0, 1.0, 1.0,  1.0, 1.0, 1.0, 1.0, 9.0,  9.0, 2.0, 2.0, 2.0, 9.0, &
-         9.0, 1.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 1.0, 1.0, 1.0, 9.0,  9.0, 2.0, 2.0, 2.0, 9.0, &
-         9.0, 1.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 1.0, 1.0, 1.0, 9.0,  9.0, 9.0, 6.0, 9.0, 9.0, &
-         9.0, 1.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 9.0, 5.0, 9.0, 9.0,  9.0, 3.0, 3.0, 3.0, 9.0, &
-         9.0, 1.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 4.0, 4.0, 4.0, 9.0,  9.0, 3.0, 3.0, 3.0, 9.0, &
-         9.0, 1.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 4.0, 4.0, 4.0, 9.0,  9.0, 3.0, 3.0, 3.0, 9.0, &
-         9.0, 1.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 4.0, 4.0, 4.0, 9.0,  9.0, 3.0, 3.0, 3.0, 9.0, &
-         9.0, 1.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 4.0, 4.0, 4.0, 9.0,  9.0, 3.0, 3.0, 3.0, 9.0, &
-         9.0, 1.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 4.0, 4.0, 4.0, 9.0,  9.0, 3.0, 3.0, 3.0, 9.0, &
-         9.0, 1.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 4.0, 4.0, 4.0, 9.0,  9.0, 3.0, 3.0, 3.0, 9.0, &
-         9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 8.0, 9.0, &
-         9.0, 6.0, 6.0, 6.0, 6.0,  6.0, 6.0, 6.0, 6.0, 6.0,  9.0, 9.0, 9.0, 9.0, 7.0,  7.0, 7.0, 7.0, 7.0, 7.0, &
-         9.0, 6.0, 6.0, 6.0, 6.0,  6.0, 6.0, 6.0, 6.0, 6.0,  6.0, 6.0, 6.0, 9.0, 7.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
-         9.0, 6.0, 6.0, 6.0, 6.0,  6.0, 6.0, 6.0, 6.0, 6.0,  6.0, 6.0, 6.0, 9.0, 7.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
-         9.0, 6.0, 6.0, 6.0, 6.0,  6.0, 6.0, 6.0, 6.0, 6.0,  6.0, 6.0, 6.0, 8.0, 7.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
-         9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 7.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
-         9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 7.0,  0.0, 0.0, 0.0, 0.0, 0.0/), &
+  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 2821.9, 2549.44, 2472.69, 2688.66, 2683.13, 2719.41, 2683.89, 2244.59, 2483.89, 2689.2,&
+          2432.77, 2797.78, 2544.55, 2494.41, 2536.93, 2465.66, 2440.65, 2225.69, 0.0, &
+         0.0, 2748.9, 2447.34, 2755.49, 2874.7, 2346.54, 2536.99, 2721.65, 2468.33, 2546.6, 2963.46, &
+          2564.8, 2937.53, 3036.52, 2731.27, 2529.42, 2821.21, 2742.64, 2499.66, 0.0, &
+         0.0, 2395.91, 2848.61, 2678.34, 3011.72, 2613.43, 2745.54, 2989.27, 2920.23, 2291.84, 2545.44, &
+         2789.72, 2346.59, 2786.36, 2684.83, 2438.92, 2610.69,  2689.3, 2602.33, 0.0, &
+         0.0, 2483.7, 2735.31, 2976.6, 3233.42, 2668.57, 2292.6, 2740.1, 2857.81, 2743.6, 2444.06, 2573.87, &
+         2855.08, 2613.29, 2701.57, 3352.55, 2564.0, 3025.03, 2427.56, 0.0, &
+         0.0, 2267.33, 2782.81, 2527.5, 2766.48, 2957.41, 3343.05, 3141.05, 2566.35, 2650.34, 2742.92, 2280.02, &
+          2626.72, 2881.62, 3167.12, 3115.05, 2838.05,  2636.08,  2783.24,  0.0, &
+         0.0, 2820.65, 2911.99, 2642.95, 3150.44, 2533.18, 3067.33, 3084.39, 2840.64, 2760.65, 2403.02, 2529.29, &
+         3511.31, 2271.61, 2227.3, 2508.7, 2858.88,  3293.69,  3142.58,  0.0, &
+         0.0, 3114.9 ,3131.08, 2820.27, 3287.25, 3384.07, 3141.46, 3457.63, 2889.2, 2867.08, 2273.87, 3345.01, &
+         3061.76, 3106.28, 2781.76, 3295.93, 3217.44,  2903.97, 2791.47, 0.0, &
+         0.0, 2906.96, 2959.25, 2909.48, 2775.41, 2819.85, 2863.38, 3402.57, 3294.53, 3408.99, 3257.53, 2952.45, &
+         2855.42, 2938.21, 2984.79, 2621.18, 3244.9,  3160.94, 2213.43, 0.0, &
+         0.0, 2762.45, 2828.82, 2774.3, 2822.31, 3045.13, 2921.17, 2639.54, 3239.07, 3116.82, 2887.34, 2887.21, &
+         3021.7, 2964.61, 2807.67, 2814.2, 2900.88, 2604.8, 3330.18, 0.0, &
+         0.0, 2773.8 ,2415.13, 2698.35, 2815.15, 2832.7, 2767.04, 2951.54, 3424.48, 2821.08, 3117.57, 3071.27, &
+         3405.28, 3236.87, 2979.43, 2855.74, 2865.74,  2706.25,  2816.8,  0.0, &
+         0.0, 2488.32, 2026.33, 2827.07, 3217.7, 2745.57, 3005.12, 2625.65, 2892.49, 2968.37, 3117.16, 2917.88, &
+          2897.28, 3336.53, 2734.44,  3487.47, 2808.68,  2663.77,  3230.12,  0.0, &
+         0.0, 2752.69, 2822.87, 3190.11, 2833.7, 2757.82, 2936.43, 3039.44, 2797.05, 2715.93, 2975.38, 2853.35, &
+          2857.33, 3466.81, 3222.28,  2746.64, 2664.91,  2942.43,  3019.91,  0.0, &
+         0.0, 2739.07, 2827.06, 2792.29, 2271.22, 2805.07, 2486.66, 2276.78, 2765.03, 2963.27, 2653.15, 2579.8, &
+          3302.41, 3137.43, 3141.73, 2825.02, 3057.72,  2786.84,  2690.5,  0.0, &
+         0.0, 2888.7, 2546.79, 2908.24, 2780.61, 2906.86, 3314.75, 3106.97, 3033.48, 3041.77, 2841.53, 2667.07, &
+          2880.55, 2972.32, 3179.55, 3117.97, 2951.07,  3388.83,  3449.22,  0.0, &
+         0.0, 2768.02, 2303.46, 2803.46, 2622.72, 2292.72, 2667.95, 2582.67, 2951.93, 2800.26, 3151.58, 2882.46, &
+          3030.87, 3141.97, 3126.41, 3341.3, 2686.55, 2545.24, 3390.11, 0.0, &
+         0.0, 2414.69, 2470.74, 2611.94, 2647.45, 2423.39, 2608.3, 2276.45, 2485.98, 2584.66, 3133.45, 3426.55, &
+          2667.1, 2962.01, 2948.8, 2967.54, 3158.43,  2586.37, 2798.46, 0.0, &
+         0.0, 2770.73, 2372.0, 1766.48, 2738.81, 3142.5, 2609.9, 2975.05, 2681.23, 2820.64, 2538.64, 2740.82, 2776.82, &
+          2492.22, 3088.22, 2828.46, 3058.16,  3223.74,  2993.81,  0.0, &
+         0.0, 2293.92, 1545.11, 2160.44, 2771.72, 2602.59, 2410.17, 2656.02, 2711.45, 2800.98, 2867.34, 2683.17, &
+         2811.27, 2497.78, 2911.4, 2693.63, 3010.6,  2708.76, 2661.58, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 /), &
          (/20,20/)))
       allocate(corrected_heights(20,20))
       corrected_heights = transpose(reshape((/ &
-         9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0, &
-         9.0, 9.0, 9.0, 3.0, 3.0,  3.0, 9.0, 1.0, 1.0, 9.0,  1.0, 1.0, 1.0, 1.0, 9.0,  9.0, 2.0, 2.0, 2.0, 9.0, &
-         9.0, 1.0, 9.0, 3.0, 3.0,  3.0, 6.0, 1.0, 1.0, 1.0,  1.0, 1.0, 1.0, 1.0, 7.0,  7.0, 2.0, 2.0, 2.0, 9.0, &
-         9.0, 1.0, 9.0, 3.0, 3.0,  3.0, 9.0, 1.0, 1.0, 1.0,  1.0, 1.0, 1.0, 1.0, 9.0,  9.0, 2.0, 2.0, 2.0, 9.0, &
-         9.0, 1.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 1.0, 1.0, 1.0, 9.0,  9.0, 2.0, 2.0, 2.0, 9.0, &
-         9.0, 1.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 1.0, 1.0, 1.0, 9.0,  9.0, 9.0, 6.0, 9.0, 9.0, &
-         9.0, 1.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 9.0, 5.0, 9.0, 9.0,  9.0, 3.0, 3.0, 3.0, 9.0, &
-         9.0, 1.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 4.0, 4.0, 4.0, 9.0,  9.0, 3.0, 3.0, 3.0, 9.0, &
-         9.0, 1.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 4.0, 4.0, 4.0, 9.0,  9.0, 3.0, 3.0, 3.0, 9.0, &
-         9.0, 1.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 4.0, 4.0, 4.0, 9.0,  9.0, 3.0, 3.0, 3.0, 9.0, &
-         9.0, 1.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 4.0, 4.0, 4.0, 9.0,  9.0, 3.0, 3.0, 3.0, 9.0, &
-         9.0, 1.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 4.0, 4.0, 4.0, 9.0,  9.0, 3.0, 3.0, 3.0, 9.0, &
-         9.0, 1.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 4.0, 4.0, 4.0, 9.0,  9.0, 3.0, 3.0, 3.0, 9.0, &
-         9.0, 7.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 8.0, 9.0, &
-         9.0, 6.0, 6.0, 6.0, 6.0,  6.0, 6.0, 6.0, 6.0, 6.0,  9.0, 9.0, 9.0, 9.0, 7.0,  7.0, 7.0, 7.0, 7.0, 7.0, &
-         9.0, 6.0, 6.0, 6.0, 6.0,  6.0, 6.0, 6.0, 6.0, 6.0,  6.0, 6.0, 6.0, 9.0, 7.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
-         9.0, 6.0, 6.0, 6.0, 6.0,  6.0, 6.0, 6.0, 6.0, 6.0,  6.0, 6.0, 6.0, 9.0, 7.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
-         9.0, 6.0, 6.0, 6.0, 6.0,  6.0, 6.0, 6.0, 6.0, 6.0,  6.0, 6.0, 6.0, 8.0, 7.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
-         9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 7.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
-         9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 9.0,  9.0, 9.0, 9.0, 9.0, 7.0,  0.0, 0.0, 0.0, 0.0, 0.0/), &
+          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 2821.9, 2549.44, 2472.69, 2688.66, 2683.13, 2719.41, 2683.89, 2244.59, 2483.89, 2689.2,&
+          2432.77, 2797.78, 2544.55, 2494.41, 2536.93, 2465.66, 2440.65, 2225.69, 0.0, &
+         0.0, 2748.9, 2447.34, 2755.49, 2874.7, 2346.54, 2536.99, 2721.65, 2468.33, 2546.6, 2963.46, &
+          2564.8, 2937.53, 3036.52, 2731.27, 2529.42, 2821.21, 2742.64, 2499.66, 0.0, &
+         0.0, 2395.91, 2848.61, 2678.34, 3011.72, 2613.43, 2745.54, 2989.27, 2920.23, 2291.84, 2545.44, &
+         2789.72, 2346.59, 2786.36, 2684.83, 2438.92, 2610.69,  2689.3, 2602.33, 0.0, &
+         0.0, 2483.7, 2735.31, 2976.6, 3233.42, 2668.57, 2292.6, 2740.1, 2857.81, 2743.6, 2444.06, 2573.87, &
+         2855.08, 2613.29, 2701.57, 3352.55, 2564.0, 3025.03, 2427.56, 0.0, &
+         0.0, 2267.33, 2782.81, 2527.5, 2766.48, 2957.41, 3343.05, 3141.05, 2566.35, 2650.34, 2742.92, 2280.02, &
+          2626.72, 2881.62, 3167.12, 3115.05, 2838.05,  2636.08,  2783.24,  0.0, &
+         0.0, 2820.65, 2911.99, 2642.95, 3150.44, 2533.18, 3067.33, 3084.39, 2840.64, 2760.65, 2403.02, 2529.29, &
+         3511.31, 2271.61, 2227.3, 2508.7, 2858.88,  3293.69,  3142.58,  0.0, &
+         0.0, 3114.9 ,3131.08, 2820.27, 3287.25, 3384.07, 3141.46, 3457.63, 2889.2, 2867.08, 2273.87, 3345.01, &
+         3061.76, 3106.28, 2781.76, 3295.93, 3217.44,  2903.97, 2791.47, 0.0, &
+         0.0, 2906.96, 2959.25, 2909.48, 2775.41, 2819.85, 2863.38, 3402.57, 3294.53, 3408.99, 3257.53, 2952.45, &
+         2855.42, 2938.21, 2984.79, 2621.18, 3244.9,  3160.94, 2213.43, 0.0, &
+         0.0, 2762.45, 2828.82, 2774.3, 2822.31, 3045.13, 2921.17, 2639.54, 3239.07, 3116.82, 2887.34, 2887.21, &
+         3021.7, 2964.61, 2807.67, 2814.2, 2900.88, 2604.8, 3330.18, 0.0, &
+         0.0, 2773.8 ,2415.13, 2698.35, 2815.15, 2832.7, 2767.04, 2951.54, 3424.48, 2821.08, 3117.57, 3071.27, &
+         3405.28, 3236.87, 2979.43, 2855.74, 2865.74,  2706.25,  2816.8,  0.0, &
+         0.0, 2488.32, 2026.33, 2827.07, 3217.7, 2745.57, 3005.12, 2625.65, 2892.49, 2968.37, 3117.16, 2917.88, &
+          2897.28, 3336.53, 2734.44,  3487.47, 2808.68,  2663.77,  3230.12,  0.0, &
+         0.0, 2752.69, 2822.87, 3190.11, 2833.7, 2757.82, 2936.43, 3039.44, 2797.05, 2715.93, 2975.38, 2853.35, &
+          2857.33, 3466.81, 3222.28,  2746.64, 2664.91,  2942.43,  3019.91,  0.0, &
+         0.0, 2739.07, 2827.06, 2792.29, 2271.22, 2805.07, 2486.66, 2276.78, 2765.03, 2963.27, 2653.15, 2579.8, &
+          3302.41, 3137.43, 3141.73, 2825.02, 3057.72,  2786.84,  2690.5,  0.0, &
+         0.0, 2888.7, 2546.79, 2908.24, 2780.61, 2906.86, 3314.75, 3106.97, 3033.48, 3041.77, 2841.53, 2667.07, &
+          2880.55, 2972.32, 3179.55, 3117.97, 2951.07,  3388.83,  3449.22,  0.0, &
+         0.0, 2768.02, 2303.46, 2803.46, 2622.72, 2292.72, 2667.95, 2582.67, 2951.93, 2800.26, 3151.58, 2882.46, &
+          3030.87, 3141.97, 3126.41, 3341.3, 2686.55, 2545.24, 3390.11, 0.0, &
+         0.0, 2414.69, 2470.74, 2611.94, 2647.45, 2423.39, 2608.3, 2276.45, 2485.98, 2584.66, 3133.45, 3426.55, &
+          2667.1, 2962.01, 2948.8, 2967.54, 3158.43,  2586.37, 2798.46, 0.0, &
+         0.0, 2770.73, 2372.0, 1766.48, 2738.81, 3142.5, 2609.9, 2975.05, 2681.23, 2820.64, 2538.64, 2740.82, 2776.82, &
+          2492.22, 3088.22, 2828.46, 3058.16,  3223.74,  2993.81,  0.0, &
+         0.0, 2293.92, 1545.11, 2160.44, 2771.72, 2602.59, 2410.17, 2656.02, 2711.45, 2800.98, 2867.34, 2683.17, &
+         2811.27, 2497.78, 2911.4, 2693.63, 3010.6,  2708.76, 2661.58, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 /), &
          (/20,20/)))
       allocate(flood_heights(20,20))
       flood_heights = transpose(reshape((/ &
-        0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  0.0,  0.0,  3.0,  3.0,  6.0,  0.0,  1.0,  1.0,  0.0,  1.0,  1.0,  1.0,  5.0,&
-          0.0,  0.0,  2.0,  2.0,  2.0,  0.0, &
-        0.0,  1.0,  0.0,  3.0,  3.0,  3.0,  7.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,&
-          8.0,  7.0,  2.0,  2.0,  2.0,  0.0, &
-        0.0,  1.0,  0.0,  3.0,  3.0,  3.0,  0.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,&
-          0.0,  0.0,  2.0,  2.0,  2.0,  0.0, &
-        0.0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  1.0,  1.0,  1.0,&
-          0.0,  0.0,  6.0,  2.0,  2.0,  0.0, &
-        0.0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  1.0,  1.0,  1.0,&
-          0.0,  0.0,  0.0,  7.0,  0.0,  0.0, &
-        0.0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  6.0,  0.0,&
-          0.0,  0.0,  3.0,  3.0,  3.0,  0.0, &
-        0.0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  4.0,  4.0,  4.0,&
-          0.0,  0.0,  3.0,  3.0,  3.0,  0.0, &
-        0.0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  4.0,  4.0,  4.0,&
-          0.0,  0.0,  3.0,  3.0,  3.0,  0.0, &
-        0.0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  4.0,  4.0,  4.0,&
-          0.0,  0.0,  3.0,  3.0,  3.0,  0.0, &
-        0.0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  4.0,  4.0,  4.0,&
-          0.0,  0.0,  3.0,  3.0,  3.0,  0.0, &
-        0.0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  4.0,  4.0,  4.0,&
-          0.0,  0.0,  3.0,  3.0,  3.0,  0.0, &
-        0.0,  7.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  5.0,  4.0,  4.0,&
-          0.0,  0.0,  6.0,  3.0,  3.0,  0.0, &
-        0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  7.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0 /), &
+        0.0,0.0,  0.0,       0.0,       0.0,   0.0,     0.0,     0.0,   0.0,    0.0,    0.0,   0.0,   0.0,  0.0, &
+           0.0,  0.0,    0.0,     0.0,   0.0, 0.0, &
+        0.0,0.0,  0.0,       0.0,       0.0,   0.0,     0.0,     0.0,   0.0,    0.0,    0.0,   0.0,   0.0,  0.0, &
+           0.0,  0.0,    0.0,     0.0,   0.0, 0.0, &
+        0.0,0.0,  0.0,       0.0,       0.0, 2536.99, 2613.43,   0.0,   0.0,    0.0,    0.0,   0.0,   0.0,  0.0, &
+           0.0,  0.0,    0.0,     0.0,   0.0, 0.0, &
+        0.0,0.0,  0.0,       0.0,       0.0, 2668.57,   0.0,     0.0,   0.0,  2444.06,  0.0,   0.0, 2564.8, 0.0, &
+           0.0, 2529.42, 0.0,     0.0,   0.0, 0.0, &
+        0.0,0.0,  0.0,       0.0,       0.0, 2683.13, 2613.43,   0.0,   0.0,    0.0, 2468.33,  0.0,   0.0,  0.0, &
+           0.0,  0.0,    0.0,     0.0,   0.0, 0.0, &
+        0.0,0.0,  0.0,   2642.95,       0.0,   0.0,     0.0,     0.0, 2650.34,  0.0,    0.0, 2403.02, 0.0,  0.0, &
+           0.0,  0.0,    0.0,     0.0,   0.0, 0.0, &
+        0.0,0.0,  0.0,   2735.31,       0.0, 2766.48,   0.0,     0.0,   0.0,    0.0, 2444.06,  0.0,   0.0,2508.7, &
+        2271.61,2626.72, 0.0,     0.0,   0.0, 0.0, &
+        0.0,0.0,  0.0,       0.0,       0.0,   0.0,     0.0,     0.0,   0.0,    0.0, 2403.02,  0.0,   0.0,  0.0, &
+           0.0,  0.0,    0.0,     0.0,   0.0, 0.0, &
+        0.0,0.0,  0.0,       0.0,       0.0,   0.0,     0.0,     0.0,   0.0,    0.0,    0.0,   0.0,2887.21, 0.0, &
+           0.0, 2781.76, 0.0,     0.0,   0.0, 0.0, &
+        0.0,0.0,  0.0,       0.0,       0.0,   0.0,     0.0,  2767.04,  0.0,    0.0, 2892.49,2887.34, 0.0,  0.0, &
+           0.0,  0.0,    0.0,     0.0,   0.0, 0.0, &
+        0.0,0.0,2488.32,     0.0,       0.0,   0.0,   2780.61,   0.0,   0.0,  2887.34,  0.0,   0.0,   0.0,  0.0, &
+           0.0,  0.0,    0.0,     0.0,   0.0, 0.0, &
+        0.0,0.0,2415.13,     0.0,       0.0, 2757.82,   0.0,  2767.04,  0.0,    0.0,    0.0,   0.0,   0.0,  0.0, &
+         2746.64, 0.0,    0.0,    2664.91,0.0, 0.0, &
+        0.0,0.0,  0.0,       0.0,       0.0, 2765.03,   0.0,     0.0,   0.0,  2765.03,  0.0,   0.0,   0.0,  0.0, &
+            0.0,  0.0,   2706.25,  0.0,   0.0, 0.0, &
+        0.0,0.0,  0.0,       0.0,   2757.82,   0.0,  2757.82, 2486.66, 2767.04, 0.0, 2667.07,2653.15, 0.0,  0.0, &
+            0.0,  0.0,    0.0,     0.0,   0.0, 0.0, &
+        0.0,0.0,  0.0,       0.0,       0.0,   0.0,     0.0,     0.0,   0.0,    0.0,    0.0, 2715.93, 0.0,  0.0, &
+            0.0,  0.0,    0.0,     0.0,   0.0, 0.0, &
+        0.0,0.0,2414.69,     0.0,       0.0, 2423.39,   0.0,   2584.66, 0.0,    0.0,    0.0,   0.0,   0.0,  0.0, &
+            0.0,  0.0,   2798.46, 2586.37,0.0, 0.0, &
+        0.0,0.0,  0.0,       0.0,       0.0, 2608.3, 2609.9, 2485.98, 2582.67,2608.3,   0.0,   0.0,   0.0,  0.0, &
+            0.0,  0.0,    0.0,    2686.55,0.0, 0.0, &
+        0.0,0.0,  0.0,       0.0,       0.0,   0.0,     0.0,     0.0,   0.0,    0.0, 2584.66,  0.0,   0.0,2497.78, &
+         0.0,  0.0,    0.0,     0.0,   0.0, 0.0, &
+        0.0,0.0,  0.0,       0.0,       0.0,   0.0,     0.0,     0.0,   0.0,    0.0,    0.0,   0.0,   0.0,  0.0,   &
+         0.0,  0.0,    0.0,     0.0,   0.0, 0.0, &
+        0.0,0.0,  0.0,       0.0,       0.0,   0.0,     0.0,     0.0,   0.0,    0.0,    0.0,   0.0,   0.0,  0.0,   &
+         0.0,  0.0,    0.0,     0.0,   0.0, 0.0 /), &
          (/20,20/)))
       allocate(connection_heights(20,20))
       connection_heights = transpose(reshape((/ &
-        0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  8.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
-        0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,&
-          0.0,  0.0,  0.0,  0.0,  0.0,  0.0 /), &
+        0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+        0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+        0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+        0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+        0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+        0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+        0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+        0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+        0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+        0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+        0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+        0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+        0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+        0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+        0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+        0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+        0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+        0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+        0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+        0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0  /), &
          (/20,20/)))
       allocate(connect_merge_and_redirect_indices_index(nlat,nlon))
       connect_merge_and_redirect_indices_index(:,:) =0
@@ -23957,6 +23975,8 @@ subroutine testLakeModel18
       flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
       flood_merge_and_redirect_indices_index(17,7) = flood_index
       flood_index = flood_index +1
+      lake_retention_coefficient_local=0.1_dp
+      instant_throughflow_local=.True.
       call add_offset(flood_next_cell_lat_index,1,(/-1/))
       call add_offset(flood_next_cell_lon_index,1,(/-1/))
       call add_offset(connect_next_cell_lat_index,1,(/-1/))
@@ -24243,27 +24263,46 @@ subroutine testLakeModel18
          (/nlon,nlat/)))
       allocate(intermediate_expected_diagnostic_lake_volumes(nlat,nlon))
       intermediate_expected_diagnostic_lake_volumes = transpose(reshape((/ &
-         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 648.84, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 648.84, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 83.99, 0.0, 0.0, 648.84, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0, 0.0, 233.30, 0.0, 0.0, 0.0, 0.0, 648.84, 0.0, 0.0, 872.55, 872.55, 872.55, 0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 648.84, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 118.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2196.67, 0.0, 0.0, 118.91, 118.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2196.67, 0.0, 0.0, 118.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0, 0.0, 2196.67, 0.0, 2196.67, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 12.20, 0.0, 0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0, 0.0, 2196.67, 0.0, 0.0, 0.0, 2196.67, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0, 2196.67, 0.0, 2196.67, 2196.67, 2196.67, 0.0, 2196.67, 2196.67, &
-         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2196.67, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  /), &
+                  0.0,0.0,0.0,0.0,0.0,  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                  0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+                  0.0,0.0,0.0,0.0,0.0,  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                  0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+                  0.0,0.0,0.0,0.0,0.0,  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                  0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+                  0.0,0.0,0.0,0.0,0.0,  0.0,0.0,0.0,0.0,1536000.0,  0.0,&
+                   0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+                  0.0,0.0,0.0,0.0,0.0,  0.0,0.0,0.0,0.0,  0.0,1536000.0,&
+                   0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+                  0.0,0.0,0.0,0.0,0.0,  0.0,  0.0,  0.0,576000.0,   0.0,&
+                    0.0,1536000.0,0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
+                  0.0,0.0,0.0,0.0,0.0,576000.0,  0.0,  0.0,  0.0,   0.0,&
+                  1536000.0,  0.0,0.0,768000.0,768000.0,768000.0,  0.0,  0.0,  0.0,  0.0, &
+                  0.0,0.0,0.0,0.0,0.0,  0.0,  0.0,0.0,0.0,0.0,1536000.0,&
+                    0.0,   0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+                  0.0,0.0,0.0,0.0,0.0,  0.0,  0.0,0.0,0.0,0.0, 0.0, 0.0,&
+                   1600000.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+                  0.0,0.0,0.0,0.0,0.0,  0.0,  0.0,3936000.0,  0.0,  0.0,&
+                  1600000.0,1600000.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
+                  0.0,0.0,0.0,0.0,0.0, 0.0,3936000.0,0.0, 0.0,1600000.0,&
+                    0.0,  0.0,  0.0,  0.0,  0.0, 0.0,  0.0,  0.0,  0.0,  0.0, &
+                  0.0,0.0,0.0,0.0,0.0,3936000.0, 0.0,3936000.0,0.0, 0.0,&
+                    0.0,  0.0,  0.0,  0.0,864000.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
+                  0.0,0.0,0.0,0.0,0.0,3936000.0,  0.0,  0.0, 0.0,3936000.0,&
+                    0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, &
+                  0.0,0.0,0.0,0.0,3936000.0,0.0,3936000.0,3936000.0,3936000.0,&
+                   0.0,3936000.0,3936000.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,3936000.0,0.0,&
+                  0.0,0.0,0.0,0.0,0.0,0.0,0.0, &
+                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                  0.0,0.0,0.0,0.0,0.0,&
+                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                  0.0,0.0,0.0,0.0,0.0,&
+                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                  0.0,0.0,0.0,0.0,0.0,&
+                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                  0.0,0.0,0.0,0.0,0.0,&
+                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                  0.0,0.0,0.0,0.0,0.0  /), &
          (/nlon,nlat/)))
       allocate(intermediate_expected_lake_fractions(3,3))
       intermediate_expected_lake_fractions = transpose(reshape((/ &
@@ -24289,46 +24328,46 @@ subroutine testLakeModel18
                                              444.17,   0.0, 32.05, 0.0, 872.55, 12.2,   0.0, 0.0, 0.0, 0.0 /)
       allocate(intermediate_expected_true_lake_depths(nlat,nlon))
       intermediate_expected_true_lake_depths = transpose(reshape((/ &
-         0.0, 0.0, 0.0, 0.0, 0.0,       0.0,       0.0,   0.0,   0.00,&
-            0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00, &
-         0.0, 0.0, 0.0, 0.0, 0.0,       0.0,       0.0,   0.0,   0.00,&
-            0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00, &
-         0.0, 0.0, 0.0, 0.0, 0.0,       0.0,       0.0,   0.0,   0.00,&
-            0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00, &
-         0.0, 0.0, 0.0, 0.0, 0.0,       0.0,       0.0,   0.0,   0.00,&
-          255890.86,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00, &
-         0.0, 0.0, 0.0, 0.0, 0.0,       0.0,       0.0,   0.0,   0.00,&
-            0.00, 255882.86,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00, &
-         0.0, 0.0, 0.0, 0.0, 0.0,       0.0,       0.0,   0.0, 287949.00, &
-           0.00,   0.00, 255890.86,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00, &
-         0.0, 0.0, 0.0, 0.0, 0.0,       287874.35, 0.0,   0.0,   0.00, &
-           0.00, 255882.86,   0.00,   0.00, 191772.86, 191772.86, 191772.86,   0.00,   0.00,   0.00,   0.00, &
-         0.0, 0.0, 0.0, 0.0, 0.0,       0.0,       0.0,   0.0,   0.00, &
-          0.00, 255882.86,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00, &
-         0.0, 0.0, 0.0, 0.0, 0.0,       0.0,       0.0,   0.0,   0.00, &
-          0.00,   0.00,   0.00, 319972.22,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00, &
-         0.0, 0.0, 0.0, 0.0, 0.0,       0.0,       0.0,   280976.95,  &
-          0.00,   0.00, 319967.22, 319972.22,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00, &
-         0.0, 0.0, 0.0, 0.0, 0.0,       0.0,       280976.95,   0.00, &
-           0.00, 319967.22,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00, &
-         0.0, 0.0, 0.0, 0.0, 0.0,       280976.95, 0.0,   280976.95,  &
-          0.00,   0.00,   0.00,   0.00,   0.00,   0.00, 431984.90,   0.00,   0.00,   0.00,   0.00,   0.00, &
-         0.0, 0.0, 0.0, 0.0, 0.0,       280976.95, 0.0,   0.0,   0.00, &
-         280976.95,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00, &
-         0.0, 0.0, 0.0, 0.0, 280976.95, 0.0,       280976.95, 280976.95, &
-         280976.95,   0.00, 280976.95, 280976.95,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00, &
-         0.0, 0.0, 0.0, 0.0, 0.0,       0.0,       0.0,   0.0,  0.0, 0.0,&
-          0.0, 280976.95,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00, &
-         0.0, 0.0, 0.0, 0.0, 0.0,       0.0,       0.0,   0.0,  0.0, 0.0,&
-          0.0,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00, &
-         0.0, 0.0, 0.0, 0.0, 0.0,       0.0,       0.0,   0.0,  0.0, 0.0,&
-          0.0,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00, &
-         0.0, 0.0, 0.0, 0.0, 0.0,       0.0,       0.0,   0.0,  0.0, 0.0,&
-          0.0,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00, &
-         0.0, 0.0, 0.0, 0.0, 0.0,       0.0,       0.0,   0.0,  0.0, 0.0,&
-          0.0,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00, &
-         0.0, 0.0, 0.0, 0.0, 0.0,       0.0,       0.0,   0.0,  0.0, 0.0,&
-          0.0,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00  /), &
+             0.0,0.0,0.0,0.0,  0.0,      0.0,       0.0,   0.0,    0.0,      0.0,    0.0,    0.0,     0.0,&
+                0.0,   0.0,    0.0,  0.0,  0.0,0.0,0.0, &
+             0.0,0.0,0.0,0.0,  0.0,      0.0,       0.0,   0.0,    0.0,      0.0,    0.0,    0.0,     0.0,&
+                0.0,   0.0,    0.0,  0.0,  0.0,0.0,0.0, &
+             0.0,0.0,0.0,0.0,  0.0,      0.0,       0.0,   0.0,    0.0,      0.0,    0.0,    0.0,     0.0,&
+                0.0,   0.0,    0.0,  0.0,  0.0,0.0,0.0, &
+             0.0,0.0,0.0,0.0,  0.0,      0.0,       0.0,   0.0,    0.0,    256068.35,0.0,    0.0,     0.0,&
+                0.0,   0.0,    0.0,  0.0,  0.0,0.0,0.0, &
+             0.0,0.0,0.0,0.0,  0.0,      0.0,       0.0,   0.0,    0.0,      0.0,255916.13,  0.0,     0.0,&
+                0.0,   0.0,    0.0,  0.0,  0.0,0.0,0.0, &
+             0.0,0.0,0.0,0.0,  0.0,      0.0,       0.0,   0.0,  288041.99,  0.0,    0.0,256080.17,   0.0,&
+                0.0,   0.0,    0.0,  0.0,  0.0,0.0,0.0, &
+             0.0,0.0,0.0,0.0,  0.0,     288116.65,  0.0,   0.0,    0.0,      0.0,255957.17,  0.0,     0.0,&
+             192136.97,192181.28,191899.88,0.0,0.0,0.0,0.0, &
+             0.0,0.0,0.0,0.0,  0.0,      0.0,       0.0,   0.0,    0.0,      0.0,256086.32,  0.0,     0.0,&
+                0.0,   0.0,    0.0,  0.0,  0.0,0.0,0.0, &
+             0.0,0.0,0.0,0.0,  0.0,      0.0,       0.0,   0.0,    0.0,      0.0,    0.0,    0.0,   320013.29,&
+             0.0,   0.0,    0.0,  0.0,  0.0,0.0,0.0, &
+             0.0,0.0,0.0,0.0,  0.0,      0.0,       0.0,281127.02, 0.0,      0.0,319981.37,319981.50, 0.0,    &
+             0.0,   0.0,    0.0,  0.0,  0.0,0.0,0.0, &
+             0.0,0.0,0.0,0.0,  0.0,      0.0,  280999.52,  0.0,    0.0, 320047.63,   0.0,    0.0,     0.0,    &
+             0.0,   0.0,    0.0,  0.0,  0.0,0.0,0.0, &
+             0.0,0.0,0.0,0.0,  0.0,     281020.99,  0.0, 281140.91,0.0,      0.0,    0.0,    0.0,     0.0,    &
+             0.0, 432006.10,0.0,  0.0,  0.0,0.0,0.0, &
+             0.0,0.0,0.0,0.0,  0.0,     281008.74,  0.0,   0.0,    0.0,281050.63,    0.0,    0.0,     0.0,    &
+             0.0,   0.0,    0.0,  0.0,  0.0,0.0,0.0, &
+             0.0,0.0,0.0,0.0,281495.34,  0.0,  281279.90,281489.78,281001.53,0.0, 281113.41,281186.76,0.0,    &
+             0.0,   0.0,    0.0,  0.0,  0.0,0.0,0.0, &
+             0.0,0.0,0.0,0.0,  0.0,      0.0,       0.0,   0.0,    0.0,      0.0,    0.0,   281099.49,0.0,    &
+             0.0,   0.0,    0.0,  0.0,  0.0,0.0,0.0, &
+             0.0,0.0,0.0,0.0,  0.0,      0.0,       0.0,   0.0,    0.0,      0.0,    0.0,    0.0,     0.0,    &
+             0.0,   0.0,    0.0,  0.0,  0.0,0.0,0.0, &
+             0.0,0.0,0.0,0.0,  0.0,      0.0,       0.0,   0.0,    0.0,      0.0,    0.0,    0.0,     0.0,    &
+             0.0,   0.0,    0.0,  0.0,  0.0,0.0,0.0, &
+             0.0,0.0,0.0,0.0,  0.0,      0.0,       0.0,   0.0,    0.0,      0.0,    0.0,    0.0,     0.0,    &
+             0.0,   0.0,    0.0,  0.0,  0.0,0.0,0.0, &
+             0.0,0.0,0.0,0.0,  0.0,      0.0,       0.0,   0.0,    0.0,      0.0,    0.0,    0.0,     0.0,    &
+             0.0,   0.0,    0.0,  0.0,  0.0,0.0,0.0, &
+             0.0,0.0,0.0,0.0,  0.0,      0.0,       0.0,   0.0,    0.0,      0.0,    0.0,    0.0,     0.0,    &
+             0.0,   0.0,    0.0,  0.0,  0.0,0.0,0.0 /), &
          (/nlon,nlat/)))
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -24368,7 +24407,7 @@ subroutine testLakeModel18
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes_three(lake_fields_out)
       call reorder_lake_volumes_three(lake_volumes)
@@ -24388,7 +24427,7 @@ subroutine testLakeModel18
       call assert_equals(intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
-      call assert_equals(intermediate_expected_true_lake_depths,lake_fields_out%true_lake_depths,nlat,nlon)
+      call assert_equals(intermediate_expected_true_lake_depths,lake_fields_out%true_lake_depths,nlat,nlon,0.1_dp)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -24433,7 +24472,7 @@ subroutine testLakeModel18
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-      call calculate_true_lake_depths(lake_prognostics_out)
+      call calculate_true_lake_depths(lake_prognostics_out,lake_fields_out)
 #ifdef TRANSPOSED_LAKE_MODEL
       call renumber_lakes_three(lake_fields_out)
       call reorder_lake_volumes_three(lake_volumes)
