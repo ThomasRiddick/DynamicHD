@@ -47,7 +47,6 @@ class Dynamic_HD_Drivers(object):
         orog_path_extension  = "orographys"
         weights_path_extension = 'remapweights'
         ls_masks_path_extension = 'lsmasks'
-        update_masks_extension = 'updatemasks'
         rmouth_cumulative_flow_path_extension = 'rmouthflow'
         grid_path_extension = 'grids'
         flowmaps_path_extension = 'flowmaps'
@@ -58,62 +57,35 @@ class Dynamic_HD_Drivers(object):
         truesinks_modifications_path_extension = 'truesinksmods'
         intelligent_burning_regions_extension = 'intburnregions'
         orography_corrections_fields_path_extension = 'orogcorrsfields'
-        null_fields_path_extension= 'nullfields'
-        grid_areas_and_spacings_path_extension = 'gridareasandspacings'
-        base_RFD_filename = "rivdir_vs_1_9_data_from_stefan.txt"
         parameter_path_extension = "params"
-        flow_params_dirs_path_extension = "flowparams"
-        hd_file_path_extension = 'hdfiles'
-        hd_restart_file_path_extension = 'hdrestartfiles'
-        js_bach_restart_file_path_extension = 'jsbachrestartfiles'
         paragen_code_copies_path_extension = 'paragencopies'
         minima_path_extension = 'minima'
         lakemask_path_extension= 'lakemasks'
-        lake_parameter_file_extension = 'lakeparafiles'
-        basin_catchment_numbers_file_extension = 'basin_catchment_numbers'
         lake_bathymetry_file_extension = 'lakebath'
         cotat_plus_parameters_path_extension = path.join(parameter_path_extension,'cotat_plus')
         orography_upscaling_parameters_path_extension = path.join(parameter_path_extension,
                                                                   'orography_upscaling')
-        lake_and_hd_params_log_file_extension = "paramsfilepathlogs"
-        self.base_RFD_filepath = path.join(data_dir,rdirs_path_extension,
-                                           base_RFD_filename)
         self.orography_path = path.join(data_dir,orog_path_extension)
-        self.upscaled_orography_filepath = path.join(self.orography_path,'upscaled','upscaled_orog_')
-        self.tarasov_upscaled_orography_filepath = path.join(self.orography_path,'tarasov_upscaled','upscaled_orog_')
         self.generated_orography_filepath = path.join(self.orography_path,'generated','updated_orog_')
-        self.corrected_orography_filepath = path.join(self.orography_path,'generated','corrected',
-                                                      'corrected_orog_')
         self.rdir_path = path.join(data_dir,rdirs_path_extension)
         self.generated_rdir_filepath = path.join(self.rdir_path,'generated','updated_RFDs_')
-        self.upscaled_generated_rdir_filepath = path.join(self.rdir_path,'generated','upscaled',
-                                                          'upscaled_rdirs_')
         self.generated_rdir_with_outflows_marked_filepath = path.join(self.rdir_path,
                                                                       'generated_outflows_marked',
                                                                       'updated_RFDs_')
-        self.update_masks_path = path.join(data_dir,update_masks_extension)
-        self.generated_update_masks_filepath = path.join(self.update_masks_path,'update_mask_')
         self.weights_path = path.join(data_dir,weights_path_extension)
         self.grids_path = path.join(data_dir,grid_path_extension)
         self.ls_masks_path = path.join(data_dir,ls_masks_path_extension)
         self.flowmaps_path = path.join(data_dir,flowmaps_path_extension)
         self.generated_flowmaps_filepath = path.join(self.flowmaps_path,'flowmap_')
-        self.upscaled_flowmaps_filepath = path.join(self.flowmaps_path,'upscaled','flowmap_')
         self.catchments_path = path.join(data_dir,catchments_path_extension)
         self.generated_catchments_path = path.join(self.catchments_path,'catchmentmap_')
-        self.upscaled_catchments_path = path.join(self.catchments_path,'upscaled','catchmentmap_')
         self.generated_ls_mask_filepath = path.join(self.ls_masks_path,'generated','ls_mask_')
-        self.generated_gaussian_ls_mask_filepath = path.join(self.ls_masks_path,'generated','gaussian',
-                                                             'ls_mask_')
         self.rmouth_path =  path.join(data_dir,rmouth_path_extension)
         self.generated_rmouth_path = path.join(self.rmouth_path,'rmouthmap_')
         self.rmouth_cumulative_flow_path = path.join(data_dir,rmouth_cumulative_flow_path_extension)
         self.generated_rmouth_cumulative_flow_path = path.join(self.rmouth_cumulative_flow_path,
                                                                'rmouthflows_')
-        self.upscaled_rmouth_cumulative_flow_path = path.join(self.rmouth_cumulative_flow_path,
-                                                              'upscaled','rmouthflows_')
         self.truesinks_path = path.join(data_dir,truesinks_path_extension)
-        self.generated_truesinks_path = path.join(self.truesinks_path,'truesinks_')
         self.ls_seed_points_path = path.join(data_dir,ls_seed_points_path_extension)
         self.generated_ls_seed_points_path = path.join(self.ls_seed_points_path,
                                                        'lsseedpoints_')
@@ -136,27 +108,12 @@ class Dynamic_HD_Drivers(object):
                                                                     'copies','orography_upscaling_params_')
         self.orography_corrections_fields_path = path.join(data_dir,
                                                            orography_corrections_fields_path_extension)
-        self.generated_orography_corrections_fields_path = path.join(self.orography_corrections_fields_path,
-                                                                     'orog_corrs_field_')
-        self.null_fields_filepath = path.join(data_dir,null_fields_path_extension)
-        self.flow_params_dirs_path = path.join(data_dir,flow_params_dirs_path_extension)
-        self.grid_areas_and_spacings_filepath = path.join(data_dir,
-                                                          grid_areas_and_spacings_path_extension)
-        self.hd_file_path = path.join(data_dir,hd_file_path_extension)
-        self.generated_hd_file_path= path.join(self.hd_file_path,'generated','hd_file_')
-        self.hd_restart_file_path = path.join(data_dir,hd_restart_file_path_extension)
-        self.generated_hd_restart_file_path = path.join(self.hd_restart_file_path,
-                                                        'generated','hd_restart_file_')
         self.paragen_code_copies_path = path.join(data_dir,paragen_code_copies_path_extension)
         self.generated_paragen_code_copies_path = path.join(self.paragen_code_copies_path,
                                                             "paragen_copy_")
         self.minima_filepath = path.join(data_dir,minima_path_extension)
         self.generated_minima_filepath = path.join(self.minima_filepath,'minima_')
         self.lakemask_filepath = path.join(data_dir,lakemask_path_extension)
-        self.lake_parameter_file_path = path.join(data_dir,
-                                                  lake_parameter_file_extension)
-        self.basin_catchment_numbers_path = path.join(data_dir,
-                                                      basin_catchment_numbers_file_extension)
         self.lake_bathymetry_filepath = path.join(data_dir,lake_bathymetry_file_extension)
         self.hd_grid_filepath = path.join(self.grids_path,"hdmodel2d_griddes")
         self.half_degree_grid_filepath = path.join(self.grids_path,"grid_0_5.txt")
