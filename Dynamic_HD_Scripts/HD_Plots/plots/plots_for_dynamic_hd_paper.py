@@ -35,9 +35,9 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
 
     def danube_catchment_correction_plots(self):
         """Three plots of the Danube catchment showing the effect of applying correction an orography."""
-        corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
+        corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.plots_data_dir,
             "rmouthflows_corrected_HD_rdirs_post_processing_20160427_141158.nc")
-        ice5g_ALG4_sinkless_all_points_0k_dir_upsc_field = os.path.join(self.rmouth_outflow_data_directory,
+        ice5g_ALG4_sinkless_all_points_0k_dir_upsc_field = os.path.join(self.plots_data_dir,
             "upscaled/rmouthflows__ICE5G_data_ALG4_sinkless_0k_upscale_riverflows_and_river_mouth_flows_20160603_112520.nc")
         plotters = self.OutFlowComparisonPlotHelpers(corrected_hd_rdirs_rmouthoutflow_file,
                                                      ice5g_ALG4_sinkless_all_points_0k_dir_upsc_field,
@@ -79,9 +79,9 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
         ref_plotter = plotters[0][0]
         uncorr_data_plotter = plotters[0][1]
         data_creation_datetime="20160930_001057"
-        corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
+        corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.plots_data_dir,
             "rmouthflows_corrected_HD_rdirs_post_processing_20160427_141158.nc")
-        ice5g_ALG4_sinkless_all_points_0k_dir_upsc_field = os.path.join(self.rmouth_outflow_data_directory,
+        ice5g_ALG4_sinkless_all_points_0k_dir_upsc_field = os.path.join(self.plots_data_dir,
             "upscaled/rmouthflows_ICE5G_data_ALG4_sinkless_downscaled_ls_mask_0k_{0}.nc".format(data_creation_datetime))
         plotters = self.OutFlowComparisonPlotHelpers(corrected_hd_rdirs_rmouthoutflow_file,
                                                      ice5g_ALG4_sinkless_all_points_0k_dir_upsc_field,
@@ -152,9 +152,9 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
 
     def comparison_of_manually_corrected_HD_rdirs_vs_automatically_generated_10min_rdirs(self):
         data_creation_datetime="20170517_003802"
-        corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
+        corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.plots_data_dir,
             "rmouthflows_corrected_HD_rdirs_post_processing_20160427_141158.nc")
-        ice5g_ALG4_sinkless_all_points_0k_dir_upsc_field = os.path.join(self.rmouth_outflow_data_directory,
+        ice5g_ALG4_sinkless_all_points_0k_dir_upsc_field = os.path.join(self.plots_data_dir,
             "upscaled/rmouthflows_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_{0}.nc".format(data_creation_datetime))
         catchment_plotters =\
             self.OutFlowComparisonPlotHelpers(corrected_hd_rdirs_rmouthoutflow_file,
@@ -234,11 +234,11 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
     def comparison_of_modern_river_directions_10_minute_original_vs_HD_upscaled(self):
         data_creation_datetime_directly_upscaled="20170517_003802"
         data_creation_datetime_rdirs_upscaled = "20170517_004128"
-        ice5g_ALG4_sinkless_all_points_0k_river_flow_dir_upsc_field = os.path.join(self.rmouth_outflow_data_directory,
+        ice5g_ALG4_sinkless_all_points_0k_river_flow_dir_upsc_field = os.path.join(self.plots_data_dir,
             "rmouthflows_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson"
             "_lsmask_0k_upscale_rdirs_{0}_updated.nc"\
                 .format(data_creation_datetime_rdirs_upscaled))
-        ice5g_ALG4_sinkless_all_points_0k_dir_upsc_field = os.path.join(self.rmouth_outflow_data_directory,
+        ice5g_ALG4_sinkless_all_points_0k_dir_upsc_field = os.path.join(self.plots_data_dir,
             "upscaled/rmouthflows_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_"
             "sinkless_glcc_olson_lsmask_0k_{0}.nc"\
                 .format(data_creation_datetime_directly_upscaled))
@@ -318,12 +318,12 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
             plt.savefig(path.join(self.save_path,"me_mi_upscaling_comp.pdf"),dpi=300)
 
     def compare_upscaled_automatically_generated_rdirs_to_HD_manually_corrected_rdirs(self):
-        ref_filename=os.path.join(self.flow_maps_data_directory,
+        ref_filename=os.path.join(self.plots_data_dir,
                                   'flowmap_corrected_HD_rdirs_post_processing_20160427_141158.nc')
-        data_filename=os.path.join(self.flow_maps_data_directory,
+        data_filename=os.path.join(self.plots_data_dir,
                                   'flowmap_ICE5G_data_ALG4_sinkless_downscaled_ls_mask_0k_upscale'
                                   '_rdirs_20161031_113238_updated.nc')
-        lsmask_filename=os.path.join(self.ls_masks_data_directory,"generated",
+        lsmask_filename=os.path.join(self.plots_data_dir,
                                      "ls_mask_extract_ls_mask_from_corrected_"
                                      "HD_rdirs_20160504_142435.nc")
         self.FlowMapTwoColourComparisonHelper(ref_filename=ref_filename,
@@ -338,17 +338,17 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
                                               lsmask_has_same_orientation_as_ref=False)
 
     def compare_upscaled_automatically_generated_rdirs_to_HD_manually_corrected_rdirs_with_catchments(self):
-        ref_filename=os.path.join(self.flow_maps_data_directory,
+        ref_filename=os.path.join(self.plots_data_dir,
                                   'flowmap_corrected_HD_rdirs_post_processing_20160427_141158.nc')
-        data_filename=os.path.join(self.flow_maps_data_directory,
+        data_filename=os.path.join(self.plots_data_dir,
                                   'flowmap_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless'
                                   '_glcc_olson_lsmask_0k_upscale_rdirs_20170517_004128_updated.nc')
-        lsmask_filename=os.path.join(self.ls_masks_data_directory,"generated",
+        lsmask_filename=os.path.join(self.plots_data_dir,"generated",
                                      "ls_mask_recreate_connected_HD_lsmask_"
                                      "from_glcc_olson_data_20170513_195421.nc")
-        corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
+        corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.plots_data_dir,
                                                              "rmouthflows_corrected_HD_rdirs_post_processing_20160427_141158.nc")
-        upscaled_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
+        upscaled_rdirs_rmouthoutflow_file = os.path.join(self.plots_data_dir,
                                                          "rmouthflows_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only"
                                                          "_data_ALG4_sinkless_glcc_olson_lsmask_0k_upscale_rdirs_20170517_004128"
                                                          "_updated.nc")
@@ -425,15 +425,15 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
             plt.savefig(path.join(self.save_path,"global_man_corr_vs_auto_gen_upscaled_global.pdf"),dpi=300)
 
     def compare_present_day_and_lgm_river_directions(self):
-        ref_filename=os.path.join(self.flow_maps_data_directory,
+        ref_filename=os.path.join(self.plots_data_dir,
                                   "flowmap_ten_minute_data_from_virna_0k_ALG4_sinkless"
                                    "_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170123"
                                    "_165707_upscaled_updated.nc")
-        data_filename=os.path.join(self.flow_maps_data_directory,
+        data_filename=os.path.join(self.plots_data_dir,
                                    "flowmap_ten_minute_data_from_virna_lgm_ALG4_sinkless"
                                    "_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170127"
                                    "_163957_upscaled_updated.nc")
-        lsmask_filename=os.path.join(self.ls_masks_data_directory,"generated",
+        lsmask_filename=os.path.join(self.plots_data_dir,
                                      "ls_mask_ten_minute_data_from_virna_lgm_"
                                      "ALG4_sinkless_no_true_sinks_oceans_lsmask"
                                      "_plus_upscale_rdirs_20170127_163957_HD_transf.nc")
@@ -458,19 +458,19 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
     def compare_present_day_and_lgm_river_directions_with_catchments(self):
         present_day_data_datetime = "20170612_202721"
         lgm_data_datetime = "20170612_202559"
-        ref_filename=os.path.join(self.flow_maps_data_directory,
+        ref_filename=os.path.join(self.plots_data_dir,
                                   "flowmap_ICE6g_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov"
                                   "_orog_corrs_{0}_upscaled_updated.nc".\
                                   format(present_day_data_datetime))
-        data_filename=os.path.join(self.flow_maps_data_directory,
+        data_filename=os.path.join(self.plots_data_dir,
                                    "flowmap_ICE6g_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_"
                                    "tarasov_orog_corrs_{0}_upscaled_updated.nc".\
                                    format(lgm_data_datetime))
-        lsmask_filename=os.path.join(self.ls_masks_data_directory,"generated",
+        lsmask_filename=os.path.join(self.plots_data_dir,"generated",
                                      "ls_mask_ICE6g_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs"
                                      "_tarasov_orog_corrs_{0}_HD_transf.nc".\
                                      format(lgm_data_datetime))
-        extra_lsmask_filename=os.path.join(self.ls_masks_data_directory,"generated",
+        extra_lsmask_filename=os.path.join(self.plots_data_dir,"generated",
                                            "ls_mask_ICE6g_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale"
                                            "_rdirs_tarasov_orog_corrs_{0}_HD_transf.nc".\
                                            format(present_day_data_datetime))
@@ -483,12 +483,12 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
         ref_rdirs_filename=("generated/upscaled/upscaled_rdirs_ICE6g_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_"
                             "plus_upscale_rdirs_tarasov_orog_corrs_{0}_upscaled_"
                             "updated.nc".format(present_day_data_datetime))
-        reference_rmouth_outflows_filename=os.path.join(self.rmouth_outflow_data_directory,
+        reference_rmouth_outflows_filename=os.path.join(self.plots_data_dir,
                                                         "rmouthflows_ICE6g_0k_ALG4_sinkless_no_true_sinks_oceans_"
                                                         "lsmask_plus_upscale_rdirs_tarasov_orog_corrs"
                                                         "_{0}_upscaled_updated.nc".\
                                             format(present_day_data_datetime))
-        data_rmouth_outflows_filename=os.path.join(self.rmouth_outflow_data_directory,
+        data_rmouth_outflows_filename=os.path.join(self.plots_data_dir,
                                                    "rmouthflows_ICE6g_lgm_ALG4_sinkless_no_true_sinks_oceans_"
                                                    "lsmask_plus_upscale_rdirs_tarasov_orog_corrs_"
                                                    "{0}_upscaled_updated.nc".\
@@ -570,28 +570,28 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
                                                                                 os.path.join(self.river_discharge_output_data_path,
                                                                                 "hd_1990-01-2_hd_higres_output_from_current_model_after_100_cycles.nc"),
                                                                                 rdirs_filepath=\
-                                                                                os.path.join(self.rdirs_data_directory,
+                                                                                os.path.join(self.plots_data_dir,
                                                                                              "rdirs_from_current_hdparas.nc"),
                                                                                 num_timeslices=365,label="Current Model HD Run using 100 cycle spin-up")
         total_discharge_info += self._river_discharge_outflow_comparison_helper(ax,river_discharge_output_filepath=\
                                                                                 os.path.join(self.river_discharge_output_data_path,
                                                                                 "hd_1990-01-2_hd_higres_output__ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170113_135934_after_one_years_running.nc"),
                                                                                 rdirs_filepath=\
-                                                                                os.path.join(self.upscaled_rdirs_data_directory,
+                                                                                os.path.join(self.plots_data_dir,
                                                                                              "upscaled_rdirs_ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170113_135934_upscaled_updated_transf.nc"),
                                                                                 num_timeslices=365,label="Dynamic HD using 1 cycle spin-up")
         total_discharge_info += self._river_discharge_outflow_comparison_helper(ax,river_discharge_output_filepath=\
                                                                                 os.path.join(self.river_discharge_output_data_path,
                                                                                 "hd_1990-01-2_hd_higres_output__ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170116_235534.nc"),
                                                                                 rdirs_filepath=\
-                                                                                os.path.join(self.upscaled_rdirs_data_directory,
+                                                                                os.path.join(self.plots_data_dir,
                                                                                              "upscaled_rdirs_ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170113_135934_upscaled_updated_transf.nc"),
                                                                                 num_timeslices=365,label="Dynamic HD using 1 cycle spin-up as basis")
         lost_discharge =  self._calculate_discharge_lost_to_changes_in_lsmask(lsmask_source_ref_filepath=\
-                                                                              os.path.join(self.jsbach_restart_file_directory,
+                                                                              os.path.join(self.plots_data_dir,
                                                                                            "jsbach_T106_11tiles_5layers_1976.nc"),
                                                                               lsmask_source_data_filepath=\
-                                                                              os.path.join(self.generated_jsbach_restart_file_directory,
+                                                                              os.path.join(self.plots_data_dir,
                                                                                            "updated_jsbach_T106_11tiles_5layers_1976_ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170123_165707.nc"),
                                                                               run_off_filepath=os.path.join(self.hdinput_data_directory,'runoff_T106_1990.nc'),
                                                                               discharge_filepath=os.path.join(self.hdinput_data_directory,'drainage_T106_1990.nc'),
@@ -601,21 +601,21 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
                                                                                 os.path.join(self.river_discharge_output_data_path,
                                                                                 "hd_1990-01-2_hd_higres_output__ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170113_135934_after_one_years_running.nc"),
                                                                                 rdirs_filepath=\
-                                                                                os.path.join(self.upscaled_rdirs_data_directory,
+                                                                                os.path.join(self.plots_data_dir,
                                                                                              "upscaled_rdirs_ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170113_135934_upscaled_updated_transf.nc"),
                                                                                 num_timeslices=365,lost_discharge=lost_discharge,label="Dynamic HD using 1 cycle spin-up + lost discharge")
         total_discharge_info += self._river_discharge_outflow_comparison_helper(ax,river_discharge_output_filepath=\
                                                                                 os.path.join(self.river_discharge_output_data_path,
                                                                                 "hd_1990-01-2_hd_higres_output__ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170113_135934_after_thirty_years_running.nc"),
                                                                                 rdirs_filepath=\
-                                                                                os.path.join(self.upscaled_rdirs_data_directory,
+                                                                                os.path.join(self.plots_data_dir,
                                                                                              "upscaled_rdirs_ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170113_135934_upscaled_updated_transf.nc"),
                                                                                 num_timeslices=365,lost_discharge=lost_discharge,label="Dynamic HD using 30 cycle spin-up + lost discharge")
         total_discharge_info += self._river_discharge_outflow_comparison_helper(ax,river_discharge_output_filepath=\
                                                                                 os.path.join(self.river_discharge_output_data_path,
                                                                                 "hd_1990-01-2_hd_higres_output__ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170116_235534.nc"),
                                                                                 rdirs_filepath=\
-                                                                                os.path.join(self.upscaled_rdirs_data_directory,
+                                                                                os.path.join(self.plots_data_dir,
                                                                                              "upscaled_rdirs_ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170113_135934_upscaled_updated_transf.nc"),
                                                                                 num_timeslices=365,lost_discharge=lost_discharge,label="Dynamic HD using 1 cycle spin-up as basis+ lost discharge")
         ax.legend()
@@ -837,37 +837,37 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
         time_two=13600
         time_three=12700
         time_four=12630
-        flowmap_one_filename = os.path.join(self.flow_maps_data_directory,
+        flowmap_one_filename = os.path.join(self.plots_data_dir,
                                 "30min_flowtocell_pmu0171a_{}.nc".format(time_one))
-        flowmap_two_filename = os.path.join(self.flow_maps_data_directory,
+        flowmap_two_filename = os.path.join(self.plots_data_dir,
                                 "30min_flowtocell_pmu0171b_{}.nc".format(time_two))
-        flowmap_three_filename = os.path.join(self.flow_maps_data_directory,
+        flowmap_three_filename = os.path.join(self.plots_data_dir,
                                   "30min_flowtocell_pmu0171b_{}.nc".format(time_three))
-        flowmap_four_filename = os.path.join(self.flow_maps_data_directory,
+        flowmap_four_filename = os.path.join(self.plots_data_dir,
                                   "30min_flowtocell_pmu0171b_{}.nc".format(time_four))
-        catchments_one_filename = os.path.join(self.catchments_directory,
+        catchments_one_filename = os.path.join(self.plots_data_dir,
                                                "30min_catchments_pmu0171a_{}.nc".format(time_one))
-        catchments_two_filename = os.path.join(self.catchments_directory,
+        catchments_two_filename = os.path.join(self.plots_data_dir,
                                                "30min_catchments_pmu0171b_{}.nc".format(time_two))
-        catchments_three_filename = os.path.join(self.catchments_directory,
+        catchments_three_filename = os.path.join(self.plots_data_dir,
                                                "30min_catchments_pmu0171b_{}.nc".format(time_three))
-        catchments_four_filename = os.path.join(self.catchments_directory,
+        catchments_four_filename = os.path.join(self.plots_data_dir,
                                                "30min_catchments_pmu0171b_{}.nc".format(time_four))
-        lsmask_one_filename = os.path.join(self.hdpara_directory,
+        lsmask_one_filename = os.path.join(self.plots_data_dir,
                                   "hdpara_{}k.nc".format(time_one))
-        lsmask_two_filename = os.path.join(self.hdpara_directory,
+        lsmask_two_filename = os.path.join(self.plots_data_dir,
                                   "hdpara_{}k.nc".format(time_two))
-        lsmask_three_filename = os.path.join(self.hdpara_directory,
+        lsmask_three_filename = os.path.join(self.plots_data_dir,
                                     "hdpara_{}k.nc".format(time_three))
-        lsmask_four_filename = os.path.join(self.hdpara_directory,
+        lsmask_four_filename = os.path.join(self.plots_data_dir,
                                    "hdpara_{}k.nc".format(time_four))
-        glac_mask_one_filename = os.path.join(self.orography_directory,
+        glac_mask_one_filename = os.path.join(self.plots_data_dir,
                                               "glac01_{}.nc".format(time_one))
-        glac_mask_two_filename = os.path.join(self.orography_directory,
+        glac_mask_two_filename = os.path.join(self.plots_data_dir,
                                               "glac01_{}.nc".format(time_two))
-        glac_mask_three_filename = os.path.join(self.orography_directory,
+        glac_mask_three_filename = os.path.join(self.plots_data_dir,
                                               "glac01_{}.nc".format(time_three))
-        glac_mask_four_filename = os.path.join(self.orography_directory,
+        glac_mask_four_filename = os.path.join(self.plots_data_dir,
                                               "glac01_{}.nc".format(time_four))
         flowmap_one = iodriver.load_field(flowmap_one_filename,
                                           file_type=iodriver.get_file_extension(flowmap_one_filename),

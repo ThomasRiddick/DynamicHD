@@ -1734,10 +1734,10 @@ class LineTypes(Enum):
     DATEANDHEIGHTVALUES = enum.auto()
     NOTSET = enum.auto()
 
-def apply_dated_based_sill_height_corrections(input_orography,
-                                              dated_based_sill_height_corrections_list_filename,
-                                              current_date,
-                                              output_orography):
+def apply_date_based_sill_height_corrections(input_orography,
+                                             date_based_sill_height_corrections_list_filename,
+                                             current_date,
+                                             output_orography):
     """
     """
     new_entry_line_pattern = re.compile(r"-*new *entry-*")
@@ -1749,7 +1749,7 @@ def apply_dated_based_sill_height_corrections(input_orography,
     correction_list = []
     dates_and_heights= None
     coords = None
-    with open(dated_based_sill_height_corrections_list_filename) as f:
+    with open(date_based_sill_height_corrections_list_filename) as f:
         previous_line_type = LineTypes.NOTSET
         for line in f:
             if comment_line_pattern.match(line):

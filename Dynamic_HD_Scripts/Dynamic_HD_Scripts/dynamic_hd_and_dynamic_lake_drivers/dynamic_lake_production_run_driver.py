@@ -315,8 +315,9 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         super(Dynamic_Lake_Production_Run_Drivers,self).__init__()
         file_label = self._generate_file_label()
         self.original_orography_filename=path.join(self.orography_path,"Ice6g_c_VM5a_10min_0k.nc")
-        self.original_ls_mask_filename=path.join(self.ls_masks_path,"generated",
-                                                 "ls_mask_no_intermediaries_lake_corrections_driver_20200726_181304_grid.nc")
+        self.original_ls_mask_filename=("/Users/thomasriddick/Documents/data/unit_test_data/"
+                                        "ls_mask_no_intermediaries_lake_corrections_"
+                                        "driver_20200726_181304_grid.nc")
         self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}_pd.nc".format(file_label)
         self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}_pd.nc".format(file_label)
         self.ancillary_data_path="/Users/thomasriddick/Documents/data/hd_ancillary_data_dirs/HDancillarydata_lakes"
@@ -369,7 +370,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
     def trial_run_for_mid_deglaciation(self):
         super(Dynamic_Lake_Production_Run_Drivers,self).__init__()
         file_label = self._generate_file_label()
-        self.original_orography_filename=("/Users/thomasriddick/Documents/data/HDdata/orographys/generated/"
+        self.original_orography_filename=("/Users/thomasriddick/Documents/data/unit_test_data/"
                                           "updated_orog__extracted_for_0k_prepare_basins_from_glac1D_20210205_135817_1250.nc")
         self.original_ls_mask_filename=("/Users/thomasriddick/Documents/data/simulation_data/laketestdata/"
                                         "ls_mask_prepare_basins_from_glac1D_20201123_200519_1250_grid.nc")
@@ -386,7 +387,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.tarasov_based_orog_correction=True
         self.glacier_mask_filename=("/Users/thomasriddick/Documents/"
                                     "data/simulation_data/transient_sim_data/1/GLAC1D_ICEM_10min_1250.nc")
-        self.present_day_base_orography_filename=("/Users/thomasriddick/Documents/data/HDdata/orographys/generated/"
+        self.present_day_base_orography_filename=("/Users/thomasriddick/Documents/data/unit_test_data/"
                                                   "updated_orog__extracted_for_1250prepare_basins_from_glac1D_20210205_135817_1250.nc")
         self.non_standard_orog_correction_filename=path.join(self.ancillary_data_path,
                                                              "ice5g_0k_lake_corrs_no_intermediaries_lake_corrections_driver_20200726_181304.nc")
@@ -855,6 +856,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         flood_next_cell_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
         connect_next_cell_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
         connect_next_cell_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        connection_heights = field.Field(np.zeros(fine_shape,dtype=np.float64,order='C'),fine_grid)
+        flood_heights = field.Field(np.zeros(fine_shape,dtype=np.float64,order='C'),fine_grid)
         connect_merge_and_redirect_indices_index = \
             field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
         flood_merge_and_redirect_indices_index = \
@@ -877,6 +880,10 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                 connection_volume_thresholds.get_data(),
                                                 flood_volume_thresholds_in=
                                                 flood_volume_thresholds.get_data(),
+                                                connection_heights_in=
+                                                connection_heights.get_data(),
+                                                flood_heights_in=
+                                                flood_heights.get_data(),
                                                 prior_fine_rdirs_in=
                                                 np.ascontiguousarray(rdirs_10min.get_data(),
                                                                      dtype=np.float64),

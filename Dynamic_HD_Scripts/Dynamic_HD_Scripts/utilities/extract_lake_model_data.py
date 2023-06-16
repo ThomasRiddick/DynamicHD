@@ -256,8 +256,7 @@ def main():
     lake_data_extractor.extract_data_to_run_lake_model(lake_parameters_filepath=
                                                        "/Users/thomasriddick/Documents/"
                                                        "data/HDdata/lakeparafiles/"
-                                                       "lakeparas_prepare_basins_from_"
-                                                       "glac1D_20210205_151552_1250.nc",
+                                                       "lakeparas.nc",
                                                        hd_parameters_filepath="/Users/"
                                                        "thomasriddick/Documents/data/"
                                                        "transient_sim_data/1/"

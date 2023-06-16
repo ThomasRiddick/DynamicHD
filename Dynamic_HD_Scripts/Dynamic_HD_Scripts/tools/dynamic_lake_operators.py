@@ -157,6 +157,8 @@ def advanced_basin_evaluation_driver(input_minima_file,
     fine_shape = input_raw_orography.get_data().shape
     connection_volume_thresholds = field.Field(np.zeros(fine_shape,dtype=np.float64,order='C'),fine_grid)
     flood_volume_thresholds = field.Field(np.zeros(fine_shape,dtype=np.float64,order='C'),fine_grid)
+    connection_heights = field.Field(np.zeros(fine_shape,dtype=np.float64,order='C'),fine_grid)
+    flood_heights = field.Field(np.zeros(fine_shape,dtype=np.float64,order='C'),fine_grid)
     flood_next_cell_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
     flood_next_cell_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
     connect_next_cell_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
@@ -187,6 +189,10 @@ def advanced_basin_evaluation_driver(input_minima_file,
                                             connection_volume_thresholds.get_data(),
                                             flood_volume_thresholds_in=
                                             flood_volume_thresholds.get_data(),
+                                            connection_heights_in=
+                                                connection_heights.get_data(),
+                                            flood_heights_in=
+                                                flood_heights.get_data(),
                                             prior_fine_rdirs_in=
                                             np.ascontiguousarray(input_prior_fine_rdirs.get_data(),
                                                                  dtype=np.float64),
