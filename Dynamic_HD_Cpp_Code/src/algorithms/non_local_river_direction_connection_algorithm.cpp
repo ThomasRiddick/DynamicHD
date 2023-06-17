@@ -5,48 +5,99 @@
  *      Author: Thomas Riddick
  */
 
-void non_local_river_direction_connection_algorithm::resolve_disconnects() {
+ALSO NEED ACC + RDIR TREE
 
+bool disconnect_list::check_for_disconnects_by_source(coords* source_coords,
+                                                      coords* target_coords){
+  for(vector<pair<coords*,coords*>>::iterator i =
+      disconnects.begin();
+      i != disconnects.end(); ++i){
+    if ((*i)->first == source_coords){
+      target_coords = (i*)->second
+      return true;
+    }
+  }
 }
 
-void non_local_river_direction_connection_algorithm::resolve_disconnect(coords* target_coords,
-                                                                        coords* starting_coords) {
+vector* disconnect_list::check_for_disconnects_by_target(coords* target_coords){
+  vector* source_coords = new vector()
+  for(vector<pair<coords*,coords*>>::iterator i =
+      disconnects.begin();
+      i != disconnects.end(); ++i){
+    if ((*i)->second == target_source){
+      source_coords.push((i*)->first)
+      return true;
+    }
+  }
+  return source_coords
+}
+
+bool disconnect_list::merge(disconnect_list* new_disconnects){
+   =
+  for(vector<pair<coords*,coords*>>::iterator i =
+      new_disconnects->invalidated_disconnects->begin();
+      i !=  new_disconnects->invalidated_disconnects->end(); ++i){
+    ITERATE THROUGH disconnects AND REMOVE IF == i
+  }
+}
+
+vector<coords*> upstream_cell_tree::get_upstream_cells(coords* coords_in,
+                                                       disconnect_list* disconnects_in){
+  vector* upstream_cell_list = upstream_cells(coords);
+  FOR EACH CELL IN UPSTREAM CELL LIST
+    if check_for_disconnects_by_source (CELL){
+      REMOVE CELL
+    }
+  vector* additional_cell_list = check_for_disconnects_by_target(coords_in);
+  upstream_cell_list.insert(upstream_cell_list.end(),additional_cell_list.begin(),
+                            additional_cell_list.end());
+  return upstream_cell_list;
+}
+
+void non_local_river_direction_connection_algorithm::resolve_disconnects() {
+  while(!disconnects.empty()){
+    disconnect = disconnects.top();
+    disconnect.pop()
+    resolve_disconnect(disconnect->first,disconnect->second)
+  }
+}
+
+
+void non_local_river_direction_connection_algorithm::resolve_disconnect(coords* starting_coords,
+                                                                        coords* target_coords) {
   completed_cells->set_all(false);
   push_cell(starting_coords->clone());
   while (!q.empty()){
     cell* center_cell = q.top();
+    center_disconnects = center_cell->get_cell_disconnect_list();
     q.pop();
     center_coords = center_cell->get_cell_coords();
+    if ((*target_coords) == (*center_coords)) break;
     process_neighbors();
     delete center_cell;
   }
-  coords* working_coords = connection_location;
+  new_disconnects = center_disconnects->clone();
+  delete center_cell;
+  coords* working_coords = target_coords->clone();
   bool starting_coords_reached = false;
   while(! starting_coords_reached){
-    transcribe_river_direction(working_coords);
+    transfer_river_direction(working_coords);
     coords* new_working_coords = get_next_cell_downstream(working_coords);
     if ((*starting_coords)==(*working_coords)) starting_coords_reached = true;
     delete working_coords;
     working_coords = new_working_coords;
   }
   delete working_coords;
-  calculate_new_disconnects()
+  filter_new_disconnects();
+  update_variables();
 }
-  // For each cell disconnected in a different catchment create a initial disconnect between
-  // the upstream cell and its downstream cell; then process this list linking any multiple
-  // disconnects to form the final list of new disconnects
 
-/* ************************
-   ************************ */
+void non_local_river_direction_connection_algorithm::mark_initial_disconnects(){
 
-//Some useful snippets to use for this
-  while (((*working_coords) != (*target_coords)) ||
-           (*working_coords_catchment == target_catchment &&
-            *working_coords_cumulative_flow > target coords cumulative flow)){
 }
 
 //No longer providing option for non-diagonal neighbors only as it never gets used
-void process_neighbors()
+void non_local_river_direction_connection_algorithm::process_neighbors()
 {
   neighbors_coords = completed_cells->get_neighbors_coords(center_coords,1);
   while( ! neighbors_coords->empty() ) {
@@ -55,62 +106,59 @@ void process_neighbors()
   delete neighbors_coords;
 }
 
-inline void process_neighbor()
+inline void non_local_river_direction_connection_algorithm::process_neighbor()
 {
   coords* nbr_coords = neighbors_coords->back();
   neighbors_coords->pop_back();
-  if (!( (*major_side_channel_mask)(nbr_coords) ||
-         (*completed_cells)(nbr_coords) ||
-         (*landsea_mask)(nbr_coords) ||
-         ((*main_channel_mask)(nbr_coords) == main_channel_invalid) ||
-         connection_found ) ) {
-    if ((*main_channel_mask)(nbr_coords) == main_channel_valid) {
-      (*number_of_outflows)(nbr_coords) += 1;
-      mark_bifurcated_river_direction(nbr_coords,center_coords);
-      connection_found = true;
-      connection_location = center_coords->clone();
-      while (!q.empty()) {
-        cell* center_cell = q.top();
-        q.pop();
-        delete center_cell;
+  if (! (OUTFLOW OR SINK)) {
+    nbr_disconnects = center_disconnects->clone()
+    coords* nbr_current_target = get_next_cell_downstream(nbr_coords);
+    if ( nbr_current_target != center_coords) {
+      // Mark disconnect in master list for removal
+      if (disconnected_cells(nbr_coords)){
+        nbr_connects->mark_disconnect_for_removal(nbr_coords);
       }
-      delete nbr_coords;
-    } else {
-      push_cell(nbr_coords);
-      (*completed_cells)(nbr_coords) = true;
-      mark_river_direction(nbr_coords,center_coords);
+      // Now remove any disconnect in the nbr_disconnects list
+      nbr_connects->remove_disconnect_if_present(nbr_coords);
+      calculate_upstream_disconnects(nbr_coords,
+                                     center_coords,
+                                     nbr_disconnects);
+      mark_working_river_direction(nbr_coords,center_coords);
     }
-  } else delete nbr_coords;
-}
-
-void push_cell(coords* cell_coords){
-      //Here orography is overloaded to mean path length (the cell class having been
-      q.push(new landsea_cell(cell_coords));
-}
-
-void track_main_channel(coords* mouth_coords){
-  cells_from_mouth = 0;
-  push_cell(mouth_coords->clone());
-  (*main_channel_mask)(mouth_coords) = main_channel_invalid;
-  while (!q.empty()){
-    cell* center_cell = q.top();
-    q.pop();
-    center_coords = center_cell->get_cell_coords();
-    if((*landsea_mask)(center_coords)){
-      process_neighbors_track_main_channel(true);
-      cumulative_flow_threshold = floor(cumulative_flow_threshold_fraction*
-                                        highest_cumulative_flow_nbrs);
-    }
-    process_neighbors_track_main_channel(false);
-    if ((*main_channel_mask)(center_coords) != not_main_channel &&
-         next_upstream_cell_coords){
-      cells_from_mouth++;
-      (*major_side_channel_mask)(next_upstream_cell_coords) = false;
-      (*main_channel_mask)(next_upstream_cell_coords) =
-        (cells_from_mouth >  minimum_cells_from_split_to_main_mouth &&
-         cells_from_mouth <=  maximum_cells_from_split_to_main_mouth) ?
-                            main_channel_valid : main_channel_invalid;
-    }
-    delete center_cell;
+    push_cell(nbr_coords)
+    BROKEN ACC + DISTANCE
   }
+  (*completed_cells)(nbr_coords) = true;
+  delete nbr_coords;
+}
+
+void non_local_river_direction_connection_algorithm::filter_new_disconnects(coords* working_coords){
+  IN NEW RDIRS
+  TRACE ONE DOWNSTREAM, SET ALL BOOL TO FALSE,MARK IN BOOL,TRACE OTHER AND SEE IF IT INTERSECTS
+}
+
+void non_local_river_direction_connection_algorithm::get_next_cell_downstream(coords* working_coords){
+  coords* target_coords;
+  if (! new_disconnects->check_for_disconnects_by_source(working_coords,target_coords)){
+    target_coords = rdirs->get_next_cell_downstream(working_coords);
+  }
+  return target_coords;
+}
+
+void non_local_river_direction_connection_algorithm::
+    calculate_upstream_disconnects(coords* coords_in,coords* target_coords_in,
+                                   disconnect_list* disconnects_in){
+  vector<coords*> upstream_cells->get_upstream_cells(coords_in,disconnects_in);
+  ITERATE OVER UPSTREAM CELLS WITH ITERATOR{
+    disconnects_in->add_disconnect(*i,target_coords,disconnects);
+    if (disconnected_cells(*i)){
+      disconnects_in->mark_disconnect_for_removal(*i);
+    }
+    disconnects_in->remove_disconnect_if_present(*i);
+  }
+}
+
+void non_local_river_direction_connection_algorithm::update_variables(){
+  disconnects->merge(new_disconnects);
+  update overall disconnect list, acc and rdirs
 }

@@ -174,10 +174,10 @@ inline basin_cell* basin_cell::clone(){
 class reconnect_cell : public cell {
 public:
 	//Constructor
-	reconnect_cell(bool in_same_catchment_in, int cumulative_flow_in,
+	reconnect_cell(bool in_same_subcatchment_in, int cumulative_flow_in,
 	               coords* cell_coords_in) :
 								 cell(0.0,cell_coords_in),
-		 						 in_same_catchment(in_same_catchment_in),
+		 						 in_same_subcatchment(in_same_subcatchment_in),
 		 						 cumulative_flow(cumulative_flow_in) {}
 	//Clone operator
 	reconnect_cell* clone();
@@ -193,19 +193,19 @@ public:
 	friend bool operator<= (const reconnect_cell&,const reconnect_cell&);
 	//Overloaded streaming operator
 	friend ostream& operator<<(ostream& out, reconnect_cell& cell_object) {
-		return out << "Cell in Same Catchment?: " << cell_object.in_same_catchment << " "
+		return out << "Cell in Same Catchment?: " << cell_object.in_same_subcatchment << " "
 							 << "Cell Coords: " << *cell_object.cell_coords;
 	}
 	//Getter
-	bool get_in_same_catchment(){return in_same_catchment;}
+	bool get_in_same_subcatchment(){return in_same_subcatchment;}
 	bool get_cumulative_flow(){return cumulative_flow;}
 private:
-	bool in_same_catchment;
+	bool in_same_subcatchment;
 	int cumulative_flow;
 };
 
 inline reconnect_cell* reconnect_cell::clone(){
-	return new reconnect_cell(get_cumulative_flow(),get_in_same_catchment(),
+	return new reconnect_cell(get_cumulative_flow(),get_in_same_subcatchment(),
 	                          get_cell_coords()->clone());
 }
 
