@@ -314,7 +314,7 @@ def plot_catchment_and_histogram_for_river(ax_hist,ax_catch,ref_catchment_field,
     else:
         return catchment_section,catchment_bounds,scale_factor
 
-class CatchmentPlotter(object):
+class CatchmentPlotter:
 
     def __init__(self,catchment_section,colors,simplified_colorscheme=False,
                  cax=None,legend=True,remove_ticks_flag=True,
@@ -527,7 +527,7 @@ def simple_catchment_and_flowmap_plots(fig,ref_ax,data_ax,ref_catchment_field,da
     simple_catchment_and_flowmap_plot_object_data(data_ax)
     return simple_catchment_and_flowmap_plot_object_ref,simple_catchment_and_flowmap_plot_object_data
 
-class SimpleCatchmentAndFlowMapPlt(object):
+class SimpleCatchmentAndFlowMapPlt:
 
     def __init__(self,catchment_field,catchment_field_for_lsmask,flowtocell,
                  catchment_bounds,catchment_num,flowtocell_threshold,colors):

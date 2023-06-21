@@ -29,7 +29,7 @@ from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.context import bash_scripts_path
 from Dynamic_HD_Scripts.context import private_bash_scripts_path
 
-class Dynamic_HD_Drivers(object):
+class Dynamic_HD_Drivers:
     """Class that drives a wide variety of dynamic HD related scripts and programs
 
     Public Members:

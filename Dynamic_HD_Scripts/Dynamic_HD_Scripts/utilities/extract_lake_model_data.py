@@ -3,7 +3,7 @@ from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers \
     import dynamic_hd_driver
 
-class Lake_Data_Extractor(object):
+class Lake_Data_Extractor:
 
     def extract_data_to_run_lake_model(self,
                                        lake_parameters_filepath,

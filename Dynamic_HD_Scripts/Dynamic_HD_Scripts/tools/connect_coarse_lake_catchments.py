@@ -14,7 +14,7 @@ from Dynamic_HD_Scripts.interface.cpp_interface.libs \
     import follow_streams_wrapper
 from Dynamic_HD_Scripts.tools import compute_catchments as cc
 
-class MergeAndRedirectIndices(object):
+class MergeAndRedirectIndices:
     pass
 
 class LatLonMergeAndRedirectIndices(MergeAndRedirectIndices):
@@ -41,7 +41,7 @@ class LatLonMergeAndRedirectIndices(MergeAndRedirectIndices):
         self.redirect_lat_index = array_in[4]
         self.redirect_lon_index = array_in[5]
 
-class  MergeAndRedirectIndicesCollection(object):
+class  MergeAndRedirectIndicesCollection:
     def __init__(self,
                  primary_merge_and_redirect_indices,
                  secondary_merge_and_redirect_indices):
@@ -76,7 +76,7 @@ def create_merge_indices_collections_from_array(array_in):
     merge_and_redirect_indices_collections.append(working_merge_and_redirect_indices_collection)
     return merge_and_redirect_indices_collections
 
-class CatchmentTrees(object):
+class CatchmentTrees:
 
     def __init__(self):
         self.primary_catchments = {}
@@ -114,7 +114,7 @@ class CatchmentTrees(object):
                 catchment_obj.subcatchments.pop(leaf_catchment_num,None)
         return leaves
 
-class CatchmentNode(object):
+class CatchmentNode:
 
     def __init__(self,supercatchment_num_in=None,supercatchment_obj_in=None):
         self.supercatchment_num = supercatchment_num_in

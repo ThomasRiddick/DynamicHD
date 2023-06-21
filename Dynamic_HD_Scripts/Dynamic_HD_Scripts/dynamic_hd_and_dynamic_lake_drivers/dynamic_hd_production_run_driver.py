@@ -1092,7 +1092,7 @@ def setup_and_run_dynamic_hd_para_gen_from_command_line_arguments(args):
     driver_object = Dynamic_HD_Production_Run_Drivers(**vars(args))
     driver_object.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
 
-class Arguments(object):
+class Arguments:
     """An empty class used to pass namelist arguments into the main routine as keyword arguments."""
 
     pass

@@ -6,7 +6,7 @@ Created on Jan 16, 2018
 from abc import ABCMeta, abstractmethod
 import inspect
 
-class InputField(object):
+class InputField:
 
     def __init__(self,name,conditions=[]):
         self.name = name
@@ -46,7 +46,7 @@ class ExtendedInputField(InputField):
     def get_requires_netcdf_fieldname(self):
         return self.requires_netcdf_fieldname
 
-class Condition(object):
+class Condition:
   pass
 
 class valid_option_helper(Condition):
@@ -94,7 +94,7 @@ class printable_lambda(Condition):
   def __str__(self):
     return self.func_string
 
-class CheckIfOptionalNetCDFFilepathHasFieldName(object):
+class CheckIfOptionalNetCDFFilepathHasFieldName:
 
     def __init__(self,filepath_sectionname,fieldname_sectionname,
                  filepath_optionname,fieldname_optionname):

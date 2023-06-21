@@ -20,7 +20,7 @@ from Dynamic_HD_Scripts.utilities.process_manager import using_mpi
 from Dynamic_HD_Scripts.context import shared_object_path, bin_path,build_path
 from sys import platform
 
-class f2py_manager(object):
+class f2py_manager:
     """Manages a f2py fortran module.
 
     Public methods:

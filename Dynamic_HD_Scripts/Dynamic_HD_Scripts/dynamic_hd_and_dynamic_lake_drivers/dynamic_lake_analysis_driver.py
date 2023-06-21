@@ -21,7 +21,7 @@ def replace_rightmost(s,oldvalue,newvalue):
     string_as_list = s.rsplit(oldvalue,1)
     return newvalue.join(string_as_list)
 
-class Dynamic_Lake_Analysis_Run_Framework(object):
+class Dynamic_Lake_Analysis_Run_Framework:
 
     ancillary_data_directory_match = re.compile(r"ancillary data directory:\s*(\S*)")
     present_day_base_orography_filepath_match = re.compile(r"present day base orography file:\s*(\S*)")
@@ -573,7 +573,7 @@ def setup_and_run_lake_analysis_from_command_line_arguments(args):
     driver_object = Dynamic_Lake_Analysis_Run_Framework(**vars(args))
     driver_object.run_selected_processes()
 
-class Arguments(object):
+class Arguments:
     """An empty class used to pass namelist arguments into the main routine as keyword arguments."""
 
     pass

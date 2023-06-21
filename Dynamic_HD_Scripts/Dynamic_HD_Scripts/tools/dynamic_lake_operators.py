@@ -232,6 +232,30 @@ def advanced_basin_evaluation_driver(input_minima_file,
     iodriver.advanced_field_writer(flood_volume_thresholds_filename,
                                    flood_volume_thresholds,
                                    fieldname='flood_volume_thresholds')
+    connection_heights_filename = path.join(output_filepath,
+                                            "connect_h_" +
+                                            output_filelabel + ".nc")
+    iodriver.advanced_field_writer(connection_heights_filename,
+                                   connection_heights,
+                                   fieldname='connection_heights')
+    flood_heights_filename = path.join(output_filepath,
+                                       "flood_h_" +
+                                       output_filelabel + ".nc")
+    iodriver.advanced_field_writer(flood_heights_filename,
+                                   flood_heights,
+                                   fieldname='flood_heights')
+    corrected_heights_filename = path.join(output_filepath,
+                                           "corrected_h_" +
+                                           output_filelabel + ".nc")
+    iodriver.advanced_field_writer(corrected_heights_filename,
+                                   input_corrected_orography,
+                                   fieldname='corrected_heights')
+    raw_heights_filename = path.join(output_filepath,
+                                     "raw_h_" +
+                                     output_filelabel + ".nc")
+    iodriver.advanced_field_writer(raw_heights_filename,
+                                   input_raw_orography,
+                                   fieldname='raw_heights')
     flood_next_cell_lat_index_filename = path.join(output_filepath,
                                                    "flood_nci_lat_" +
                                                    output_filelabel + ".nc")
@@ -276,6 +300,10 @@ def advanced_basin_evaluation_driver(input_minima_file,
                                    fieldname="lake_centers")
     individual_field_filenames = [connection_volume_thresholds_filename,
                                   flood_volume_thresholds_filename,
+                                  connection_heights_filename,
+                                  flood_heights_filename,
+                                  corrected_heights_filename,
+                                  raw_heights_filename,
                                   flood_next_cell_lat_index_filename,
                                   flood_next_cell_lon_index_filename,
                                   connect_next_cell_lat_index_filename,

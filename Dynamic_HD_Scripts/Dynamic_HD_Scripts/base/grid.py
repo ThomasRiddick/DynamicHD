@@ -1111,7 +1111,7 @@ def makeGrid(grid_type,**kwargs):
         except KeyError:
             raise RuntimeError('Invalid Grid Type')
 
-class LatLongGridGradientChangeMaskingHelper(object):
+class LatLongGridGradientChangeMaskingHelper:
     """A helper class containing methods for calculating when gradient changes are significant.
 
     Class methods:

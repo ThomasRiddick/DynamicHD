@@ -16,7 +16,7 @@ import math
 from HD_Plots.utilities import river_comparison_plotting_routines as rc_pts
 from HD_Plots.utilities import plotting_tools as pts
 
-class Interactive_Plots(object):
+class Interactive_Plots:
     """The main class for the interactive orography and cumulative flow/river flow comparison plots"""
 
     numbers_max_size = 200
@@ -327,7 +327,7 @@ class Interactive_Plots(object):
         self.match_right_scaling_callback_functions.append(match_right_scaling)
         self.match_catch_scaling_callback_functions.append(match_catch_scaling)
 
-class Update(object):
+class Update:
 
     def __init__(self,orog_plot_num,lat_offset,lon_offset,plots_object):
         self.orog_plot_num = orog_plot_num
@@ -511,7 +511,7 @@ class Update(object):
         ax_catch.callbacks.connect('ylim_changed',self.po.match_catch_scaling_callback_functions[self.orog_plot_num])
         fig.canvas.draw()
 
-class Reset(object):
+class Reset:
 
     def __init__(self,orog_plot_num,plots_object):
         self.orog_plot_num = orog_plot_num
@@ -544,7 +544,7 @@ class Reset(object):
         fig = plt.gcf()
         fig.canvas.draw()
 
-class Match_Right_Scaling(object):
+class Match_Right_Scaling:
 
     def __init__(self,orog_plot_num,plots_object):
         self.orog_plot_num = orog_plot_num
@@ -590,7 +590,7 @@ class Match_Right_Scaling(object):
         fig.canvas.toolbar.push_current()
         fig.canvas.draw()
 
-class Match_Left_Scaling(object):
+class Match_Left_Scaling:
 
     def __init__(self,orog_plot_num,plots_object):
         self.orog_plot_num = orog_plot_num
@@ -628,7 +628,7 @@ class Match_Left_Scaling(object):
         fig.canvas.toolbar.push_current()
         fig.canvas.draw()
 
-class Match_Catch_Scaling(object):
+class Match_Catch_Scaling:
 
     def __init__(self,orog_plot_num,plots_object):
         self.orog_plot_num = orog_plot_num

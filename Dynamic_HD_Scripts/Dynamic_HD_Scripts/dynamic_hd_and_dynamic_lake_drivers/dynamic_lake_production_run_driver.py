@@ -913,6 +913,10 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                 basin_catchment_numbers.get_data())
         fields_to_write = [connection_volume_thresholds,
                            flood_volume_thresholds,
+                           connection_heights,
+                           flood_heights,
+                           orography_10min,
+                           orography_10min,
                            flood_next_cell_lat_index,
                            flood_next_cell_lon_index,
                            connect_next_cell_lat_index,
@@ -924,6 +928,10 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                            minima]
         fieldnames_for_fields_to_write = ['connection_volume_thresholds',
                                           'flood_volume_thresholds',
+                                          'connection_heights',
+                                          'flood_heights',
+                                          'corrected_heights',
+                                          'raw_heights',
                                           'flood_next_cell_lat_index',
                                           'flood_next_cell_lon_index',
                                           'connect_next_cell_lat_index',
@@ -1081,7 +1089,7 @@ def setup_and_run_dynamic_hd_para_and_lake_gen_from_command_line_arguments(args)
     driver_object = Dynamic_Lake_Production_Run_Drivers(**vars(args))
     driver_object.no_intermediaries_dynamic_lake_driver()
 
-class Arguments(object):
+class Arguments:
     """An empty class used to pass namelist arguments into the main routine as keyword arguments."""
 
     pass

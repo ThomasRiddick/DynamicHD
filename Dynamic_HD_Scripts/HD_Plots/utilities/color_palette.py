@@ -4,7 +4,7 @@ Created on Mar 8, 2017
 @author: thomasriddick
 '''
 
-class ColorPalette(object):
+class ColorPalette:
     """Various set of colors to use in plots"""
 
     def __init__(self,palette_to_use='default'):

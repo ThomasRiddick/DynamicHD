@@ -9,7 +9,7 @@ import sys
 import inspect
 from Dynamic_HD_Scripts.command_line_drivers import config_layouts
 
-class SetupValidator(object):
+class SetupValidator:
     """
     Validates ConfigParser configurations according to the templates given in config_layouts
     to ensure they are a valid setup for HD operations. Decide which HD operator is being used

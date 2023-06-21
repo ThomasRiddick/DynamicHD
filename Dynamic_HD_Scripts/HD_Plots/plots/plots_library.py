@@ -36,7 +36,7 @@ from HD_Plots.utilities.color_palette import ColorPalette #@UnresolvedImport
 
 global interactive_plots
 
-class Plots(object):
+class Plots:
     """A general base class for plots"""
 
     hd_data_path = '/Users/thomasriddick/Documents/data/HDdata/'

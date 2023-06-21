@@ -14,7 +14,7 @@ import re
 from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.base.iodriver import advanced_field_loader
 
-class Params(object):
+class Params:
     """
     Class to store the parameters of the river mouth matching code
 
@@ -99,7 +99,7 @@ class Params(object):
         self.init_default_params()
         self.minflow = float('inf')
 
-class RiverMouth(object):
+class RiverMouth:
     """Class representing a river mouth, including coordinates,outflow (in num cells), an ID and matching params"""
 
     def __init__(self,lat,lon,outflow,idnum,params):
@@ -168,7 +168,7 @@ class RiverMouth(object):
         else:
             return False
 
-class ConflictChecker(object):
+class ConflictChecker:
     """Functions to check candidate match pairs to see if they conflict with other candidates"""
 
     @classmethod
@@ -237,7 +237,7 @@ class ConflictChecker(object):
                                     break
         return [item['item'] for item in conflicts_list if not item['skip']]
 
-class ConflictResolver(object):
+class ConflictResolver:
     """Contains methods necessary to resolve a set of conflicts"""
 
     @classmethod

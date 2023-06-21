@@ -13,7 +13,7 @@ import xarray
 import scipy.ndimage as ndi
 from Dynamic_HD_Scripts.base import grid as gd
 
-class Field(object):
+class Field:
     """A general class to store and manipulate fields on a given grid type
 
     Public methods:
