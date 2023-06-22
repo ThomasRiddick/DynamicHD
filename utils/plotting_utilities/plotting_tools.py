@@ -12,7 +12,7 @@ import math
 import itertools
 from Dynamic_HD_Scripts.base import grid
 from Dynamic_HD_Scripts.base import field
-from HD_Plots.utilities import river_names
+from plotting_utilities import river_names
 
 
 class OrogCoordFormatter:

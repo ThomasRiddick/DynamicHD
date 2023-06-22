@@ -13,8 +13,8 @@ from matplotlib.ticker import FuncFormatter
 import matplotlib.pyplot as plt
 import numpy as np
 import math
-from HD_Plots.utilities import river_comparison_plotting_routines as rc_pts
-from HD_Plots.utilities import plotting_tools as pts
+from plotting_utilities import river_comparison_plotting_routines as rc_pts
+from plotting_utilities import plotting_tools as pts
 
 class Interactive_Plots:
     """The main class for the interactive orography and cumulative flow/river flow comparison plots"""

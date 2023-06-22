@@ -12,7 +12,7 @@ import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import re
-from HD_Plots.utilities import plotting_tools as pts
+from plotting_utilities import plotting_tools as pts
 
 def find_catchment_numbers(ref_catchment_field,data_catchment_field,
                            data_catchment_field_original_scale,

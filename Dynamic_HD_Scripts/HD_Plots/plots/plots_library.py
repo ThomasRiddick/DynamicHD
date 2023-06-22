@@ -19,7 +19,6 @@ import textwrap
 import os.path
 import math
 import copy
-from HD_Plots.utilities import plotting_tools as pts
 from netCDF4 import Dataset
 from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.base.iodriver import advanced_field_loader
@@ -27,12 +26,13 @@ from Dynamic_HD_Scripts.base import iohelper as iohlpr
 from Dynamic_HD_Scripts.base import field
 from Dynamic_HD_Scripts.base import grid
 from Dynamic_HD_Scripts.utilities import utilities
-from HD_Plots.utilities import plotting_tools as pts
-from HD_Plots.utilities import match_river_mouths as mtch_rm
-from HD_Plots.utilities import river_comparison_plotting_routines as rc_pts
-from HD_Plots.utilities import flowmap_plotting_routines as fmp_pts #@UnresolvedImport
-from HD_Plots.utilities.interactive_plotting_routines import Interactive_Plots
-from HD_Plots.utilities.color_palette import ColorPalette #@UnresolvedImport
+from plotting_utilities import plotting_tools as pts
+from plotting_utilities import match_river_mouths as mtch_rm
+from plotting_utilities import river_comparison_plotting_routines as rc_pts
+from plotting_utilities import plotting_tools as pts
+from plotting_utilities import flowmap_plotting_routines as fmp_pts #@UnresolvedImport
+from plotting_utilities.interactive_plotting_routines import Interactive_Plots
+from plotting_utilities.color_palette import ColorPalette #@UnresolvedImport
 
 global interactive_plots
 

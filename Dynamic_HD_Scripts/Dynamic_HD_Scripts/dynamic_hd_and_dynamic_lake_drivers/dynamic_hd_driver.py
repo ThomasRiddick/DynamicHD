@@ -45,16 +45,13 @@ class Dynamic_HD_Drivers:
         rdirs_path_extension = "rdirs"
         rmouth_path_extension = "rmouths"
         orog_path_extension  = "orographys"
-        weights_path_extension = 'remapweights'
         ls_masks_path_extension = 'lsmasks'
         rmouth_cumulative_flow_path_extension = 'rmouthflow'
         grid_path_extension = 'grids'
         flowmaps_path_extension = 'flowmaps'
         catchments_path_extension = 'catchmentmaps'
         truesinks_path_extension = 'truesinks'
-        ls_seed_points_path_extension = 'lsseedpoints'
         orography_corrections_path_extension = 'orogcorrs'
-        truesinks_modifications_path_extension = 'truesinksmods'
         intelligent_burning_regions_extension = 'intburnregions'
         orography_corrections_fields_path_extension = 'orogcorrsfields'
         parameter_path_extension = "params"
@@ -63,8 +60,6 @@ class Dynamic_HD_Drivers:
         lakemask_path_extension= 'lakemasks'
         lake_bathymetry_file_extension = 'lakebath'
         cotat_plus_parameters_path_extension = path.join(parameter_path_extension,'cotat_plus')
-        orography_upscaling_parameters_path_extension = path.join(parameter_path_extension,
-                                                                  'orography_upscaling')
         self.orography_path = path.join(data_dir,orog_path_extension)
         self.generated_orography_filepath = path.join(self.orography_path,'generated','updated_orog_')
         self.rdir_path = path.join(data_dir,rdirs_path_extension)
@@ -72,7 +67,6 @@ class Dynamic_HD_Drivers:
         self.generated_rdir_with_outflows_marked_filepath = path.join(self.rdir_path,
                                                                       'generated_outflows_marked',
                                                                       'updated_RFDs_')
-        self.weights_path = path.join(data_dir,weights_path_extension)
         self.grids_path = path.join(data_dir,grid_path_extension)
         self.ls_masks_path = path.join(data_dir,ls_masks_path_extension)
         self.flowmaps_path = path.join(data_dir,flowmaps_path_extension)
@@ -86,14 +80,9 @@ class Dynamic_HD_Drivers:
         self.generated_rmouth_cumulative_flow_path = path.join(self.rmouth_cumulative_flow_path,
                                                                'rmouthflows_')
         self.truesinks_path = path.join(data_dir,truesinks_path_extension)
-        self.ls_seed_points_path = path.join(data_dir,ls_seed_points_path_extension)
-        self.generated_ls_seed_points_path = path.join(self.ls_seed_points_path,
-                                                       'lsseedpoints_')
         self.orography_corrections_path = path.join(data_dir,orography_corrections_path_extension)
         self.copied_orography_corrections_filepath = path.join(self.orography_corrections_path,
                                                                'copies','orog_corr_')
-        self.truesinks_modifications_filepath = path.join(data_dir,
-                                                          truesinks_modifications_path_extension)
         self.intelligent_burning_regions_path = path.join(data_dir,
                                                           intelligent_burning_regions_extension)
         self.copied_intelligent_burning_regions_path = path.join(self.intelligent_burning_regions_path,
@@ -102,10 +91,6 @@ class Dynamic_HD_Drivers:
                                                     cotat_plus_parameters_path_extension)
         self.copied_cotat_plus_parameters_path = path.join(self.cotat_plus_parameters_path,
                                                            'copies','cotat_plus_params_')
-        self.orography_upscaling_parameters_path = path.join(data_dir,
-                                                             orography_upscaling_parameters_path_extension)
-        self.copied_orography_upscaling_parameters_path = path.join(self.orography_upscaling_parameters_path,
-                                                                    'copies','orography_upscaling_params_')
         self.orography_corrections_fields_path = path.join(data_dir,
                                                            orography_corrections_fields_path_extension)
         self.paragen_code_copies_path = path.join(data_dir,paragen_code_copies_path_extension)
@@ -115,10 +100,7 @@ class Dynamic_HD_Drivers:
         self.generated_minima_filepath = path.join(self.minima_filepath,'minima_')
         self.lakemask_filepath = path.join(data_dir,lakemask_path_extension)
         self.lake_bathymetry_filepath = path.join(data_dir,lake_bathymetry_file_extension)
-        self.hd_grid_filepath = path.join(self.grids_path,"hdmodel2d_griddes")
-        self.half_degree_grid_filepath = path.join(self.grids_path,"grid_0_5.txt")
         self.ten_minute_grid_filepath = path.join(self.grids_path,"grid_10min.txt")
-        self.thirty_second_grid_filepath= path.join(self.grids_path,"grid_30sec.txt")
 
     @staticmethod
     def _generate_file_label():

@@ -17,9 +17,9 @@ import matplotlib.gridspec as gridspec
 from matplotlib.widgets import Button, TextBox, RectangleSelector, RangeSlider
 from matplotlib.widgets import Slider
 from matplotlib.colors import LogNorm
-from HD_Plots.utilities.match_river_mouths import generate_matches
-from HD_Plots.utilities import match_river_mouths
-from HD_Plots.utilities import plotting_tools as pts
+from plotting_utilities.match_river_mouths import generate_matches
+from plotting_utils.utilities import match_river_mouths
+from plotting_utils.utilities import plotting_tools as pts
 from Dynamic_HD_Scripts.utilities import utilities
 from Dynamic_HD_Scripts.base.field import Field
 from enum import Enum
