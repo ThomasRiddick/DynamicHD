@@ -50,6 +50,7 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
                            "paragen/paragen.inp","paragen/riv_n.dat","paragen/slope.dat",
                            "10min_catchments.nc","10min_corrected_orog.nc",
                            "10min_flowtocell.nc","10min_flowtorivermouths.nc",
+                           "10min_filled_orog.nc",
                            "10min_rdirs.nc","10min_lake_volumes.nc",
                            "30min_catchments.nc","30min_connected_catchments.nc",
                            "30min_filled_orog.nc","30min_flowtocell.nc",
