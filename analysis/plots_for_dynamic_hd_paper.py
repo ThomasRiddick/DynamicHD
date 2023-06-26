@@ -17,7 +17,7 @@ from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.utilities import utilities
 from plotting_utilities import river_comparison_plotting_routines as rc_pts
 from plotting_utilities import plotting_tools as pts
-from HD_Plots.plots.plots_library import (Plots,HDparameterPlots,HDOutputPlots,OutflowPlots, #@UnusedImport
+from plots_library import (Plots,HDparameterPlots,HDOutputPlots,OutflowPlots, #@UnusedImport
                                           FlowMapPlots,FlowMapPlotsWithCatchments,OrographyPlots, #@UnusedImport
                                           SimpleOrographyPlots, Ice5GComparisonPlots) #@UnusedImport
 

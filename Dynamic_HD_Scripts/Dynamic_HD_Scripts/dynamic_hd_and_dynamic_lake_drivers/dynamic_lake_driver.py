@@ -202,10 +202,10 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
             #                                fieldname="catch")
 
     def remove_no_data_values_from_upscaled_MERIT_correction_set(self):
-        input_upscaled_correction_set_filename = ("/Users/thomasriddick/Documents/data/HDdata/"
+        input_upscaled_correction_set_filename = ("/Users/thomasriddick/Documents/data/analysis_data/"
                                                   "orogcorrsfields/orog_corrs_field_generate_"
                                                   "corrections_for_upscaled_MeritHydro_0k_20220326_121152_rn.nc")
-        output_upscaled_correction_set_filename = ("/Users/thomasriddick/Documents/data/HDdata/"
+        output_upscaled_correction_set_filename = ("/Users/thomasriddick/Documents/data/analysis_data/"
                                                    "orogcorrsfields/orog_corrs_field_generate_"
                                                    "corrections_for_upscaled_MeritHydro_0k_20220326_121152_rn_adjusted.nc")
         upscaled_orography_filename = ("/Users/thomasriddick/Documents/data/HDdata/"

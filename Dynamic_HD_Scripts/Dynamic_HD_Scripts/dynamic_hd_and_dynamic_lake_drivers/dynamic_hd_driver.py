@@ -125,7 +125,7 @@ class Dynamic_HD_Drivers:
                                                                           glacier_mask_fieldname="glac",
                                                                           orography_corrections_fieldname="orog",
                                                                           truesinks_fieldname="true_sinks"):
-        truesinks_filename = ("/Users/thomasriddick/Documents/data/HDdata/truesinks/"
+        truesinks_filename = ("/Users/thomasriddick/Documents/data/analysis_data/"
                               "truesinks_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_20191014_173825_with_grid.nc")
         cls.generate_present_day_river_directions_with_true_sinks(orography_filepath,
                                                                   landsea_mask_filepath,

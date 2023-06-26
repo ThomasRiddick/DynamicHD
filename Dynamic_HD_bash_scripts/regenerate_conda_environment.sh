@@ -43,10 +43,11 @@ if ! $no_modules; then
   fi
 fi
 
+conda_command=mamba
 conda-env remove -n dyhdenv3
-conda config --add channels conda-forge
-conda create --yes -n dyhdenv3
+$conda_command config --add channels conda-forge
+$conda_comannd create --yes -n dyhdenv3
 source activate dyhdenv3
-conda install --yes cdo=1.9.9 netcdf4 numpy matplotlib xarray cython scipy python-cdo configparser mpi4py
-conda list -e
+$conda_command install --yes cdo=1.9.9 netcdf4 numpy matplotlib xarray cython scipy python-cdo configparser mpi4py
+$conda_command list -e
 source deactivate
