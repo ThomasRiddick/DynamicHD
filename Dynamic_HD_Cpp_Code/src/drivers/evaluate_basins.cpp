@@ -37,7 +37,8 @@ void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                                            int nlat_fine, int nlon_fine,
                                            int nlat_coarse,int nlon_coarse,
                                            string merges_filepath,
-                                           int* basin_catchment_numbers_in){
+                                           int* basin_catchment_numbers_in,
+                                           int* sinkless_rdirs_in){
   auto minima_in = new bool[nlat_fine*nlon_fine];
   for (int i = 0; i < nlat_fine*nlon_fine; i++) {
     minima_in[i] = bool(minima_in_int[i]);
@@ -63,7 +64,8 @@ void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                          nlat_fine, nlon_fine,
                          nlat_coarse,nlon_coarse,
                          merges_filepath,
-                         basin_catchment_numbers_in);
+                         basin_catchment_numbers_in,
+                         sinkless_rdirs_in);
 }
 
 void latlon_evaluate_basins(bool* minima_in,
@@ -87,7 +89,8 @@ void latlon_evaluate_basins(bool* minima_in,
                             int nlat_fine, int nlon_fine,
                             int nlat_coarse,int nlon_coarse,
                             string merges_filepath,
-                            int* basin_catchment_numbers_in){
+                            int* basin_catchment_numbers_in,
+                            int* sinkless_rdirs_in){
   cout << "Entering Basin Evaluation C++ Code" << endl;
   auto alg = latlon_basin_evaluation_algorithm();
   int scale_factor = nlat_fine/nlat_coarse;
@@ -126,7 +129,7 @@ void latlon_evaluate_basins(bool* minima_in,
   auto sink_filling_alg_4 = new sink_filling_algorithm_4_latlon();
   int* next_cell_lat_index_dummy_in = new int[(nlat_fine+2*scale_factor)*nlon_fine];
   int* next_cell_lon_index_dummy_in = new int[(nlat_fine+2*scale_factor)*nlon_fine];
-  short* sinkless_rdirs_dummy_out = new short[(nlat_fine+2*scale_factor)*nlon_fine];
+  short* sinkless_rdirs_out = new short[(nlat_fine+2*scale_factor)*nlon_fine];
   int* catchment_nums_dummy_in = new int[(nlat_fine+2*scale_factor)*nlon_fine];
   bool* true_sinks_in = new bool[(nlat_fine+2*scale_factor)*nlon_fine];
   fill_n(true_sinks_in,(nlat_fine+2*scale_factor)*nlon_fine,false);
@@ -195,7 +198,7 @@ void latlon_evaluate_basins(bool* minima_in,
                                   next_cell_lat_index_dummy_in,
                                   next_cell_lon_index_dummy_in,
                                   grid_params_in,
-                                  sinkless_rdirs_dummy_out,
+                                  sinkless_rdirs_out,
                                   catchment_nums_dummy_in);
   alg.setup_fields(minima_in_ext,
                    raw_orography_in_ext,
@@ -279,6 +282,10 @@ void latlon_evaluate_basins(bool* minima_in,
     if(basin_catchment_numbers_in){
       basin_catchment_numbers_in[i-scale_factor*nlon_fine] =
         basin_catchment_numbers_in_ext[i];
+    }
+    if(sinkless_rdirs_in){
+      sinkless_rdirs_in[i-scale_factor*nlon_fine] =
+        sinkless_rdirs_out[i];
     }
   }
   //Consistency checks

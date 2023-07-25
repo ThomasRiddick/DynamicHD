@@ -127,7 +127,8 @@ def advanced_basin_evaluation_driver(input_minima_file,
                                      combined_output_filename,
                                      output_filepath,
                                      output_filelabel,
-                                     output_basin_catchment_nums_filepath=None):
+                                     output_basin_catchment_nums_filepath=None,
+                                     output_sinkless_rdirs_filepath=None):
     input_minima    = iodriver.advanced_field_loader(input_minima_file,
                                                      field_type='Generic',
                                                      fieldname=input_minima_fieldname)
@@ -169,8 +170,13 @@ def advanced_basin_evaluation_driver(input_minima_file,
         field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
     if output_basin_catchment_nums_filepath is not None:
         basin_catchment_numbers = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        if output_sinkless_rdirs_filepath is not None:
+            sinkless_rdirs = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        else:
+            sinkless_rdirs = None
     else:
         basin_catchment_numbers = None
+        sinkless_rdirs = None
     merges_filename = path.join(output_filepath,
                                 "merges_" +
                                 output_filelabel + ".nc")
@@ -219,7 +225,9 @@ def advanced_basin_evaluation_driver(input_minima_file,
                                             flood_merge_and_redirect_indices_index.get_data(),
                                             merges_filepath=merges_filename,
                                             basin_catchment_numbers_in=
-                                            basin_catchment_numbers.get_data())
+                                            basin_catchment_numbers.get_data(),
+                                            sinkless_rdirs_in=
+                                            sinkless_rdirs.get_data())
     connection_volume_thresholds_filename = path.join(output_filepath,
                                                       "connect_vts_" +
                                                       output_filelabel + ".nc")
@@ -321,6 +329,10 @@ def advanced_basin_evaluation_driver(input_minima_file,
         iodriver.advanced_field_writer(output_basin_catchment_nums_filepath,
                                        basin_catchment_numbers,
                                        fieldname="basin_catchment_numbers")
+        if output_sinkless_rdirs_filepath is not None:
+            iodriver.advanced_field_writer(output_sinkless_rdirs_filepath,
+                                           sinkless_rdirs,
+                                           fieldname="rdir")
 
 def advanced_water_redistribution_driver(input_lake_numbers_file,
                                          input_lake_numbers_fieldname,

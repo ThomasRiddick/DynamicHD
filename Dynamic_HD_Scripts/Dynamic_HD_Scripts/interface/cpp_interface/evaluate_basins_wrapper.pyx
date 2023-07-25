@@ -49,7 +49,8 @@ cdef extern from 'drivers/evaluate_basins.cpp':
                                                int nlat_fine, int nlon_fine,
                                                int nlat_coarse,int nlon_coarse,
                                                string merges_filepath,
-                                               int* basin_catchment_numbers_in)
+                                               int* basin_catchment_numbers_in,
+                                               int* sinkless_rdirs_in)
 
 def evaluate_basins(np.ndarray[int,ndim=2,mode='c'] minima_in_int,
                     np.ndarray[double,ndim=2,mode='c'] raw_orography_in,
@@ -70,7 +71,8 @@ def evaluate_basins(np.ndarray[int,ndim=2,mode='c'] minima_in_int,
                     np.ndarray[int,ndim=2,mode='c'] connect_merge_and_redirect_indices_index_in,
                     np.ndarray[int,ndim=2,mode='c'] flood_merge_and_redirect_indices_index_in,
                     str merges_filepath,
-                    np.ndarray[int,ndim=2,mode='c'] basin_catchment_numbers_in=None):
+                    np.ndarray[int,ndim=2,mode='c'] basin_catchment_numbers_in=None,
+                    np.ndarray[int,ndim=2,mode='c'] sinkless_rdirs_in=None):
     cdef int nlat_fine,nlon_fine
     nlat_fine, nlon_fine = raw_orography_in.shape[0],raw_orography_in.shape[1]
     cdef int nlat_coarse,nlon_coarse
@@ -98,7 +100,7 @@ def evaluate_basins(np.ndarray[int,ndim=2,mode='c'] minima_in_int,
                                       nlat_fine, nlon_fine,
                                       nlat_coarse, nlon_coarse,
                                       merges_filepath_c)
-    else:
+    else if sinkless_rdirs_in is None:
       latlon_evaluate_basins_cython_wrapper(&minima_in_int[0,0],
                                             &raw_orography_in[0,0],
                                             &corrected_orography_in[0,0],
@@ -121,3 +123,27 @@ def evaluate_basins(np.ndarray[int,ndim=2,mode='c'] minima_in_int,
                                             nlat_coarse, nlon_coarse,
                                             merges_filepath_c,
                                             &basin_catchment_numbers_in[0,0])
+    else:
+      latlon_evaluate_basins_cython_wrapper(&minima_in_int[0,0],
+                                            &raw_orography_in[0,0],
+                                            &corrected_orography_in[0,0],
+                                            &cell_areas_in[0,0],
+                                            &connection_volume_thresholds_in[0,0],
+                                            &flood_volume_thresholds_in[0,0],
+                                            &connection_heights_in[0,0],
+                                            &flood_heights_in[0,0],
+                                            &prior_fine_rdirs_in[0,0],
+                                            &prior_coarse_rdirs_in[0,0],
+                                            &prior_fine_catchments_in[0,0],
+                                            &coarse_catchment_nums_in[0,0],
+                                            &flood_next_cell_lat_index_in[0,0],
+                                            &flood_next_cell_lon_index_in[0,0],
+                                            &connect_next_cell_lat_index_in[0,0],
+                                            &connect_next_cell_lon_index_in[0,0],
+                                            &connect_merge_and_redirect_indices_index_in[0,0],
+                                            &flood_merge_and_redirect_indices_index_in[0,0],
+                                            nlat_fine, nlon_fine,
+                                            nlat_coarse, nlon_coarse,
+                                            merges_filepath_c,
+                                            &basin_catchment_numbers_in[0,0]
+                                            &sinkless_rdirs_in[0,0])

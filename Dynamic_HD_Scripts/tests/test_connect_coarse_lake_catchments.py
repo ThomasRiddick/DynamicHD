@@ -840,7 +840,7 @@ class TestConnectCoarseLakeCatchments(unittest.TestCase):
         flood_merge_and_redirect_indices_collections.append(collected_indices)
         flood_merge_and_redirect_indices_index[41,35] = flood_index;
         flood_index += 1
-        connected_coarse_lake_catchments,_ = \
+        connected_coarse_lake_catchments = \
           cclc.connect_coarse_lake_catchments(field.Field(coarse_catchments,
                                                           grid="LatLong",nlat=27,nlong=20),
                                               field.Field(lake_centers,

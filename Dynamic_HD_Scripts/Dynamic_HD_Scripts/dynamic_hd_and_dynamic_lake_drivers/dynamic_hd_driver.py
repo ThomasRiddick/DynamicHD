@@ -50,7 +50,6 @@ class Dynamic_HD_Drivers:
         grid_path_extension = 'grids'
         flowmaps_path_extension = 'flowmaps'
         catchments_path_extension = 'catchmentmaps'
-        truesinks_path_extension = 'truesinks'
         orography_corrections_path_extension = 'orogcorrs'
         intelligent_burning_regions_extension = 'intburnregions'
         orography_corrections_fields_path_extension = 'orogcorrsfields'
@@ -79,7 +78,6 @@ class Dynamic_HD_Drivers:
         self.rmouth_cumulative_flow_path = path.join(data_dir,rmouth_cumulative_flow_path_extension)
         self.generated_rmouth_cumulative_flow_path = path.join(self.rmouth_cumulative_flow_path,
                                                                'rmouthflows_')
-        self.truesinks_path = path.join(data_dir,truesinks_path_extension)
         self.orography_corrections_path = path.join(data_dir,orography_corrections_path_extension)
         self.copied_orography_corrections_filepath = path.join(self.orography_corrections_path,
                                                                'copies','orog_corr_')
