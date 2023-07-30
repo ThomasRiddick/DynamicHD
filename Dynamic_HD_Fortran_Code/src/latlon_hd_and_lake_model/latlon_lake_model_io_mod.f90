@@ -226,7 +226,7 @@ function read_lake_parameters(instant_throughflow)&
     call check_return_code(nf90_inq_varid(ncid,'connection_heights',varid))
     call check_return_code(nf90_get_var(ncid, varid,temp_real_array_surface))
     allocate(connection_heights(nlat,nlon))
-    flood_heights = transpose(temp_real_array_surface)
+    connection_heights = transpose(temp_real_array_surface)
 
     call check_return_code(nf90_inq_varid(ncid,'flood_merges_and_redirects',varid))
     call check_return_code(nf90_get_var(ncid, varid,temp_integer_array_flood_merges))

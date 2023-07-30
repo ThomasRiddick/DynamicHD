@@ -12,7 +12,7 @@ GFORTRAN :=  /usr/local/Cellar/gcc@10/10.4.0/bin/gfortran-10
 endif
 NAGFORTRAN :=  /usr/local/bin/nagfor
 EXT_SOURCE :=$(shell echo ${HOME} )/Documents/code/
-GFORTRAN_NETCDF_F := /usr/local/Cellar/netcdf-fortran/4.6.0
+GFORTRAN_NETCDF_F := /usr/local/Cellar/netcdf-fortran/4.6.1
 NETCDF_F_LIB :=libnetcdff.dylib
 ifeq ($(COMPILE_TRANSPOSED_LAKE_MODEL),True)
 TRANSPOSED_SOURCE_CODE_LOC := /Users/thomasriddick/Documents/Work/switched_code
