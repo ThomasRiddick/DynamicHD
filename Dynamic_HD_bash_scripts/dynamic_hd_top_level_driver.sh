@@ -327,6 +327,9 @@ fi
 #Setup correct python path
 export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${PYTHONPATH}
 
+#Set library path
+export LD_LIBRARY_PATH="${HOME}/sw-spack/netcdf-cxx4-4.3.1-d54zya/lib":"${HOME}/sw-spack/netcdf-c-4.8.1-khy3ru/lib":${LD_LIBRARY_PATH}
+
 #Set Open MPI Fortran compiler
 export OMPI_FC=/sw/rhel6-x64/gcc/gcc-6.2.0/bin/gfortran
 
