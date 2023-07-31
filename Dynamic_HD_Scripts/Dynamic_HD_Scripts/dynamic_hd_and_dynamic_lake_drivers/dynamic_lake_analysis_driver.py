@@ -34,7 +34,7 @@ class Dynamic_Lake_Analysis_Run_Framework:
 
     def __init__(self,
                  base_directory,
-                 setup_directory_structure=None,
+                 setup_directory_structure=False,
                  ancillary_data_directory=None,
                  present_day_base_orography_filepath=None,
                  base_corrections_filepath=None,
