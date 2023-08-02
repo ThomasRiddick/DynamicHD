@@ -1,0 +1,13 @@
+fortran_src += files('accumulate_flow_test_mod.f90',
+                     'area_test_mod.f90',
+                     'cotat_plus_test_mod.f90',
+                     'doubly_linked_list_test_module.f90',
+                     'field_section_test_mod.f90',
+                     'flow_test_mod.f90',
+                     'icosohedral_hd_and_lake_model_test_mod.f90',
+                     'latlon_hd_and_lake_model_test_mod.f90',
+                     'loop_breaker_test_mod.f90',
+                     'manual_fruit_basket.f90',
+                     'manual_fruit_basket_driver.f90',
+                     'map_non_coincident_grids_test_mod.f90',
+                     'subfield_test_mod.f90')
