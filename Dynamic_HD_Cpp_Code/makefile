@@ -1,5 +1,5 @@
 RM := rm -rf
-USE_CLANG := True
+USE_CLANG := False
 ifeq ($(shell uname -s),Darwin)
 ifeq ($(USE_CLANG),True)
 GPLUSPLUS := clang++
@@ -7,9 +7,9 @@ else
 GPLUSPLUS := /usr/local/Cellar/gcc@10/10.4.0/bin/g++-10
 endif
 STDLIB_OPT :=
-FLAGS := -DPROCESSED_CELL_COUNTER  -DUSE_NETCDFCPP -DDARWIN -g  -fsanitize=address
-NETCDFC :=  /usr/local/Cellar/netcdf/4.9.0
-NETCDFCXX :=  /usr/local/Cellar/netcdf-cxx/4.3.1
+FLAGS := -DPROCESSED_CELL_COUNTER   -DDARWIN -g  -fsanitize=address
+NETCDFC :=  /usr/local/Cellar/netcdf/4.9.2_1
+NETCDFCXX :=  /usr/local/Cellar/netcdf-cxx/4.3.1_1
 INCLUDE := -isystem"$(NETCDFCXX)/include" -isystem"$(NETCDFC)/include"
 else ifeq ($(shell hostname -d),lvt.dkrz.de)
 STDLIB_OPT :=
