@@ -31,3 +31,4 @@ determine_river_directions_wrapper.cpp
 evaluate_basins_wrapper.cpp
 lake_operators_wrapper.cpp
 upscale_orography_wrapper.cpp
+build
