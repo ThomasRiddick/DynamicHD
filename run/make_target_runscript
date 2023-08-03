@@ -1,9 +1,0 @@
-#!/bin/bash
-
-name=${1}
-
-echo "Creating runscript ${name}"
-
-create_target_header ${output_script}
-
-cat

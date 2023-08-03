@@ -1,0 +1,16 @@
+#!/bin/ksh
+
+{% block header required %}{% end block header %}
+
+####################################################
+#################### USER INPUT ####################
+####################################################
+
+#AUTOMATICALLY DEPOPULATE ANY UNUSED VARS
+#SCRIPT WILL BE PLACED IN RUN DIR OR MAKE A DIR IN PROJECTS FOLDER
+
+####################################################
+############# END OF USER INPUT ####################
+####################################################
+
+{% block main required %}{% end block main %}

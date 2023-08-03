@@ -1,0 +1,22 @@
+{% extend target_runscript_template %}
+
+{% if make_project_at_runtime %}
+{% block make_project required %}{% end block %}
+{% endif %}
+
+{% if script_type == 'run' %}
+
+{% block preproc required %}{% end block %}
+{% block run required %}{% end block %}
+{% block postproc required %}{% end block%}
+{% block clean required %}{% end block %}
+
+{% elif script_type == 'prerep'}
+
+{% block report_pre required %}{% end block %}
+
+{% elif script_type == 'postrep'}
+
+{% block report_post required %}{% end block %}
+
+{% endif}
