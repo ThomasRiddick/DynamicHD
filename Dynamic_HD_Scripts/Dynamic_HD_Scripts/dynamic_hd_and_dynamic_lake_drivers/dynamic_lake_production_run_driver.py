@@ -115,6 +115,9 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         shutil.move(path.join(self.working_directory_path,
                              "basin_catchment_numbers_temp.nc"),
                     path.join(dest,"basin_catchment_numbers.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                              "sinkless_rdirs_10min.nc"),
+                    path.join(dest,"sinkless_rdirs_10min.nc"))
         # shutil.move(path.join(self.working_directory_path,
         #                      "10min_lake_volumes.nc"),
         #             path.join(dest,"10min_lake_volumes.nc"))
@@ -863,6 +866,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         flood_merge_and_redirect_indices_index = \
             field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
         basin_catchment_numbers = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        sinkless_rdirs_10min = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
         merges_filename =  path.join(self.working_directory_path,"merges_and_redirects_temp.nc")
         fields_filename =  path.join(self.working_directory_path,"fields_temp.nc")
         evaluate_basins_wrapper.evaluate_basins(minima_in_int=
@@ -910,7 +914,9 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                 flood_merge_and_redirect_indices_index.get_data(),
                                                 merges_filepath=merges_filename,
                                                 basin_catchment_numbers_in=
-                                                basin_catchment_numbers.get_data())
+                                                basin_catchment_numbers.get_data(),
+                                                sinkless_rdirs_in=
+                                                sinkless_rdirs_10min.get_data())
         fields_to_write = [connection_volume_thresholds,
                            flood_volume_thresholds,
                            connection_heights,
@@ -959,6 +965,13 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         #                                   temp_basin_catchment_numbers_filename,
         #                                   path.join(self.working_directory_path,
         #                                             "10min_lake_volumes.nc"))
+        #Write out sinkless rdirs
+        #Need to add switch for this
+        sinkless_rdirs_10min_filename = path.join(self.working_directory_path,
+                                                  "sinkless_rdirs_10min.nc")
+        iodriver.advanced_field_writer(sinkless_rdirs_10min_filename,
+                                       sinkless_rdirs_10min,
+                                       fieldname="rdirs")
         river_directions_filepath = path.join(self.working_directory_path,"30min_rdirs.nc")
         coarse_catchments_filepath = path.join(self.working_directory_path,"30min_catchments.nc")
         coarse_catchments_fieldname = "catchments"

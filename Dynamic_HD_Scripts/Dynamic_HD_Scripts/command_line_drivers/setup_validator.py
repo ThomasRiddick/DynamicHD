@@ -7,6 +7,7 @@ Created on Jan 14, 2018
 import configparser
 import sys
 import inspect
+import warnings
 from Dynamic_HD_Scripts.command_line_drivers import config_layouts
 
 class SetupValidator:
@@ -103,17 +104,17 @@ class SetupValidator:
                                        required_input_fields[section]] and
                         option not in [field.name for field in
                                        optional_input_fields[section]]):
-                        raise UserWarning("Unusued option {0} specified".format(option))
+                        warnings.warn("Unusued option {0} specified".format(option))
                 elif section_in_required_fields:
                     if option not in [field.name for field in
                                        required_input_fields[section]]:
-                        raise UserWarning("Unusued option {0} specified".format(option))
+                        warnings.warn("Unusued option {0} specified".format(option))
                 elif section_in_optional_fields:
                     if option not in [field.name for field in
                                        optional_input_fields[section]]:
-                        raise UserWarning("Unusued option {0} specified".format(option))
+                        warnings.warn("Unusued option {0} specified".format(option))
                 else:
-                    raise UserWarning("Unusued section {0} specified".format(section))
+                    warnings.warn("Unusued section {0} specified".format(section))
 
     def print_valid_options(self):
         output_str = ''

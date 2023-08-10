@@ -6,6 +6,7 @@ Created on Feb 24, 2016
 '''
 
 import inspect
+import warnings
 import datetime
 import subprocess
 import numpy as np
@@ -301,7 +302,7 @@ class Dynamic_HD_Drivers:
         if path.splitext(area_spacing_file)[1] != '.dat':
             self._convert_data_file_type(area_spacing_file,'.dat','HD')
         if path.splitext(output_file)[1] != '.nc':
-            raise UserWarning("Output filename doesn't have a netCDF extension as expected")
+            warnings.warn("Output filename doesn't have a netCDF extension as expected")
         try:
             print(subprocess.check_output([path.join(private_bash_scripts_path,
                                                      "generate_output_file.sh"),
@@ -547,7 +548,7 @@ class Dynamic_HD_Drivers:
         """
 
         if new_file_type==(path.splitext(filename)[1]):
-            raise UserWarning('File {0} is already of type {1}'.format(filename,new_file_type))
+            warnings.warn('File {0} is already of type {1}'.format(filename,new_file_type))
             return
         field_to_convert = iodriver.load_field(filename,
                                                file_type=iodriver.get_file_extension(filename),

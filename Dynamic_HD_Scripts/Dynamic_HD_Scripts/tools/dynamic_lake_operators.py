@@ -429,7 +429,7 @@ def add_lake_bathymetry_driver(input_orography_file,
   lake_mask = iodriver.advanced_field_loader(lake_mask_file,
                                              field_type='Generic',
                                              fieldname=lake_mask_fieldname)
-  lake_mask.change_dtype(np.bool)
+  lake_mask.change_dtype(bool)
   output_orography = add_lake_bathymetry(input_orography,
                                          input_bathymetry,
                                          lake_mask)
@@ -458,7 +458,7 @@ def filter_narrow_lakes(input_unfilled_orography,
       greater_than_or_equal_to_value(interior_cell_min_masked_neighbors)
     dilated_interior_cell_mask.dilate(np.array([[True,True,True],
                                         [True,True,True],
-                                        [True,True,True]],dtype=np.bool_),
+                                        [True,True,True]],dtype=bool),
                                        iterations=max_range)
     filtered_lake_mask = non_edge_cell_mask.logical_or(dilated_interior_cell_mask.\
                                                        logical_and(edge_cell_mask))

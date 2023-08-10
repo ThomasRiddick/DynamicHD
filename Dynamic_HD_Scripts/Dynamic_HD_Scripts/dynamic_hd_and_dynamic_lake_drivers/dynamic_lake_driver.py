@@ -57,13 +57,13 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
       #base_filepath = "/Users/thomasriddick/Documents/data/lake_analysis_runs/lake_analysis_one_21_Jun_2021/lakes/results"
       base_filepath = "/Users/thomasriddick/Documents/data/lake_analysis_runs/lake_analysis_two_26_Mar_2022/lakes/results"
       #dates = range(15990,15980,-10)
-      dates = range(14800,11000,-100)
+      dates = range(15000,14700,-100)
       #dates = [0]
       for date in dates:
         #river_directions_filepath = ("{0}/diag_version_13_date_{1}/30min_rdirs.nc".format(base_filepath,date))
         #coarse_catchments_filepath = ("{0}/diag_version_13_date_{1}/30min_catchments.nc".format(base_filepath,date))
-        river_directions_filepath = ("{0}/diag_version_35_date_{1}/30min_rdirs.nc".format(base_filepath,date))
-        coarse_catchments_filepath = ("{0}/diag_version_35_date_{1}/30min_catchments.nc".format(base_filepath,date))
+        river_directions_filepath = ("{0}/diag_version_41_date_{1}/30min_rdirs.nc".format(base_filepath,date))
+        coarse_catchments_filepath = ("{0}/diag_version_41_date_{1}/30min_catchments.nc".format(base_filepath,date))
         river_directions_fieldname = "rdirs"
         coarse_catchments_fieldname = "catchments"
         # cc.advanced_main(filename=river_directions_filepath,
@@ -72,18 +72,18 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
         #                  output_fieldname="catchments",
         #                  loop_logfile=("{0}/loops_log_{1}.txt".format(base_filepath,date)),
         #                  use_cpp_alg=True)
-        lake_parameters_filepath = ("{0}/lakeparas_version_35_date_{1}.nc".format(base_filepath,date))
-        basin_numbers_filepath = ("{0}/diag_version_35_date_{1}/basin_catchment_numbers.nc".format(base_filepath,date))
-        connected_coarse_catchments_out_filename = ("{0}/diag_version_35_date_{1}/30min_connected_catchments.nc".\
+        lake_parameters_filepath = ("{0}/lakeparas_version_41_date_{1}.nc".format(base_filepath,date))
+        basin_numbers_filepath = ("{0}/diag_version_41_date_{1}/basin_catchment_numbers.nc".format(base_filepath,date))
+        connected_coarse_catchments_out_filename = ("{0}/diag_version_41_date_{1}/30min_connected_catchments.nc".\
                                                     format(base_filepath,date))
         connected_coarse_catchments_out_fieldname = "catchments"
         basin_catchment_numbers_fieldname = "basin_catchment_numbers"
-        cumulative_flow_filename=("{0}/diag_version_35_date_{1}/30min_flowtocell.nc".format(base_filepath,date))
+        cumulative_flow_filename=("{0}/diag_version_41_date_{1}/30min_flowtocell.nc".format(base_filepath,date))
         cumulative_flow_fieldname="cumulative_flow"
-        cumulative_flow_out_filename=("{0}/diag_version_35_date_{1}/30min"
+        cumulative_flow_out_filename=("{0}/diag_version_41_date_{1}/30min"
                                       "_flowtocell_connected.nc".format(base_filepath,date))
         cumulative_flow_out_fieldname="cumulative_flow"
-        cumulative_river_mouth_flow_out_filename=("{0}/diag_version_35_date_{1}/"
+        cumulative_river_mouth_flow_out_filename=("{0}/diag_version_41_date_{1}/"
                                                   "30min_flowtorivermouths_connectedv2.nc".format(base_filepath,date))
         cumulative_river_mouth_flow_out_fieldname="cumulative_flow_to_ocean"
         cclc.connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
@@ -114,15 +114,15 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                                        cumulative_river_mouth_flow_out_fieldname)
 
     def extract_volumes_for_transient_run(self):
-      base_filepath = "/Users/thomasriddick/Documents/data/lake_analysis_runs/lake_analysis_one_21_Jun_2021/lakes/results"
-      dates = range(15000,11000,-100)
+      base_filepath = "/Users/thomasriddick/Documents/data/lake_analysis_runs/lake_analysis_two_26_Mar_2022/lakes/results"
+      dates = range(15000,14700,-100)
       #dates = range(15990,15980,-10)
       #dates = [0]
       for date in dates:
-        lake_parameters_filepath = ("{0}/lakeparas_version_33_date_{1}.nc".format(base_filepath,date))
-        basin_catchment_numbers_filepath = ("{0}/diag_version_33_date_{1}/"
+        lake_parameters_filepath = ("{0}/lakeparas_version_41_date_{1}.nc".format(base_filepath,date))
+        basin_catchment_numbers_filepath = ("{0}/diag_version_41_date_{1}/"
                                             "basin_catchment_numbers.nc".format(base_filepath,date))
-        lake_volumes_out_filepath = ("{0}/diag_version_33_date_{1}/"
+        lake_volumes_out_filepath = ("{0}/diag_version_41_date_{1}/"
                                      "10min_lake_volumes.nc".format(base_filepath,date))
         extract_lake_volumes.\
             lake_volume_extraction_driver(lake_parameters_filepath,
@@ -266,8 +266,8 @@ def main():
     #lake_drivers.prepare_basins_from_glac1D()
     #lake_drivers.extract_lake_volumes_from_glac1D_basins()
     #lake_drivers.connect_catchments_for_glac1D()
-    lake_drivers.connect_catchments_for_transient_run()
-    #lake_drivers.extract_volumes_for_transient_run()
+    #lake_drivers.connect_catchments_for_transient_run()
+    lake_drivers.extract_volumes_for_transient_run()
     #lake_drivers.add_10min_rmouth_to_transient_data()
     #lake_drivers.expand_transient_data_catchments_to_include_rmouth()
     #lake_drivers.remove_no_data_values_from_upscaled_MERIT_correction_set()

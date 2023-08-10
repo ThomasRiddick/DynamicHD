@@ -4,6 +4,7 @@ Created on Mar 4, 2017
 @author: thomasriddick
 '''
 
+import warnings
 import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib as mpl
@@ -265,8 +266,8 @@ def plot_composite_image(ax,image,minflowcutoff,first_datasource_name,second_dat
     else:
         cb = plt.colorbar(mappable,cax=cax)
         if second_ls_mask:
-          raise UserWarning("Use of secondary ls mask is not compatible with mutliple common"
-                            "catchments label mode. Color bar will not be correct.")
+           warnings.warn("Use of secondary ls mask is not compatible with mutliple common"
+                         "catchments label mode. Color bar will not be correct.")
     plt.tight_layout()
     plt.subplots_adjust(right=0.85)
     if use_only_one_color_for_flowmap:

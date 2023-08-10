@@ -649,10 +649,10 @@ def parse_arguments():
         args.skip_current_day_time_slice):
         raise RuntimeError("Incompatible options")
     if args.generate_lake_orography_corrections and args.apply_orography_tweaks:
-        raise UserWarning("Applying orography correction automatically applies"
-                          "orography tweaks too, thus setting will"
-                          "-t apply-orography-tweaks have no effect as "
-                          "-g generate-lake-orography-corrections is set")
+        warnings.warn("Applying orography correction automatically applies"
+                      "orography tweaks too, thus setting will"
+                      "-t apply-orography-tweaks have no effect as "
+                      "-g generate-lake-orography-corrections is set")
     return args
 
 if __name__ == '__main__':

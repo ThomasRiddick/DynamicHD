@@ -14,8 +14,7 @@ from Dynamic_HD_Scripts.interface.cpp_interface.libs \
     import follow_streams_wrapper
 from plotting_utilities.dynamic_lake_analysis_plotting_routines import generate_catchment_and_cflow_comp_sequence
 from plotting_utilities.dynamic_lake_analysis_plotting_routines import find_highest_version
-from plotting_utilities.dynamic_lake_analysis_plotting_routines import InteractiveTimeslicePlots
-from plotting_utilities.dynamic_lake_analysis_plotting_routines import TimeSequences
+from plotting_utilities.dynamic_lake_analysis_plotting_routines import InteractiveTimeSlicePlots
 from plotting_utilities.dynamic_lake_analysis_plotter import DynamicLakeAnalysisPlotter
 from plotting_utilities.color_palette import ColorPalette
 
@@ -149,7 +148,7 @@ def rivers_from_lake_corr_and_rivers_from_original_corr_comparison(show_animatio
         anim = animation.ArtistAnimation(fig,ims,interval=200,blit=False,repeat_delay=500)
         plt.show()
     else:
-        interactive_plots = InteractiveTimeslicePlots(colors,
+        interactive_plots = InteractiveTimeSlicePlots(colors,
                                                       ["comp"],
                                                       lsmask_sequence[1:],
                                                       glacier_mask_sequence[1:],
@@ -304,7 +303,7 @@ def rivers_from_lake_corr_and_lakes_comparison(show_animation=True):
         anim = animation.ArtistAnimation(fig,ims,interval=200,blit=False,repeat_delay=500)
         plt.show()
     else:
-        interactive_plots = InteractiveTimeslicePlots(colors,
+        interactive_plots = InteractiveTimeSlicePlots(colors,
                                                       ["comp","cflow1","cflow2",
                                                        "catch1","cflowandlake1","lakev1"],
                                                       lsmask_sequence[1:],
@@ -496,7 +495,7 @@ def latest_lake_version_vs_base_version_lakes_comparison():
                                                      time_slice=None,
                                                      fieldname="true_sinks",
                                                      adjust_orientation=True).get_data()
-    interactive_plots = InteractiveTimeslicePlots(colors,
+    interactive_plots = InteractiveTimeSlicePlots(colors,
                                               ["lakev1","cflow1",
                                                "orog1","catch1",
                                                "cflowandlake1",
@@ -534,38 +533,36 @@ def latest_lake_version_vs_base_version_lakes_comparison():
 
 def latest_lake_version_vs_previous_analysis_lakes_comparison():
     dates = []#[0]
-    dates.extend(list(range(15000,11000,-100)))
+    dates.extend(list(range(15000,14700,-100)))
     colors = ColorPalette('default')
     current_analysis_base_dir = ("/Users/thomasriddick/Documents/data/"
                                  "lake_analysis_runs/lake_analysis_two_26_Mar_2022/")
+    # previous_analysis_base_dir = ("/Users/thomasriddick/Documents/data/"
+    #                              "lake_analysis_runs/lake_analysis_one_21_Jun_2021/")
     previous_analysis_base_dir = ("/Users/thomasriddick/Documents/data/"
-                                 "lake_analysis_runs/lake_analysis_one_21_Jun_2021/")
+                                  "lake_analysis_runs/lake_analysis_two_26_Mar_2022/")
     glac_template = ("/Users/thomasriddick/Documents/"
                      "data/simulation_data/lake_transient_data/run_1/"
                      "10min_glac_DATEk.nc")
-    time_sequences = TimeSequences(dates,
-                                   sequence_one_base_dir=
-                                   current_analysis_base_dir,
-                                   sequence_two_base_dir=
-                                   previous_analysis_base_dir,
-                                   glacier_mask_file_template=glac_template,
-                                   super_fine_orography_filepath=
-                                   join("/Users/thomasriddick/"
-                                        "Documents/data/HDdata/orographys",
-                                        "srtm30plus_v6.nc"),
-                                   use_connected_catchments=False,
-                                   missing_fields=["lake_volumes_one","lake_volume_two",
-                                                   "fine_river_flow_one","fine_river_flow_two",
-                                                   "filled_orography_two"],
-                                   use_latest_version_for_sequence_one=True,
-                                   use_latest_version_for_sequence_two=False,
-                                   sequence_two_fixed_version=0)
-    initial_configuration = ["truesinks","cflow1",
-                             "orog1","catch1"]
-    plotter = DynamicLakeAnalysisPlotter(colors,time_sequences,
-                                         initial_configuration)
+    initial_configuration = {}
+    initial_configuration["plots"] = ["cflow1"]
+    initial_configuration["dates"] = dates
+    initial_configuration["sequence_one_base_dir"] = current_analysis_base_dir
+    initial_configuration["sequence_two_base_dir"] = previous_analysis_base_dir
+    initial_configuration["glacier_mask_file_template"] = glac_template
+    initial_configuration["super_fine_orography_filepath"] = join("/Users/thomasriddick/"
+                                                                  "Documents/data/HDdata/orographys",
+                                                                  "srtm30plus_v6.nc")
+    initial_configuration["use_connected_catchments"] = False
+    initial_configuration["missing_fields"] = ["fine_river_flow_one","fine_river_flow_two",
+                                               "corrected_orographies"]
+    initial_configuration["use_latest_version_for_sequence_one"] = True
+    initial_configuration["sequence_one_fixed_version"] = -1
+    initial_configuration["use_latest_version_for_sequence_two"] = True
+    initial_configuration["sequence_two_fixed_version"] = -1
+    plotter = DynamicLakeAnalysisPlotter(colors,
+                                         initial_configuration_in=initial_configuration)
     plotter.run()
-
 
 def main():
     #rivers_from_lake_corr_and_rivers_from_original_corr_comparison(False)

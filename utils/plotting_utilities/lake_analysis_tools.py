@@ -4,8 +4,9 @@ from collections import deque
 from copy import deepcopy
 import matplotlib.pyplot as plt
 import sys
+import warnings
 
-raise UserWarning("What does the input area bounds variable do???? Ditto dates")
+warnings.warn("What does the input area bounds variable do???? Ditto dates")
 
 #Not wrapping - no known paleo-lakes that
 #would require this
@@ -81,20 +82,20 @@ class LakePointExtractor:
         self.lake_tracker = None
         self.initial_lake_center = initial_lake_center
         lake_point_sequence = []
-        for date,filled_orography in \
+        for date,lake_basin_numbers in \
               zip(dates,
                   lake_basin_numbers_sequence):
-              lake_point_sequence.append(self.extract_lake_mask(lake_basin_numbers_sequence))
+              lake_point_sequence.append(self.extract_lake(lake_basin_numbers))
         return lake_point_sequence
 
-    def extract_lake(lake_basin_numbers):
+    def extract_lake(self,lake_basin_numbers):
         all_lake_mask = np.logical_not(lake_basin_numbers <= 0)
         if self.lake_tracker is None:
            self.lake_tracker = LakeTracker(all_lake_mask,self.initial_lake_center)
            this_lake_mask = self.lake_tracker.get_current_lake_mask()
         else:
            this_lake_mask = self.lake_tracker.track_lake(all_lake_mask)
-        return np.argwhere(this_lake_mask)[0]
+        return tuple(np.argwhere(this_lake_mask)[0])
 
 class LakeHeightAndVolumeExtractor:
 
@@ -104,13 +105,12 @@ class LakeHeightAndVolumeExtractor:
                                                 lake_volumes_sequence):
         lake_heights = []
         lake_volumes = []
-        for date,lake_point,filled_orography,lake_volumes in \
-              zip(dates,
-                  lake_point_sequence,
+        for lake_point,filled_orography,lake_volumes_array in \
+              zip(lake_point_sequence,
                   filled_orography_sequence,
                   lake_volumes_sequence):
               lake_heights.append(filled_orography[tuple(lake_point)])
-              lake_volumes.append(lake_volumes[tuple(lake_point)])
+              lake_volumes.append(lake_volumes_array[tuple(lake_point)])
         return lake_heights,lake_volumes
 
 class CoastlineIdentifier:
@@ -259,7 +259,7 @@ class OutflowBasinIdentifier:
 
     def calculate_discharge_to_ocean_basins(self,
                                             lsmask,
-                                            discharge_to_ocean
+                                            discharge_to_ocean,
                                             input_area_bounds):
         discharge_to_ocean_basins = []
         for ocean_basin_number in range(len(self.coastline_identifiers)):
@@ -288,35 +288,34 @@ class SpillwayProfiler:
     #Again no wrapping as no known case where wrapping would be required
     @staticmethod
     def find_downstream_cell(working_coords,sinkless_rdirs):
-        rdir = sinkless_rdirs[working_coords]
+        rdir = sinkless_rdirs[tuple(working_coords)]
         inc_i = 0
         inc_j = 0
         if rdir == 5 or rdir == 0:
-            return True
+            return False
         elif rdir == -1:
             raise RuntimeError("River reaching unphysical point")
-        elif rdir == 7 or rdir == 8 or rdir == 9:
-            inc_i == -1
+        elif rdir < -1 or rdir > 9:
+            raise RuntimeError("Unrecognised river direction: {}".format(rdir))
+        if rdir == 7 or rdir == 8 or rdir == 9:
+            inc_i = -1
         elif rdir == 1 or rdir == 2 or rdir == 3:
-            inc_i == 1
-        elif rdir == 7 or rdir == 4 or rdir == 1:
+            inc_i = 1
+        if rdir == 7 or rdir == 4 or rdir == 1:
             inc_j = -1
         elif rdir == 9 or rdir == 6 or rdir == 3:
             inc_j =  1
-        else:
-            raise RuntimeError("Unrecognised river direction")
         working_coords[0] = working_coords[0] + inc_i
         working_coords[1] = working_coords[1] + inc_j
         return working_coords
 
-
     @classmethod
     def extract_spillway_profile(cls,lake_center,sinkless_rdirs,
                                  corrected_heights):
-        spillway_height_profile = [corrected_heights[lake_center]]
-        working_coords = deepcopy(lake_center)
+        spillway_height_profile = [corrected_heights[tuple(lake_center)]]
+        working_coords = list(deepcopy(lake_center))
         while cls.find_downstream_cell(working_coords,sinkless_rdirs):
-            spillway_height_profile.append(corrected_heights[working_coords])
+            spillway_height_profile.append(corrected_heights[tuple(working_coords)])
         return spillway_height_profile
 
 if __name__ == '__main__':
@@ -335,11 +334,8 @@ if __name__ == '__main__':
     shape = lsmask_data.shape
     lake_center = [266//3,521//3]
     basin_identifier = OutflowBasinIdentifier("30minLatLong")
-    basin_identifier.set_lsmask(lsmask_data)
-    print(basin_identifier.identify_ocean_basin_for_lake_outflow(lake_center,
-                                                                 connected_catchments.get_data()))
-
-
-
-
-
+    print(basin_identifier.identify_ocean_basin_for_lake_outflow(lsmask=lsmask_data,
+                                                                 connected_catchments=
+                                                                 connected_catchments.get_data(),
+                                                                 lake_point=lake_center,
+                                                                 input_area_bounds=[]))

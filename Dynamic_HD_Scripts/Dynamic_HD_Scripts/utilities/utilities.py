@@ -12,6 +12,7 @@ import shutil
 import cdo
 import netCDF4
 import enum
+import warnings
 from enum import Enum
 from Dynamic_HD_Scripts.base import field
 from Dynamic_HD_Scripts.base import grid
@@ -1210,7 +1211,7 @@ def advanced_downscale_ls_mask_driver(input_coarse_ls_mask_filename,
     #fine_nlat = scale_factor*input_coarse_ls_mask_field.get_grid().nlat
     #fine_nlong = scale_factor*input_coarse_ls_mask_field.get_grid().nlong
     #output_fine_ls_mask.get_grid().set_coordinates()
-    raise UserWarning("Coordinates not set for fine grid!")
+    warnings.warn("Coordinates not set for fine grid!")
     iodriver.advanced_field_writer(output_fine_ls_mask_filename,output_fine_ls_mask_field,
                                    fieldname=output_fine_ls_mask_fieldname)
 

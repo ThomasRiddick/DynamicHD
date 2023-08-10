@@ -19,6 +19,7 @@ import textwrap
 import os.path
 import math
 import copy
+import warnings
 from netCDF4 import Dataset
 from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.base.iodriver import advanced_field_loader
@@ -1461,8 +1462,8 @@ class OutflowPlots(Plots):
                                               super_fine_grid_offset_adjustment=super_fine_grid.\
                                               get_longitude_offset_adjustment())
             elif ref_orog_filename or data_orog_original_scale_filename:
-                raise UserWarning("No orography plot generated, require both a reference orography"
-                                  " and a data orography to generate an orography plot")
+                warnings.warn("No orography plot generated, require both a reference orography"
+                              " and a data orography to generate an orography plot")
         print("Unresolved Conflicts: ")
         for conflict in unresolved_conflicts:
             print(" Conflict:")
