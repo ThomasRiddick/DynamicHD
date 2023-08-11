@@ -261,10 +261,11 @@ class OutflowBasinIdentifier:
                                             lsmask,
                                             discharge_to_ocean,
                                             input_area_bounds):
+        self.set_lsmask(lsmask)
         discharge_to_ocean_basins = []
         for ocean_basin_number in range(len(self.coastline_identifiers)):
             discharge_to_ocean_basins.append(sum(discharge_to_ocean[self.ocean_basin_numbers ==
-                                                                    ocean_basin_number]))
+                                                                         ocean_basin_number]))
         return discharge_to_ocean_basins
 
 

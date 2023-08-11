@@ -188,7 +188,7 @@ class TimeSequences:
                 self.lake_volumes_one_sequence.append(lake_volumes_one.get_data())
             if not "lake_basin_numbers_one" in missing_fields:
                 lake_basin_numbers_one = advanced_field_loader(filename=join(sequence_one_results_base_dir,
-                                                                           "basin_catchment_numbers.nc"),
+                                                                           "10min_basin_catchment_numbers.nc"),
                                                                            time_slice=None,
                                                                            fieldname="basin_catchment_numbers",
                                                                            adjust_orientation=True)
@@ -243,7 +243,7 @@ class TimeSequences:
                 self.lake_volumes_two_sequence.append(lake_volumes_two.get_data())
             if not "lake_basin_numbers_two" in missing_fields:
                 lake_basin_numbers_two = advanced_field_loader(filename=join(sequence_two_results_base_dir,
-                                                                         "basin_catchment_numbers.nc"),
+                                                                         "10min_basin_catchment_numbers.nc"),
                                                                          time_slice=None,
                                                                          fieldname="basin_catchment_numbers",
                                                                          adjust_orientation=True)

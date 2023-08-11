@@ -113,20 +113,20 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                             "30min_catchments.nc"),
                     path.join(dest,"30min_catchments.nc"))
         shutil.move(path.join(self.working_directory_path,
-                             "basin_catchment_numbers_temp.nc"),
-                    path.join(dest,"basin_catchment_numbers.nc"))
+                             "10min_basin_catchment_numbers.nc"),
+                    path.join(dest,"10min_basin_catchment_numbers.nc"))
         shutil.move(path.join(self.working_directory_path,
-                              "sinkless_rdirs_10min.nc"),
-                    path.join(dest,"sinkless_rdirs_10min.nc"))
-        # shutil.move(path.join(self.working_directory_path,
-        #                      "10min_lake_volumes.nc"),
-        #             path.join(dest,"10min_lake_volumes.nc"))
-        #shutil.move(path.join(self.working_directory_path,
-        #                     "30min_flowtocell_connected.nc"),
-        #            path.join(dest,"30min_flowtocell_connected.nc"))
-        # shutil.move(path.join(self.working_directory_path,
-        #                      "30min_connected_catchments.nc"),
-        #             path.join(dest,"30min_connected_catchments.nc"))
+                              "10min_sinkless_rdirs.nc"),
+                    path.join(dest,"10min_sinkless_rdirs.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                             "10min_lake_volumes.nc"),
+                    path.join(dest,"10min_lake_volumes.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                            "30min_flowtocell_connected.nc"),
+                   path.join(dest,"30min_flowtocell_connected.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                             "30min_connected_catchments.nc"),
+                    path.join(dest,"30min_connected_catchments.nc"))
         shutil.move(path.join(self.working_directory_path,
                              "30min_flowtorivermouths_connected.nc"),
                     path.join(dest,"30min_flowtorivermouths_connected.nc"))
@@ -189,55 +189,6 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         config = configparser.ConfigParser()
         print("Read python driver options from file {0}".format(self.python_config_filename))
         config.read(self.python_config_filename)
-        self._check_config_section_is_valid(config,"output_options")
-        self._check_config_option_is_valid(config,
-                                           "output_options",
-                                           "output_corrected_orog")
-        self._check_config_option_is_valid(config,
-                                           "output_options",
-                                           "output_fine_filled_orog")
-        self._check_config_option_is_valid(config,
-                                           "output_options",
-                                           "output_fine_rdirs")
-        self._check_config_option_is_valid(config,
-                                           "output_options",
-                                           "output_fine_catchments")
-        self._check_config_option_is_valid(config,
-                                           "output_options",
-                                           "output_fine_flowtocell")
-        self._check_config_option_is_valid(config,
-                                           "output_options",
-                                           "output_fine_flowtorivermouths")
-        self._check_config_option_is_valid(config,
-                                           "output_options",
-                                           "output_pre_loop_removal_coarse_rdirs")
-        self._check_config_option_is_valid(config,
-                                           "output_options",
-                                           "output_pre_loop_removal_coarse_flowtocell")
-        self._check_config_option_is_valid(config,
-                                           "output_options",
-                                           "output_pre_loop_removal_coarse_flowtorivermouths")
-        self._check_config_option_is_valid(config,
-                                          "output_options",
-                                          "output_pre_loop_removal_coarse_catchments")
-        self._check_config_option_is_valid(config,
-                                          "output_options",
-                                          "output_coarse_rdirs")
-        self._check_config_option_is_valid(config,
-                                          "output_options",
-                                          "output_coarse_unfilled_orog")
-        self._check_config_option_is_valid(config,
-                                          "output_options",
-                                          "output_coarse_filled_orog")
-        self._check_config_option_is_valid(config,
-                                          "output_options",
-                                          "output_coarse_flowtocell")
-        self._check_config_option_is_valid(config,
-                                          "output_options",
-                                          "output_coarse_flowtorivermouths")
-        self._check_config_option_is_valid(config,
-                                          "output_options",
-                                          "output_coarse_catchments")
         self._check_config_section_is_valid(config,"input_fieldname_options")
         self._check_config_option_is_valid(config,
                                           "input_fieldname_options",
@@ -271,47 +222,38 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             config.set("general_options","print_timing_information","False")
         if not config.has_option("general_options","use_gradual_transitions"):
             config.set("general_options","use_gradual_transitions","True")
+
+        output_options = \
+            { "output_10min_corrected_orog_fieldname":"corrected_orog",
+              "output_10min_filled_orog_fieldname":"filled_orog",
+              "output_10min_rdirs_fieldname":"rdirs",
+              "output_10min_flow_to_cell":"cumulative_flow",
+              "output_10min_flow_to_river_mouths":"cumulative_flow_to_ocean",
+              "output_10min_catchments":"catchments",
+              "output_30min_pre_loop_removal_rdirs":"rdirs",
+              "output_30min_pre_loop_removal_flow_to_cell":"cumulative_flow",
+              "output_30min_pre_loop_removal_flow_to_river_mouth":"cumulative_flow_to_ocean",
+              "output_30min_pre_loop_removal_catchments":"catchments",
+              "output_30min_rdirs":"rdirs",
+              "output_30min_unfilled_orog":"unfilled_orog",
+              "output_30min_filled_orog":"filled_orog",
+              "output_30min_ls_mask":"lsmask",
+              "output_30min_flow_to_cell":"cumulative_flow",
+              "output_30min_flow_to_river_mouths":"cumulative_flow_to_ocean",
+              "output_30min_catchments":"catchments",
+              "output_10min_sinkless_rdirs":"rdirs",
+              "output_10min_basin_catchment_numbers":"basin_catchment_numbers" }
+        self._check_config_section_is_valid(config,"output_options")
         if not config.has_section("output_fieldname_options"):
             config.add_section("output_fieldname_options")
-        if not config.has_option("output_fieldname_options","output_10min_corrected_orog_fieldname"):
-            config.set("output_fieldname_options","output_10min_corrected_orog_fieldname","corrected_orog")
-        if not config.has_option("output_fieldname_options","output_10min_filled_orog_fieldname"):
-            config.set("output_fieldname_options","output_10min_filled_orog_fieldname","filled_orog")
-        if not config.has_option("output_fieldname_options","output_10min_rdirs_fieldname"):
-            config.set("output_fieldname_options","output_10min_rdirs_fieldname","rdirs")
-        if not config.has_option("output_fieldname_options","output_10min_flow_to_cell"):
-            config.set("output_fieldname_options","output_10min_flow_to_cell","cumulative_flow")
-        if not config.has_option("output_fieldname_options","output_10min_flow_to_river_mouths"):
-            config.set("output_fieldname_options","output_10min_flow_to_river_mouths","cumulative_flow_to_ocean")
-        if not config.has_option("output_fieldname_options","output_10min_catchments"):
-            config.set("output_fieldname_options","output_10min_catchments","catchments")
-        if not config.has_option("output_fieldname_options","output_30min_pre_loop_removal_rdirs"):
-            config.set("output_fieldname_options","output_30min_pre_loop_removal_rdirs","rdirs")
-        if not config.has_option("output_fieldname_options",
-                                 "output_30min_pre_loop_removal_flow_to_cell"):
-            config.set("output_fieldname_options","output_30min_pre_loop_removal_flow_to_cell","cumulative_flow")
-        if not config.has_option("output_fieldname_options",
-                                 "output_30min_pre_loop_removal_flow_to_river_mouth"):
-            config.set("output_fieldname_options",
-                       "output_30min_pre_loop_removal_flow_to_river_mouth","cumulative_flow_to_ocean")
-        if not config.has_option("output_fieldname_options",
-                                 "output_30min_pre_loop_removal_catchments"):
-            config.set("output_fieldname_options",
-                       "output_30min_pre_loop_removal_catchments","catchments")
-        if not config.has_option("output_fieldname_options","output_30min_rdirs"):
-            config.set("output_fieldname_options","output_30min_rdirs","rdirs")
-        if not config.has_option("output_fieldname_options","output_30min_unfilled_orog"):
-            config.set("output_fieldname_options","output_30min_unfilled_orog","unfilled_orog")
-        if not config.has_option("output_fieldname_options","output_30min_filled_orog"):
-            config.set("output_fieldname_options","output_30min_filled_orog","filled_orog")
-        if not config.has_option("output_fieldname_options","output_30min_ls_mask"):
-            config.set("output_fieldname_options","output_30min_ls_mask","lsmask")
-        if not config.has_option("output_fieldname_options","output_30min_flow_to_cell"):
-            config.set("output_fieldname_options","output_30min_flow_to_cell","cumulative_flow")
-        if not config.has_option("output_fieldname_options","output_30min_flow_to_river_mouths"):
-            config.set("output_fieldname_options","output_30min_flow_to_river_mouths","cumulative_flow_to_ocean")
-        if not config.has_option("output_fieldname_options","output_30min_catchments"):
-            config.set("output_fieldname_options","output_30min_catchments","catchments")
+        #This is exception as it doesn't take a fieldname
+        if not config.has_option("output_options","output_10min_lake_volumes"):
+            config.set("output_options","output_10min_lake_volumes","False")
+        for key,value in output_options.items():
+            if not config.has_option("output_options",key):
+                config.set("output_options",key,"False")
+            if not config.has_option("output_fieldname_options",key):
+                config.set("output_fieldname_options",key,value)
         return config
 
     def trial_run_for_present_day(self):
@@ -825,8 +767,6 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                 "output_30min_catchments"))
         cell_areas_filename_10min = path.join(self.ancillary_data_path,
                                               "10min_grid_area_default_R.nc")
-        temp_basin_catchment_numbers_filename = path.join(self.working_directory_path,
-                                                          "basin_catchment_numbers_temp.nc")
         output_lakestart_dirname = path.dirname(self.output_lakestart_filepath)
         output_water_redistributed_to_lakes_file = path.join(self.working_directory_path,
                                                              "water_to_lakes.nc")
@@ -956,22 +896,28 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         for file_to_remove in [merges_filename,fields_filename]:
             os.remove(file_to_remove)
         #Write out basins maps
-        iodriver.advanced_field_writer(temp_basin_catchment_numbers_filename,
+        basin_catchment_numbers_filename = path.join(self.working_directory_path,
+                                                     "10min_basin_catchment_numbers.nc")
+        iodriver.advanced_field_writer(basin_catchment_numbers_filename,
                                        basin_catchment_numbers,
-                                       fieldname="basin_catchment_numbers")
-        #Run a couple of extra diagnostic -- needs further work to integrate
-        # extract_lake_volumes.\
-        #     lake_volume_extraction_driver(self.output_lakeparas_filepath,
-        #                                   temp_basin_catchment_numbers_filename,
-        #                                   path.join(self.working_directory_path,
-        #                                             "10min_lake_volumes.nc"))
+                                       fieldname=config.get("output_fieldname_options",
+                                                            "output_10min_basin_catchment_numbers"))
+        #Calculate and write lake volumes
+        if config.getboolean("output_options","output_10min_lake_volumes"):
+            extract_lake_volumes.\
+                lake_volume_extraction_driver(self.output_lakeparas_filepath,
+                                              basin_catchment_numbers_filename,
+                                              path.join(self.working_directory_path,
+                                                        "10min_lake_volumes.nc"))
         #Write out sinkless rdirs
-        #Need to add switch for this
-        sinkless_rdirs_10min_filename = path.join(self.working_directory_path,
-                                                  "sinkless_rdirs_10min.nc")
-        iodriver.advanced_field_writer(sinkless_rdirs_10min_filename,
-                                       sinkless_rdirs_10min,
-                                       fieldname="rdirs")
+        if config.getboolean("output_options","output_10min_sinkless_rdirs"):
+            sinkless_rdirs_10min_filename = \
+                iodriver.advanced_field_writer(path.join(self.working_directory_path,
+                                                         "10min_sinkless_rdirs.nc"),
+                                               sinkless_rdirs_10min,
+                                               fieldname=config.get("output_fieldname_options",
+                                                                    "output_10min_sinkless_rdirs"))
+
         river_directions_filepath = path.join(self.working_directory_path,"30min_rdirs.nc")
         coarse_catchments_filepath = path.join(self.working_directory_path,"30min_catchments.nc")
         coarse_catchments_fieldname = "catchments"
@@ -988,44 +934,30 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         cumulative_river_mouth_flow_out_filename=path.join(self.working_directory_path,
                                                            "30min_flowtorivermouths_connected.nc")
         cumulative_river_mouth_flow_out_fieldname="cumulative_flow_to_ocean"
-        # cclc.connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
-        #                                            self.output_lakeparas_filepath,
-        #                                            temp_basin_catchment_numbers_filename,
-        #                                            river_directions_filepath,
-        #                                            connected_coarse_catchments_out_filename,
-        #                                            coarse_catchments_fieldname,
-        #                                            connected_coarse_catchments_out_fieldname,
-        #                                            "basin_catchment_numbers",
-        #                                            river_directions_fieldname,
-        #                                            cumulative_flow_filename,
-        #                                            cumulative_flow_out_filename,
-        #                                            cumulative_flow_fieldname,
-        #                                            cumulative_flow_out_fieldname)
-        # river_mouth_marking_driver.\
-        # advanced_flow_to_rivermouth_calculation_driver(input_river_directions_filename=
-        #                                                river_directions_filepath,
-        #                                                input_flow_to_cell_filename=
-        #                                                cumulative_flow_out_filename,
-        #                                                output_flow_to_river_mouths_filename=
-        #                                                cumulative_river_mouth_flow_out_filename,
-        #                                                input_river_directions_fieldname=
-        #                                                river_directions_fieldname,
-        #                                                input_flow_to_cell_fieldname=
-        #                                                cumulative_flow_out_fieldname,
-        #                                                output_flow_to_river_mouths_fieldname=
-        #                                                cumulative_river_mouth_flow_out_fieldname)
-        #Temporary Replacement for river mouth marking code
+        cclc.connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
+                                                   self.output_lakeparas_filepath,
+                                                   basin_catchment_numbers_filename,
+                                                   river_directions_filepath,
+                                                   connected_coarse_catchments_out_filename,
+                                                   coarse_catchments_fieldname,
+                                                   connected_coarse_catchments_out_fieldname,
+                                                   "basin_catchment_numbers",
+                                                   river_directions_fieldname,
+                                                   cumulative_flow_filename,
+                                                   cumulative_flow_out_filename,
+                                                   cumulative_flow_fieldname,
+                                                   cumulative_flow_out_fieldname)
         river_mouth_marking_driver.\
         advanced_flow_to_rivermouth_calculation_driver(input_river_directions_filename=
                                                        river_directions_filepath,
                                                        input_flow_to_cell_filename=
-                                                       cumulative_flow_filename,
+                                                       cumulative_flow_out_filename,
                                                        output_flow_to_river_mouths_filename=
                                                        cumulative_river_mouth_flow_out_filename,
                                                        input_river_directions_fieldname=
                                                        river_directions_fieldname,
                                                        input_flow_to_cell_fieldname=
-                                                       cumulative_flow_fieldname,
+                                                       cumulative_flow_out_fieldname,
                                                        output_flow_to_river_mouths_fieldname=
                                                        cumulative_river_mouth_flow_out_fieldname)
         #Redistribute water
@@ -1061,6 +993,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                        output=self.output_lakestart_filepath)
         os.remove(output_water_redistributed_to_lakes_file)
         os.remove(output_water_redistributed_to_rivers_file)
+        if not config.getboolean("output_options","output_10min_basin_catchment_numbers"):
+            os.remove(basin_catchment_numbers_filename)
         if print_timing_info:
             end_time = timer()
             print("---- Timing info ----")
