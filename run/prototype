@@ -1,16 +1,40 @@
-#!/bin/ksh
+{% extends "templates/main.tmpl" %}
 
-{% block header required %}{% end block header %}
+{% block user_input %}
+########################################
+###############USER INPUT###############
+########################################
 
-####################################################
-#################### USER INPUT ####################
-####################################################
+########################################
+############END OF USER INPUT###########
+########################################
+{% endblock %}
 
-#AUTOMATICALLY DEPOPULATE ANY UNUSED VARS
-#SCRIPT WILL BE PLACED IN RUN DIR OR MAKE A DIR IN PROJECTS FOLDER
+#ADDITIONAL USER COMMANDS
+# Insert additional command into blocks as required
+# and they will be inserted into the runscript/utility script
+# at the specified point
 
-####################################################
-############# END OF USER INPUT ####################
-####################################################
+# At the start after the headers
+{% block user_commands_start %}
+{% endblock %}
 
-{% block main required %}{% end block main %}
+# After making the directory for the project (if option is selected)
+{% block user_commands_post_makeproject %}
+{% endblock %}
+
+# Before running the main program but after pre-processing
+{% block user_commands_pre_run %}
+{% endblock %}
+
+# Before after running the main program
+{% block user_commands_post_run %}
+{% endblock %}
+
+# Before clean-up but after post-processing
+{% block user_commands_pre_clean %}
+{% endblock %}
+
+# At the end of script after clean-up
+{% block user_commands_end %}
+{% endblock %}

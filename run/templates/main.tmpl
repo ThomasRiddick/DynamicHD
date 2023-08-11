@@ -1,22 +1,37 @@
-{% extend target_runscript_template %}
+{% include "templates/header.tmpl" %} {% block user_input required %}{% endblock %}
 
-{% if make_project_at_runtime %}
-{% block make_project required %}{% end block %}
+{% block user_commands_start %}{% endblock %}
+
+{% if input.make_project_at_runtime or input.script_type == 'makeproject'%}
+{% include  make_project %}
+{% if input.make_project_at_runtime %}
+{% block user_commands_post_makeproject %}{% endblock %}
+{% endif %}
 {% endif %}
 
-{% if script_type == 'run' %}
+{% import "templates/components.tmpl" as components %}
 
-{% block preproc required %}{% end block %}
-{% block run required %}{% end block %}
-{% block postproc required %}{% end block%}
-{% block clean required %}{% end block %}
+{% if input.script_type == 'run' %}
 
-{% elif script_type == 'prerep'}
+{{ components.preproc() }}
+{% block user_commands_pre_run %}{% endblock %}
+{% if input.high_res %}
+{% include "templates/run_high_res.tmpl" %}
+{% else %}
+{% include "templates/run_low_res.tmpl" %}
+{% endif %}
+{% block user_commands_post_run %}{% endblock %}
+{{ components.postproc() }}
+{% block user_commands_pre_clean %}{% endblock %}
+{{ components.clean() }}
 
-{% block report_pre required %}{% end block %}
+{% elif input.script_type == 'prerep' %}
 
-{% elif script_type == 'postrep'}
+{{ components.report_pre() }}
 
-{% block report_post required %}{% end block %}
+{% elif input.script_type == 'postrep' %}
 
-{% endif}
+{{ components.report_post() }}
+
+{% endif %}
+{% block user_commands_end %}{% endblock %}
