@@ -148,6 +148,7 @@ class DynamicLakeAnalysisPlotter:
 
     def run(self):
         timeseries = []
+        self.corrections = []
         self.interactive_plots = InteractiveTimeSlicePlots(self.colors,
                                                       self.configuration['plots'],
                                                       **vars(self.time_sequences),
@@ -155,7 +156,8 @@ class DynamicLakeAnalysisPlotter:
                                                       use_glacier_mask=False,
                                                       dynamic_configuration=True,
                                                       zoomed=False,
-                                                      zoomed_section_bounds={})
+                                                      zoomed_section_bounds={},
+                                                      corrections=self.corrections)
         self.interactive_lake_plots = InteractiveTimeSlicePlots(self.colors,
                                                                 self.configuration['plots'],
                                                                 **vars(self.time_sequences),
@@ -164,7 +166,8 @@ class DynamicLakeAnalysisPlotter:
                                                                 dynamic_configuration=True,
                                                                 zoomed=True,
                                                                 zoomed_section_bounds=
-                                                                self.lake_defs["Agassiz"]['input_area_bounds'])
+                                                                self.lake_defs["Agassiz"]['input_area_bounds'],
+                                                                corrections=self.corrections)
 
         build_dict = lambda figs,nums,prefix : { f'-{prefix}CANVAS{i}-':figure for i,figure in zip(nums,figs) }
         figures = build_dict(self.interactive_plots.figs,[1,2,4,6],'GM')

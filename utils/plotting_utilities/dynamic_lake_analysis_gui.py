@@ -3,19 +3,52 @@ import PySimpleGUI as sg
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg,NavigationToolbar2Tk
 import logging
 import copy
+import re
 
 logging.basicConfig(level=logging.INFO)
 
+class SetCoordsAndHeight:
+
+        def __init__(self,key_prefix,window):
+                self.key_prefix = key_prefix
+                self.window = window
+                self.lat = None
+                self.lon = None
+                self.date = None
+                self.original_height = None
+
+        def get_stored_values(self):
+                return self.lat,self.lon,self.date,self.original_height
+
+        def __call__(self,lat,lon,date,original_height):
+                self.lat = lat
+                self.lon = lon
+                self.date = date
+                self.original_height = original_height
+                for key_number in ["1","2","4","6"]:
+                        self.window[f'-{self.key_prefix}CORRLAT{key_number}-'].\
+                                update(value=str(lat))
+                        self.window[f'-{self.key_prefix}CORRLON{key_number}-'].\
+                                update(value=str(lon))
+                        self.window[f'-{self.key_prefix}CORRDATE{key_number}-'].\
+                                update(value=date)
+                        self.window[f'-{self.key_prefix}CORRHEIGHTOUT{key_number}-'].\
+                                update(value=str(original_height))
+
+
 class DynamicLakeAnalysisGUI:
+
         combo_events = { f'-{key_prefix}PLOTLIST' + event_label + '-':i for
                              i,event_label in enumerate(["11","21","22",
-                                                            "41","42","43","44",
-                                                            "61","62","63","64",
-                                                            "65","66"]) for key_prefix in ['GM','LM']}
+                                                         "41","42","43","44",
+                                                         "61","62","63","64",
+                                                         "65","66"]) for key_prefix in ['GM','LM']}
         ts_combo_events = { f'-TSPLOTLIST' + event_label + '-':i for
                                 i,event_label in enumerate(["11","21","22",
                                                             "31","32","33",
                                                             "41","42","43","44"])}
+        default_corrections_file = ("/Users/thomasriddick/Documents/"
+                                    "data/temp/erosion_corrections.txt")
 
         def __init__(self,avail_plots,avail_ts_plots,initial_configuration):
                 mpl.use('TkAgg')
@@ -60,6 +93,35 @@ class DynamicLakeAnalysisGUI:
                         sg.Button('>>',key=f"-{key_prefix}FFORWARD-",enable_events=True),
                         sg.Button('>E',key=f"-{key_prefix}EFORWARD-",enable_events=True),
                         sg.Text(self.configuration["dates"][-1],key=f'-{key_prefix}ENDDATE-'))
+
+        @staticmethod
+        def corrections_editor_factory(key_prefix,key_number):
+                return [sg.pin(sg.Column([[sg.Text("Correction Editor"),
+                                           sg.Checkbox("Select Coordinates",
+                                                       key=f'-{key_prefix}SELECTCOORDS{key_number}-',
+                                                       enable_events=True),
+                                           sg.Text("Date:"),
+                                           sg.Text("",
+                                                   key=f'-{key_prefix}CORRDATE{key_number}-'),
+                                           sg.Text("Coords: "),
+                                           sg.Text("lat= "),
+                                           sg.Text("",
+                                                   key=f'-{key_prefix}CORRLAT{key_number}-'),
+                                           sg.Text("lon= "),
+                                           sg.Text("",
+                                                   key=f'-{key_prefix}CORRLON{key_number}-'),
+                                           sg.Text("Original Height:"),
+                                           sg.Text("0",
+                                                   key=f'-{key_prefix}CORRHEIGHTOUT{key_number}-'),
+                                           sg.Text("Adjusted Height:"),
+                                           sg.InputText("0",
+                                                        key=f'-{key_prefix}CORRHEIGHTIN{key_number}-'),
+                                           sg.Button("Write",
+                                                     key=f'-{key_prefix}WRITECORR{key_number}-'),
+                                           sg.Text("Written: 0 0 0 0",visible=False,
+                                                   key=f'-{key_prefix}WRITTENCORR{key_number}-')]],
+                                         key=f"-{key_prefix}CORREDIT{key_number}-",
+                                         visible=False))]
 
         def prepare_time_series(self):
                 time_series_tab_layout_main_1 = [[*self.config_and_save_button_factory('TS','1')],
@@ -138,6 +200,7 @@ class DynamicLakeAnalysisGUI:
                 maps_tab_layout_main_1 = [[*self.config_and_save_button_factory(key_prefix,'1'),
                                            *self.stepping_buttons_factory(f"{key_prefix}1"),
                                            *self.sliders_factory(f"{key_prefix}1")],
+                                          self.corrections_editor_factory(key_prefix,'1'),
                                           [sg.Canvas(key=f"-{key_prefix}CANVAS1-",
                                                      size=(1800,800))],
                                           [sg.Canvas(key=f"-{key_prefix}NAVCAN1-")]]
@@ -145,13 +208,15 @@ class DynamicLakeAnalysisGUI:
                 maps_tab_layout_main_2 =  [[*self.config_and_save_button_factory(key_prefix,'2'),
                                            *self.stepping_buttons_factory(f"{key_prefix}2"),
                                            *self.sliders_factory(f"{key_prefix}2")],
-                                          [sg.Canvas(key=f"-{key_prefix}CANVAS2-",
-                                                     size=(1800,800))],
-                                          [sg.Canvas(key=f"-{key_prefix}NAVCAN2-")]]
+                                           self.corrections_editor_factory(key_prefix,'2'),
+                                           [sg.Canvas(key=f"-{key_prefix}CANVAS2-",
+                                                      size=(1800,800))],
+                                           [sg.Canvas(key=f"-{key_prefix}NAVCAN2-")]]
 
                 maps_tab_layout_main_4 = [[*self.config_and_save_button_factory(key_prefix,'4'),
                                            *self.stepping_buttons_factory(f"{key_prefix}4"),
                                            *self.sliders_factory(f"{key_prefix}4")],
+                                          self.corrections_editor_factory(key_prefix,'4'),
                                           [sg.Canvas(key=f"-{key_prefix}CANVAS4-",
                                                      size=(1800,800))],
                                           [sg.Canvas(key=f"-{key_prefix}NAVCAN4-")]]
@@ -159,6 +224,7 @@ class DynamicLakeAnalysisGUI:
                 maps_tab_layout_main_6 = [[*self.config_and_save_button_factory(key_prefix,'6'),
                                            *self.stepping_buttons_factory(f"{key_prefix}6"),
                                            *self.sliders_factory(f"{key_prefix}6")],
+                                          self.corrections_editor_factory(key_prefix,'6'),
                                           [sg.Canvas(key=f"-{key_prefix}CANVAS6-",
                                                      size=(1800,800))],
                                           [sg.Canvas(key=f"-{key_prefix}NAVCAN6-")]]
@@ -235,6 +301,12 @@ class DynamicLakeAnalysisGUI:
         def change_visible_column(self,key_base,visible_key_num,numeric_labels=[1,2,4,6]):
                 for label in numeric_labels:
                         self.window[f'-{key_base}{label}-'].update(visible=(visible_key_num == label))
+
+        def change_correction_editor_visibility(self):
+                for prefix in ["GM","LM"]:
+                        for label in [1,2,4,6]:
+                                self.window[f'-{prefix}CORREDIT{label}-'].update(visible=
+                                                                        self.values["-SHOWCORREDITOR-"])
 
         def process_config_main_switches_for_maps(self,key_prefix):
                 if self.event.startswith("-GM") or self.event.startswith("-LM"):
@@ -351,6 +423,34 @@ class DynamicLakeAnalysisGUI:
                         event_handler.step_back()
                         self.update_date(key_prefix,event_handler)
 
+        def check_for_select_coords_events(self,key_prefix,event_handler):
+                labels = [f'-{key_prefix}SELECTCOORDS{event_label}-' for
+                                           event_label in ["1","2","4","6"]]
+                if self.event in labels:
+                        event_handler.toggle_select_coords(self.values[self.event])
+
+        def check_for_write_correction_events(self,key_prefix,event_handler):
+                labels = [f'-{key_prefix}WRITECORR{event_label}-' for
+                                           event_label in ["1","2","4","6"]]
+                if self.event in labels:
+                        key_number = re.match(f"-{key_prefix}WRITECORR(\d)-",self.event).group(1)
+                        event_handler.write_correction(new_height=
+                                                       self.values[f'-{key_prefix}CORRHEIGHTIN{key_number}-'])
+
+        def check_for_correction_source_events(self,event_handlers):
+                if self.event == "-CORRSOURCERADIO1-" or self.event == "-CORRSOURCERADIO2-":
+                        for event_handler in event_handlers:
+                                event_handler.\
+                                toggle_use_orog_one_for_original_height(self.event ==
+                                                                        "-CORRSOURCERADIO1-")
+
+        def check_for_include_threshold_in_corrected_slices_events(self,event_handlers):
+                if self.event == "-INCLUDETHRESINCORRS-":
+                        for event_handler in event_handlers:
+                                event_handler.\
+                                toggle_include_date_itself_in_corrected_slices(
+                                        self.values["-INCLUDETHRESINCORRS-"])
+
         def update_date(self,key_prefix,event_handler):
                 nums_for_labels = [1,2,4,6] if (self.event.startswith("-GM") or
                                                 self.event.startswith("-LM")) else [1]
@@ -419,6 +519,11 @@ class DynamicLakeAnalysisGUI:
 
         def reset_to_current_config_values(self):
                 self.reset_to_configuration(self.configuration)
+
+        def set_corrections_file(self,event_handler):
+                event_handler.set_corrections_file(self.values["-CORRECTIONSFILE-"])
+                self.window['-CURRENTCORRECTIONSFILE-'].\
+                        update(value="Current file: {}".format(self.values["-CORRECTIONSFILE-"]))
 
         def setup_layout(self):
                 menu_def = [['File',['Exit',]],]
@@ -489,13 +594,34 @@ class DynamicLakeAnalysisGUI:
 
                 cross_sections_tab_layout_wrapper = self.prepare_cross_sections()
 
+                corrections_editor_config_tab_layout = \
+                        [[sg.Checkbox("Show corrections editor",key="-SHOWCORREDITOR-",
+                                      enable_events=True)],
+                         [sg.Text("Current file: {}".format(self.default_corrections_file),
+                                  key="-CURRENTCORRECTIONSFILE-")],
+                         [sg.Text("Write corrections to file:"),
+                          sg.InputText(self.default_corrections_file,
+                                       key="-CORRECTIONSFILE-"),
+                          sg.Button("Set",
+                                    key="-SETCORRECTIONSFILE-",enable_events=True)],
+                          [sg.Radio("Corrections for data source 1","CORRSOURCERADIO",
+                                    default=True,key="-CORRSOURCERADIO1-",
+                                    enable_events=True),
+                           sg.Radio("Corrections for data source 2","CORRSOURCERADIO",
+                                    default=False,key="-CORRSOURCERADIO2-",
+                                    enable_events=True)],
+                           [sg.Checkbox("Include threshold date in corrected slices",
+                                        default=True,key="-INCLUDETHRESINCORRS-",
+                                        enable_events=True)]]
+
                 layout = [[sg.Menu(menu_def)],
                           [sg.TabGroup([[sg.Tab('Input data',input_data_tab_layout,key="-ID-"),
                                          sg.Tab('Time Series',time_series_tab_layout_wrapper,key="-TS-"),
                                          sg.Tab('Global Maps',global_maps_tab_layout_wrapper,key="-GM-"),
                                          sg.Tab('Lake Maps',lake_maps_tab_layout_wrapper,key="-LM-"),
                                          sg.Tab('Cross Sections',cross_sections_tab_layout_wrapper,
-                                                key="-CS-")]],
+                                                key="-CS-"),
+                                         sg.Tab('Corrections Editor',corrections_editor_config_tab_layout)]],
                                          key='-TABS-',enable_events=True)]]
                 return layout
 
@@ -509,6 +635,7 @@ class DynamicLakeAnalysisGUI:
                 fig_canvas.get_tk_widget().pack(fill='both',side='top',expand=1)
                 self.fig_canvas[canvas_key] = fig_canvas
                 self.tbar_canvas[canvas_key] = tbar
+
 
         def run_main_event_loop(self,figures,
                                 interactive_timeseries_plots,
@@ -526,6 +653,14 @@ class DynamicLakeAnalysisGUI:
                 self.tbar_canvas = {}
                 for key,fig in figures.items():
                         self.setup_figure(fig,key)
+                self.interactive_plots.set_corrections_file(self.default_corrections_file)
+                self.interactive_lake_plots.set_corrections_file(self.default_corrections_file)
+                self.interactive_plots.\
+                        set_specify_coords_and_height_callback(SetCoordsAndHeight("GM",
+                                                                                  self.window))
+                self.interactive_lake_plots.\
+                        set_specify_coords_and_height_callback(SetCoordsAndHeight("LM",
+                                                                                  self.window))
                 while True:
                         self.event, self.values = self.window.read()
                         logging.info(self.event)
@@ -543,12 +678,25 @@ class DynamicLakeAnalysisGUI:
                         self.check_for_stepping_events("CS",self.spillway_plots)
                         self.check_for_slider_events("GM",self.interactive_plots)
                         self.check_for_slider_events("LM",self.interactive_lake_plots)
+                        self.check_for_select_coords_events("GM",self.interactive_plots)
+                        self.check_for_select_coords_events("LM",self.interactive_lake_plots)
+                        self.check_for_write_correction_events("GM",self.interactive_plots)
+                        self.check_for_write_correction_events("LM",self.interactive_lake_plots)
+                        self.check_for_correction_source_events([self.interactive_plots,
+                                                                 self.interactive_lake_plots])
+                        self.check_for_include_threshold_in_corrected_slices_events(
+                                [self.interactive_plots,self.interactive_lake_plots])
                         if self.event == "-UPDATEPLOTS-":
                                 self.update_plots()
                         if self.event == "-RETURNTODEFAULT-":
                                 self.reset_to_original_config_values()
                         if self.event == "-RETURNTOCURRENT-":
                                 self.reset_to_current_config_values()
+                        if self.event == "-SHOWCORREDITOR-":
+                                self.change_correction_editor_visibility()
+                        if self.event == "-SETCORRECTIONSFILE-":
+                                self.set_corrections_file(self.interactive_plots)
+                                self.set_corrections_file(self.interactive_lake_plots)
                         if active_tab in ["GM","LM","CS","TS"]:
                                 current_visible_column = self.visible_column[active_tab]
                                 if current_visible_column > 0:

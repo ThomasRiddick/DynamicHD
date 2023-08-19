@@ -23,7 +23,7 @@ from plotting_utilities.lake_analysis_tools import SpillwayProfiler
 from Dynamic_HD_Scripts import utilities
 from Dynamic_HD_Scripts.base.iodriver import advanced_field_loader
 from Dynamic_HD_Scripts.base.field import Field
-from os.path import join
+from os.path import join, isfile
 from enum import Enum
 
 class PlotScales(Enum):
@@ -572,6 +572,7 @@ class InteractiveTimeSlicePlots:
                  zero_slice_only_one=False,
                  zero_slice_only_two=False,
                  dynamic_configuration=False,
+                 corrections=None,
                  **kwargs):
         mpl.use('TkAgg')
         self.plot_types = {"comp":self.catchment_and_cflow_comp_plot,
@@ -585,6 +586,8 @@ class InteractiveTimeSlicePlots:
                            "fcflowcomp":self.fine_cflow_comp_plot,
                            "orog1":self.orography_plot_one,
                            "orog2":self.orography_plot_one,
+                           "morog1":self.modified_orography_plot_one,
+                           "morog2":self.modified_orography_plot_two,
                            "orogcomp":self.orography_comp_plot,
                            "sforog":self.super_fine_orography_plot,
                            "firstcorrorog":self.first_corrected_orography_plot,
@@ -605,6 +608,7 @@ class InteractiveTimeSlicePlots:
                            "lakebasinnums1":self.lake_basin_numbers_plot_one,
                            "lakebasinnums2":self.lake_basin_numbers_plot_two}
         self.orog_plot_types  = ["orog1","orog2","orogcomp","sforog",
+                                 "morog1","morog2",
                                  "firstcorrorog","secondcorrorog",
                                  "thirdcorrorog","fourthcorrorog",
                                  "corrorog12comp","corrorog23comp",
@@ -639,7 +643,13 @@ class InteractiveTimeSlicePlots:
         self.zero_slice_only_two = zero_slice_only_two
         self.original_zoom_settings = self.zoom_settings.copy()
         self.fine_cutoff_scaling = self.zoom_settings.fine_scale_factor*self.zoom_settings.fine_scale_factor
+        self.select_coords = False
+        self.corrections_file = None
+        self.specify_coords_and_height_callback = None
+        self.use_orog_one_for_original_height = True
         self.replot_required = False
+        self.corrections = corrections
+        self.include_date_itself_in_corrected_slices = True
         self.figs = []
         fig = plt.figure(figsize=(9,4),facecolor="#E3F2FD",dpi=200)
         self.figs.append(fig)
@@ -678,6 +688,9 @@ class InteractiveTimeSlicePlots:
         self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[1,1])))
         self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[2,0])))
         self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[2,1])))
+        for fig in self.figs:
+            fig.canvas.mpl_connect('button_press_event',
+                                   lambda event: self.set_coords_and_height(event))
         # if (not set(self.plot_configuration).isdisjoint(self.cflow_plot_types)):
         #     #add zero to list to prevent errors if the two sequences are Nones
         #     maxflow =   max([np.max(slice) if slice is not None else 0
@@ -755,6 +768,7 @@ class InteractiveTimeSlicePlots:
                                                                   orography_two_sequence,
                                                                   ["{} YBP".format(date) for date
                                                                    in date_sequence],
+                                                                   date_sequence,
                                                                    self.lake_and_river_plots_required,
                                                                    self.minflowcutoff)
         self.gen = generate_catchment_and_cflow_sequence_tuple(combined_sequence_tuples,
@@ -788,7 +802,7 @@ class InteractiveTimeSlicePlots:
          self.true_sinks_slice_zoomed,
          self.lake_and_river_colour_codes_one_slice_zoomed,
          self.lake_and_river_colour_codes_two_slice_zoomed,
-         self.date_text) = self.gen.send(self.next_command_to_send)
+         self.date_text,self.date) = self.gen.send(self.next_command_to_send)
         for index,plot in enumerate(self.plot_configuration):
             if plot is not None:
                 self.plot_types[plot](index)
@@ -932,6 +946,14 @@ class InteractiveTimeSlicePlots:
         self.timeslice_plots[index].scale = PlotScales.FINE
         self.orography_plot_base(index,self.orography_two_slice_zoomed)
 
+    def modified_orography_plot_one(self,index):
+        self.timeslice_plots[index].scale = PlotScales.FINE
+        self.modified_orography_plot_base(index,self.orography_one_slice_zoomed)
+
+    def modified_orography_plot_two(self,index):
+        self.timeslice_plots[index].scale = PlotScales.FINE
+        self.modified_orography_plot_base(index,self.orography_two_slice_zoomed)
+
     def orography_comp_plot(self,index):
         self.timeslice_plots[index].scale = PlotScales.FINE
         self.orography_plot_base(index,self.orography_one_slice_zoomed -
@@ -975,6 +997,18 @@ class InteractiveTimeSlicePlots:
     def true_sinks_plot(self,index):
         self.timeslice_plots[index].scale = PlotScales.FINE
         self.plot_from_colour_codes(self.true_sinks_slice_zoomed,index)
+
+    def modified_orography_plot_base(self,index,orography):
+        modified_orography = np.copy(orography)
+        for correction in self.corrections:
+            if (self.date > correction["date"] or
+                (self.include_date_itself_in_corrected_slices and
+                 self.date == correction["date"])):
+                modified_orography[correction["lat"],correction["lon"]] = \
+                    (orography[correction["lat"],correction["lon"]] +
+                     correction["height_change"])
+        self.orography_plot_base(index,modified_orography)
+
 
     def orography_plot_base(self,index,orography):
         if not self.timeslice_plots[index].plot or self.replot_required:
@@ -1052,6 +1086,75 @@ class InteractiveTimeSlicePlots:
     #     self.step()
     #     self.replot_required = False
 
+    def set_coords_and_height(self,eclick):
+        if eclick.ydata is None or eclick.xdata is None:
+            return
+        if self.select_coords:
+            if self.zoom_settings.zoomed:
+                min_lat = self.zoom_settings.zoomed_section_bounds["min_lat"]
+                min_lon = self.zoom_settings.zoomed_section_bounds["min_lon"]
+            else:
+                min_lat = 0
+                min_lon = 0
+            orography = (self.orography_one_slice_zoomed
+                         if self.use_orog_one_for_original_height else
+                         self.orography_two_slice_zoomed)
+            self.specify_coords_and_height_callback(lat=
+                                                    round(eclick.ydata)+min_lat,
+                                                    lon=
+                                                    round(eclick.xdata)+min_lon,
+                                                    date=self.date,
+                                                    original_height=
+                                                    orography[round(eclick.ydata),
+                                                              round(eclick.xdata)])
+
+    def write_correction(self,new_height):
+        lat,lon,date,original_height = self.specify_coords_and_height_callback.get_stored_values()
+        height_change = float(new_height)-original_height
+        with open(self.corrections_file,'a') as f:
+            f.write("{}, {}, {}, {} \n".format(lat,lon,date,height_change))
+        self.corrections.append({"lat":lat,"lon":lon,"date":date,"height_change":height_change})
+        self.next_command_to_send = "zoom"
+        self.replot_required = True
+        self.step()
+        self.replot_required = False
+
+    def read_corrections(self):
+        self.corrections.clear()
+        if isfile(self.corrections_file):
+            with open(self.corrections_file,'r') as f:
+                for line in f:
+                    data = line.strip().split(",")
+                    self.corrections.append({"lat":int(data[0]),
+                                             "lon":int(data[1]),
+                                             "date":int(data[2]),
+                                             "height_change":float(data[3])})
+        self.next_command_to_send = "zoom"
+        self.replot_required = True
+        self.step()
+        self.replot_required = False
+
+
+    def toggle_include_date_itself_in_corrected_slices(self,value):
+        self.include_date_itself_in_corrected_slices = value
+        self.next_command_to_send = "zoom"
+        self.replot_required = True
+        self.step()
+        self.replot_required = False
+
+    def toggle_use_orog_one_for_original_height(self,value):
+        self.use_orog_one_for_original_height = value
+
+    def toggle_select_coords(self,value):
+        self.select_coords = value
+
+    def set_specify_coords_and_height_callback(self,callback):
+        self.specify_coords_and_height_callback = callback
+
+    def set_corrections_file(self,filepath):
+        self.corrections_file = filepath
+        self.read_corrections()
+
     def zoom_in_normal(self,eclick,erelease):
         self.zoom_in_base(eclick,erelease,scale_factor=1)
 
@@ -1110,7 +1213,7 @@ class InteractiveTimeSlicePlots:
                                    scale_factor=scale_factor)
 
     def get_current_date(self):
-        return self.date_text
+        return self.date
 
 def find_highest_version(base_dir_template):
     split_string = base_dir_template.rsplit("VERSION_NUMBER",1)
@@ -1257,6 +1360,7 @@ def prep_combined_sequence_tuples(lsmask_sequence,
                                   orography_one_sequence,
                                   orography_two_sequence,
                                   date_text_sequence,
+                                  date_sequence,
                                   lake_and_river_plots_required=False,
                                   minflowcutoff=100):
     lake_and_river_colour_codes_sequence_one=None
@@ -1297,6 +1401,7 @@ def prep_combined_sequence_tuples(lsmask_sequence,
                                       change_none_to_list(lake_and_river_colour_codes_sequence_one),
                                       change_none_to_list(lake_and_river_colour_codes_sequence_two),
                                       change_none_to_list(date_text_sequence),
+                                      change_none_to_list(date_sequence),
                                       fillvalue=None))
 
 def generate_catchment_and_cflow_sequence_tuple(combined_sequence_tuples,
@@ -1322,7 +1427,7 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequence_tuples,
          lake_basin_numbers_two_slice,fine_river_flow_one_slice,
          fine_river_flow_two_slice,orography_one_slice,
          orography_two_slice,lake_and_river_colour_codes_one_slice,
-         lake_and_river_colour_codes_two_slice,date_text) = combined_sequence_tuples[i]
+         lake_and_river_colour_codes_two_slice,date_text,date) = combined_sequence_tuples[i]
         if return_zero_slice_only_one:
             if return_zero_slice_only_two:
                 (lsmask_slice,glacier_mask_slice,catchment_nums_one_slice,
@@ -1332,7 +1437,7 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequence_tuples,
                  lake_volumes_two_slice,lake_basin_numbers_one_slice,
                  lake_basin_numbers_two_slice,fine_river_flow_one_slice,
                  fine_river_flow_two_slice,lake_and_river_colour_codes_one_slice,
-                 lake_and_river_colour_codes_two_slice,date_text) = combined_sequence_tuples[0]
+                 lake_and_river_colour_codes_two_slice,date_text,_) = combined_sequence_tuples[0]
             else:
                 (_,_,catchment_nums_one_slice,
                  _,river_flow_one_slice,
@@ -1341,7 +1446,7 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequence_tuples,
                  _,lake_basin_numbers_one_slice,
                  _,fine_river_flow_one_slice,
                  _,lake_and_river_colour_codes_one_slice,
-                 _,date_text) = combined_sequence_tuples[0]
+                 _,date_text,_) = combined_sequence_tuples[0]
         elif return_zero_slice_only_two:
              (_,_,_,
              catchment_nums_two_slice,_,
@@ -1350,7 +1455,7 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequence_tuples,
              lake_volumes_two_slice,_,
              lake_basin_numbers_two_slice,_,
              fine_river_flow_two_slice,_,
-             lake_and_river_colour_codes_two_slice,date_text) = combined_sequence_tuples[0]
+             lake_and_river_colour_codes_two_slice,date_text,_) = combined_sequence_tuples[0]
         if zoom_settings.zoomed:
             lsmask_slice_zoomed=extract_zoomed_section(lsmask_slice,zoom_settings.zoomed_section_bounds)
             glacier_mask_slice_zoomed=extract_zoomed_section(glacier_mask_slice,
@@ -1467,7 +1572,7 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequence_tuples,
                                  true_sinks_slice_zoomed,
                                  lake_and_river_colour_codes_one_slice_zoomed,
                                  lake_and_river_colour_codes_two_slice_zoomed,
-                                 date_text)
+                                 date_text,date)
         if bidirectional:
             if not isinstance(input_from_send,bool):
                 if input_from_send == "zoom":
@@ -1514,13 +1619,13 @@ def generate_catchment_and_cflow_comp_sequence(colors,
                                                              river_mouths_one_sequence,
                                                              river_mouths_two_sequence,
                                                              None,None,None,None,
-                                                             date_text_sequence,False)
+                                                             date_text_sequence,None,False)
     for (lsmask_slice_zoomed,glacier_mask_slice_zoomed,
          matched_catchment_nums_one,matched_catchment_nums_two,
          river_flow_one_slice_zoomed,river_flow_two_slice_zoomed,_,_,_,_,_,_,_,_,_,
-         date_text) in generate_catchment_and_cflow_sequence_tuple(combined_sequence_tuples,
-                                                                   ZoomSettings(zoomed,
-                                                                                zoomed_section_bounds)):
+         date_text,_) in generate_catchment_and_cflow_sequence_tuple(combined_sequence_tuples,
+                                                                    ZoomSettings(zoomed,
+                                                                                 zoomed_section_bounds)):
         im_list.append([generate_catchment_and_cflow_comp_slice(colors,
                                                                 lsmask_slice_zoomed,
                                                                 glacier_mask_slice_zoomed,
