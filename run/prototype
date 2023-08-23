@@ -1,14 +1,20 @@
-{% extends "templates/main.tmpl" %}
+{%- extends "templates/main.tmpl" -%}
 
-{% block user_input %}
+{%- block user_input -%}
 ########################################
 ###############USER INPUT###############
 ########################################
-
+#Path to grid file
+icon_grid_filepath=
+#Path to (fractional) lsmask
+lsmask_filepath=
+#By default the true sinks filepath should
+#be left blank
+true_sinks_filepath=
 ########################################
 ############END OF USER INPUT###########
 ########################################
-{% endblock %}
+{%- endblock -%}
 
 #ADDITIONAL USER COMMANDS
 # Insert additional command into blocks as required
@@ -16,25 +22,25 @@
 # at the specified point
 
 # At the start after the headers
-{% block user_commands_start %}
-{% endblock %}
+{%- block user_commands_start -%}
+{%- endblock -%}
 
 # After making the directory for the project (if option is selected)
-{% block user_commands_post_makeproject %}
-{% endblock %}
+{%- block user_commands_post_create_project -%}
+{%- endblock -%}
 
 # Before running the main program but after pre-processing
-{% block user_commands_pre_run %}
-{% endblock %}
+{%- block user_commands_pre_run -%}
+{%- endblock -%}
 
 # Before after running the main program
-{% block user_commands_post_run %}
-{% endblock %}
+{%- block user_commands_post_run -%}
+{%- endblock -%}
 
 # Before clean-up but after post-processing
-{% block user_commands_pre_clean %}
-{% endblock %}
+{%- block user_commands_pre_clean -%}
+{%- endblock -%}
 
 # At the end of script after clean-up
-{% block user_commands_end %}
-{% endblock %}
+{%- block user_commands_end -%}
+{%- endblock -%}
