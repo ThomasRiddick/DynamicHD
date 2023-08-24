@@ -21,7 +21,7 @@ def replace_rightmost(s,oldvalue,newvalue):
     string_as_list = s.rsplit(oldvalue,1)
     return newvalue.join(string_as_list)
 
-class Dynamic_Lake_Analysis_Run_Framework(object):
+class Dynamic_Lake_Analysis_Run_Framework:
 
     ancillary_data_directory_match = re.compile(r"ancillary data directory:\s*(\S*)")
     present_day_base_orography_filepath_match = re.compile(r"present day base orography file:\s*(\S*)")
@@ -34,7 +34,7 @@ class Dynamic_Lake_Analysis_Run_Framework(object):
 
     def __init__(self,
                  base_directory,
-                 setup_directory_structure=None,
+                 setup_directory_structure=False,
                  ancillary_data_directory=None,
                  present_day_base_orography_filepath=None,
                  base_corrections_filepath=None,
@@ -141,8 +141,10 @@ class Dynamic_Lake_Analysis_Run_Framework(object):
         self.start_date = start_date
         self.end_date = end_date
         self.slice_spacing = slice_spacing
-        self.run_clear_lake_results = clear_lake_results
-        self.run_clear_river_results = clear_river_results
+        self.run_clear_lake_results = (clear_lake_results >= -1)
+        self.run_clear_river_results = (clear_river_results >= -1)
+        self.clear_lake_results_version = clear_lake_results
+        self.clear_river_results_version = clear_river_results
         self.run_clear_river_default_orog_corrs_results = clear_river_default_orog_corrs_results
         self.generate_present_day_rivers_with_original_sink_set = \
             generate_present_day_rivers_with_original_sink_set
@@ -235,9 +237,9 @@ class Dynamic_Lake_Analysis_Run_Framework(object):
         if self.setup_directory_structure:
             self.run_setup_directory_structure()
         if self.run_clear_lake_results:
-            self.clear_lake_results()
+            self.clear_lake_results(self.clear_lake_results_version)
         if self.run_clear_river_results:
-            self.clear_river_results()
+            self.clear_river_results(self.clear_river_results_version)
         if self.run_clear_river_default_orog_corrs_results:
             self.clear_river_default_orog_corrs_results()
         if self.generate_lake_orography_corrections or self.apply_orography_tweaks:
@@ -527,29 +529,81 @@ class Dynamic_Lake_Analysis_Run_Framework(object):
                        "working_true_sinks_set.txt"),"w") as true_sinks_txt:
             true_sinks_txt.write("# lat, lon, height")
 
-    def clear_lake_results(self):
+    def clear_lake_results(self,version):
         print("Clearing lake results...")
-        for file in [ file for file in
-                      os.listdir(join(self.lakes_directory,
-                                              "results")) if file.endswith(".nc")]:
-            os.remove(join(self.lakes_directory,"results",file))
+        if version == -1:
+            for file in [ file for file in
+                          os.listdir(join(self.lakes_directory,
+                                                  "results")) if file.endswith(".nc")]:
+                print("removing {}".format(join(self.lakes_directory,"results",file)))
+                os.remove(join(self.lakes_directory,"results",file))
+            for folder in [ folder for folder in
+                            os.listdir(join(self.lakes_directory,
+                                          "results")) if folder.startswith("diag_version_")]:
+                for file in [ file for file in
+                              os.listdir(join(self.lakes_directory,
+                                          "results",folder)) if (file.endswith(".nc") or
+                                                                 file.endswith(".txt"))]:
+                    print("removing {}".format(join(self.lakes_directory,"results",folder,file)))
+                    os.remove(join(self.lakes_directory,"results",folder,file))
+                print("removing dir {}".format(join(self.lakes_directory,"results",folder)))
+                os.rmdir(join(self.lakes_directory,"results",folder))
+        else:
+            for file in [ file for file in
+                          os.listdir(join(self.lakes_directory,
+                                                  "results")) if (file.endswith(".nc") and
+                                                                  f'version_{version}' in file)]:
+                print("removing {}".format(join(self.lakes_directory,"results",file)))
+                os.remove(join(self.lakes_directory,"results",file))
+            for folder in [ folder for folder in
+                            os.listdir(join(self.lakes_directory,
+                                          "results")) if folder.startswith(f'diag_version_{version}')]:
+                for file in [ file for file in
+                              os.listdir(join(self.lakes_directory,
+                                          "results",folder)) if (file.endswith(".nc") or
+                                                                 file.endswith(".txt"))]:
+                    print("removing {}".format(join(self.lakes_directory,"results",folder,file)))
+                    os.remove(join(self.lakes_directory,"results",folder,file))
+                print("removing {}".format(join(self.lakes_directory,"results",folder)))
+                os.rmdir(join(self.lakes_directory,"results",folder))
 
-    def clear_river_results(self):
+    def clear_river_results(self,version):
         print("Clearing river results...")
-        for file in [ file for file in
-                      os.listdir(join(self.rivers_directory,
-                                      "results")) if file.endswith(".nc")]:
-            os.remove(join(self.rivers_directory,"results",file))
-        for folder in [ folder for folder in
-                        os.listdir(join(self.rivers_directory,
-                                      "results")) if folder.startswith("diag_version_")]:
+        if version == -1:
             for file in [ file for file in
                           os.listdir(join(self.rivers_directory,
-                                      "results",folder)) if (file.endswith(".nc") or
-                                                             file.endswith(".txt"))]:
-                os.remove(join(self.rivers_directory,"results",folder,file))
-            os.rmdir(join(self.rivers_directory,"results",folder))
-
+                                          "results")) if file.endswith(".nc")]:
+                print("removing {}".format(join(self.rivers_directory,"results",file)))
+                os.remove(join(self.rivers_directory,"results",file))
+            for folder in [ folder for folder in
+                            os.listdir(join(self.rivers_directory,
+                                          "results")) if folder.startswith("diag_version_")]:
+                for file in [ file for file in
+                              os.listdir(join(self.rivers_directory,
+                                          "results",folder)) if (file.endswith(".nc") or
+                                                                 file.endswith(".txt"))]:
+                    print("removing {}".format(join(self.rivers_directory,"results",folder,file)))
+                    os.remove(join(self.rivers_directory,"results",folder,file))
+                print("removing {}".format(join(self.rivers_directory,"results",folder)))
+                os.rmdir(join(self.rivers_directory,"results",folder))
+        else:
+            for file in [ file for file in
+                          os.listdir(join(self.rivers_directory,
+                                          "results")) if (file.endswith(".nc") and
+                                                          f'version_{version}' in file)]:
+                print("removing {}".format(join(self.rivers_directory,"results",file)))
+                os.remove(join(self.rivers_directory,"results",file))
+            for folder in [ folder for folder in
+                            os.listdir(join(self.rivers_directory,
+                                          "results")) if folder.startswith(f"diag_version_{version}")]:
+                for file in [ file for file in
+                              os.listdir(join(self.rivers_directory,
+                                          "results",folder)) if (file.endswith(".nc") or
+                                                                 file.endswith(".txt"))]:
+                    print("removing {}".format(join(self.rivers_directory,"results",folder,file)))
+                    os.remove(join(self.rivers_directory,"results",folder,file))
+                print("removing {}".format(join(self.rivers_directory,"results",folder)))
+                os.rmdir(join(self.rivers_directory,"results",folder))
 
     def clear_river_default_orog_corrs_results(self):
         print("Clearing default orography correction results...")
@@ -573,7 +627,7 @@ def setup_and_run_lake_analysis_from_command_line_arguments(args):
     driver_object = Dynamic_Lake_Analysis_Run_Framework(**vars(args))
     driver_object.run_selected_processes()
 
-class Arguments(object):
+class Arguments:
     """An empty class used to pass namelist arguments into the main routine as keyword arguments."""
 
     pass
@@ -618,8 +672,8 @@ def parse_arguments():
     parser.add_argument('-d','--start-date',type=int,default=0)
     parser.add_argument('-e','--end-date',type=int,default=0)
     parser.add_argument('-i','--slice-spacing',type=int,default=10)
-    parser.add_argument('--clear-lake-results',action="store_true")
-    parser.add_argument('--clear-river-results',action="store_true")
+    parser.add_argument('--clear-lake-results',nargs='?',type=int,const=-1,default=-2)
+    parser.add_argument('--clear-river-results',nargs='?',type=int,const=-1,default=-2)
     parser.add_argument('--clear-river-default-orog-corrs-results',
                         action="store_true")
     parser.add_argument('--generate-present-day-rivers-with-original-sink-set',
@@ -649,10 +703,10 @@ def parse_arguments():
         args.skip_current_day_time_slice):
         raise RuntimeError("Incompatible options")
     if args.generate_lake_orography_corrections and args.apply_orography_tweaks:
-        raise UserWarning("Applying orography correction automatically applies"
-                          "orography tweaks too, thus setting will"
-                          "-t apply-orography-tweaks have no effect as "
-                          "-g generate-lake-orography-corrections is set")
+        warnings.warn("Applying orography correction automatically applies"
+                      "orography tweaks too, thus setting will"
+                      "-t apply-orography-tweaks have no effect as "
+                      "-g generate-lake-orography-corrections is set")
     return args
 
 if __name__ == '__main__':

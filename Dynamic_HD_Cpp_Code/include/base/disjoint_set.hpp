@@ -7,35 +7,54 @@
 
 // Does not include union by rank. Uses path splitting
 
+#ifndef INCLUDE_DISJOINT_SET_HPP_
+#define INCLUDE_DISJOINT_SET_HPP_
+
+#include <vector>
+#include <iostream>
+#include <functional>
 using namespace std;
 
-class element {
+class disjoint_set {
   protected:
     int label;
-    element* parent = nullptr;
-    element* root = nullptr;
+    int size;
+    disjoint_set* root = nullptr;
+    vector<disjoint_set*>* nodes = nullptr;
   public:
-    element(int label_in) : label(label_in) {parent = this; root = this}
-    element* get_parent(){ return parent;}
-    element* get_root(){ return root;}
-    void set_parent(element* x){ parent = x;}
-    void set_root(element* x){ root = x; }
-}
+    disjoint_set(int label_in) : label(label_in), size(1)
+      { root = this; nodes = new vector<disjoint_set*>(); }
+    ~disjoint_set() { delete nodes; }
+    disjoint_set* get_root(){ return root;}
+    void set_root(disjoint_set* x){ root = x; }
+    void add_node(disjoint_set* x) { nodes->push_back(x); }
+    void add_nodes(vector<disjoint_set*>* extra_nodes)
+      { nodes->insert(nodes->end(),extra_nodes->begin(),
+                      extra_nodes->end());}
+    vector<disjoint_set*>* get_nodes() { return nodes; }
+    void increase_size(int size_increment_in) {size += size_increment_in;}
+    int get_size() { return size;}
+    int get_label() { return label;}
+    friend ostream& operator<<(ostream& out, disjoint_set& set_object)
+    { return out << set_object.get_label(); }
+};
 
-class disjoint_set{
+class disjoint_set_forest{
   protected:
-    num_elements;
-    vector<element*> elements;
+    vector<disjoint_set*> sets;
   public:
-    disjoint_set() : num_elements(0) {}
-    disjoint_set(num_elements_in) {
-      num_elements = 0;
-      for (int i=0;i<num_elements_in;i++){
-        add_element();
-      }
-    }
-    element* find_root(element* x);
-    void link(element* x,element* y);
-    element* add_element();
-    element* get_element(int label_in){ return elements[label_in - 1];}
-}
+    disjoint_set_forest() {}
+    ~disjoint_set_forest();
+    disjoint_set* find_root(disjoint_set* x);
+    int find_root(int label_in);
+    bool link(disjoint_set* x,disjoint_set* y);
+    bool make_new_link(int label_x, int label_y);
+    void add_set(int label_in);
+    disjoint_set* get_set(int label_in);
+    void for_elements_in_set(disjoint_set* root,function<void(int)> func);
+    void for_elements_in_set(int root_label,function<void(int)> func);
+    bool check_subset_has_elements(int label_of_element,vector<int> element_labels);
+    friend ostream& operator<<(ostream& out, disjoint_set_forest& sets_object);
+};
+
+#endif //INCLUDE_DISJOINT_SET_HPP_

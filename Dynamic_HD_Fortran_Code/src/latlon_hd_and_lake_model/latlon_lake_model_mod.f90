@@ -1,5 +1,6 @@
 module latlon_lake_model_mod
 
+use latlon_lake_model_tree_mod
 #ifdef USE_LOGGING
   use latlon_lake_logger_mod
 #endif
@@ -11,24 +12,10 @@ integer,parameter :: dp = selected_real_kind(12)
 integer, parameter :: filling_lake_type = 1
 integer, parameter :: overflowing_lake_type = 2
 integer, parameter :: subsumed_lake_type = 3
-integer, parameter :: no_merge = 0
-integer, parameter :: primary_merge   = 1
-integer, parameter :: secondary_merge = 2
-integer, parameter :: double_merge = 3
-integer, parameter :: null_mtype = 4
-integer, parameter, dimension(17) :: convert_to_simple_merge_type_connect = (/no_merge,primary_merge,primary_merge, &
-                                                                              primary_merge,primary_merge,secondary_merge, &
-                                                                              secondary_merge,secondary_merge,secondary_merge, &
-                                                                              no_merge,no_merge,no_merge,double_merge, &
-                                                                              double_merge,double_merge,double_merge, &
-                                                                              null_mtype/)
-integer, parameter, dimension(17) :: convert_to_simple_merge_type_flood = (/no_merge,primary_merge,secondary_merge, &
-                                                                            no_merge,double_merge,primary_merge, &
-                                                                            secondary_merge,no_merge,double_merge, &
-                                                                            primary_merge,secondary_merge,double_merge, &
-                                                                            primary_merge,secondary_merge,no_merge, &
-                                                                            double_merge,null_mtype/)
-
+integer, parameter :: no_merge_mtype = 0
+integer, parameter :: primary_merge_mtype   = 1
+integer, parameter :: secondary_merge_mtype = 2
+integer, parameter :: null_mtype = 3
 
 type :: coordslist
   integer, pointer, dimension(:) :: lat_coords
@@ -39,19 +26,75 @@ interface coordslist
   procedure :: coordslistconstructor
 end interface coordslist
 
+type :: mergeandredirectindices
+  logical :: is_primary_merge
+  logical :: merged
+  logical :: local_redirect
+  integer :: merge_target_lat_index
+  integer :: merge_target_lon_index
+  integer :: redirect_lat_index
+  integer :: redirect_lon_index
+  contains
+    procedure :: initialisemergeandredirectindices
+    procedure :: add_offset_to_merge_indices
+    procedure :: reset_merge_indices
+    procedure :: get_merge_type
+    procedure :: get_merge_target_coords
+    procedure :: get_outflow_redirect_coords
+    procedure :: is_equal_to
+end type mergeandredirectindices
+
+interface mergeandredirectindices
+  procedure :: mergeandredirectindicesconstructor
+  procedure :: mergeandredirectindicesconstructorfromarray
+end interface mergeandredirectindices
+
+type :: mergeandredirectindicespointer
+  type(mergeandredirectindices), pointer :: ptr
+end type mergeandredirectindicespointer
+
+type :: mergeandredirectindicescollection
+  logical :: primary_merge
+  logical :: secondary_merge
+  type(mergeandredirectindicespointer), pointer, dimension(:) :: &
+    primary_merge_and_redirect_indices
+  integer :: primary_merge_and_redirect_indices_count
+  type(mergeandredirectindices), pointer :: secondary_merge_and_redirect_indices
+  contains
+    procedure :: initialisemergeandredirectindicescollection
+    procedure :: mergeandredirectindicescollectiondestructor
+    procedure :: add_offset_to_collection
+    procedure :: reset_collection
+end type mergeandredirectindicescollection
+
+interface mergeandredirectindicescollection
+  procedure :: mergeandredirectindicescollectionconstructor
+end interface mergeandredirectindicescollection
+
+type :: mergeandredirectindicescollectionpointer
+  type(mergeandredirectindicescollection), pointer :: ptr
+end type mergeandredirectindicescollectionpointer
+
 type :: lakeparameters
   logical :: instant_throughflow
   real(dp) :: lake_retention_coefficient
+  real(dp) :: minimum_lake_volume_threshold
   logical, pointer, dimension(:,:) :: lake_centers
   real(dp), pointer, dimension(:,:) :: connection_volume_thresholds
   real(dp), pointer, dimension(:,:) :: flood_volume_thresholds
   logical, pointer, dimension(:,:) :: flood_only
-  logical, pointer, dimension(:,:) :: flood_local_redirect
-  logical, pointer, dimension(:,:) :: connect_local_redirect
-  logical, pointer, dimension(:,:) :: additional_flood_local_redirect
-  logical, pointer, dimension(:,:) :: additional_connect_local_redirect
-  integer, pointer, dimension(:,:) :: merge_points
+  integer, pointer, dimension(:,:) :: connect_merge_and_redirect_indices_index
+  integer, pointer, dimension(:,:) :: flood_merge_and_redirect_indices_index
+  type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    connect_merge_and_redirect_indices_collections
+  type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    flood_merge_and_redirect_indices_collections
   real(dp), pointer, dimension(:,:) :: cell_areas_on_surface_model_grid
+  real(dp), pointer, dimension(:,:) :: cell_areas
+  real(dp), pointer, dimension(:,:) :: raw_heights
+  real(dp), pointer, dimension(:,:) :: corrected_heights
+  real(dp), pointer, dimension(:,:) :: flood_heights
+  real(dp), pointer, dimension(:,:) :: connection_heights
   integer, pointer, dimension(:,:) :: basin_numbers
   integer, pointer, dimension(:,:) :: number_fine_grid_cells
   type(coordslist), pointer, dimension(:) :: basins
@@ -61,18 +104,6 @@ type :: lakeparameters
   integer, pointer, dimension(:,:) :: flood_next_cell_lon_index
   integer, pointer, dimension(:,:) :: connect_next_cell_lat_index
   integer, pointer, dimension(:,:) :: connect_next_cell_lon_index
-  integer, pointer, dimension(:,:) :: flood_force_merge_lat_index
-  integer, pointer, dimension(:,:) :: flood_force_merge_lon_index
-  integer, pointer, dimension(:,:) :: connect_force_merge_lat_index
-  integer, pointer, dimension(:,:) :: connect_force_merge_lon_index
-  integer, pointer, dimension(:,:) :: flood_redirect_lat_index
-  integer, pointer, dimension(:,:) :: flood_redirect_lon_index
-  integer, pointer, dimension(:,:) :: connect_redirect_lat_index
-  integer, pointer, dimension(:,:) :: connect_redirect_lon_index
-  integer, pointer, dimension(:,:) :: additional_flood_redirect_lat_index
-  integer, pointer, dimension(:,:) :: additional_flood_redirect_lon_index
-  integer, pointer, dimension(:,:) :: additional_connect_redirect_lat_index
-  integer, pointer, dimension(:,:) :: additional_connect_redirect_lon_index
   integer, pointer, dimension(:,:) :: corresponding_surface_cell_lat_index
   integer, pointer, dimension(:,:) :: corresponding_surface_cell_lon_index
   integer :: nlat,nlon
@@ -105,10 +136,12 @@ type :: lakefields
   real(dp), pointer, dimension(:,:) :: water_to_hd
   real(dp), pointer, dimension(:,:) :: lake_water_from_ocean
   integer, pointer, dimension(:,:) :: number_lake_cells
+  real(dp), pointer, dimension(:,:) :: true_lake_depths
   integer, pointer, dimension(:) :: cells_with_lakes_lat
   integer, pointer, dimension(:) :: cells_with_lakes_lon
   real(dp), pointer, dimension(:) :: evaporation_from_lakes
   logical, pointer, dimension(:) :: evaporation_applied
+  type(rooted_tree_forest), pointer :: set_forest
   type(lakepointer), pointer, dimension(:) :: other_lakes
   contains
     procedure :: initialiselakefields
@@ -154,9 +187,7 @@ type :: lake
   type(lakefields), pointer :: lake_fields
   integer :: number_of_flooded_cells
   integer :: secondary_number_of_flooded_cells
-  ! Filling lake variables
-  logical :: primary_merge_completed
-  logical :: use_additional_fields
+  ! There are no specific filling lake variables
   ! Overflowing lake variables
   real(dp) :: excess_water
   integer :: outflow_redirect_lat
@@ -173,12 +204,11 @@ type :: lake
     procedure :: accept_merge
     procedure :: store_water
     procedure :: find_true_primary_lake
-    procedure :: get_merge_type
-    procedure :: get_primary_merge_coords
-    procedure :: get_secondary_merge_coords
+    procedure :: find_true_rolledback_primary_lake
+    procedure :: get_merge_indices_index
+    procedure :: get_merge_indices_collection
     procedure :: check_if_merge_is_possible
     procedure :: initialiselake
-    procedure :: set_filling_lake_parameter_to_null_values
     procedure :: set_overflowing_lake_parameter_to_null_values
     procedure :: set_subsumed_lake_parameter_to_null_values
     procedure :: accept_split
@@ -186,16 +216,16 @@ type :: lake
     procedure :: release_negative_water
     procedure :: generate_lake_numbers
     procedure :: calculate_effective_lake_volume_per_cell
+    procedure :: calculate_true_lake_depth
     !Filling lake procedures
     procedure :: initialisefillinglake
     procedure :: perform_primary_merge
     procedure :: perform_secondary_merge
-    procedure :: rollback_primary_merge
+    procedure :: conditionally_rollback_primary_merge
     procedure :: fill_current_cell
     procedure :: change_to_overflowing_lake
     procedure :: update_filling_cell
     procedure :: rollback_filling_cell
-    procedure :: get_outflow_redirect_coords
     !Overflowing lake procedures
     procedure :: initialiseoverflowinglake
     procedure :: change_overflowing_lake_to_filling_lake
@@ -211,9 +241,232 @@ end interface lake
 
 contains
 
+subroutine initialisemergeandredirectindices(this, &
+                                             is_primary_merge_in, &
+                                             local_redirect_in, &
+                                             merge_target_lat_index_in, &
+                                             merge_target_lon_index_in, &
+                                             redirect_lat_index_in, &
+                                             redirect_lon_index_in)
+  class(mergeandredirectindices) :: this
+  logical :: is_primary_merge_in
+  logical :: local_redirect_in
+  integer :: merge_target_lat_index_in
+  integer :: merge_target_lon_index_in
+  integer :: redirect_lat_index_in
+  integer :: redirect_lon_index_in
+    this%is_primary_merge = is_primary_merge_in
+    this%local_redirect = local_redirect_in
+    this%merged = .False.
+    this%merge_target_lat_index = merge_target_lat_index_in
+    this%merge_target_lon_index = merge_target_lon_index_in
+    this%redirect_lat_index = redirect_lat_index_in
+    this%redirect_lon_index = redirect_lon_index_in
+end subroutine initialisemergeandredirectindices
+
+function mergeandredirectindicesconstructor(is_primary_merge_in, &
+                                            local_redirect_in, &
+                                            merge_target_lat_index_in, &
+                                            merge_target_lon_index_in, &
+                                            redirect_lat_index_in, &
+                                            redirect_lon_index_in) &
+    result(constructor)
+  type(mergeandredirectindices), pointer :: constructor
+  logical :: is_primary_merge_in
+  logical :: local_redirect_in
+  integer :: merge_target_lat_index_in
+  integer :: merge_target_lon_index_in
+  integer :: redirect_lat_index_in
+  integer :: redirect_lon_index_in
+    allocate(constructor)
+    call constructor%initialisemergeandredirectindices(is_primary_merge_in, &
+                                                       local_redirect_in, &
+                                                       merge_target_lat_index_in, &
+                                                       merge_target_lon_index_in, &
+                                                       redirect_lat_index_in, &
+                                                       redirect_lon_index_in)
+end function mergeandredirectindicesconstructor
+
+function mergeandredirectindicesconstructorfromarray(is_primary_merge,array_in) &
+    result(constructor)
+  type(mergeandredirectindices), pointer :: constructor
+  integer, dimension(:), pointer :: array_in
+  logical :: is_primary_merge
+    allocate(constructor)
+    call constructor%initialisemergeandredirectindices(is_primary_merge, &
+                                                       (array_in(2)==1), &
+                                                       array_in(3), &
+                                                       array_in(4), &
+                                                       array_in(5), &
+                                                       array_in(6))
+end function mergeandredirectindicesconstructorfromarray
+
+subroutine add_offset_to_merge_indices(this,offset)
+  class(mergeandredirectindices) :: this
+  integer, intent(in) :: offset
+    this%merge_target_lat_index = this%merge_target_lat_index + offset
+    this%merge_target_lon_index = this%merge_target_lon_index + offset
+    this%redirect_lat_index = this%redirect_lat_index + offset
+    this%redirect_lon_index = this%redirect_lon_index + offset
+end subroutine add_offset_to_merge_indices
+
+subroutine reset_merge_indices(this)
+  class(mergeandredirectindices) :: this
+    this%merged = .false.
+end subroutine reset_merge_indices
+
+function is_equal_to(this,rhs) result(equals)
+  class(mergeandredirectindices) :: this
+  type(mergeandredirectindices), pointer :: rhs
+  logical :: equals
+    equals = (this%is_primary_merge .eqv. rhs%is_primary_merge)
+    equals = equals .and. (this%local_redirect .eqv. rhs%local_redirect)
+    equals = equals .and. (this%merge_target_lat_index == rhs%merge_target_lat_index)
+    equals = equals .and. (this%merge_target_lon_index == rhs%merge_target_lon_index)
+    equals = equals .and. (this%redirect_lat_index == rhs%redirect_lat_index)
+    equals = equals .and. (this%redirect_lon_index == rhs%redirect_lon_index)
+end function is_equal_to
+
+
+subroutine add_offset_to_collection(this,offset)
+  class(mergeandredirectindicescollection) :: this
+  class(mergeandredirectindices), pointer :: working_merge_and_redirect_indices
+  integer, intent(in) :: offset
+  integer :: i
+    if(this%primary_merge) then
+      do i = 1,this%primary_merge_and_redirect_indices_count
+        working_merge_and_redirect_indices => &
+          this%primary_merge_and_redirect_indices(i)%ptr
+        call working_merge_and_redirect_indices%add_offset_to_merge_indices(offset)
+      end do
+    end if
+    if(this%secondary_merge) then
+      call this%secondary_merge_and_redirect_indices%add_offset_to_merge_indices(offset)
+    end if
+end subroutine add_offset_to_collection
+
+subroutine reset_collection(this)
+  class(mergeandredirectindicescollection) :: this
+  class(mergeandredirectindices), pointer :: working_merge_and_redirect_indices
+  integer :: i
+    if(this%primary_merge) then
+      do i = 1,this%primary_merge_and_redirect_indices_count
+        working_merge_and_redirect_indices => &
+          this%primary_merge_and_redirect_indices(i)%ptr
+        call working_merge_and_redirect_indices%reset_merge_indices()
+      end do
+    end if
+    if(this%secondary_merge) then
+      call this%secondary_merge_and_redirect_indices%reset_merge_indices()
+    end if
+end subroutine reset_collection
+
+subroutine initialisemergeandredirectindicescollection(this, &
+                                                       primary_merge_and_redirect_indices_in, &
+                                                       secondary_merge_and_redirect_indices_in)
+  class(mergeandredirectindicescollection) :: this
+  type(mergeandredirectindicespointer), pointer, dimension(:) :: &
+    primary_merge_and_redirect_indices_in
+  type(mergeandredirectindices), pointer :: secondary_merge_and_redirect_indices_in
+    this%primary_merge_and_redirect_indices => primary_merge_and_redirect_indices_in
+    this%secondary_merge_and_redirect_indices => secondary_merge_and_redirect_indices_in
+    if (associated(this%primary_merge_and_redirect_indices)) then
+      this%primary_merge_and_redirect_indices_count = size(this%primary_merge_and_redirect_indices)
+      this%primary_merge = (this%primary_merge_and_redirect_indices_count > 0)
+    else
+      this%primary_merge_and_redirect_indices_count = 0
+      this%primary_merge = .false.
+    end if
+    this%secondary_merge = associated(this%secondary_merge_and_redirect_indices)
+end subroutine initialisemergeandredirectindicescollection
+
+function mergeandredirectindicescollectionconstructor(primary_merge_and_redirect_indices_in, &
+                                                        secondary_merge_and_redirect_indices_in) &
+    result(constructor)
+  type(mergeandredirectindicescollection), pointer :: constructor
+  type(mergeandredirectindicespointer), pointer, dimension(:) :: &
+    primary_merge_and_redirect_indices_in
+  type(mergeandredirectindices), pointer :: secondary_merge_and_redirect_indices_in
+    allocate(constructor)
+    call constructor%initialisemergeandredirectindicescollection(primary_merge_and_redirect_indices_in, &
+                                                                 secondary_merge_and_redirect_indices_in)
+end function mergeandredirectindicescollectionconstructor
+
+subroutine mergeandredirectindicescollectiondestructor(this)
+  class(mergeandredirectindicescollection) :: this
+  type(mergeandredirectindices), pointer :: working_merge_and_redirect_indices
+  integer :: i
+    if(this%primary_merge) then
+      do i = 1,this%primary_merge_and_redirect_indices_count
+        working_merge_and_redirect_indices => &
+          this%primary_merge_and_redirect_indices(i)%ptr
+        deallocate(working_merge_and_redirect_indices)
+      end do
+      deallocate(this%primary_merge_and_redirect_indices)
+    end if
+    if(this%secondary_merge) then
+      deallocate(this%secondary_merge_and_redirect_indices)
+    end if
+end subroutine mergeandredirectindicescollectiondestructor
+
+function createmergeindicescollectionsfromarray(array_in) &
+    result(merge_and_redirect_indices_collections)
+  integer, dimension(:,:,:), pointer :: array_in
+  type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+      merge_and_redirect_indices_collections
+  type(mergeandredirectindicescollection), pointer :: &
+      working_merge_and_redirect_indices_collection
+  type(mergeandredirectindices), pointer :: working_merge_and_redirect_indices
+  type(mergeandredirectindices), pointer :: secondary_merge_and_redirect_indices
+  type(mergeandredirectindicespointer), pointer, dimension(:) :: &
+    primary_merge_and_redirect_indices
+  integer, dimension(:), pointer :: array_slice
+  integer :: i,j
+  integer :: primary_merge_count
+    allocate(merge_and_redirect_indices_collections(size(array_in,1)))
+    do i = 1,size(array_in,1)
+      if (size(array_in,2) > 1) then
+        primary_merge_count = 0
+        do j = 2,size(array_in,2)
+          if (array_in(i,j,1) == 1) then
+            primary_merge_count = j - 1
+          end if
+        end do
+        if (primary_merge_count > 0) then
+          allocate(primary_merge_and_redirect_indices(primary_merge_count))
+        else
+          primary_merge_and_redirect_indices => null()
+        end if
+      else
+        primary_merge_and_redirect_indices => null()
+      end if
+      do j = 1,size(array_in,2)
+        if (array_in(i,j,1) == 1) then
+          array_slice => array_in(i,j,1:size(array_in,3))
+          working_merge_and_redirect_indices => &
+            mergeandredirectindices((j /= 1),array_slice)
+          if (j == 1) then
+            secondary_merge_and_redirect_indices => working_merge_and_redirect_indices
+          else
+            primary_merge_and_redirect_indices(j-1)%ptr => working_merge_and_redirect_indices
+          end if
+        else if (j == 1) then
+          secondary_merge_and_redirect_indices => null()
+        end if
+      end do
+      working_merge_and_redirect_indices_collection => &
+        mergeandredirectindicescollection(primary_merge_and_redirect_indices, &
+                                          secondary_merge_and_redirect_indices)
+      merge_and_redirect_indices_collections(i)%ptr => &
+        working_merge_and_redirect_indices_collection
+    end do
+end function createmergeindicescollectionsfromarray
+
 subroutine initialiselake(this,center_cell_lat_in,center_cell_lon_in, &
                           current_cell_to_fill_lat_in, &
                           current_cell_to_fill_lon_in, &
+                          previous_cell_to_fill_lat_in, &
+                          previous_cell_to_fill_lon_in, &
                           center_cell_coarse_lat_in, &
                           center_cell_coarse_lon_in, &
                           lake_number_in,lake_volume_in,&
@@ -225,6 +478,8 @@ subroutine initialiselake(this,center_cell_lat_in,center_cell_lon_in, &
   integer, intent(in) :: center_cell_lon_in
   integer, intent(in) :: current_cell_to_fill_lat_in
   integer, intent(in) :: current_cell_to_fill_lon_in
+  integer, intent(in) :: previous_cell_to_fill_lat_in
+  integer, intent(in) :: previous_cell_to_fill_lon_in
   integer, intent(in) :: center_cell_coarse_lat_in
   integer, intent(in) :: center_cell_coarse_lon_in
   integer, intent(in) :: lake_number_in
@@ -233,8 +488,10 @@ subroutine initialiselake(this,center_cell_lat_in,center_cell_lon_in, &
   real(dp), intent(in)    :: unprocessed_water_in
   type(lakeparameters), target, intent(in) :: lake_parameters_in
   type(lakefields), pointer, intent(inout) :: lake_fields_in
+  type(mergeandredirectindicescollection), pointer :: merge_indices_collection
+  logical :: is_flood_merge
+  integer :: merge_indices_index
   integer :: i
-  integer :: merge_type
     this%lake_parameters => lake_parameters_in
     this%lake_fields => lake_fields_in
     this%lake_number = lake_number_in
@@ -246,12 +503,19 @@ subroutine initialiselake(this,center_cell_lat_in,center_cell_lon_in, &
     this%center_cell_coarse_lon = center_cell_coarse_lon_in
     this%current_cell_to_fill_lat = current_cell_to_fill_lat_in
     this%current_cell_to_fill_lon = current_cell_to_fill_lon_in
+    this%previous_cell_to_fill_lat = previous_cell_to_fill_lat_in
+    this%previous_cell_to_fill_lon = previous_cell_to_fill_lon_in
     this%unprocessed_water = unprocessed_water_in
     if (.not. associated(this%filled_lake_cell_lats)) then
       i = 0
       do
-        merge_type = this%get_merge_type()
-        if (merge_type == secondary_merge .or. merge_type == double_merge) exit
+        merge_indices_index = this%get_merge_indices_index(is_flood_merge)
+        if (merge_indices_index /= 0) then
+          merge_indices_collection => &
+            this%get_merge_indices_collection(merge_indices_index, &
+                                              is_flood_merge)
+          if (merge_indices_collection%secondary_merge) exit
+        end if
         call this%update_filling_cell(.true.)
         i = i + 1
       end do
@@ -274,14 +538,18 @@ end subroutine initialiselake
 
 subroutine generate_lake_numbers(this)
   class(lake),intent(inout) :: this
-  integer :: i
-  integer :: merge_type
-    i = 0
+  type(mergeandredirectindicescollection), pointer :: merge_indices_collection
+  integer :: merge_indices_index
+  logical :: is_flood_merge
     do
-      merge_type = this%get_merge_type()
-      if (merge_type == secondary_merge .or. merge_type == double_merge) exit
+      merge_indices_index = this%get_merge_indices_index(is_flood_merge)
+      if (merge_indices_index /= 0) then
+        merge_indices_collection => &
+          this%get_merge_indices_collection(merge_indices_index, &
+                                            is_flood_merge)
+        if (merge_indices_collection%secondary_merge) exit
+      end if
       call this%update_filling_cell(.false.)
-      i = i + 1
     end do
 end subroutine generate_lake_numbers
 
@@ -297,28 +565,20 @@ end function coordslistconstructor
 subroutine initialiselakeparameters(this,lake_centers_in, &
                                     connection_volume_thresholds_in, &
                                     flood_volume_thresholds_in, &
-                                    flood_local_redirect_in, &
-                                    connect_local_redirect_in, &
-                                    additional_flood_local_redirect_in, &
-                                    additional_connect_local_redirect_in, &
-                                    merge_points_in, &
                                     cell_areas_on_surface_model_grid_in, &
+                                    cell_areas_in, &
+                                    raw_heights_in, &
+                                    corrected_heights_in, &
+                                    flood_heights_in, &
+                                    connection_heights_in, &
                                     flood_next_cell_lat_index_in, &
                                     flood_next_cell_lon_index_in, &
                                     connect_next_cell_lat_index_in, &
                                     connect_next_cell_lon_index_in, &
-                                    flood_force_merge_lat_index_in, &
-                                    flood_force_merge_lon_index_in, &
-                                    connect_force_merge_lat_index_in, &
-                                    connect_force_merge_lon_index_in, &
-                                    flood_redirect_lat_index_in, &
-                                    flood_redirect_lon_index_in, &
-                                    connect_redirect_lat_index_in, &
-                                    connect_redirect_lon_index_in, &
-                                    additional_flood_redirect_lat_index_in, &
-                                    additional_flood_redirect_lon_index_in, &
-                                    additional_connect_redirect_lat_index_in, &
-                                    additional_connect_redirect_lon_index_in, &
+                                    connect_merge_and_redirect_indices_index_in, &
+                                    flood_merge_and_redirect_indices_index_in, &
+                                    connect_merge_and_redirect_indices_collections_in, &
+                                    flood_merge_and_redirect_indices_collections_in, &
                                     corresponding_surface_cell_lat_index_in, &
                                     corresponding_surface_cell_lon_index_in, &
                                     nlat_in,nlon_in, &
@@ -332,28 +592,22 @@ subroutine initialiselakeparameters(this,lake_centers_in, &
   logical, pointer, dimension(:,:) :: lake_centers_in
   real(dp), pointer, dimension(:,:) :: connection_volume_thresholds_in
   real(dp), pointer, dimension(:,:) :: flood_volume_thresholds_in
-  logical, pointer, dimension(:,:) :: flood_local_redirect_in
-  logical, pointer, dimension(:,:) :: connect_local_redirect_in
-  logical, pointer, dimension(:,:) :: additional_flood_local_redirect_in
-  logical, pointer, dimension(:,:) :: additional_connect_local_redirect_in
-  integer, pointer, dimension(:,:) :: merge_points_in
   real(dp), pointer, dimension(:,:) :: cell_areas_on_surface_model_grid_in
+  real(dp), pointer, dimension(:,:) :: cell_areas_in
+  real(dp), pointer, dimension(:,:) :: raw_heights_in
+  real(dp), pointer, dimension(:,:) :: corrected_heights_in
+  real(dp), pointer, dimension(:,:) :: flood_heights_in
+  real(dp), pointer, dimension(:,:) :: connection_heights_in
   integer, pointer, dimension(:,:) :: flood_next_cell_lat_index_in
   integer, pointer, dimension(:,:) :: flood_next_cell_lon_index_in
   integer, pointer, dimension(:,:) :: connect_next_cell_lat_index_in
   integer, pointer, dimension(:,:) :: connect_next_cell_lon_index_in
-  integer, pointer, dimension(:,:) :: flood_force_merge_lat_index_in
-  integer, pointer, dimension(:,:) :: flood_force_merge_lon_index_in
-  integer, pointer, dimension(:,:) :: connect_force_merge_lat_index_in
-  integer, pointer, dimension(:,:) :: connect_force_merge_lon_index_in
-  integer, pointer, dimension(:,:) :: flood_redirect_lat_index_in
-  integer, pointer, dimension(:,:) :: flood_redirect_lon_index_in
-  integer, pointer, dimension(:,:) :: connect_redirect_lat_index_in
-  integer, pointer, dimension(:,:) :: connect_redirect_lon_index_in
-  integer, pointer, dimension(:,:) :: additional_flood_redirect_lat_index_in
-  integer, pointer, dimension(:,:) :: additional_flood_redirect_lon_index_in
-  integer, pointer, dimension(:,:) :: additional_connect_redirect_lat_index_in
-  integer, pointer, dimension(:,:) :: additional_connect_redirect_lon_index_in
+  integer, pointer, dimension(:,:) :: connect_merge_and_redirect_indices_index_in
+  integer, pointer, dimension(:,:) :: flood_merge_and_redirect_indices_index_in
+  type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    connect_merge_and_redirect_indices_collections_in
+  type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    flood_merge_and_redirect_indices_collections_in
   integer, pointer, dimension(:,:) :: corresponding_surface_cell_lat_index_in
   integer, pointer, dimension(:,:) :: corresponding_surface_cell_lon_index_in
   integer, pointer, dimension(:,:) :: number_of_lake_cells_temp
@@ -376,31 +630,28 @@ subroutine initialiselakeparameters(this,lake_centers_in, &
   integer :: surface_cell_to_fine_cell_map_number
   integer :: map_number,number_of_lake_cells
     number_of_basins_in_coarse_cell = 0
+    this%minimum_lake_volume_threshold = 0.0000001
     this%lake_centers => lake_centers_in
     this%connection_volume_thresholds => connection_volume_thresholds_in
     this%flood_volume_thresholds => flood_volume_thresholds_in
-    this%flood_local_redirect => flood_local_redirect_in
-    this%connect_local_redirect => connect_local_redirect_in
-    this%additional_flood_local_redirect => additional_flood_local_redirect_in
-    this%additional_connect_local_redirect => additional_connect_local_redirect_in
-    this%merge_points => merge_points_in
     this%cell_areas_on_surface_model_grid => cell_areas_on_surface_model_grid_in
+    this%cell_areas => cell_areas_in
+    this%raw_heights => raw_heights_in
+    this%corrected_heights => corrected_heights_in
+    this%flood_heights => flood_heights_in
+    this%connection_heights => connection_heights_in
     this%flood_next_cell_lat_index => flood_next_cell_lat_index_in
     this%flood_next_cell_lon_index => flood_next_cell_lon_index_in
     this%connect_next_cell_lat_index => connect_next_cell_lat_index_in
     this%connect_next_cell_lon_index => connect_next_cell_lon_index_in
-    this%flood_force_merge_lat_index => flood_force_merge_lat_index_in
-    this%flood_force_merge_lon_index => flood_force_merge_lon_index_in
-    this%connect_force_merge_lat_index => connect_force_merge_lat_index_in
-    this%connect_force_merge_lon_index => connect_force_merge_lon_index_in
-    this%flood_redirect_lat_index => flood_redirect_lat_index_in
-    this%flood_redirect_lon_index => flood_redirect_lon_index_in
-    this%connect_redirect_lat_index => connect_redirect_lat_index_in
-    this%connect_redirect_lon_index => connect_redirect_lon_index_in
-    this%additional_flood_redirect_lat_index => additional_flood_redirect_lat_index_in
-    this%additional_flood_redirect_lon_index => additional_flood_redirect_lon_index_in
-    this%additional_connect_redirect_lat_index => additional_connect_redirect_lat_index_in
-    this%additional_connect_redirect_lon_index => additional_connect_redirect_lon_index_in
+    this%connect_merge_and_redirect_indices_index => &
+        connect_merge_and_redirect_indices_index_in
+    this%flood_merge_and_redirect_indices_index => &
+        flood_merge_and_redirect_indices_index_in
+    this%connect_merge_and_redirect_indices_collections => &
+        connect_merge_and_redirect_indices_collections_in
+    this%flood_merge_and_redirect_indices_collections => &
+        flood_merge_and_redirect_indices_collections_in
     this%corresponding_surface_cell_lat_index => corresponding_surface_cell_lat_index_in
     this%corresponding_surface_cell_lon_index => corresponding_surface_cell_lon_index_in
     this%nlat = nlat_in
@@ -537,28 +788,20 @@ end subroutine initialiselakeparameters
 function lakeparametersconstructor(lake_centers_in, &
                                    connection_volume_thresholds_in, &
                                    flood_volume_thresholds_in, &
-                                   flood_local_redirect_in, &
-                                   connect_local_redirect_in, &
-                                   additional_flood_local_redirect_in, &
-                                   additional_connect_local_redirect_in, &
-                                   merge_points_in, &
                                    cell_areas_on_surface_model_grid_in, &
+                                   cell_areas_in, &
+                                   raw_heights_in, &
+                                   corrected_heights_in, &
+                                   flood_heights_in, &
+                                   connection_heights_in, &
                                    flood_next_cell_lat_index_in, &
                                    flood_next_cell_lon_index_in, &
                                    connect_next_cell_lat_index_in, &
                                    connect_next_cell_lon_index_in, &
-                                   flood_force_merge_lat_index_in, &
-                                   flood_force_merge_lon_index_in, &
-                                   connect_force_merge_lat_index_in, &
-                                   connect_force_merge_lon_index_in, &
-                                   flood_redirect_lat_index_in, &
-                                   flood_redirect_lon_index_in, &
-                                   connect_redirect_lat_index_in, &
-                                   connect_redirect_lon_index_in, &
-                                   additional_flood_redirect_lat_index_in, &
-                                   additional_flood_redirect_lon_index_in, &
-                                   additional_connect_redirect_lat_index_in, &
-                                   additional_connect_redirect_lon_index_in, &
+                                   connect_merge_and_redirect_indices_index_in, &
+                                   flood_merge_and_redirect_indices_index_in, &
+                                   connect_merge_and_redirect_indices_collections_in, &
+                                   flood_merge_and_redirect_indices_collections_in, &
                                    corresponding_surface_cell_lat_index_in, &
                                    corresponding_surface_cell_lon_index_in, &
                                    nlat_in,nlon_in, &
@@ -570,28 +813,22 @@ function lakeparametersconstructor(lake_centers_in, &
   logical, pointer, dimension(:,:), intent(in) :: lake_centers_in
   real(dp), pointer, dimension(:,:), intent(in) :: connection_volume_thresholds_in
   real(dp), pointer, dimension(:,:), intent(in) :: flood_volume_thresholds_in
-  logical, pointer, dimension(:,:), intent(in) :: flood_local_redirect_in
-  logical, pointer, dimension(:,:), intent(in) :: connect_local_redirect_in
-  logical, pointer, dimension(:,:), intent(in) :: additional_flood_local_redirect_in
-  logical, pointer, dimension(:,:), intent(in) :: additional_connect_local_redirect_in
-  integer, pointer, dimension(:,:), intent(in) :: merge_points_in
   real(dp), pointer, dimension(:,:), intent(in) :: cell_areas_on_surface_model_grid_in
+  real(dp), pointer, dimension(:,:), intent(in) :: cell_areas_in
+  real(dp), pointer, dimension(:,:), intent(in) :: raw_heights_in
+  real(dp), pointer, dimension(:,:), intent(in) :: corrected_heights_in
+  real(dp), pointer, dimension(:,:), intent(in) :: flood_heights_in
+  real(dp), pointer, dimension(:,:), intent(in) :: connection_heights_in
   integer, pointer, dimension(:,:), intent(in) :: flood_next_cell_lat_index_in
   integer, pointer, dimension(:,:), intent(in) :: flood_next_cell_lon_index_in
   integer, pointer, dimension(:,:), intent(in) :: connect_next_cell_lat_index_in
   integer, pointer, dimension(:,:), intent(in) :: connect_next_cell_lon_index_in
-  integer, pointer, dimension(:,:), intent(in) :: flood_force_merge_lat_index_in
-  integer, pointer, dimension(:,:), intent(in) :: flood_force_merge_lon_index_in
-  integer, pointer, dimension(:,:), intent(in) :: connect_force_merge_lat_index_in
-  integer, pointer, dimension(:,:), intent(in) :: connect_force_merge_lon_index_in
-  integer, pointer, dimension(:,:), intent(in) :: flood_redirect_lat_index_in
-  integer, pointer, dimension(:,:), intent(in) :: flood_redirect_lon_index_in
-  integer, pointer, dimension(:,:), intent(in) :: connect_redirect_lat_index_in
-  integer, pointer, dimension(:,:), intent(in) :: connect_redirect_lon_index_in
-  integer, pointer, dimension(:,:), intent(in) :: additional_flood_redirect_lat_index_in
-  integer, pointer, dimension(:,:), intent(in) :: additional_flood_redirect_lon_index_in
-  integer, pointer, dimension(:,:), intent(in) :: additional_connect_redirect_lat_index_in
-  integer, pointer, dimension(:,:), intent(in) :: additional_connect_redirect_lon_index_in
+  integer, pointer, dimension(:,:) :: connect_merge_and_redirect_indices_index_in
+  integer, pointer, dimension(:,:) :: flood_merge_and_redirect_indices_index_in
+  type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    connect_merge_and_redirect_indices_collections_in
+  type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    flood_merge_and_redirect_indices_collections_in
   integer, pointer, dimension(:,:) :: corresponding_surface_cell_lat_index_in
   integer, pointer, dimension(:,:) :: corresponding_surface_cell_lon_index_in
   integer, intent(in) :: nlat_in,nlon_in
@@ -603,28 +840,20 @@ function lakeparametersconstructor(lake_centers_in, &
     call constructor%initialiselakeparameters(lake_centers_in, &
                                               connection_volume_thresholds_in, &
                                               flood_volume_thresholds_in, &
-                                              flood_local_redirect_in, &
-                                              connect_local_redirect_in, &
-                                              additional_flood_local_redirect_in, &
-                                              additional_connect_local_redirect_in, &
-                                              merge_points_in, &
                                               cell_areas_on_surface_model_grid_in, &
+                                              cell_areas_in, &
+                                              raw_heights_in, &
+                                              corrected_heights_in, &
+                                              flood_heights_in, &
+                                              connection_heights_in, &
                                               flood_next_cell_lat_index_in, &
                                               flood_next_cell_lon_index_in, &
                                               connect_next_cell_lat_index_in, &
                                               connect_next_cell_lon_index_in, &
-                                              flood_force_merge_lat_index_in, &
-                                              flood_force_merge_lon_index_in, &
-                                              connect_force_merge_lat_index_in, &
-                                              connect_force_merge_lon_index_in, &
-                                              flood_redirect_lat_index_in, &
-                                              flood_redirect_lon_index_in, &
-                                              connect_redirect_lat_index_in, &
-                                              connect_redirect_lon_index_in, &
-                                              additional_flood_redirect_lat_index_in, &
-                                              additional_flood_redirect_lon_index_in, &
-                                              additional_connect_redirect_lat_index_in, &
-                                              additional_connect_redirect_lon_index_in, &
+                                              connect_merge_and_redirect_indices_index_in, &
+                                              flood_merge_and_redirect_indices_index_in, &
+                                              connect_merge_and_redirect_indices_collections_in, &
+                                              flood_merge_and_redirect_indices_collections_in, &
                                               corresponding_surface_cell_lat_index_in, &
                                               corresponding_surface_cell_lon_index_in, &
                                               nlat_in,nlon_in, &
@@ -636,6 +865,7 @@ end function lakeparametersconstructor
 
 subroutine lakeparametersdestructor(this)
   class(lakeparameters),intent(inout) :: this
+  type(mergeandredirectindicescollection), pointer :: collected_indices
   integer :: i
     deallocate(this%flood_only)
     deallocate(this%basin_numbers)
@@ -648,32 +878,33 @@ subroutine lakeparametersdestructor(this)
       deallocate(this%surface_cell_to_fine_cell_maps(i)%lat_coords)
       deallocate(this%surface_cell_to_fine_cell_maps(i)%lon_coords)
     end do
+    if (associated(this%flood_merge_and_redirect_indices_collections)) then
+      do i = 1,size(this%flood_merge_and_redirect_indices_collections)
+          collected_indices => this%flood_merge_and_redirect_indices_collections(i)%ptr
+          call collected_indices%mergeandredirectindicescollectiondestructor()
+          deallocate(collected_indices)
+      end do
+      deallocate(this%flood_merge_and_redirect_indices_collections)
+    end if
+    if (associated(this%connect_merge_and_redirect_indices_collections)) then
+      do i = 1,size(this%connect_merge_and_redirect_indices_collections)
+          collected_indices => this%connect_merge_and_redirect_indices_collections(i)%ptr
+          call collected_indices%mergeandredirectindicescollectiondestructor()
+          deallocate(collected_indices)
+      end do
+      deallocate(this%connect_merge_and_redirect_indices_collections)
+    end if
     deallocate(this%surface_cell_to_fine_cell_maps)
     deallocate(this%lake_centers)
     deallocate(this%connection_volume_thresholds)
     deallocate(this%flood_volume_thresholds)
-    deallocate(this%flood_local_redirect)
-    deallocate(this%connect_local_redirect)
-    deallocate(this%additional_flood_local_redirect)
-    deallocate(this%additional_connect_local_redirect)
-    deallocate(this%merge_points)
     deallocate(this%cell_areas_on_surface_model_grid)
     deallocate(this%flood_next_cell_lat_index)
     deallocate(this%flood_next_cell_lon_index)
     deallocate(this%connect_next_cell_lat_index)
     deallocate(this%connect_next_cell_lon_index)
-    deallocate(this%flood_force_merge_lat_index)
-    deallocate(this%flood_force_merge_lon_index)
-    deallocate(this%connect_force_merge_lat_index)
-    deallocate(this%connect_force_merge_lon_index)
-    deallocate(this%flood_redirect_lat_index)
-    deallocate(this%flood_redirect_lon_index)
-    deallocate(this%connect_redirect_lat_index)
-    deallocate(this%connect_redirect_lon_index)
-    deallocate(this%additional_flood_redirect_lat_index)
-    deallocate(this%additional_flood_redirect_lon_index)
-    deallocate(this%additional_connect_redirect_lat_index)
-    deallocate(this%additional_connect_redirect_lon_index)
+    deallocate(this%connect_merge_and_redirect_indices_index)
+    deallocate(this%flood_merge_and_redirect_indices_index)
     deallocate(this%corresponding_surface_cell_lat_index)
     deallocate(this%corresponding_surface_cell_lon_index)
     deallocate(this%number_fine_grid_cells)
@@ -721,6 +952,8 @@ subroutine initialiselakefields(this,lake_parameters)
       allocate(this%number_lake_cells(lake_parameters%nlat_surface_model,&
                                       lake_parameters%nlon_surface_model))
       this%number_lake_cells(:,:) = 0
+      allocate(this%true_lake_depths(lake_parameters%nlat,lake_parameters%nlon))
+      this%true_lake_depths(:,:) = 0.0_dp
       allocate(cells_with_lakes_lat_temp(lake_parameters%nlat_coarse*lake_parameters%nlon_coarse))
       allocate(cells_with_lakes_lon_temp(lake_parameters%nlat_coarse*lake_parameters%nlon_coarse))
       number_of_cells_containing_lakes = 0
@@ -753,6 +986,7 @@ subroutine initialiselakefields(this,lake_parameters)
       this%evaporation_from_lakes(:) = 0.0
       allocate(this%evaporation_applied(count(lake_parameters%lake_centers)))
       this%evaporation_applied(:) = .false.
+      this%set_forest => rooted_tree_forest()
       deallocate(cells_with_lakes_lat_temp)
       deallocate(cells_with_lakes_lon_temp)
 end subroutine initialiselakefields
@@ -783,6 +1017,8 @@ subroutine lakefieldsdestructor(this)
     deallocate(this%effective_volume_per_cell_on_surface_grid)
     deallocate(this%evaporation_applied)
     deallocate(this%evaporation_from_lakes)
+    call this%set_forest%rooted_tree_forest_destructor()
+    deallocate(this%set_forest)
 end subroutine lakefieldsdestructor
 
 subroutine initialiselakeprognostics(this,lake_parameters_in,lake_fields_in)
@@ -809,8 +1045,9 @@ subroutine initialiselakeprognostics(this,lake_parameters_in,lake_fields_in)
           center_cell_coarse_lat = ceiling(real(i)/real(fine_cells_per_coarse_cell_lat));
           center_cell_coarse_lon = ceiling(real(j)/real(fine_cells_per_coarse_cell_lon));
           lake_number = lake_number + 1
+          call lake_fields_in%set_forest%add_set(lake_number)
           lake_temp => lake(lake_parameters_in,lake_fields_in,&
-                             i,j,i,j,center_cell_coarse_lat, &
+                             i,j,i,j,i,j,center_cell_coarse_lat, &
                              center_cell_coarse_lon, &
                              lake_number,0.0_dp,0.0_dp,0.0_dp)
           lakes_temp(lake_number) = lakepointer(lake_temp)
@@ -862,6 +1099,8 @@ end subroutine lakeprognosticsdestructor
 subroutine initialisefillinglake(this,lake_parameters_in,lake_fields_in,center_cell_lat_in, &
                                  center_cell_lon_in,current_cell_to_fill_lat_in, &
                                  current_cell_to_fill_lon_in, &
+                                 previous_cell_to_fill_lat_in, &
+                                 previous_cell_to_fill_lon_in, &
                                  center_cell_coarse_lat_in, &
                                  center_cell_coarse_lon_in, &
                                  lake_number_in, &
@@ -875,6 +1114,8 @@ subroutine initialisefillinglake(this,lake_parameters_in,lake_fields_in,center_c
   integer, intent(in) :: center_cell_lon_in
   integer, intent(in) :: current_cell_to_fill_lat_in
   integer, intent(in) :: current_cell_to_fill_lon_in
+  integer, intent(in) :: previous_cell_to_fill_lat_in
+  integer, intent(in) :: previous_cell_to_fill_lon_in
   integer, intent(in) :: center_cell_coarse_lat_in
   integer, intent(in) :: center_cell_coarse_lon_in
   integer, intent(in) :: lake_number_in
@@ -884,6 +1125,8 @@ subroutine initialisefillinglake(this,lake_parameters_in,lake_fields_in,center_c
     call this%initialiselake(center_cell_lat_in,center_cell_lon_in, &
                              current_cell_to_fill_lat_in, &
                              current_cell_to_fill_lon_in, &
+                             previous_cell_to_fill_lat_in, &
+                             previous_cell_to_fill_lon_in, &
                              center_cell_coarse_lat_in, &
                              center_cell_coarse_lon_in, &
                              lake_number_in, &
@@ -893,15 +1136,16 @@ subroutine initialisefillinglake(this,lake_parameters_in,lake_fields_in,center_c
                              lake_parameters_in, &
                              lake_fields_in)
     this%lake_type = filling_lake_type
-    this%primary_merge_completed = .false.
-    this%use_additional_fields = .false.
     call this%set_overflowing_lake_parameter_to_null_values()
     call this%set_subsumed_lake_parameter_to_null_values()
 end subroutine initialisefillinglake
 
 function lakeconstructor(lake_parameters_in,lake_fields_in,center_cell_lat_in, &
                          center_cell_lon_in,current_cell_to_fill_lat_in, &
-                         current_cell_to_fill_lon_in,center_cell_coarse_lat_in, &
+                         current_cell_to_fill_lon_in, &
+                         previous_cell_to_fill_lat_in, &
+                         previous_cell_to_fill_lon_in, &
+                         center_cell_coarse_lat_in, &
                          center_cell_coarse_lon_in, lake_number_in, &
                          lake_volume_in,secondary_lake_volume_in,&
                          unprocessed_water_in) result(constructor)
@@ -912,6 +1156,8 @@ function lakeconstructor(lake_parameters_in,lake_fields_in,center_cell_lat_in, &
   integer, intent(in) :: center_cell_lon_in
   integer, intent(in) :: current_cell_to_fill_lat_in
   integer, intent(in) :: current_cell_to_fill_lon_in
+  integer, intent(in) :: previous_cell_to_fill_lat_in
+  integer, intent(in) :: previous_cell_to_fill_lon_in
   integer, intent(in) :: center_cell_coarse_lat_in
   integer, intent(in) :: center_cell_coarse_lon_in
   integer, intent(in) :: lake_number_in
@@ -925,6 +1171,8 @@ function lakeconstructor(lake_parameters_in,lake_fields_in,center_cell_lat_in, &
                                          center_cell_lon_in, &
                                          current_cell_to_fill_lat_in, &
                                          current_cell_to_fill_lon_in, &
+                                         previous_cell_to_fill_lat_in, &
+                                         previous_cell_to_fill_lon_in, &
                                          center_cell_coarse_lat_in, &
                                          center_cell_coarse_lon_in, &
                                          lake_number_in, &
@@ -932,12 +1180,6 @@ function lakeconstructor(lake_parameters_in,lake_fields_in,center_cell_lat_in, &
                                          secondary_lake_volume_in,&
                                          unprocessed_water_in)
 end function lakeconstructor
-
-subroutine set_filling_lake_parameter_to_null_values(this)
-  class(lake) :: this
-    this%primary_merge_completed = .false.
-    this%use_additional_fields = .false.
-end subroutine set_filling_lake_parameter_to_null_values
 
 subroutine initialiseoverflowinglake(this,outflow_redirect_lat_in, &
                                      outflow_redirect_lon_in, &
@@ -948,6 +1190,8 @@ subroutine initialiseoverflowinglake(this,outflow_redirect_lat_in, &
                                      center_cell_lon_in,&
                                      current_cell_to_fill_lat_in, &
                                      current_cell_to_fill_lon_in, &
+                                     previous_cell_to_fill_lat_in, &
+                                     previous_cell_to_fill_lon_in, &
                                      center_cell_coarse_lat_in, &
                                      center_cell_coarse_lon_in, &
                                      next_merge_target_lat_in, &
@@ -964,6 +1208,8 @@ subroutine initialiseoverflowinglake(this,outflow_redirect_lat_in, &
   integer, intent(in) :: center_cell_lon_in
   integer, intent(in) :: current_cell_to_fill_lat_in
   integer, intent(in) :: current_cell_to_fill_lon_in
+  integer, intent(in) :: previous_cell_to_fill_lat_in
+  integer, intent(in) :: previous_cell_to_fill_lon_in
   integer, intent(in) :: center_cell_coarse_lat_in
   integer, intent(in) :: center_cell_coarse_lon_in
   integer, intent(in) :: next_merge_target_lat_in
@@ -977,6 +1223,8 @@ subroutine initialiseoverflowinglake(this,outflow_redirect_lat_in, &
     call this%initialiselake(center_cell_lat_in,center_cell_lon_in, &
                              current_cell_to_fill_lat_in, &
                              current_cell_to_fill_lon_in, &
+                             previous_cell_to_fill_lat_in, &
+                             previous_cell_to_fill_lon_in, &
                              center_cell_coarse_lat_in, &
                              center_cell_coarse_lon_in, &
                              lake_number_in,lake_volume_in, &
@@ -992,7 +1240,6 @@ subroutine initialiseoverflowinglake(this,outflow_redirect_lat_in, &
     this%local_redirect = local_redirect_in
     this%lake_retention_coefficient = lake_retention_coefficient_in
     this%excess_water = 0.0_dp
-    call this%set_filling_lake_parameter_to_null_values()
     call this%set_subsumed_lake_parameter_to_null_values()
 end subroutine initialiseoverflowinglake
 
@@ -1011,6 +1258,8 @@ subroutine initialisesubsumedlake(this,lake_parameters_in,lake_fields_in, &
                                   primary_lake_number_in,center_cell_lat_in, &
                                   center_cell_lon_in,current_cell_to_fill_lat_in, &
                                   current_cell_to_fill_lon_in, &
+                                  previous_cell_to_fill_lat_in, &
+                                  previous_cell_to_fill_lon_in, &
                                   center_cell_coarse_lat_in, &
                                   center_cell_coarse_lon_in, &
                                   lake_number_in,&
@@ -1025,6 +1274,8 @@ subroutine initialisesubsumedlake(this,lake_parameters_in,lake_fields_in, &
   integer, intent(in) :: center_cell_lon_in
   integer, intent(in) :: current_cell_to_fill_lat_in
   integer, intent(in) :: current_cell_to_fill_lon_in
+  integer, intent(in) :: previous_cell_to_fill_lat_in
+  integer, intent(in) :: previous_cell_to_fill_lon_in
   integer, intent(in) :: center_cell_coarse_lat_in
   integer, intent(in) :: center_cell_coarse_lon_in
   integer, intent(in) :: lake_number_in
@@ -1034,6 +1285,8 @@ subroutine initialisesubsumedlake(this,lake_parameters_in,lake_fields_in, &
     call this%initialiselake(center_cell_lat_in,center_cell_lon_in, &
                              current_cell_to_fill_lat_in, &
                              current_cell_to_fill_lon_in, &
+                             previous_cell_to_fill_lat_in, &
+                             previous_cell_to_fill_lon_in, &
                              center_cell_coarse_lat_in, &
                              center_cell_coarse_lon_in, &
                              lake_number_in,lake_volume_in, &
@@ -1042,7 +1295,6 @@ subroutine initialisesubsumedlake(this,lake_parameters_in,lake_fields_in, &
                              lake_parameters_in,lake_fields_in)
     this%lake_type = subsumed_lake_type
     this%primary_lake_number = primary_lake_number_in
-    call this%set_filling_lake_parameter_to_null_values()
     call this%set_overflowing_lake_parameter_to_null_values()
 end subroutine initialisesubsumedlake
 
@@ -1220,16 +1472,35 @@ subroutine run_lakes(lake_parameters,lake_prognostics,lake_fields)
     end do
 end subroutine run_lakes
 
+subroutine calculate_true_lake_depths(lake_prognostics,lake_fields)
+  type(lakeprognostics), intent(inout) :: lake_prognostics
+  type(lakefields), intent(inout) :: lake_fields
+  type(lake), pointer :: working_lake
+  integer :: i
+    lake_fields%true_lake_depths(:,:) = 0.0_dp
+    do i = 1,size(lake_prognostics%lakes)
+      working_lake => lake_prognostics%lakes(i)%lake_pointer
+      if (working_lake%lake_type == overflowing_lake_type .or. &
+          working_lake%lake_type == filling_lake_type) then
+        call working_lake%calculate_true_lake_depth()
+      end if
+    end do
+end subroutine calculate_true_lake_depths
+
 recursive subroutine add_water(this,inflow)
   class(lake), target, intent(inout) :: this
   real(dp), intent(in) :: inflow
   type(lake),  pointer :: other_lake
-  integer :: target_cell_lat,target_cell_lon
+  type(mergeandredirectindicescollection), pointer :: merge_indices_collection
+  type(mergeandredirectindices), pointer :: merge_indices
   integer :: merge_type
   integer :: other_lake_number
+  integer :: merge_indices_index
   logical :: filled
+  integer :: i
   logical :: merge_possible
   logical :: already_merged
+  logical :: is_flood_merge
   real(dp) :: inflow_local
 #ifdef USE_LOGGING
     call log_process_wrapper(this%lake_number,this%center_cell_lat, &
@@ -1242,48 +1513,42 @@ recursive subroutine add_water(this,inflow)
       do while (inflow_local > 0.0_dp)
         filled = this%fill_current_cell(inflow_local)
         if(filled) then
-          merge_type = this%get_merge_type()
-          if(merge_type /= no_merge) then
-            do
-              if (.not. (merge_type == primary_merge .and. &
-                         this%primary_merge_completed)) then
-                if (merge_type == double_merge .and. &
-                    this%primary_merge_completed) then
-                  merge_type = secondary_merge
-                  this%use_additional_fields = .true.
-                end if
-                merge_possible = &
-                  this%check_if_merge_is_possible(merge_type,already_merged)
-                if (merge_possible) then
-                  if (merge_type == secondary_merge) then
-                    call this%perform_secondary_merge()
-                    call this%store_water(inflow_local)
-                    return
-                  else
-                    call this%perform_primary_merge()
-                  end if
-                else if (.not. already_merged) then
-                  call this%change_to_overflowing_lake(merge_type)
-                  call this%store_water(inflow_local)
-                  return
-                else if (merge_type == secondary_merge) then
-                  call this%get_secondary_merge_coords(target_cell_lat,target_cell_lon)
-                  other_lake_number = &
-                    this%lake_fields%lake_numbers(target_cell_lat,target_cell_lon)
-                  other_lake => &
-                    this%lake_fields%other_lakes(other_lake_number)%lake_pointer
-                  if (other_lake%lake_type == subsumed_lake_type) then
-                    call other_lake%change_subsumed_lake_to_filling_lake()
-                  end if
-                  call other_lake%change_to_overflowing_lake(primary_merge)
-                  call this%perform_secondary_merge()
-                  call this%store_water(inflow_local)
-                  return
-                else if (merge_type == double_merge) then
-                  this%primary_merge_completed = .true.
+          merge_indices_index = this%get_merge_indices_index(is_flood_merge)
+          if (merge_indices_index /= 0) then
+            merge_indices_collection => &
+              this%get_merge_indices_collection(merge_indices_index, &
+                                                is_flood_merge)
+            do i = 1,merge_indices_collection%primary_merge_and_redirect_indices_count + 1
+              if (i <= &
+                  merge_indices_collection%primary_merge_and_redirect_indices_count) then
+                merge_indices => &
+                  merge_indices_collection%primary_merge_and_redirect_indices(i)%ptr
+              else
+                if (merge_indices_collection%secondary_merge) then
+                  merge_indices => &
+                    merge_indices_collection%secondary_merge_and_redirect_indices
+                else
+                  exit
                 end if
               end if
-              if (merge_type /= double_merge) exit
+              merge_possible = &
+                this%check_if_merge_is_possible(merge_indices,already_merged,merge_type)
+              if (merge_possible) then
+                if (merge_type == secondary_merge_mtype) then
+                  call this%perform_secondary_merge(merge_indices)
+                  call this%store_water(inflow_local)
+                  return
+                else
+                  call this%perform_primary_merge(merge_indices)
+                end if
+              else if (.not. already_merged) then
+                !Note becoming an overflowing lake occur not only when the other basin
+                !is not yet full enough but also when the other other basin is overflowing
+                !but is filling another basin at the same height (at a tri basin meeting point)
+                call this%change_to_overflowing_lake(merge_indices)
+                call this%store_water(inflow_local)
+                return
+              end if
             end do
           end if
           call this%update_filling_cell()
@@ -1316,34 +1581,61 @@ end subroutine add_water
 subroutine remove_water(this,outflow)
   class(lake), target, intent(inout) :: this
   class(lake), pointer :: other_lake
+  type(mergeandredirectindicescollection), pointer :: merge_indices_collection
+  type(mergeandredirectindices), pointer :: merge_indices
   real(dp) :: outflow
   real(dp) :: outflow_local
   real(dp) :: new_outflow
   logical :: drained
+  logical :: is_flood_merge
   integer :: merge_type
+  integer :: merge_indices_index
+  integer :: i
 #ifdef USE_LOGGING
     call log_process_wrapper(this%lake_number,this%center_cell_lat, &
                              this%center_cell_lon,this%lake_type,&
                              this%lake_volume,"remove_water")
 #endif
     if (this%lake_type == filling_lake_type) then
+      drained = .true.
       if (outflow <= this%unprocessed_water) then
         this%unprocessed_water = this%unprocessed_water - outflow
         return
       end if
       outflow_local = outflow - this%unprocessed_water
       this%unprocessed_water = 0.0_dp
-      do while (outflow_local > 0.0_dp)
+      do while (outflow_local > 0.0_dp .or. drained)
         outflow_local = this%drain_current_cell(outflow_local,drained)
         if (drained) then
           call this%rollback_filling_cell()
-          merge_type = get_merge_type(this)
-          if (merge_type == primary_merge .or. merge_type == double_merge) then
-            new_outflow = outflow_local/2.0_dp
-            outflow_local = outflow_local - new_outflow
-            call this%rollback_primary_merge(new_outflow)
-            this%primary_merge_completed = .false.
-            this%use_additional_fields = .false.
+          merge_indices_index = this%get_merge_indices_index(is_flood_merge)
+          if (merge_indices_index /= 0) then
+            merge_indices_collection => &
+              this%get_merge_indices_collection(merge_indices_index, &
+                                                is_flood_merge)
+            do i = merge_indices_collection%primary_merge_and_redirect_indices_count+1,1,-1
+              if (i <= merge_indices_collection%primary_merge_and_redirect_indices_count) then
+                merge_indices => &
+                  merge_indices_collection%primary_merge_and_redirect_indices(i)%ptr
+              else
+                if(merge_indices_collection%secondary_merge) then
+                  merge_indices => &
+                    merge_indices_collection%secondary_merge_and_redirect_indices
+                else
+                  cycle
+                end if
+              end if
+              merge_type = merge_indices%get_merge_type()
+              if (merge_type == primary_merge_mtype) then
+                new_outflow = outflow_local/2.0_dp
+                if (this%conditionally_rollback_primary_merge(merge_indices,new_outflow)) then
+                  outflow_local = outflow_local - new_outflow
+                end if
+              else if (merge_type == secondary_merge_mtype) then
+                write(*,*) "Merge logic failure"
+                stop
+              end if
+            end do
           end if
         end if
       end do
@@ -1371,16 +1663,39 @@ subroutine remove_water(this,outflow)
                                               this%current_cell_to_fill_lon) = .false.
       end if
       call this%change_overflowing_lake_to_filling_lake()
-      merge_type = this%get_merge_type()
-      if (merge_type == double_merge) then
-        if (this%primary_merge_completed) then
+
+      merge_indices_index = this%get_merge_indices_index(is_flood_merge)
+      if (merge_indices_index /= 0) then
+        merge_indices_collection => &
+          this%get_merge_indices_collection(merge_indices_index, &
+                                            is_flood_merge)
+        do i = merge_indices_collection%primary_merge_and_redirect_indices_count+1,1,-1
+          if (i <= merge_indices_collection%primary_merge_and_redirect_indices_count) then
+            merge_indices => &
+              merge_indices_collection%primary_merge_and_redirect_indices(i)%ptr
+          else
+            if(merge_indices_collection%secondary_merge) then
+              merge_indices => &
+                merge_indices_collection%secondary_merge_and_redirect_indices
+            else
+              cycle
+            end if
+          end if
+          merge_type = merge_indices%get_merge_type()
+          if (merge_type == primary_merge_mtype) then
             new_outflow = outflow_local/2.0_dp
-            outflow_local = outflow_local - new_outflow
-            call this%rollback_primary_merge(new_outflow)
-        end if
+            if(this%conditionally_rollback_primary_merge(merge_indices, &
+                                                         new_outflow)) then
+              outflow_local = outflow_local - new_outflow
+            end if
+          else if (merge_type == secondary_merge_mtype) then
+            if(merge_indices%merged) then
+              write(*,*) "Merge logic failure"
+              stop
+            end if
+          end if
+        end do
       end if
-      this%primary_merge_completed = .false.
-      this%use_additional_fields = .false.
       call this%remove_water(outflow_local)
     else if (this%lake_type == subsumed_lake_type) then
       if (outflow <= this%unprocessed_water) then
@@ -1410,11 +1725,13 @@ subroutine release_negative_water(this)
     this%lake_volume = 0.0_dp
 end subroutine release_negative_water
 
-subroutine accept_merge(this,redirect_coords_lat,redirect_coords_lon)
+subroutine accept_merge(this,redirect_coords_lat,redirect_coords_lon, &
+                        primary_lake_number)
   class(lake), intent(inout) :: this
   integer, intent(in) :: redirect_coords_lat
   integer, intent(in) :: redirect_coords_lon
   integer :: lake_type
+  integer :: primary_lake_number
   real(dp) :: excess_water
     lake_type = this%lake_type
     excess_water = this%excess_water
@@ -1431,6 +1748,11 @@ subroutine accept_merge(this,redirect_coords_lat,redirect_coords_lon)
       this%number_of_flooded_cells = &
         this%number_of_flooded_cells + 1
     end if
+    if (.not. this%lake_fields%set_forest%make_new_link_from_labels(primary_lake_number, &
+                                                                    this%lake_number)) then
+      write(*,*) "Lake merging logic failure"
+      stop
+    end if
     call this%initialisesubsumedlake(this%lake_parameters, &
                                      this%lake_fields, &
                                      this%lake_fields%lake_numbers(redirect_coords_lat, &
@@ -1439,6 +1761,8 @@ subroutine accept_merge(this,redirect_coords_lat,redirect_coords_lon)
                                      this%center_cell_lon, &
                                      this%current_cell_to_fill_lat, &
                                      this%current_cell_to_fill_lon, &
+                                     this%previous_cell_to_fill_lat, &
+                                     this%previous_cell_to_fill_lon, &
                                      this%center_cell_coarse_lat, &
                                      this%center_cell_coarse_lon, &
                                      this%lake_number,this%lake_volume,&
@@ -1449,8 +1773,9 @@ subroutine accept_merge(this,redirect_coords_lat,redirect_coords_lon)
     end if
 end subroutine accept_merge
 
-subroutine accept_split(this)
+subroutine accept_split(this,primary_lake_number)
   class(lake), intent(inout) :: this
+  integer :: primary_lake_number
     if (this%lake_fields%flooded_lake_cells(this%current_cell_to_fill_lat, &
                                             this%current_cell_to_fill_lon)) then
       this%lake_fields%flooded_lake_cells(this%current_cell_to_fill_lat, &
@@ -1461,11 +1786,18 @@ subroutine accept_split(this)
       this%lake_fields%connected_lake_cells(this%current_cell_to_fill_lat, &
                                             this%current_cell_to_fill_lon) = .false.
     end if
+    if ( .not. this%lake_fields%set_forest%split_set(primary_lake_number, &
+                                                     this%lake_number)) then
+      write(*,*) "Lake splitting logic failure"
+      stop
+    end if
     call this%initialisefillinglake(this%lake_parameters,this%lake_fields, &
                                     this%center_cell_lat, &
                                     this%center_cell_lon, &
                                     this%current_cell_to_fill_lat, &
                                     this%current_cell_to_fill_lon, &
+                                    this%previous_cell_to_fill_lat, &
+                                    this%previous_cell_to_fill_lon, &
                                     this%center_cell_coarse_lat, &
                                     this%center_cell_coarse_lon, &
                                     this%lake_number,this%lake_volume, &
@@ -1473,21 +1805,17 @@ subroutine accept_split(this)
                                     this%unprocessed_water)
 end subroutine
 
-subroutine change_to_overflowing_lake(this,merge_type)
+subroutine change_to_overflowing_lake(this,merge_indices)
   class(lake), intent(inout) :: this
+  type(mergeandredirectindices), pointer :: merge_indices
   integer :: outflow_redirect_lat
   integer :: outflow_redirect_lon
-  integer :: merge_type
   integer :: target_cell_lat,target_cell_lon
   logical :: local_redirect
-    call this%get_outflow_redirect_coords(outflow_redirect_lat, &
-                                          outflow_redirect_lon, &
-                                          local_redirect)
-    if (merge_type == secondary_merge) then
-      call this%get_secondary_merge_coords(target_cell_lat,target_cell_lon)
-    else
-      call this%get_primary_merge_coords(target_cell_lat,target_cell_lon)
-    end if
+    call merge_indices%get_outflow_redirect_coords(outflow_redirect_lat, &
+                                                   outflow_redirect_lon, &
+                                                   local_redirect)
+    call merge_indices%get_merge_target_coords(target_cell_lat,target_cell_lon)
     if (.not. (this%lake_fields%connected_lake_cells(this%current_cell_to_fill_lat, &
                                                      this%current_cell_to_fill_lon) .or. &
                this%lake_parameters%flood_only(this%current_cell_to_fill_lat, &
@@ -1509,6 +1837,8 @@ subroutine change_to_overflowing_lake(this,merge_type)
                                         this%center_cell_lon, &
                                         this%current_cell_to_fill_lat, &
                                         this%current_cell_to_fill_lon, &
+                                        this%previous_cell_to_fill_lat, &
+                                        this%previous_cell_to_fill_lon, &
                                         this%center_cell_coarse_lat, &
                                         this%center_cell_coarse_lon, &
                                         target_cell_lat, &
@@ -1611,6 +1941,240 @@ recursive subroutine calculate_effective_lake_volume_per_cell(this,consider_seco
     end if
 end subroutine calculate_effective_lake_volume_per_cell
 
+subroutine calculate_true_lake_depth(this)
+  class(lake), intent(inout) :: this
+  class(lake), pointer :: secondary_lake
+  integer, pointer, dimension(:) :: working_cell_lats
+  integer, pointer, dimension(:) :: working_cell_lons
+  integer, dimension(:), pointer :: label_list
+  real(dp) :: current_cell_to_fill_height
+  real(dp) :: sill_height
+  real(dp) :: volume_above_current_filling_cell
+  real(dp) :: highest_threshold_reached
+  real(dp) :: total_lake_area
+  real(dp) :: volume_above_sill
+  real(dp) :: depth_above_sill
+  real(dp) :: depth_above_current_filling_cell
+  integer :: secondary_lake_number
+  integer :: working_cell_list_length
+  integer :: working_cell_index
+  integer :: i,j
+  integer :: lat,lon
+    if (this%lake_type == filling_lake_type) then
+      if (this%lake_fields%connected_lake_cells(this%current_cell_to_fill_lat, &
+                                                 this%current_cell_to_fill_lon) .or. &
+          this%lake_parameters%flood_only(this%current_cell_to_fill_lat, &
+                                          this%current_cell_to_fill_lon)) then
+        current_cell_to_fill_height = &
+          this%lake_parameters%raw_heights(this%current_cell_to_fill_lat, &
+                                           this%current_cell_to_fill_lon)
+      else
+        current_cell_to_fill_height = &
+          this%lake_parameters%corrected_heights(this%current_cell_to_fill_lat, &
+                                                 this%current_cell_to_fill_lon)
+      end if
+      if (this%previous_cell_to_fill_lat /= this%current_cell_to_fill_lat .or. &
+          this%previous_cell_to_fill_lon /= this%current_cell_to_fill_lon) then
+        if (this%lake_fields%flooded_lake_cells(this%previous_cell_to_fill_lat, &
+                                                 this%previous_cell_to_fill_lon) .or. &
+             this%lake_parameters%flood_only(this%previous_cell_to_fill_lat, &
+                                             this%previous_cell_to_fill_lon)) then
+          highest_threshold_reached = &
+            this%lake_parameters%flood_volume_thresholds(this%previous_cell_to_fill_lat, &
+                                                         this%previous_cell_to_fill_lon)
+        else
+          highest_threshold_reached = &
+            this%lake_parameters%connection_volume_thresholds(this%previous_cell_to_fill_lat, &
+                                                              this%previous_cell_to_fill_lon)
+        end if
+      else
+        highest_threshold_reached = 0.0_dp
+      end if
+      volume_above_current_filling_cell = &
+        this%lake_volume + &
+        this%unprocessed_water - &
+        highest_threshold_reached
+      label_list => this%lake_fields%set_forest%get_all_node_labels_of_set(this%lake_number)
+      working_cell_list_length = this%filled_lake_cell_index + 1
+      if (size(label_list) > 0) then
+        do j = 1,size(label_list)
+          secondary_lake_number = label_list(j)
+          if (.not. (secondary_lake_number == this%lake_number)) then
+            working_cell_list_length = &
+              working_cell_list_length + &
+              this%lake_fields%other_lakes(secondary_lake_number)&
+              &%lake_pointer%filled_lake_cell_index + 1
+          end if
+        end do
+      end if
+      allocate(working_cell_lats(working_cell_list_length))
+      allocate(working_cell_lons(working_cell_list_length))
+      working_cell_index = 0
+      if (this%filled_lake_cell_index > 0) then
+        do i = 1,this%filled_lake_cell_index
+          if (this%filled_lake_cell_lats(i) /= this%current_cell_to_fill_lat .or. &
+              this%filled_lake_cell_lons(i) /= this%current_cell_to_fill_lon) then
+            working_cell_index = working_cell_index + 1
+            working_cell_lats(working_cell_index) = this%filled_lake_cell_lats(i)
+            working_cell_lons(working_cell_index) = this%filled_lake_cell_lons(i)
+          end if
+        end do
+      end if
+      working_cell_index = working_cell_index + 1
+      working_cell_lats(working_cell_index) = this%current_cell_to_fill_lat
+      working_cell_lons(working_cell_index) = this%current_cell_to_fill_lon
+      if (size(label_list) > 0) then
+        do j = 1,size(label_list)
+          secondary_lake_number = label_list(j)
+          if (.not. (secondary_lake_number == this%lake_number)) then
+            secondary_lake => this%lake_fields%&
+                              &other_lakes(secondary_lake_number)%lake_pointer
+            do i = 1,secondary_lake%filled_lake_cell_index
+              if (this%lake_fields%lake_numbers(secondary_lake%filled_lake_cell_lats(i), &
+                                                secondary_lake%filled_lake_cell_lons(i)) == &
+                  secondary_lake_number) then
+                working_cell_index = working_cell_index + 1
+                working_cell_lats(working_cell_index) = &
+                  secondary_lake%filled_lake_cell_lats(i)
+                working_cell_lons(working_cell_index) = &
+                  secondary_lake%filled_lake_cell_lons(i)
+              end if
+            end do
+            if (this%lake_fields%lake_numbers(secondary_lake%current_cell_to_fill_lat, &
+                                              secondary_lake%current_cell_to_fill_lon) == &
+                secondary_lake_number) then
+              working_cell_index = working_cell_index + 1
+              working_cell_lats(working_cell_index) = &
+                secondary_lake%current_cell_to_fill_lat
+              working_cell_lons(working_cell_index) = &
+                secondary_lake%current_cell_to_fill_lon
+            end if
+          end if
+        end do
+      end if
+      total_lake_area = 0.0_dp
+      do i = 1,working_cell_index
+        lat = working_cell_lats(i)
+        lon = working_cell_lons(i)
+        if (this%lake_fields%flooded_lake_cells(lat,lon) .or. &
+            this%lake_parameters%flood_only(lat,lon) .or. &
+            (lat == this%current_cell_to_fill_lat .and. &
+             lon == this%current_cell_to_fill_lon .and. &
+             this%lake_fields%connected_lake_cells(lat,lon))) then
+          total_lake_area = total_lake_area + &
+                            this%lake_parameters%cell_areas(lat,lon)
+        end if
+      end do
+      depth_above_current_filling_cell = &
+        volume_above_current_filling_cell / total_lake_area
+      do i = 1,working_cell_index
+        lat = working_cell_lats(i)
+        lon = working_cell_lons(i)
+        if (this%lake_fields%flooded_lake_cells(lat,lon) .or. &
+           this%lake_parameters%flood_only(lat,lon) .or. &
+           (lat == this%current_cell_to_fill_lat .and. &
+            lon == this%current_cell_to_fill_lon .and. &
+            this%lake_fields%connected_lake_cells(lat,lon))) then
+          this%lake_fields%true_lake_depths(lat,lon) =  &
+            depth_above_current_filling_cell + current_cell_to_fill_height - &
+            this%lake_parameters%raw_heights(lat,lon)
+        end if
+      end do
+    else if (this%lake_type == overflowing_lake_type) then
+      if (this%lake_fields%flooded_lake_cells(this%current_cell_to_fill_lat, &
+                                              this%current_cell_to_fill_lon) .or. &
+          this%lake_parameters%flood_only(this%current_cell_to_fill_lat, &
+                                          this%current_cell_to_fill_lon)) then
+        sill_height = &
+          this%lake_parameters%flood_heights(this%current_cell_to_fill_lat, &
+                                             this%current_cell_to_fill_lon)
+      else
+        sill_height = &
+          this%lake_parameters%connection_heights(this%current_cell_to_fill_lat, &
+                                                  this%current_cell_to_fill_lon)
+      end if
+      volume_above_sill = this%excess_water + &
+                            this%unprocessed_water
+      label_list => this%lake_fields%set_forest%get_all_node_labels_of_set(this%lake_number)
+      working_cell_list_length = this%filled_lake_cell_index + 1
+      if (size(label_list) > 0) then
+        do j = 1,size(label_list)
+          secondary_lake_number = label_list(j)
+          if (.not. (secondary_lake_number == this%lake_number)) then
+            working_cell_list_length = &
+              working_cell_list_length + &
+              this%lake_fields%other_lakes(secondary_lake_number)%&
+              &lake_pointer%filled_lake_cell_index + 1
+          end if
+        end do
+      end if
+      allocate(working_cell_lats(working_cell_list_length))
+      allocate(working_cell_lons(working_cell_list_length))
+      working_cell_index = 0
+      if (this%filled_lake_cell_index > 0) then
+        do i = 1,this%filled_lake_cell_index
+          working_cell_index = working_cell_index + 1
+          working_cell_lats(working_cell_index) = this%filled_lake_cell_lats(i)
+          working_cell_lons(working_cell_index) = this%filled_lake_cell_lons(i)
+        end do
+      end if
+      working_cell_index = working_cell_index + 1
+      working_cell_lats(working_cell_index) = this%current_cell_to_fill_lat
+      working_cell_lons(working_cell_index) = this%current_cell_to_fill_lon
+      if (size(label_list) > 0) then
+        do j = 1,size(label_list)
+          secondary_lake_number = label_list(j)
+          if (.not. (secondary_lake_number == this%lake_number)) then
+            secondary_lake => this%lake_fields%&
+                              &other_lakes(secondary_lake_number)%lake_pointer
+            do i = 1,secondary_lake%filled_lake_cell_index
+              working_cell_index = working_cell_index + 1
+              working_cell_lats(working_cell_index) = &
+                secondary_lake%filled_lake_cell_lats(i)
+              working_cell_lons(working_cell_index) = &
+                secondary_lake%filled_lake_cell_lons(i)
+            end do
+            working_cell_index = working_cell_index + 1
+            working_cell_lats(working_cell_index) = &
+              secondary_lake%current_cell_to_fill_lat
+            working_cell_lons(working_cell_index) = &
+              secondary_lake%current_cell_to_fill_lon
+          end if
+        end do
+      end if
+      if (this%lake_fields%flooded_lake_cells(this%current_cell_to_fill_lat, &
+                                              this%current_cell_to_fill_lon) .or. &
+          this%lake_parameters%flood_only(this%current_cell_to_fill_lat, &
+                                          this%current_cell_to_fill_lon)) then
+        total_lake_area = this%lake_parameters%cell_areas(this%current_cell_to_fill_lat, &
+                                                          this%current_cell_to_fill_lon)
+      else
+        total_lake_area = 0.0_dp
+      end if
+      do i = 1,working_cell_index
+        lat = working_cell_lats(i)
+        lon = working_cell_lons(i)
+        if (this%lake_fields%flooded_lake_cells(lat,lon) .or. &
+            this%lake_parameters%flood_only(lat,lon)) then
+          total_lake_area = total_lake_area + &
+                            this%lake_parameters%cell_areas(lat,lon)
+        end if
+      end do
+      depth_above_sill = &
+        volume_above_sill / total_lake_area
+      do i = 1,working_cell_index
+        lat = working_cell_lats(i)
+        lon = working_cell_lons(i)
+        if (this%lake_fields%flooded_lake_cells(lat,lon) .or. &
+            this%lake_parameters%flood_only(lat,lon)) then
+          this%lake_fields%true_lake_depths(lat,lon) = &
+            depth_above_sill + sill_height - &
+            this%lake_parameters%raw_heights(lat,lon)
+        end if
+      end do
+    end if
+end subroutine calculate_true_lake_depth
+
 function fill_current_cell(this,inflow) result(filled)
   class(lake), intent(inout) :: this
   real(dp), intent(inout) :: inflow
@@ -1665,7 +2229,22 @@ function drain_current_cell(this,outflow,drained) result(outflow_out)
         this%lake_parameters%connection_volume_thresholds(this%previous_cell_to_fill_lat, &
                                                           this%previous_cell_to_fill_lon)
     end if
-    if (new_lake_volume >= minimum_new_lake_volume) then
+
+    if (new_lake_volume <= 0.0_dp .and. minimum_new_lake_volume <= 0.0_dp) then
+      this%lake_volume = new_lake_volume
+      drained = .true.
+      outflow_out = 0.0_dp
+    else if (new_lake_volume <= this%lake_parameters%minimum_lake_volume_threshold &
+             .and. minimum_new_lake_volume <= 0.0_dp) then
+      this%lake_volume = 0.0_dp
+      drained = .true.
+      outflow_out = 0.0_dp
+      this%lake_fields%lake_water_from_ocean(this%center_cell_coarse_lat, &
+                                           this%center_cell_coarse_lon) = &
+        this%lake_fields%lake_water_from_ocean(this%center_cell_coarse_lat, &
+                                             this%center_cell_coarse_lon) - &
+        new_lake_volume
+    else if (new_lake_volume >= minimum_new_lake_volume) then
       this%lake_volume = new_lake_volume
       drained = .false.
       outflow_out = 0.0_dp
@@ -1676,105 +2255,141 @@ function drain_current_cell(this,outflow,drained) result(outflow_out)
     end if
 end function
 
-function get_merge_type(this) result(simple_merge_type)
-  class(lake), intent(inout) :: this
-  integer :: simple_merge_type
-  integer :: extended_merge_type
-    extended_merge_type = this%lake_parameters%merge_points(this%current_cell_to_fill_lat, &
-                                                            this%current_cell_to_fill_lon)
+function get_merge_type(this) result(merge_type)
+  class(mergeandredirectindices) :: this
+  integer :: merge_type
+    if (this%is_primary_merge) then
+      merge_type = primary_merge_mtype
+    else
+      merge_type = secondary_merge_mtype
+    end if
+end function get_merge_type
+
+function get_merge_indices_index(this,is_flood_merge) result(merge_indices_index)
+  class(lake), intent(in) :: this
+  logical, intent(out) :: is_flood_merge
+  integer :: merge_indices_index
     if (this%lake_fields%connected_lake_cells(this%current_cell_to_fill_lat, &
                                               this%current_cell_to_fill_lon) .or. &
         this%lake_parameters%flood_only(this%current_cell_to_fill_lat, &
                                         this%current_cell_to_fill_lon)) then
-      simple_merge_type = convert_to_simple_merge_type_flood(Int(extended_merge_type)+1)
+      is_flood_merge = .True.
+      merge_indices_index = this%lake_parameters%&
+        &flood_merge_and_redirect_indices_index(this%current_cell_to_fill_lat, &
+                                                this%current_cell_to_fill_lon)
     else
-      simple_merge_type = convert_to_simple_merge_type_connect(Int(extended_merge_type)+1)
+      is_flood_merge = .False.
+      merge_indices_index = this%lake_parameters%&
+        &connect_merge_and_redirect_indices_index(this%current_cell_to_fill_lat, &
+                                                  this%current_cell_to_fill_lon)
     end if
-end function get_merge_type
+end function get_merge_indices_index
 
-function check_if_merge_is_possible(this,simple_merge_type,already_merged) &
+function get_merge_indices_collection(this,merge_indices_index, &
+                                      is_flood_merge) result(collection)
+  class(lake), intent(in) :: this
+  type(mergeandredirectindicescollection), pointer :: collection
+  integer :: merge_indices_index
+  logical :: is_flood_merge
+  if (is_flood_merge) then
+    collection => this%lake_parameters% &
+           flood_merge_and_redirect_indices_collections(merge_indices_index)%ptr
+  else
+    collection => this%lake_parameters% &
+           connect_merge_and_redirect_indices_collections(merge_indices_index)%ptr
+  end if
+end function get_merge_indices_collection
+
+subroutine get_merge_target_coords(this,target_cell_lat,target_cell_lon)
+  class(mergeandredirectindices), intent(inout) :: this
+  integer, intent(out) :: target_cell_lat
+  integer, intent(out) :: target_cell_lon
+    target_cell_lat = this%merge_target_lat_index
+    target_cell_lon = this%merge_target_lon_index
+end subroutine get_merge_target_coords
+
+subroutine get_outflow_redirect_coords(this, &
+                                       outflow_redirect_lat, &
+                                       outflow_redirect_lon, &
+                                       local_redirect)
+  class(mergeandredirectindices), intent(inout) :: this
+  integer, intent(out) :: outflow_redirect_lat
+  integer, intent(out) :: outflow_redirect_lon
+  logical, intent(out) :: local_redirect
+    outflow_redirect_lat = this%redirect_lat_index
+    outflow_redirect_lon = this%redirect_lon_index
+    local_redirect = this%local_redirect
+end subroutine get_outflow_redirect_coords
+
+function check_if_merge_is_possible(this,merge_indices,already_merged, &
+                                    merge_type) &
    result(merge_possible)
   class(lake), intent(in) :: this
-  integer, intent(in) :: simple_merge_type
+  type(mergeandredirectindices), pointer, intent(inout) :: merge_indices
+  integer, intent(out) :: merge_type
   logical, intent(out) :: already_merged
   logical :: merge_possible
   type(lake), pointer :: other_lake
   type(lake), pointer :: other_lake_target_lake
-  type(lake), pointer :: other_lake_target_lake_true_primary
   integer :: target_cell_lat
   integer :: target_cell_lon
+  integer :: other_lake_number
   integer :: other_lake_target_lake_number
-    if (simple_merge_type == secondary_merge) then
-      call this%get_secondary_merge_coords(target_cell_lat,target_cell_lon)
-    else
-      call this%get_primary_merge_coords(target_cell_lat,target_cell_lon)
+    merge_type = merge_indices%get_merge_type()
+    if (merge_indices%merged) then
+      merge_possible = .false.
+      already_merged = .true.
+      return
     end if
-    if ((.not. (this%lake_fields%connected_lake_cells(target_cell_lat, &
-                                                      target_cell_lon) .or. &
-                this%lake_parameters%flood_only(target_cell_lat, &
-                                                target_cell_lon))) .or. &
-        (this%lake_parameters%flood_only(target_cell_lat, &
-                                         target_cell_lon) .and. &
-         .not. this%lake_fields%flooded_lake_cells(target_cell_lat, &
-                                                   target_cell_lon))) then
+    call merge_indices%get_merge_target_coords(target_cell_lat,target_cell_lon)
+    other_lake_number = this%lake_fields%lake_numbers(target_cell_lat, &
+                                                      target_cell_lon)
+    if (other_lake_number == 0) then
       merge_possible = .false.
       already_merged = .false.
       return
     end if
-    other_lake => this%lake_fields%&
-                  &other_lakes(this%lake_fields%lake_numbers(target_cell_lat, &
-                                                             target_cell_lon))%lake_pointer
+    other_lake => this%lake_fields%other_lakes(other_lake_number)%lake_pointer
     other_lake => other_lake%find_true_primary_lake()
     if (other_lake%lake_number == this%lake_number) then
       merge_possible = .false.
       already_merged = .true.
       return
-    end if
-    if (other_lake%lake_type == overflowing_lake_type) then
+    else if (other_lake%lake_type == overflowing_lake_type) then
       other_lake_target_lake_number = &
         this%lake_fields%lake_numbers(other_lake%next_merge_target_lat, &
                                       other_lake%next_merge_target_lon)
-      do
-        if (other_lake_target_lake_number == 0) then
-          merge_possible = .false.
-          already_merged = .false.
-          return
-        end if
-        other_lake_target_lake => &
-          this%lake_fields%other_lakes(other_lake_target_lake_number)%lake_pointer
-        if (other_lake_target_lake%lake_number == this%lake_number) then
-          merge_possible = .true.
-          already_merged = .false.
-          return
-        else
-          if (other_lake_target_lake%lake_type == overflowing_lake_type) then
-            other_lake_target_lake_number = &
-              this%lake_fields%lake_numbers(other_lake_target_lake%next_merge_target_lat,&
-                                            other_lake_target_lake%next_merge_target_lon)
-          else if (other_lake_target_lake%lake_type == subsumed_lake_type) then
-            other_lake_target_lake_true_primary => &
-              other_lake_target_lake%find_true_primary_lake()
-            other_lake_target_lake_number = &
-              other_lake_target_lake_true_primary%lake_number
-          else
-             merge_possible = .false.
-             already_merged = .false.
-             return
-          end if
-        end if
-      end do
+      if (other_lake_target_lake_number == 0) then
+        merge_possible = .false.
+        already_merged = .false.
+        return
+      end if
+      other_lake_target_lake => &
+        this%lake_fields%other_lakes(other_lake_target_lake_number)%lake_pointer
+      other_lake_target_lake => find_true_primary_lake(other_lake_target_lake)
+      if (other_lake_target_lake%lake_number == this%lake_number) then
+        merge_possible = .true.
+        already_merged = .false.
+        return
+      else
+         merge_possible = .false.
+         already_merged = .false.
+         return
+      end if
     else
       merge_possible = .false.
       already_merged = .false.
     end if
 end function check_if_merge_is_possible
 
-subroutine perform_primary_merge(this)
+subroutine perform_primary_merge(this,merge_indices)
   class(lake), intent(inout) :: this
+  type(mergeandredirectindices), pointer, intent(inout) :: merge_indices
   type(lake), pointer :: other_lake
   integer :: target_cell_lat,target_cell_lon
   integer :: other_lake_number
-    call this%get_primary_merge_coords(target_cell_lat,target_cell_lon)
+    call merge_indices%get_merge_target_coords(target_cell_lat,target_cell_lon)
+    merge_indices%merged = .true.
     other_lake_number = this%lake_fields%lake_numbers(target_cell_lat,target_cell_lon)
     other_lake => this%lake_fields%other_lakes(other_lake_number)%lake_pointer
     other_lake => other_lake%find_true_primary_lake()
@@ -1783,16 +2398,17 @@ subroutine perform_primary_merge(this)
     this%secondary_number_of_flooded_cells = this%secondary_number_of_flooded_cells + &
       other_lake%number_of_flooded_cells + &
       other_lake%secondary_number_of_flooded_cells
-    this%primary_merge_completed = .true.
-    call other_lake%accept_merge(this%center_cell_lat,this%center_cell_lon)
+    call other_lake%accept_merge(this%center_cell_lat,this%center_cell_lon, &
+                                 this%lake_number)
 end subroutine perform_primary_merge
 
-subroutine perform_secondary_merge(this)
+subroutine perform_secondary_merge(this,merge_indices)
   class(lake), intent(inout) :: this
+  type(mergeandredirectindices), pointer, intent(inout) :: merge_indices
   type(lake), pointer :: other_lake
   integer :: target_cell_lat,target_cell_lon
   integer :: other_lake_number
-    call this%get_secondary_merge_coords(target_cell_lat,target_cell_lon)
+    call merge_indices%get_merge_target_coords(target_cell_lat,target_cell_lon)
     if (.not. (this%lake_fields%connected_lake_cells(this%current_cell_to_fill_lat, &
                                                      this%current_cell_to_fill_lon) .or. &
                this%lake_parameters%flood_only(this%current_cell_to_fill_lat, &
@@ -1828,48 +2444,95 @@ subroutine perform_secondary_merge(this)
         call other_lake%change_overflowing_lake_to_filling_lake()
     end if
     call this%accept_merge(other_lake%center_cell_lat, &
-                           other_lake%center_cell_lon)
+                           other_lake%center_cell_lon, &
+                           other_lake%lake_number)
 end subroutine perform_secondary_merge
 
-subroutine rollback_primary_merge(this,other_lake_outflow)
+recursive function conditionally_rollback_primary_merge(this,merge_indices,&
+                                                        other_lake_outflow) &
+    result(rollback_performed)
   class(lake), intent(inout) :: this
+  type(mergeandredirectindices), pointer, intent(inout) :: merge_indices
+  type(mergeandredirectindicescollection), pointer :: merge_indices_collection
+  logical :: rollback_performed
   class(lake), pointer :: other_lake
+  class(lake), pointer :: other_lake_true_primary_lake
   integer :: other_lake_number
   real(dp) :: other_lake_outflow
   integer :: target_cell_lat, target_cell_lon
-    call this%get_primary_merge_coords(target_cell_lat, &
-                                       target_cell_lon)
+  logical :: is_flood_merge, dummy
+  integer :: i
+  integer :: merge_type
+  integer :: merge_indices_index
+    call merge_indices%get_merge_target_coords(target_cell_lat,target_cell_lon)
     other_lake_number = this%lake_fields%lake_numbers(target_cell_lat, &
                                                       target_cell_lon)
     other_lake => this%lake_fields%other_lakes(other_lake_number)%lake_pointer
+    if (other_lake%lake_type /= subsumed_lake_type) then
+      rollback_performed = .false.
+      return
+    end if
     other_lake => find_true_rolledback_primary_lake(other_lake)
+    other_lake_true_primary_lake => find_true_primary_lake(other_lake)
+    if (other_lake_true_primary_lake%lake_number /= this%lake_number) then
+      rollback_performed = .false.
+      return
+    end if
+    merge_indices%merged = .false.
     this%secondary_lake_volume = this%secondary_lake_volume - other_lake%lake_volume - &
       other_lake%secondary_lake_volume
     this%secondary_number_of_flooded_cells = &
       this%secondary_number_of_flooded_cells - &
       (other_lake%number_of_flooded_cells + &
        other_lake%secondary_number_of_flooded_cells)
-    call other_lake%accept_split()
+    call other_lake%accept_split(this%lake_number)
+    merge_indices_index = other_lake%get_merge_indices_index(is_flood_merge)
+    if (merge_indices_index /= 0) then
+      merge_indices_collection => &
+            this%get_merge_indices_collection(merge_indices_index, &
+                                              is_flood_merge)
+      do i = merge_indices_collection%primary_merge_and_redirect_indices_count+1,1,-1
+        if (i <= merge_indices_collection%primary_merge_and_redirect_indices_count) then
+          merge_indices => &
+            merge_indices_collection%primary_merge_and_redirect_indices(i)%ptr
+        else
+          if(merge_indices_collection%secondary_merge) then
+            merge_indices => &
+              merge_indices_collection%secondary_merge_and_redirect_indices
+          else
+            cycle
+          end if
+        end if
+        merge_type = merge_indices%get_merge_type()
+        if (merge_type == primary_merge_mtype) then
+          dummy = conditionally_rollback_primary_merge(other_lake,merge_indices,0.0_dp)
+        else if(merge_type == secondary_merge_mtype) then
+          if (merge_indices%merged) then
+              write(*,*) "Merge logic failure"
+              stop
+          end if
+        end if
+      end do
+    end if
     call other_lake%remove_water(other_lake_outflow)
-end subroutine rollback_primary_merge
+    rollback_performed = .true.
+end function conditionally_rollback_primary_merge
 
 subroutine change_overflowing_lake_to_filling_lake(this)
   class(lake), intent(inout) :: this
-  logical :: use_additional_fields
     this%unprocessed_water = this%unprocessed_water + this%excess_water
-    use_additional_fields = (this%get_merge_type() == double_merge)
     call this%initialisefillinglake(this%lake_parameters,this%lake_fields, &
                                     this%center_cell_lat, &
                                     this%center_cell_lon, &
                                     this%current_cell_to_fill_lat, &
                                     this%current_cell_to_fill_lon,&
+                                    this%previous_cell_to_fill_lat, &
+                                    this%previous_cell_to_fill_lon, &
                                     this%center_cell_coarse_lat, &
                                     this%center_cell_coarse_lon, &
                                     this%lake_number,this%lake_volume,&
                                     this%secondary_lake_volume,&
                                     this%unprocessed_water)
-    this%primary_merge_completed = .true.
-    this%use_additional_fields = use_additional_fields
 end subroutine change_overflowing_lake_to_filling_lake
 
 subroutine change_subsumed_lake_to_filling_lake(this)
@@ -1879,13 +2542,13 @@ subroutine change_subsumed_lake_to_filling_lake(this)
                                     this%center_cell_lon, &
                                     this%current_cell_to_fill_lat, &
                                     this%current_cell_to_fill_lon,&
+                                    this%previous_cell_to_fill_lat, &
+                                    this%previous_cell_to_fill_lon, &
                                     this%center_cell_coarse_lat, &
                                     this%center_cell_coarse_lon, &
                                     this%lake_number,this%lake_volume, &
                                     this%secondary_lake_volume,&
                                     this%unprocessed_water)
-    this%primary_merge_completed = .false.
-    this%use_additional_fields = .false.
 end subroutine change_subsumed_lake_to_filling_lake
 
 subroutine update_filling_cell(this,dry_run)
@@ -1958,14 +2621,12 @@ subroutine update_filling_cell(this,dry_run)
       this%filled_lake_cell_index = this%filled_lake_cell_index + 1
       this%filled_lake_cell_lats(this%filled_lake_cell_index) = coords_lat
       this%filled_lake_cell_lons(this%filled_lake_cell_index) = coords_lon
-      this%primary_merge_completed = .false.
     end if
 end subroutine update_filling_cell
 
 subroutine rollback_filling_cell(this)
   class(lake), intent(inout) :: this
   integer :: lat_surface_model, lon_surface_model
-    this%primary_merge_completed = .false.
     if (this%lake_parameters%flood_only(this%current_cell_to_fill_lat, &
                                         this%current_cell_to_fill_lon) .or. &
         (.not. this%lake_fields%connected_lake_cells(this%current_cell_to_fill_lat, &
@@ -2018,131 +2679,13 @@ subroutine rollback_filling_cell(this)
     end if
 end subroutine
 
-subroutine get_primary_merge_coords(this,lat,lon)
-  class(lake), intent(in) :: this
-  integer, intent(out) :: lat
-  integer, intent(out) :: lon
-  logical :: connected_lake_cell
-  connected_lake_cell = ((this%lake_fields%connected_lake_cells(this%current_cell_to_fill_lat, &
-                                                                this%current_cell_to_fill_lon)) .or. &
-                         (this%lake_parameters%flood_only(this%current_cell_to_fill_lat, &
-                                                          this%current_cell_to_fill_lon)))
-  if (connected_lake_cell) then
-    lat = &
-      this%lake_parameters%flood_force_merge_lat_index(this%current_cell_to_fill_lat, &
-                                                       this%current_cell_to_fill_lon)
-    lon = &
-      this%lake_parameters%flood_force_merge_lon_index(this%current_cell_to_fill_lat, &
-                                                  this%current_cell_to_fill_lon)
-  else
-    lat = &
-      this%lake_parameters%connect_force_merge_lat_index(this%current_cell_to_fill_lat, &
-                                                    this%current_cell_to_fill_lon)
-    lon = &
-      this%lake_parameters%connect_force_merge_lon_index(this%current_cell_to_fill_lat, &
-                                                    this%current_cell_to_fill_lon)
-  end if
-end subroutine get_primary_merge_coords
-
-subroutine get_secondary_merge_coords(this,lat,lon)
-  class(lake), intent(in) :: this
-  integer, intent(out) :: lat
-  integer, intent(out) :: lon
-  logical :: connected_lake_cell
-  connected_lake_cell = ((this%lake_fields%connected_lake_cells(this%current_cell_to_fill_lat, &
-                                                                this%current_cell_to_fill_lon)) .or. &
-                         (this%lake_parameters%flood_only(this%current_cell_to_fill_lat, &
-                                                          this%current_cell_to_fill_lon)))
-  if (connected_lake_cell) then
-    lat = &
-      this%lake_parameters%flood_next_cell_lat_index(this%current_cell_to_fill_lat, &
-                                                     this%current_cell_to_fill_lon)
-    lon = &
-      this%lake_parameters%flood_next_cell_lon_index(this%current_cell_to_fill_lat, &
-                                                     this%current_cell_to_fill_lon)
-  else
-    lat = &
-      this%lake_parameters%connect_next_cell_lat_index(this%current_cell_to_fill_lat, &
-                                                       this%current_cell_to_fill_lon)
-    lon = &
-      this%lake_parameters%connect_next_cell_lon_index(this%current_cell_to_fill_lat, &
-                                                       this%current_cell_to_fill_lon)
-  end if
-end subroutine get_secondary_merge_coords
-
-subroutine get_outflow_redirect_coords(this,lat,lon,local_redirect)
-  class(lake), intent(in) :: this
-  integer, intent(out) :: lat
-  integer, intent(out) :: lon
-  logical, intent(out) :: local_redirect
-  logical :: connected_lake_cell
-  connected_lake_cell = (this%lake_fields%connected_lake_cells(this%current_cell_to_fill_lat, &
-                                                               this%current_cell_to_fill_lon) .or. &
-                         this%lake_parameters%flood_only(this%current_cell_to_fill_lat, &
-                                                         this%current_cell_to_fill_lon))
-  if (this%use_additional_fields) then
-    if (connected_lake_cell) then
-      local_redirect = &
-        this%lake_parameters%additional_flood_local_redirect(this%current_cell_to_fill_lat, &
-                                                             this%current_cell_to_fill_lon)
-    else
-      local_redirect = &
-        this%lake_parameters%additional_connect_local_redirect(this%current_cell_to_fill_lat, &
-                                                               this%current_cell_to_fill_lon)
-    end if
-  else
-    if (connected_lake_cell) then
-      local_redirect = &
-        this%lake_parameters%flood_local_redirect(this%current_cell_to_fill_lat, &
-                                                  this%current_cell_to_fill_lon)
-    else
-      local_redirect = &
-        this%lake_parameters%connect_local_redirect(this%current_cell_to_fill_lat, &
-                                                    this%current_cell_to_fill_lon)
-    end if
-  end if
-  if (this%use_additional_fields) then
-    if (connected_lake_cell) then
-      lat = &
-        this%lake_parameters%additional_flood_redirect_lat_index(this%current_cell_to_fill_lat, &
-                                                                 this%current_cell_to_fill_lon)
-      lon = &
-        this%lake_parameters%additional_flood_redirect_lon_index(this%current_cell_to_fill_lat, &
-                                                                 this%current_cell_to_fill_lon)
-    else
-      lat = &
-        this%lake_parameters%additional_connect_redirect_lat_index(this%current_cell_to_fill_lat, &
-                                                                   this%current_cell_to_fill_lon)
-      lon = &
-        this%lake_parameters%additional_connect_redirect_lon_index(this%current_cell_to_fill_lat, &
-                                                                   this%current_cell_to_fill_lon)
-    end if
-  else
-    if (connected_lake_cell) then
-      lat = &
-        this%lake_parameters%flood_redirect_lat_index(this%current_cell_to_fill_lat, &
-                                                      this%current_cell_to_fill_lon)
-      lon = &
-        this%lake_parameters%flood_redirect_lon_index(this%current_cell_to_fill_lat, &
-                                                      this%current_cell_to_fill_lon)
-    else
-      lat = &
-        this%lake_parameters%connect_redirect_lat_index(this%current_cell_to_fill_lat, &
-                                                        this%current_cell_to_fill_lon)
-      lon = &
-        this%lake_parameters%connect_redirect_lon_index(this%current_cell_to_fill_lat, &
-                                                        this%current_cell_to_fill_lon)
-    end if
-  end if
-end subroutine get_outflow_redirect_coords
-
 recursive function find_true_rolledback_primary_lake(this) result(true_primary_lake)
   class(lake), target, intent(in) :: this
   type(lake), pointer :: true_primary_lake
   type(lake), pointer :: next_lake
     next_lake => this%lake_fields%other_lakes(this%primary_lake_number)%lake_pointer
     if (next_lake%lake_type == subsumed_lake_type) then
-      true_primary_lake => next_lake%find_true_primary_lake()
+      true_primary_lake => next_lake%find_true_rolledback_primary_lake()
     else
       true_primary_lake => this
     end if
@@ -2151,8 +2694,12 @@ end function
 recursive function find_true_primary_lake(this) result(true_primary_lake)
   class(lake), target, intent(in) :: this
   type(lake), pointer :: true_primary_lake
+  integer :: true_primary_lake_number
     if (this%lake_type == subsumed_lake_type) then
-        true_primary_lake => find_true_primary_lake(this%lake_fields%other_lakes(this%primary_lake_number)%lake_pointer)
+        true_primary_lake_number = &
+          this%lake_fields%set_forest%find_root_from_label(this%primary_lake_number)
+        true_primary_lake => &
+          this%lake_fields%other_lakes(true_primary_lake_number)%lake_pointer
     else
         true_primary_lake => this
     end if
@@ -2207,6 +2754,11 @@ function calculate_diagnostic_lake_volumes(lake_parameters,&
       lake_volumes_by_lake_number(original_lake_index) = &
         working_lake%lake_volume + &
         working_lake%secondary_lake_volume
+      if (working_lake%lake_type == overflowing_lake_type) then
+        lake_volumes_by_lake_number(original_lake_index) = &
+          lake_volumes_by_lake_number(original_lake_index) + &
+          working_lake%excess_water
+      end if
     end do
     do j=1,lake_parameters%nlon
       do i=1,lake_parameters%nlat

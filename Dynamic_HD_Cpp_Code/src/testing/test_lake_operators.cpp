@@ -5652,6 +5652,9 @@ TEST_F(FilterOutShallowLakeTest, FilterOutShallowLakeTestOne){
   for (auto i =0; i < nlat*nlon; i++){
     EXPECT_EQ(unfilled_orography_in[i],unfilled_orography_expected_out[i]);
   }
+  delete[] unfilled_orography_expected_out;
+  delete[] unfilled_orography_in;
+  delete[] filled_orography_in;
 };
 
 TEST_F(FilterOutShallowLakeTest, FilterOutShallowLakeTestTwo){
@@ -5739,6 +5742,9 @@ TEST_F(FilterOutShallowLakeTest, FilterOutShallowLakeTestTwo){
   for (auto i =0; i < nlat*nlon; i++){
     EXPECT_EQ(unfilled_orography_in[i],unfilled_orography_expected_out[i]);
   }
+  delete[] unfilled_orography_expected_out;
+  delete[] unfilled_orography_in;
+  delete[] filled_orography_in;
 };
 
 TEST_F(FilterOutShallowLakeTest, FilterOutShallowLakeTestThree){
@@ -5826,6 +5832,9 @@ TEST_F(FilterOutShallowLakeTest, FilterOutShallowLakeTestThree){
   for (auto i =0; i < nlat*nlon; i++){
     EXPECT_EQ(unfilled_orography_in[i],unfilled_orography_expected_out[i]);
   }
+  delete[] unfilled_orography_expected_out;
+  delete[] unfilled_orography_in;
+  delete[] filled_orography_in;
 };
 
 }  // namespace

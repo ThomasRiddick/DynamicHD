@@ -30,6 +30,9 @@ function pass_arguments()
     help = "Filepath to file containing runoff values"
   "--lake-evaporation-file", "-e"
     help = "Filepath to file containing values for evaporation from lakes"
+  "--use-input-data-for-individual-timesteps", "-s"
+    help = "Data read from input files is for individual timesteps"
+    action = :store_true
   "--timesteps", "-t"
     help = "Number of timesteps to run"
     arg_type = Int
@@ -49,28 +52,44 @@ function main()
   local runoffs::Array{Field{Float64},1}
   local lake_evaporations::Array{Field{Float64},1}
   if args["drainage-file"] != nothing
-    drainages = load_drainage_fields(args["drainage-file"],grid,
-                                     last_timestep=12)
-    drainages = [divide(x,30.0) for x in drainages]
+    if args["use-input-data-for-individual-timesteps"]
+      drainages = load_drainage_fields(args["drainage-file"],grid,
+                                       last_timestep=9)
+    else
+      drainages = load_drainage_fields(args["drainage-file"],grid,
+                                       last_timestep=12)
+      drainages = [divide(x,30.0) for x in drainages]
+    end
   else
     drainage::Field{Float64} = LatLonField{Float64}(river_parameters.grid,269747790.0*2.25/100.0)
     drainages = repeat(drainage,12*51)
   end
   if args["runoff-file"] != nothing
-    runoffs = load_runoff_fields(args["runoff-file"],grid,
-                                 last_timestep=12)
-    runoffs = [divide(x,30.0) for x in runoffs]
+    if args["use-input-data-for-individual-timesteps"]
+      runoffs = load_runoff_fields(args["runoff-file"],grid,
+                                   last_timestep=9)
+    else
+      runoffs = load_runoff_fields(args["runoff-file"],grid,
+                                   last_timestep=12)
+      runoffs = [divide(x,30.0) for x in runoffs]
+    end
   else
     runoffs = deepcopy(drainages)
   end
   if args["lake-evaporation-file"] != nothing
-    lake_evaporations = load_lake_evaporation_fields(args["lake-evaporation-file"],grid,
-                                                     last_timestep=12)
-    lake_evaporations = [divide(x,30.0) for x in lake_evaporations]
+    if args["use-input-data-for-individual-timesteps"]
+      lake_evaporations = load_lake_evaporation_fields(args["lake-evaporation-file"],surface_model_grid,
+                                                       last_timestep=9)
+    else
+      lake_evaporations = load_lake_evaporation_fields(args["lake-evaporation-file"],surface_model_grid,
+                                                       last_timestep=12)
+      lake_evaporations = [divide(x,30.0) for x in lake_evaporations]
+    end
   else
-    lake_evaporation::Field{Float64} = LatLonField{Float64}(river_parameters.grid,0.0)
+    lake_evaporation::Field{Float64} = LatLonField{Float64}(surface_model_grid,0.0)
     lake_evaporations = repeat(lake_evaporation,12*51)
   end
+  input_data_is_monthly_mean::Bool = ! args["use-input-data-for-individual-timesteps"]
   if args["lake-para-file"] != nothing
     lake_parameters = load_lake_parameters(args["lake-para-file"],lake_grid,grid,surface_model_grid)
     drainages_copy = deepcopy(drainages)
@@ -88,7 +107,10 @@ function main()
                                 lake_parameters,drainages,runoffs,lake_evaporations,
                                 timesteps,true,initial_water_to_lake_centers,
                                 initial_spillover_to_rivers;output_timestep=10,
-                                print_timestep_results=false)
+                                print_timestep_results=false,
+                                use_realistic_surface_coupling=true,
+                                input_data_is_monthly_mean=
+                                input_data_is_monthly_mean)
         # Profile.clear()
         # Profile.init(delay=0.01)
         # @time drive_hd_and_lake_model(river_parameters,river_fields,
@@ -105,18 +127,27 @@ function main()
         drive_hd_and_lake_model(river_parameters,lake_parameters,drainages,runoffs,
                                 lake_evaporations,timesteps,true,initial_water_to_lake_centers,
                                 initial_spillover_to_rivers;output_timestep=10,
-                                print_timestep_results=true)
+                                print_timestep_results=true,
+                                use_realistic_surface_coupling=true,
+                                input_data_is_monthly_mean=
+                                input_data_is_monthly_mean)
       end
     else
       if args["hd-init-file"] != nothing
         drive_hd_and_lake_model(river_parameters,river_fields,
                                 lake_parameters,drainages,runoffs,
                                 lake_evaporations,timesteps;output_timestep=10,
-                                print_timestep_results=true)
+                                print_timestep_results=true,
+                                use_realistic_surface_coupling=true,
+                                input_data_is_monthly_mean=
+                                input_data_is_monthly_mean)
       else
         drive_hd_and_lake_model(river_parameters,lake_parameters,
                                 drainages,runoffs,lake_evaporations,
-                                timesteps;output_timestep=10,print_timestep_results=true)
+                                timesteps;output_timestep=10,print_timestep_results=true,
+                                use_realistic_surface_coupling=true,
+                                input_data_is_monthly_mean=
+                                input_data_is_monthly_mean)
         # @time drive_hd_and_lake_model(river_parameters,lake_parameters,
         #                               drainages_copy,runoffs_copy,
         #                               lake_evaporations_copy,timesteps;
@@ -132,7 +163,9 @@ function main()
                      timesteps;output_timestep=10,print_timestep_results=false)
       @time drive_hd_model(river_parameters,river_fields,
                            drainages_copy,runoffs_copy,lake_evaporations_copy,
-                           timesteps;output_timestep=10,print_timestep_results=false)
+                           timesteps;output_timestep=10,print_timestep_results=false,
+                           input_data_is_monthly_mean=
+                           input_data_is_monthly_mean)
     else
       drainages_copy = deepcopy(drainages)
       runoffs_copy = deepcopy(runoffs)
@@ -144,7 +177,9 @@ function main()
       Profile.init(delay=0.0001)
       @time drive_hd_model(river_parameters,drainages_copy,
                            runoffs_copy,lake_evaporations_copy,
-                           timesteps;output_timestep=10,print_timestep_results=false)
+                           timesteps;output_timestep=10,print_timestep_results=false,
+                           input_data_is_monthly_mean=
+                           input_data_is_monthly_mean)
       Profile.print()
       r = Profile.retrieve();
       f = open("/Users/thomasriddick/Downloads/profile.bin", "w")
@@ -161,11 +196,15 @@ end
 #push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/transient_sim_1/results_for_1400/lake_model_start_1400.nc")
 #push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/transient_sim_1/results_for_1400/hdstart_1400.nc")
 # push!(ARGS,"-t6000")
-push!(ARGS,"-p/Users/thomasriddick/Documents/data/temp/8510/hdpara_8510k.nc")
-push!(ARGS,"-l/Users/thomasriddick/Documents/data/temp/8510/lakepara_8510k.nc")
-push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/8510/lakestart_8510k.nc")
-push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/8510/hdrestart_8510k.nc")
+push!(ARGS,"-p/Users/thomasriddick/Documents/data/temp/10070/hdpara_10070k.nc")
+push!(ARGS,"-l/Users/thomasriddick/Documents/data/temp/10070/lakepara_10070k.nc")
+push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/10070/lakestart_10070k.nc")
+push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/10070/restart_rid004_hd_29291231.nc")
+push!(ARGS,"-s")
+push!(ARGS,"-d/Users/thomasriddick/Documents/data/temp/10070/lake_and_hd_model_debug_rf_and_drmerged.nc")
+push!(ARGS,"-r/Users/thomasriddick/Documents/data/temp/10070/lake_and_hd_model_debug_rf_and_drmerged.nc")
+push!(ARGS,"-e/Users/thomasriddick/Documents/data/temp/10070/lake_and_hd_model_debug_lhmerged.nc")
 #push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/transient_sim_1/results_for_1400/lake_model_start_1400.nc")
 #push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/transient_sim_1/results_for_1400/hdstart_1400.nc")
-push!(ARGS,"-t1000")
+push!(ARGS,"-t9")
 main()

@@ -272,6 +272,14 @@ end subroutine latlon_destructor
 subroutine icon_single_index_destructor(this)
   class(icon_single_index_flow_accumulation_algorithm), intent(inout) :: this
     deallocate(this%next_cell_index)
+    !Not deallocating causes a leak but deallocating causes a seg-fault
+    !futher investigation required
+    !if (associated(this%bifurcation_complete)) then
+    !  deallocate(this%bifurcation_complete)
+    !end if
+    !if (associated(this%bifurcated_next_cell_index)) then
+    !  deallocate(this%bifurcated_next_cell_index)
+    !end if
     call this%destructor
 end subroutine icon_single_index_destructor
 

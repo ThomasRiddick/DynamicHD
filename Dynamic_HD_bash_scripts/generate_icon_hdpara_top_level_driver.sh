@@ -7,7 +7,7 @@ echo "Running Version 1.3 of the ICON HD Parameters Generation Code"
 function load_module
 {
 module_name=$1
-if [[ $(hostname -d) == "atos.local" ]]; then
+if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
 	module load ${module_name}
 else
 	eval "eval `/usr/bin/tclsh /sw/share/Modules-4.2.1/libexec/modulecmd.tcl bash load ${module_name}`"
@@ -191,6 +191,16 @@ if ! [[ -e $python_config_filepath ]]; then
 fi
 
 shopt -s nocasematch
+no_env_gen=${no_env_gen:-"false"}
+if [[ $no_env_gen == "true" ]] || [[ $no_env_gen == "t" ]]; then
+        no_env_gen=true
+elif [[ $no_env_gen == "false" ]] || [[ $no_env_gen == "f" ]]; then
+        no_env_gen=false
+else
+        echo "Format of no_env_gen flag (${no_env_gen}) is unknown, please use True/False or T/F" 1>&2
+        exit 1
+fi
+
 no_conda=${no_conda:-"false"}
 if [[ ${no_conda} == "true" ]] || [[ $no_conda == "t" ]]; then
 	no_conda=true
@@ -227,7 +237,7 @@ cd ${working_directory}
 #Setup conda environment
 echo "Setting up environment"
 if ! $no_modules ; then
-  if [[ $(hostname -d) == "atos.local" ]]; then
+  if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
     		source /etc/profile
     		unload_module netcdf_c
       	unload_module imagemagick
@@ -245,26 +255,28 @@ export LD_LIBRARY_PATH="${HOME}/sw-spack/netcdf-cxx4-4.3.1-d54zya/lib":"${HOME}/
 export DYLD_LIBRARY_PATH=$LD_LIBRARY_PATH:$DYLD_LIBRARY_PATH
 
 if ! $no_modules && ! $no_conda ; then
-	if [[ $(hostname -d) == "atos.local" ]]; then
+	if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
     load_module python3
 	else
 		load_module anaconda3
 	fi
 fi
 
+if ! $no_conda && ! $no_env_gen ; then
+  if $compilation_required && conda info -e | grep -q "dyhdenv3"; then
+    conda env remove --yes --name dyhdenv3
+  fi
+  if ! conda info -e | grep -q "dyhdenv3"; then
+    ${source_directory}/Dynamic_HD_bash_scripts/regenerate_conda_environment.sh $no_modules
+  fi
+fi
 if ! $no_conda ; then
-	if $compilation_required && conda info -e | grep -q "dyhdenv3"; then
-		conda env remove --yes --name dyhdenv3
-	fi
-	if ! conda info -e | grep -q "dyhdenv3"; then
-		${source_directory}/Dynamic_HD_bash_scripts/regenerate_conda_environment.sh $no_modules
-	fi
-	source activate dyhdenv3
+  source activate dyhdenv3
 fi
 
 #Load a new version of gcc that doesn't have the polymorphic variable bug
 if ! $no_modules ; then
-  if [[ $(hostname -d) == "atos.local" ]]; then
+  if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
     load_module gcc/11.2.0-gcc-11.2.0
 	else
 		load_module gcc/6.3.0
@@ -296,6 +308,7 @@ rm -f ten_minute_accumulated_flow_temp.nc
 rm -f icon_intermediate_catchments.nc
 rm -f icon_intermediate_rdirs.nc
 rm -f icon_intermediate_catchments_loops_log.log
+rm -f icon_intermediate_accumulated_flow.nc
 rm -f zeros_temp.nc
 rm -f icon_final_rdirs.nc
 rm -f orography_filled.nc
@@ -320,6 +333,7 @@ ten_minute_catchments_filepath="ten_minute_catchments_temp.nc"
 ten_minute_accumulated_flow_filepath="ten_minute_accumulated_flow_temp.nc"
 icon_intermediate_catchments_filepath="icon_intermediate_catchments.nc"
 icon_intermediate_rdirs_filepath="icon_intermediate_rdirs.nc"
+icon_intermediate_accumulated_flow_filepath="icon_intermediate_accumulated_flow.nc"
 icon_final_filepath="icon_final_rdirs.nc"
 python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/command_line_drivers/create_icon_coarse_river_directions_driver.py ${true_sinks_argument} downscaled_ls_mask_temp_inverted.nc ${ten_minute_river_direction_filepath} ${ten_minute_catchments_filepath} ${ten_minute_accumulated_flow_filepath} ${python_config_filepath} ${working_directory}
 while [[ $(grep -c "[0-9]" "${ten_minute_catchments_filepath%%.nc}_loops.log") -ne 0 ]]; do
@@ -338,8 +352,8 @@ while [[ $(grep -c "[0-9]" "${ten_minute_catchments_filepath%%.nc}_loops.log") -
 done
  ${source_directory}/Dynamic_HD_Fortran_Code/Release/COTAT_Plus_LatLon_To_Icon_Fortran_Exec ${ten_minute_river_direction_filepath}  ${ten_minute_accumulated_flow_filepath} ${grid_file} ${icon_intermediate_rdirs_filepath} "rdirs" "acc" "rdirs" ${cotat_params_file}
   ${source_directory}/Dynamic_HD_Cpp_Code/Release/Compute_Catchments_SI_Exec ${icon_intermediate_rdirs_filepath} ${icon_intermediate_catchments_filepath} ${grid_file} "rdirs" 1 ${icon_intermediate_catchments_filepath%%.nc}_loops_log.log 1
- 	cdo expr,"acc=(rdirs == -9999999)" ${icon_intermediate_rdirs_filepath} zeros_temp.nc
-  ${source_directory}/Dynamic_HD_Fortran_Code/Release/LatLon_To_Icon_Loop_Breaker_Fortran_Exec ${ten_minute_river_direction_filepath}  ${ten_minute_accumulated_flow_filepath} ${cell_numbers_filepath}  ${grid_file} ${icon_final_filepath} ${icon_intermediate_catchments_filepath} zeros_temp.nc ${icon_intermediate_rdirs_filepath}  "rdirs" "acc" "cell_index" "next_cell_index" "catchment" "acc" "rdirs"  ${icon_intermediate_catchments_filepath%%.nc}_loops_log.log
+ 	${source_directory}/Dynamic_HD_Fortran_Code/Release/Accumulate_Flow_Icon_Simple_Interface_Exec ${grid_file} ${icon_intermediate_rdirs_filepath} ${icon_intermediate_accumulated_flow_filepath} "rdirs" "acc"
+  ${source_directory}/Dynamic_HD_Fortran_Code/Release/LatLon_To_Icon_Loop_Breaker_Fortran_Exec ${ten_minute_river_direction_filepath}  ${ten_minute_accumulated_flow_filepath} ${cell_numbers_filepath}  ${grid_file} ${icon_final_filepath} ${icon_intermediate_catchments_filepath} ${icon_intermediate_accumulated_flow_filepath} ${icon_intermediate_rdirs_filepath}  "rdirs" "acc" "cell_index" "next_cell_index" "catchment" "acc" "rdirs"  ${icon_intermediate_catchments_filepath%%.nc}_loops_log.log
   ${source_directory}/Dynamic_HD_Cpp_Code/Release/Compute_Catchments_SI_Exec ${icon_final_filepath} ${output_catchments_filepath} ${grid_file} "next_cell_index" 1 ${output_catchments_filepath%%.nc}_loops_log.log 1
   ${source_directory}/Dynamic_HD_Fortran_Code/Release/Accumulate_Flow_Icon_Simple_Interface_Exec ${grid_file} ${icon_final_filepath} ${output_accumulated_flow_filepath} "next_cell_index" "acc"
   rm -f paragen/area_dlat_dlon.txt
@@ -355,6 +369,7 @@ done
   mkdir paragen
   cp ${grid_file} grid_in_temp.nc
   cp ${input_ls_mask_filepath} mask_in_temp.nc
+   	cdo expr,"acc=(rdirs == -9999999)" ${icon_intermediate_rdirs_filepath} zeros_temp.nc
   ${source_directory}/Dynamic_HD_Cpp_Code/Release/Fill_Sinks_Icon_SI_Exec ${input_orography_filepath} ${input_ls_mask_filepath} zeros_temp.nc orography_filled.nc ${grid_file} "z" "cell_sea_land_mask" "acc" 0 0 0.0 1 0
   ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/generate_icon_hd_file_driver.sh ${working_directory}/paragen ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran ${working_directory} grid_in_temp.nc mask_in_temp.nc ${icon_final_filepath}  orography_filled.nc
 ${source_directory}/Dynamic_HD_bash_scripts/adjust_icon_k_parameters.sh  ${working_directory}/paragen/hdpara_icon.nc ${output_hdpara_filepath} "r2b4"
@@ -377,6 +392,7 @@ ${source_directory}/Dynamic_HD_bash_scripts/adjust_icon_k_parameters.sh  ${worki
   rm -f icon_intermediate_rdirs.nc
   rm -f icon_intermediate_catchments_loops_log.log
   rm -f icon_intermediate_catchments.nc
+  rm -f icon_intermediate_accumulated_flow.nc
   rm -f zeros_temp.nc
   rm -f icon_final_rdirs.nc
   rm -f cell_numbers_temp.nc

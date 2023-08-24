@@ -255,6 +255,8 @@ protected:
 	//Used to assist in the acceleration of algorithm 1 (to denote a suspected sill point)
 	//has been added to the main priority queue from the plain slope queue
 	bool requeued = false;
+	//Used to prevent no data cells being processed needlessly
+	bool nbr_orog_is_no_data = false;
 };
 
 /**
@@ -378,6 +380,10 @@ public:
 	void setup_minima_q(field<bool>*);
 	// Return q of minima for basin filling code
 	stack<coords*>* get_minima_q();
+	// Return catchments for basin filling code
+	field<int>* get_catchments() {return catchment_nums; };
+	// Set catchments default value (for basin filling code)
+	void set_catchments(int default_value) { catchment_nums->set_all(default_value); }
 protected:
 	///Label which method is being used
 	const int method = 4;

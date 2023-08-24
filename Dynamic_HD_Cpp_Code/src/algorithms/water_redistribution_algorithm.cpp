@@ -43,7 +43,7 @@ void water_redistribution_algorithm::run_water_redistribution(){
   cout << "Entering Water Redistribution C++ Code" << endl;
   prepare_lake_center_list();
   redistribute_water();
-  for (int i = 0; i < lake_center_list.size(); i++){
+  for (int i = 0; i < (int)lake_center_list.size(); i++){
     if(lake_center_list[i]) delete lake_center_list[i];
   };
 }

@@ -4,6 +4,7 @@ from Cython.Shadow import bint
 cimport numpy as np
 import numpy as np
 from libcpp cimport bool
+from libcpp.string cimport string
 
 cdef extern from 'drivers/burn_carved_rivers.cpp':
     void latlon_burn_carved_rivers_cython_wrapper(double* orography_in,double* rdirs_in,
@@ -38,6 +39,13 @@ cdef extern from 'drivers/redistribute_water.cpp':
 cdef extern from 'drivers/filter_out_shallow_lakes.cpp':
     void latlon_filter_out_shallow_lakes(double* unfilled_orography,double* filled_orography,
                                          double minimum_depth_threshold,int nlat_in,int nlon_in)
+
+cdef extern from 'drivers/filter_out_shallow_lakes.cpp':
+    void latlon_filter_out_shallow_lakes(double* unfilled_orography,double* filled_orography,
+                                         double minimum_depth_threshold,int nlat_in,int nlon_in)
+
+cdef extern from 'drivers/create_merge_structure_test_data.cpp':
+    void latlon_create_merge_structure_test_data(string merge_test_data_filepath)
 
 def burn_carved_rivers(np.ndarray[double,ndim=2,mode='c'] orography_in,
                        np.ndarray[double,ndim=2,mode='c'] rdirs_in,
@@ -129,3 +137,7 @@ def filter_out_shallow_lakes(np.ndarray[double,ndim=2,mode='c'] unfilled_orograp
                                     &filled_orography[0,0],
                                     minimum_depth_threshold,
                                     nlat_in,nlon_in)
+
+def create_merge_structure_test_data(str merge_test_data_filepath):
+    cdef string merge_test_data_filepath_c = string(bytes(merge_test_data_filepath,'utf-8'))
+    latlon_create_merge_structure_test_data(merge_test_data_filepath_c)

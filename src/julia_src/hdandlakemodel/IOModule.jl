@@ -9,6 +9,8 @@ using FieldModule: round,convert,invert,add_offset,get_data,maximum,equals
 using HDModule: RiverParameters,RiverPrognosticFields
 using LakeModule: LakeParameters,LatLonLakeParameters, UnstructuredLakeParameters
 using LakeModule: GridSpecificLakeParameters,LakeFields
+using LakeModule: create_merge_indices_collections_from_array
+using LakeModule: MergeAndRedirectIndicesCollection
 using MergeTypesModule
 
 import LakeModule: write_lake_numbers_field,write_lake_volumes_field
@@ -31,12 +33,15 @@ end
 function load_field(file_handle::NcFile,grid::Grid,variable_name::AbstractString,
                     field_type::DataType,;timestep::Int64=-1)
   variable::NcVar = file_handle[variable_name]
-  values::Array{field_type,get_number_of_dimensions(grid)} = NetCDF.readvar(variable)
+  extra_dims = timestep == -1 ? 0 : 1
+  values_orig::Array{field_type,get_number_of_dimensions(grid)+extra_dims} =
+    NetCDF.readvar(variable)
+  local values::Array{field_type,get_number_of_dimensions(grid)}
   if isa(grid,LatLonGrid)
     if timestep == -1
-      values = permutedims(values, [2,1])
+      values = permutedims(values_orig, [2,1])
     else
-      values = permutedims(values, [2,1])[:,:,timestep]
+      values = permutedims(values_orig[:,:,timestep], [2,1])
     end
   end
   return Field{field_type}(grid,values)
@@ -291,27 +296,49 @@ function load_lake_parameters(lake_para_filepath::AbstractString,grid::Grid,hd_g
       load_field(file_handle,grid,"connection_volume_thresholds",Float64)
     flood_volume_thresholds::Field{Float64} =
       load_field(file_handle,grid,"flood_volume_thresholds",Float64)
-    flood_local_redirect::Field{Bool} =
-      load_field(file_handle,grid,"flood_local_redirect",Bool)
-    connect_local_redirect::Field{Bool} =
-      load_field(file_handle,grid,"connect_local_redirect",Bool)
-    additional_flood_local_redirect::Field{Bool} =
-      load_field(file_handle,grid,"additional_flood_local_redirect",Bool)
-    additional_connect_local_redirect::Field{Bool} =
-      load_field(file_handle,grid,"additional_connect_local_redirect",Bool)
-    merge_points::Field{MergeTypes} =
-      load_field(file_handle,grid,"merge_points",Int64)
-    cell_areas_on_surface_model_grid:Field{Float64} =
-      load_field(file_handle,grid,"cell_areas_on_surface_model_grid",Float64)
+    connect_merge_and_redirect_indices_index::Field{Int64} =
+      load_field(file_handle,grid,"connect_merge_and_redirect_indices_index",Int64)
+    add_offset(connect_merge_and_redirect_indices_index,1,Int64[])
+    flood_merge_and_redirect_indices_index::Field{Int64} =
+      load_field(file_handle,grid,"flood_merge_and_redirect_indices_index",Int64)
+    add_offset(flood_merge_and_redirect_indices_index,1,Int64[])
+    cell_areas_on_surface_model_grid::Field{Float64} =
+      load_field(file_handle,surface_model_grid,"cell_areas_on_surface_model_grid",Float64)
+    raw_heights::Field{Float64} =
+      load_field(file_handle,grid,"raw_heights",Float64)
+    corrected_heights::Field{Float64} =
+      load_field(file_handle,grid,"corrected_heights",Float64)
+    flood_heights::Field{Float64} =
+      load_field(file_handle,grid,"flood_heights",Float64)
+    connection_heights::Field{Float64} =
+      load_field(file_handle,grid,"connection_heights",Float64)
+    # variable::NcVar = file_handle["connect_merges_and_redirects"]
+    # connect_merges_and_redirect_array::Array{Int64} = NetCDF.readvar(variable)
+    # connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+    #   create_merge_indices_collections_from_array(connect_merges_and_redirect_array)
+    # add_offset(connect_merge_and_redirect_indices_collections,1)
+    cell_areas::Field{Float64} =
+      load_field(file_handle,grid,"cell_areas",Float64)
+    connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      Vector{MergeAndRedirectIndicesCollection}()
+    variable = file_handle["flood_merges_and_redirects"]
+    flood_merges_and_redirect_array::Array{Int64} = NetCDF.readvar(variable)
+    flood_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      create_merge_indices_collections_from_array(flood_merges_and_redirect_array)
+    add_offset(flood_merge_and_redirect_indices_collections,1)
     return LakeParameters(lake_centers,
                           connection_volume_thresholds,
                           flood_volume_thresholds,
-                          flood_local_redirect,
-                          connect_local_redirect,
-                          additional_flood_local_redirect,
-                          additional_connect_local_redirect,
-                          merge_points,
+                          connect_merge_and_redirect_indices_index,
+                          flood_merge_and_redirect_indices_index,
+                          connect_merge_and_redirect_indices_collections,
+                          flood_merge_and_redirect_indices_collections,
                           cell_areas_on_surface_model_grid,
+                          cell_areas,
+                          raw_heights,
+                          corrected_heights,
+                          flood_heights,
+                          connection_heights,
                           grid,hd_grid,
                           surface_model_grid,
                           grid_specific_lake_parameters)
@@ -336,68 +363,18 @@ function load_grid_specific_lake_parameters(file_handle::NcFile,grid::LatLonGrid
       load_field(file_handle,grid,"connect_next_cell_lat_index",Int64)
   connect_next_cell_lon_index::Field{Int64} =
       load_field(file_handle,grid,"connect_next_cell_lon_index",Int64)
-  flood_force_merge_lat_index::Field{Int64} =
-      load_field(file_handle,grid,"flood_force_merge_lat_index",Int64)
-  flood_force_merge_lon_index::Field{Int64} =
-      load_field(file_handle,grid,"flood_force_merge_lon_index",Int64)
-  connect_force_merge_lat_index::Field{Int64} =
-      load_field(file_handle,grid,"connect_force_merge_lat_index",Int64)
-  connect_force_merge_lon_index::Field{Int64} =
-      load_field(file_handle,grid,"connect_force_merge_lon_index",Int64)
-  flood_redirect_lat_index::Field{Int64} =
-      load_field(file_handle,grid,"flood_redirect_lat_index",Int64)
-  flood_redirect_lon_index::Field{Int64} =
-      load_field(file_handle,grid,"flood_redirect_lon_index",Int64)
-  connect_redirect_lat_index::Field{Int64} =
-      load_field(file_handle,grid,"connect_redirect_lat_index",Int64)
-  connect_redirect_lon_index::Field{Int64} =
-      load_field(file_handle,grid,"connect_redirect_lon_index",Int64)
-  additional_flood_redirect_lat_index::Field{Int64} =
-      load_field(file_handle,grid,"additional_flood_redirect_lat_index",Int64)
-  additional_flood_redirect_lon_index::Field{Int64} =
-      load_field(file_handle,grid,"additional_flood_redirect_lon_index",Int64)
-  additional_connect_redirect_lat_index::Field{Int64} =
-      load_field(file_handle,grid,"additional_connect_redirect_lat_index",Int64)
-  additional_connect_redirect_lon_index::Field{Int64} =
-      load_field(file_handle,grid,"additional_connect_redirect_lon_index",Int64)
   corresponding_surface_cell_lat_index::Field{Int64} =
-      load_field(file_handle,surface_model_grid,"corresponding_surface_cell_lat_index",Int64)
+      load_field(file_handle,grid,"corresponding_surface_cell_lat_index",Int64)
   corresponding_surface_cell_lon_index::Field{Int64} =
-      load_field(file_handle,surface_model_grid,"corresponding_surface_cell_lon_index",Int64)
+      load_field(file_handle,grid,"corresponding_surface_cell_lon_index",Int64)
   add_offset(flood_next_cell_lat_index,1,Int64[-1])
   add_offset(flood_next_cell_lon_index,1,Int64[-1])
   add_offset(connect_next_cell_lat_index,1,Int64[-1])
   add_offset(connect_next_cell_lon_index,1,Int64[-1])
-  add_offset(flood_force_merge_lat_index,1,Int64[-1])
-  add_offset(flood_force_merge_lon_index,1,Int64[-1])
-  add_offset(connect_force_merge_lat_index,1,Int64[-1])
-  add_offset(connect_force_merge_lon_index,1,Int64[-1])
-  add_offset(flood_redirect_lat_index,1,Int64[-1])
-  add_offset(flood_redirect_lon_index,1,Int64[-1])
-  add_offset(connect_redirect_lat_index,1,Int64[-1])
-  add_offset(connect_redirect_lon_index,1,Int64[-1])
-  add_offset(additional_flood_redirect_lat_index,1,Int64[-1])
-  add_offset(additional_flood_redirect_lon_index,1,Int64[-1])
-  add_offset(additional_connect_redirect_lat_index,1,Int64[-1])
-  add_offset(additional_connect_redirect_lon_index,1,Int64[-1])
-  add_offset(corresponding_surface_cell_lat_index,1,Int64[-1])
-  add_offset(corresponding_surface_cell_lon_index,1,Int64[-1])
   return LatLonLakeParameters(flood_next_cell_lat_index,
                               flood_next_cell_lon_index,
                               connect_next_cell_lat_index,
                               connect_next_cell_lon_index,
-                              flood_force_merge_lat_index,
-                              flood_force_merge_lon_index,
-                              connect_force_merge_lat_index,
-                              connect_force_merge_lon_index,
-                              flood_redirect_lat_index,
-                              flood_redirect_lon_index,
-                              connect_redirect_lat_index,
-                              connect_redirect_lon_index,
-                              additional_flood_redirect_lat_index,
-                              additional_flood_redirect_lon_index,
-                              additional_connect_redirect_lat_index,
-                              additional_connect_redirect_lon_index,
                               corresponding_surface_cell_lat_index,
                               corresponding_surface_cell_lon_index)
 end
@@ -408,28 +385,10 @@ function load_grid_specific_lake_parameters(file_handle::NcFile,grid::Unstructur
       load_field(file_handle,grid,"flood_next_cell_index",Int64)
   connect_next_cell_index::Field{Int64} =
       load_field(file_handle,grid,"connect_next_cell_index",Int64)
-  flood_force_merge_index::Field{Int64} =
-      load_field(file_handle,grid,"flood_force_merge_index",Int64)
-  connect_force_merge_index::Field{Int64} =
-      load_field(file_handle,grid,"connect_force_merge_index",Int64)
-  flood_redirect_index::Field{Int64} =
-      load_field(file_handle,grid,"flood_redirect_index",Int64)
-  connect_redirect_index::Field{Int64} =
-      load_field(file_handle,grid,"connect_redirect_index",Int64)
-  additional_flood_redirect_index::Field{Int64} =
-      load_field(file_handle,grid,"additional_flood_redirect_index",Int64)
-  additional_connect_redirect_index::Field{Int64} =
-      load_field(file_handle,grid,"additional_connect_redirect_index",Int64)
   corresponding_surface_cell_index::Field{Int64} =
       load_field(file_handle,surface_model_grid,"corresponding_surface_cell_index",Int64)
   return UnstructuredLakeParameters(flood_next_cell_index,
                                     connect_next_cell_index,
-                                    flood_force_merge_index,
-                                    connect_force_merge_index,
-                                    flood_redirect_index,
-                                    connect_redirect_index,
-                                    additional_flood_redirect_index,
-                                    additional_connect_redirect_index,
                                     corresponding_surface_cell_index)
 end
 
@@ -482,8 +441,8 @@ function load_drainage_fields(drainages_filename::AbstractString,grid::Grid;
   drainages::Array{Field{Float64},1} = Field{Float64}[]
   try
     for i::Int64 = first_timestep:last_timestep
-      drainages[i] =  load_field(file_handle,grid,"drainages",
-                                 Float64;timestep=i)
+      push!(drainages,load_field(file_handle,grid,"drainage",
+                                 Float64;timestep=i))
     end
   finally
     NetCDF.close(file_handle)
@@ -498,8 +457,8 @@ function load_runoff_fields(runoffs_filename::AbstractString,grid::Grid;
   runoffs::Array{Field{Float64},1} = Field{Float64}[]
   try
     for i::Int64 = first_timestep:last_timestep
-      runoffs[i] = load_field(file_handle,grid,"runoffs",
-                              Float64;timestep=i)
+      push!(runoffs,load_field(file_handle,grid,"runoff",
+                               Float64;timestep=i))
     end
   finally
     NetCDF.close(file_handle)
@@ -515,8 +474,8 @@ function load_lake_evaporation_fields(lake_evaporations_filename::AbstractString
   lake_evaporations::Array{Field{Float64},1} = Field{Float64}[]
   try
     for i::Int64 = first_timestep:last_timestep
-      lake_evaporations[i] = load_field(file_handle,grid,"evaporation",
-                              Float64;timestep=i)
+      push!(lake_evaporations,load_field(file_handle,grid,"lake_height_change",
+                                         Float64;timestep=i))
     end
   finally
     NetCDF.close(file_handle)

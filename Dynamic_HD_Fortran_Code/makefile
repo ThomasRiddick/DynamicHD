@@ -8,11 +8,11 @@ ifeq ($(shell uname -s),Darwin)
 ifeq ($(USE_MPI),True)
 GFORTRAN :=  /usr/local/bin/mpifort
 else
-GFORTRAN :=  /usr/local/Cellar/gcc@10/10.3.0/bin/gfortran-10
+GFORTRAN :=  /usr/local/Cellar/gcc@10/10.4.0/bin/gfortran-10
 endif
 NAGFORTRAN :=  /usr/local/bin/nagfor
 EXT_SOURCE :=$(shell echo ${HOME} )/Documents/code/
-GFORTRAN_NETCDF_F := /usr/local/Cellar/netcdf/4.8.1_2
+GFORTRAN_NETCDF_F := /usr/local/Cellar/netcdf-fortran/4.6.1
 NETCDF_F_LIB :=libnetcdff.dylib
 ifeq ($(COMPILE_TRANSPOSED_LAKE_MODEL),True)
 TRANSPOSED_SOURCE_CODE_LOC := /Users/thomasriddick/Documents/Work/switched_code
@@ -21,7 +21,7 @@ endif
 ifeq ($(USE_MPI),True)
 FLAGS := -DUSE_MPI -m64
 endif
-else ifeq ($(shell hostname -d),atos.local)
+else ifeq ($(shell hostname -d),lvt.dkrz.de)
 ifeq ($(USE_MPI),True)
 GFORTRAN := $(shell which mpifort)
 else
@@ -31,7 +31,7 @@ endif
 endif
 NAGFORTRAN :=  $(shell which nagfor)
 INTELFORTRAN := $(shell which ifort)
-#EXT_SOURCE :=$(shell echo ${HOME} )/HDancillarydata_11Sept2019/code/
+EXT_SOURCE :=$(shell echo ${HOME} )/palmod_ancillary_data/HDancillarydata_11Sept2019/code/
 ifneq ($(USE_SETTINGS_FROM_CONFIGURE),True)
 GFORTRAN_NETCDF_F :=/sw/spack-levante/netcdf-fortran-4.5.3-l2ulgp
 NETCDF_F_LIB :=libnetcdff.so

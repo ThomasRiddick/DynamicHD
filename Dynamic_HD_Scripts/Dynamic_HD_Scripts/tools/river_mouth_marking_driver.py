@@ -132,9 +132,9 @@ def main(rdirs_filepath,updatedrdirs_filepath,lsmask_filepath=None,
                 iodriver.write_field(flowtorivermouths_filepath,flowtorivermouths_field,
                                      file_type=iodriver.get_file_extension(flowtorivermouths_filepath))
             else:
-                raise UserWarning("Flow to cell file specified but no target flow to river"
-                                  " mouth target file defined; not processing the flow to"
-                                  " cell field")
+                warnings.warn("Flow to cell file specified but no target flow to river"
+                              " mouth target file defined; not processing the flow to"
+                              " cell field")
         if rivermouths_filepath:
             iodriver.write_field(rivermouths_filepath,rivermouth_field,
                                  file_type=iodriver.get_file_extension(rivermouths_filepath))

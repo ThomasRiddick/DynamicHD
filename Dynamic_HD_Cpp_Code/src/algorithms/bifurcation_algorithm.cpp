@@ -374,11 +374,11 @@ double* bifurcation_algorithm_latlon::get_bifurcation_rdirs(){
 }
 
 int* bifurcation_algorithm_icon_single_index::get_bifurcation_next_cell_index(){
-  int array_size = _grid->get_total_size();
-  int* bifurcation_next_cell_index_out = new int[maximum_bifurcations*array_size];
-  for (int i = 0; i< maximum_bifurcations;i++){
+  long array_size = (long)_grid->get_total_size();
+  int* bifurcation_next_cell_index_out = new int[(long)maximum_bifurcations*array_size];
+  for (long i = 0; i< (long)maximum_bifurcations;i++){
     int* bifurcation_next_cell_index_slice = bifurcations_next_cell_index[i]->get_array();
-    for (int j = 0; j < array_size;j++){
+    for (long j = 0; j < array_size;j++){
       bifurcation_next_cell_index_out[j+i*array_size] = bifurcation_next_cell_index_slice[j];
     }
   }

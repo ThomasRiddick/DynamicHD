@@ -7,7 +7,7 @@ echo "Running Version 3.11 of the Dynamic Lake and HD Parameters Generation Code
 function load_module
 {
 module_name=$1
-if [[ $(hostname -d) == "atos.local" ]]; then
+if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
 	module load ${module_name}
 else
 	eval "eval `/usr/bin/tclsh /sw/share/Modules-4.2.1/libexec/modulecmd.tcl bash load ${module_name}`"
@@ -251,7 +251,7 @@ if [[ $(uname) == "Darwin" ]]; then
 	#Need to compile manually to run on macos
 	echo "Warning - manual compilation is required on macos" 1>&2
 	compilation_required=false
-elif ! [[ $(hostname -d) == "atos.local" ]] ; then
+elif ! [[ $(hostname -d) == "lvt.dkrz.de" ]] ; then
 	#We are on the linux system... for some reason the flock utility isn't working on
 	#linux system at the moment
 	echo "Warning - no locking in place; running multiple copies of this script from the"
@@ -279,7 +279,7 @@ fi
 #Setup conda environment
 echo "Setting up environment"
 if ! $no_modules ; then
-  if [[ $(hostname -d) == "atos.local" ]]; then
+  if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
     		source /etc/profile
     		unload_module netcdf_c
       	unload_module imagemagick
@@ -292,7 +292,7 @@ if ! $no_modules ; then
 fi
 
 if ! $no_modules && ! $no_conda ; then
-	if [[ $(hostname -d) == "atos.local" ]]; then
+	if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
     load_module python3
 	else
 		load_module anaconda3
@@ -313,7 +313,7 @@ fi
 
 #Load a new version of gcc that doesn't have the polymorphic variable bug
 if ! $no_modules ; then
-  if [[ $(hostname -d) == "atos.local" ]]; then
+  if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
     load_module gcc/11.2.0-gcc-11.2.0
 	else
 		load_module gcc/6.3.0
@@ -322,6 +322,9 @@ fi
 
 #Setup correct python path
 export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${PYTHONPATH}
+
+#Set library path
+export LD_LIBRARY_PATH="${HOME}/sw-spack/netcdf-cxx4-4.3.1-d54zya/lib":"${HOME}/sw-spack/netcdf-c-4.8.1-khy3ru/lib":${LD_LIBRARY_PATH}
 
 #Call compilation script
 ${source_directory}/Dynamic_HD_bash_scripts/compile_dynamic_hd_code.sh ${compilation_required} false ${source_directory} ${working_directory} true "compile_only"

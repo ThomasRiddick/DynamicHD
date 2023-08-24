@@ -1,13 +1,19 @@
 RM := rm -rf
+USE_CLANG := False
 ifeq ($(shell uname -s),Darwin)
-GPLUSPLUS := /usr/bin/g++
-STDLIB_OPT := -stdlib=libc++
-FLAGS := -DPROCESSED_CELL_COUNTER -DUSE_NETCDFCPP -DDARWIN
-NETCDFCXX := /Users/thomasriddick/anaconda3/pkgs/netcdf-cxx4-4.3.0-h703b707_9
-INCLUDE := -I"$(NETCDFCXX)/include"
-else ifeq ($(shell hostname -d),atos.local)
+ifeq ($(USE_CLANG),True)
+GPLUSPLUS := clang++
+else
+GPLUSPLUS := /usr/local/Cellar/gcc@10/10.4.0/bin/g++-10
+endif
 STDLIB_OPT :=
-FLAGS :=-pthread -DUSE_NETCDFCPP
+FLAGS := -DPROCESSED_CELL_COUNTER   -DDARWIN -g  -fsanitize=address
+NETCDFC :=  /usr/local/Cellar/netcdf/4.9.2_1
+NETCDFCXX :=  /usr/local/Cellar/netcdf-cxx/4.3.1_1
+INCLUDE := -isystem"$(NETCDFCXX)/include" -isystem"$(NETCDFC)/include"
+else ifeq ($(shell hostname -d),lvt.dkrz.de)
+STDLIB_OPT :=
+FLAGS :=-pthread -DUSE_NETCDFCPP -g
 INCLUDE := -isystem"$(NETCDFCXX)/include" -isystem"$(NETCDFC)/include"
 ifneq ($(USE_SETTINGS_FROM_CONFIGURE),True)
 GPLUSPLUS :=  /sw/spack-levante/gcc-11.2.0-7jcqrc/bin/g++
@@ -34,7 +40,7 @@ endif
 -include ../src/subdir.mk
 -include ../subdir.mk
 
-EXECUTABLES += Dynamic_HD_Cpp_Exec Fill_Sinks_Icon_SI_Exec Compute_Catchments_SI_Exec Determine_River_Directions_SI_Exec Evaluate_Basins_SI_Exec Bifurcate_River_Basic_SI_Exec
+EXECUTABLES += Dynamic_HD_Cpp_Exec Fill_Sinks_Icon_SI_Exec Compute_Catchments_SI_Exec Determine_River_Directions_SI_Exec Bifurcate_River_Basic_SI_Exec
 
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(strip $(CC_DEPS)),)
@@ -60,10 +66,10 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables
 
 # All Target
-all: Dynamic_HD_Cpp_Code Fill_Sinks_Icon_SI_Exec Compute_Catchments_SI_Exec Determine_River_Directions_SI_Exec Evaluate_Basins_SI_Exec Bifurcate_River_Basic_SI_Exec
+all: Dynamic_HD_Cpp_Code #Fill_Sinks_Icon_SI_Exec Compute_Catchments_SI_Exec Determine_River_Directions_SI_Exec Evaluate_Basins_SI_Exec Bifurcate_River_Basic_SI_Exec
 
 # Tool invocations
-tools_only: $(USER_OBJS) Fill_Sinks_Icon_SI_Exec Compute_Catchments_SI_Exec Determine_River_Directions_SI_Exec Evaluate_Basins_SI_Exec Bifurcate_River_Basic_SI_Exec
+tools_only: $(USER_OBJS) Fill_Sinks_Icon_SI_Exec Compute_Catchments_SI_Exec Determine_River_Directions_SI_Exec Bifurcate_River_Basic_SI_Exec
 compile_only: $(USER_OBJS)
 
 Dynamic_HD_Cpp_Code: $(OBJS) $(USER_OBJS) $(TEST_OBJS)

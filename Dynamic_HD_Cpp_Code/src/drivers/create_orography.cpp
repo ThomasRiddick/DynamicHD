@@ -41,5 +41,7 @@ void create_orography(bool* landsea_in,double* inclines_in,
       orography_in[i] = - bathymetry_in[i];
     }
   }
+  delete[] bathymetry_in;
+  delete[] landsea_inv_in;
   delete grid_params_in;
 }

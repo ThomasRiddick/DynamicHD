@@ -24,7 +24,7 @@ grid_desc_lat_first = re.compile(r'^ *yfirst *= *([-.0-9]+)')
 grid_desc_lon_inc = re.compile(r'^ *xinc *= *([-.0-9]+)')
 grid_desc_lat_inc = re.compile(r'^ *yinc *= *([-.0-9]+)')
 
-class Grid_Description(object):
+class Grid_Description:
     """Class to hold a single grid description parameter and the pattern that matches it"""
 
     def __init__(self,pattern):
@@ -53,7 +53,7 @@ class Grid_Description(object):
         """Get the value"""
         return self.value
 
-class Grid_Descriptions(object):
+class Grid_Descriptions:
     """Class to hold a collection of grid description parameters"""
 
     def __init__(self,grid_descs):

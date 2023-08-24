@@ -11,17 +11,19 @@ import glob
 import re
 import itertools
 import numpy as np
+import matplotlib.backends
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-from matplotlib.widgets import Button, TextBox, RectangleSelector, RangeSlider
-from matplotlib.widgets import Slider
 from matplotlib.colors import LogNorm
-from HD_Plots.utilities.match_river_mouths import generate_matches
-from HD_Plots.utilities import match_river_mouths
-from HD_Plots.utilities import plotting_tools as pts
-from Dynamic_HD_Scripts.utilities import utilities
+from plotting_utilities.match_river_mouths import generate_matches
+from plotting_utilities import match_river_mouths
+from plotting_utilities import plotting_tools as pts
+from plotting_utilities.lake_analysis_tools import SpillwayProfiler
+from Dynamic_HD_Scripts import utilities
+from Dynamic_HD_Scripts.base.iodriver import advanced_field_loader
 from Dynamic_HD_Scripts.base.field import Field
+from os.path import join, isfile
 from enum import Enum
 
 class PlotScales(Enum):
@@ -29,13 +31,18 @@ class PlotScales(Enum):
     FINE = 2
     SUPERFINE = 3
 
-class TimeslicePlot():
+class TimeSlicePlot():
 
     def __init__(self,ax):
         self.ax = ax
         self.plot = None
         self.selector = None
         self.scale = PlotScales.NORMAL
+
+class TimeSeriesPlot:
+
+    def __init__(self,ax):
+        self.ax = ax
 
 class ZoomSettings():
 
@@ -51,43 +58,523 @@ class ZoomSettings():
     def copy(self):
         return ZoomSettings(self.zoomed,dict(self.zoomed_section_bounds))
 
-class InteractiveTimeslicePlots:
+class TimeSequences:
+    def __init__(self,dates,
+                 sequence_one_base_dir,
+                 sequence_two_base_dir,
+                 glacier_mask_file_template,
+                 super_fine_orography_filepath,
+                 use_connected_catchments=True,
+                 missing_fields=[],
+                 use_latest_version_for_sequence_one=True,
+                 sequence_one_fixed_version=-1,
+                 use_latest_version_for_sequence_two=True,
+                 sequence_two_fixed_version=-1,
+                 **kwargs):
+        self.lsmask_sequence = []
+        self.glacier_mask_sequence = []
+        self.catchment_nums_one_sequence = []
+        self.river_flow_one_sequence= []
+        self.river_mouths_one_sequence = []
+        if not "lake_volumes_one" in missing_fields:
+            self.lake_volumes_one_sequence = []
+        else:
+            self.lake_volumes_one_sequence = None
+        if not "lake_basin_numbers_one" in missing_fields:
+            self.lake_basin_numbers_one_sequence = []
+        else:
+            self.lake_basin_numbers_one_sequence = None
+        self.fine_river_flow_one_sequence= []
+        if not "orography_one" in missing_fields:
+            self.orography_one_sequence = []
+        else:
+            self.orography_one_sequence = None
+        self.catchment_nums_two_sequence = []
+        self.river_flow_two_sequence= []
+        self.river_mouths_two_sequence = []
+        if not "lake_volumes_two" in missing_fields:
+            self.lake_volumes_two_sequence = []
+        else:
+            self.lake_volumes_two_sequence = None
+        if not "lake_basin_numbers_two" in missing_fields:
+            self.lake_basin_numbers_two_sequence = []
+        else:
+            self.lake_basin_numbers_two_sequence = None
+        self.fine_river_flow_two_sequence= []
+        if not "orography_two" in missing_fields:
+            self.orography_two_sequence = []
+        else:
+            self.orography_two_sequence = None
+        if not "filled_orography_one" in missing_fields:
+            self.filled_orography_one_sequence = []
+        else:
+            self.filled_orography_one_sequence = None
+        if not "filled_orography_two" in missing_fields:
+            self.filled_orography_two_sequence = []
+        else:
+            self.filled_orography_two_sequence = None
+        if not "sinkless_rdirs_one" in missing_fields:
+            self.sinkless_rdirs_one_sequence = []
+        else:
+            self.sinkless_rdirs_one_sequence = None,
+        if not "sinkless_rdirs_two" in missing_fields:
+            self.sinkless_rdirs_two_sequence = []
+        else:
+            self.sinkless_rdirs_two_sequence = None,
+        self.date_sequence = dates
+        for date in self.date_sequence:
+            #Note latest version may differ between dates hence calculate this
+            #on a date by date basis
+            if use_latest_version_for_sequence_one:
+                sequence_one_lakes_version = \
+                    find_highest_version(sequence_one_base_dir +
+                                        "lakes/results/"
+                                        "diag_version_VERSION_NUMBER_date_{}".format(date))
+            else:
+                sequence_one_lakes_version = sequence_one_fixed_version
+            if use_latest_version_for_sequence_two:
+                sequence_two_lakes_version = \
+                    find_highest_version(sequence_two_base_dir +
+                                        "lakes/results/"
+                                        "diag_version_VERSION_NUMBER_date_{}".format(date))
+            else:
+                sequence_two_lakes_version = sequence_two_fixed_version
+            sequence_one_results_base_dir = (sequence_one_base_dir +
+                                             "lakes/results/diag_version_{}_date_{}".\
+                                               format(sequence_one_lakes_version,date))
+            sequence_two_results_base_dir = (sequence_two_base_dir +
+                                                  "lakes/results/diag_version_{}_date_{}".\
+                                                  format(sequence_two_lakes_version,date))
+            rdirs = advanced_field_loader(filename=join(sequence_one_results_base_dir,"30min_rdirs.nc"),
+                                          time_slice=None,
+                                          field_type="RiverDirections",
+                                          fieldname="rdirs",
+                                          adjust_orientation=True)
+            lsmask_data = rdirs.get_lsmask()
+            self.lsmask_sequence.append(lsmask_data)
+            glacier_mask = advanced_field_loader(filename=glacier_mask_file_template.replace("DATE",str(date)),
+                                                 time_slice=None,
+                                                 fieldname="glac",
+                                                 adjust_orientation=True)
+            self.glacier_mask_sequence.append(glacier_mask.get_data())
+            catchment_nums_one = advanced_field_loader(filename=join(sequence_one_results_base_dir,
+                                                                     "30min_connected_catchments.nc"
+                                                                     if use_connected_catchments else
+                                                                     "30min_catchments.nc"),
+                                                          time_slice=None,
+                                                          fieldname="catchments",
+                                                          adjust_orientation=True)
+            self.catchment_nums_one_sequence.append(catchment_nums_one.get_data())
+            river_flow_one = advanced_field_loader(filename=join(sequence_one_results_base_dir,
+                                                                 "30min_flowtocell_connected.nc"
+                                                                 if use_connected_catchments else
+                                                                 "30min_flowtocell.nc"),
+                                                      time_slice=None,
+                                                      fieldname="cumulative_flow",
+                                                      adjust_orientation=True)
+            self.river_flow_one_sequence.append(river_flow_one.get_data())
+            river_mouths_one = advanced_field_loader(filename=join(sequence_one_results_base_dir,
+                                                                      "30min_flowtorivermouths_connected.nc"),
+                                                        time_slice=None,
+                                                        fieldname="cumulative_flow_to_ocean",
+                                                        adjust_orientation=True)
+            self.river_mouths_one_sequence.append(river_mouths_one.get_data())
+            if not "lake_volumes_one" in missing_fields:
+                lake_volumes_one = advanced_field_loader(filename=join(sequence_one_results_base_dir,
+                                                                         "10min_lake_volumes.nc"),
+                                                           time_slice=None,
+                                                           fieldname="lake_volume",
+                                                           adjust_orientation=True)
+                self.lake_volumes_one_sequence.append(lake_volumes_one.get_data())
+            if not "lake_basin_numbers_one" in missing_fields:
+                lake_basin_numbers_one = advanced_field_loader(filename=join(sequence_one_results_base_dir,
+                                                                           "10min_basin_catchment_numbers.nc"),
+                                                                           time_slice=None,
+                                                                           fieldname="basin_catchment_numbers",
+                                                                           adjust_orientation=True)
+                self.lake_basin_numbers_one_sequence.append(lake_basin_numbers_one.get_data())
+            if not "fine_river_flow_one" in missing_fields:
+                fine_river_flow_one = advanced_field_loader(filename=join(sequence_one_results_base_dir,
+                                                                             "10min_flowtocell.nc"),
+                                                               time_slice=None,
+                                                               fieldname="cumulative_flow",
+                                                               adjust_orientation=True)
+                self.fine_river_flow_one_sequence.append(fine_river_flow_one.get_data())
+            else:
+                self.fine_river_flow_one_sequence = None
+            if not "orography_one" in missing_fields:
+                orography_one = advanced_field_loader(filename=join(sequence_one_results_base_dir,
+                                                                    "10min_corrected_orog.nc"),
+                                                         time_slice=None,
+                                                         fieldname="corrected_orog",
+                                                         adjust_orientation=True)
+                self.orography_one_sequence.append(orography_one.get_data())
+            if not "orography_two" in missing_fields:
+                orography_two = advanced_field_loader(filename=join(sequence_two_results_base_dir,
+                                                                    "10min_corrected_orog.nc"),
+                                                         time_slice=None,
+                                                         fieldname="corrected_orog",
+                                                         adjust_orientation=True)
+                self.orography_two_sequence.append(orography_two.get_data())
+            catchment_nums_two = advanced_field_loader(filename=join(sequence_two_results_base_dir,
+                                                                      "30min_connected_catchments.nc"),
+                                                        time_slice=None,
+                                                        fieldname="catchments",
+                                                        adjust_orientation=True)
+            self.catchment_nums_two_sequence.append(catchment_nums_two.get_data())
+            river_flow_two = advanced_field_loader(filename=join(sequence_two_results_base_dir,
+                                                                  "30min_flowtocell_connected.nc"),
+                                                    time_slice=None,
+                                                    fieldname="cumulative_flow",
+                                                    adjust_orientation=True)
+            self.river_flow_two_sequence.append(river_flow_two.get_data())
+            river_mouths_two = advanced_field_loader(filename=join(sequence_two_results_base_dir,
+                                                                    "30min_flowtorivermouths_connected.nc"),
+                                                      time_slice=None,
+                                                      fieldname="cumulative_flow_to_ocean",
+                                                      adjust_orientation=True)
+            self.river_mouths_two_sequence.append(river_mouths_two.get_data())
+            if not "lake_volumes_two" in missing_fields:
+                lake_volumes_two = advanced_field_loader(filename=join(sequence_two_results_base_dir,
+                                                                       "10min_lake_volumes.nc"),
+                                                         time_slice=None,
+                                                         fieldname="lake_volume",
+                                                         adjust_orientation=True)
+                self.lake_volumes_two_sequence.append(lake_volumes_two.get_data())
+            if not "lake_basin_numbers_two" in missing_fields:
+                lake_basin_numbers_two = advanced_field_loader(filename=join(sequence_two_results_base_dir,
+                                                                         "10min_basin_catchment_numbers.nc"),
+                                                                         time_slice=None,
+                                                                         fieldname="basin_catchment_numbers",
+                                                                         adjust_orientation=True)
+                self.lake_basin_numbers_two_sequence.append(lake_basin_numbers_two.get_data())
+            if not "fine_river_flow_two" in missing_fields:
+                fine_river_flow_two = advanced_field_loader(filename=join(sequence_two_results_base_dir,
+                                                            "10min_flowtocell.nc"),
+                                                            time_slice=None,
+                                                            fieldname="cumulative_flow",
+                                                            adjust_orientation=True)
+                self.fine_river_flow_two_sequence.append(fine_river_flow_two.get_data())
+            else:
+                self.fine_river_flow_two_sequence = None
+            if not "filled_orography_one" in missing_fields:
+                filled_orography_one = advanced_field_loader(filename=join(sequence_one_results_base_dir,
+                                                                           "10min_filled_orog.nc"),
+                                                             time_slice=None,
+                                                             fieldname="filled_orog",
+                                                             adjust_orientation=True)
+                self.filled_orography_one_sequence.append(filled_orography_one.get_data())
+            if not "filled_orography_two" in missing_fields:
+                filled_orography_two = advanced_field_loader(filename=join(sequence_two_results_base_dir,
+                                                                           "10min_filled_orog.nc"),
+                                                             time_slice=None,
+                                                             fieldname="filled_orog",
+                                                             adjust_orientation=True)
+                self.filled_orography_two_sequence.append(filled_orography_two.get_data())
+            if not "sinkless_rdirs_one" in missing_fields:
+                sinkless_rdirs_one = advanced_field_loader(filename=join(sequence_one_results_base_dir,
+                                                                           "10min_sinkless_rdirs.nc"),
+                                                           time_slice=None,
+                                                           fieldname="rdirs",
+                                                           adjust_orientation=True)
+                self.sinkless_rdirs_one_sequence.append(sinkless_rdirs_one.get_data())
+            if not "sinkless_rdirs_two" in missing_fields:
+                sinkless_rdirs_two = advanced_field_loader(filename=join(sequence_two_results_base_dir,
+                                                                           "10min_sinkless_rdirs.nc"),
+                                                           time_slice=None,
+                                                           fieldname="rdirs",
+                                                           adjust_orientation=True)
+                self.sinkless_rdirs_two_sequence.append(sinkless_rdirs_two.get_data())
+        if not "super_fine_orography" in missing_fields:
+            self.super_fine_orography = advanced_field_loader(filename=join(super_fine_orography_filepath),
+                                                         time_slice=None,
+                                                         fieldname="topo",
+                                                         adjust_orientation=True).get_data()
+        else:
+            self.super_fine_orography = None
+        if not "corrected_orographies" in missing_fields:
+            self.first_corrected_orography = advanced_field_loader(filename=join(sequence_one_base_dir,
+                                                                            "corrections","work",
+                                                              "pre_preliminary_tweak_orography.nc"),
+                                                              time_slice=None,
+                                                              fieldname="orog",
+                                                              adjust_orientation=True).get_data()
+            self.second_corrected_orography = advanced_field_loader(filename=join(sequence_one_base_dir,
+                                                                             "corrections","work",
+                                                               "post_preliminary_tweak_orography.nc"),
+                                                               time_slice=None,
+                                                               fieldname="orog",
+                                                               adjust_orientation=True).get_data()
+            self.third_corrected_orography = advanced_field_loader(filename=join(sequence_one_base_dir,
+                                                                            "corrections","work",
+                                                              "pre_final_tweak_orography.nc"),
+                                                             time_slice=None,
+                                                             fieldname="orog",
+                                                             adjust_orientation=True).get_data()
+            self.fourth_corrected_orography = advanced_field_loader(filename=join(sequence_one_base_dir,
+                                                                            "corrections","work",
+                                                               "post_final_tweak_orography.nc"),
+                                                               time_slice=None,
+                                                               fieldname="orog",
+                                                               adjust_orientation=True).get_data()
+        else:
+            self.first_corrected_orography = None
+            self.second_corrected_orography = None
+            self.third_corrected_orography = None
+            self.fourth_corrected_orography = None
+        if not "true_sinks" in missing_fields:
+            highest_true_sinks_version = find_highest_version(join(sequence_one_base_dir,
+                                                             "corrections","true_sinks_fields",
+                                                             "true_sinks_field_version_"
+                                                             "VERSION_NUMBER.nc"))
+            self.true_sinks = advanced_field_loader(filename=join(sequence_one_base_dir,
+                                                                  "corrections","true_sinks_fields",
+                                                                  "true_sinks_field_version_{}.nc".\
+                                                                  format(highest_true_sinks_version)),
+                                                                  time_slice=None,
+                                                                  fieldname="true_sinks",
+                                                                  adjust_orientation=True).get_data()
+        else:
+            self.true_sinks = None
 
-    zoom_button_colors = itertools.cycle(['grey','lightgray'])
-    height_range_text_match = re.compile("^\s*(-?[0-9]*)\s*,\s*(-?[0-9]*)\s*$")
+class InteractiveSpillwayPlots:
 
     def __init__(self,colors,
-                 configuration,
-                 lsmask_sequence,
-                 glacier_mask_sequence,
-                 catchment_nums_one_sequence,
-                 catchment_nums_two_sequence,
-                 river_flow_one_sequence,
-                 river_flow_two_sequence,
-                 river_mouths_one_sequence,
-                 river_mouths_two_sequence,
-                 lake_volume_one_sequence,
-                 lake_volume_two_sequence,
-                 lake_basin_numbers_one_sequence,
-                 lake_basin_numbers_two_sequence,
-                 fine_river_flow_one_sequence,
-                 fine_river_flow_two_sequence,
-                 orography_one_sequence,
-                 orography_two_sequence,
-                 super_fine_orography,
-                 first_corrected_orography,
-                 second_corrected_orography,
-                 third_corrected_orography,
-                 fourth_corrected_orography,
-                 true_sinks,
-                 date_sequence,
+                 **kwargs):
+        mpl.use('TkAgg')
+        self.show_plot_one = True
+        self.setup_sequences(**kwargs)
+        self.spillway_plot_axes = []
+        self.figs = []
+        fig = plt.figure(figsize=(9,4),facecolor="#E3F2FD",dpi=200)
+        self.figs.append(fig)
+        gs=gridspec.GridSpec(nrows=1,ncols=1,width_ratios=[1],
+                             height_ratios=[1],
+                             hspace=0.1,
+                             wspace=0.1)
+        self.spillway_plot_axes.append(fig.add_subplot(gs[0,0]))
+        fig = plt.figure(figsize=(9,4),facecolor="#E3F2FD",dpi=200)
+        self.figs.append(fig)
+        gs=gridspec.GridSpec(nrows=2,ncols=1,width_ratios=[1],
+                             height_ratios=[1,1],
+                             hspace=0.1,
+                             wspace=0.1)
+        self.spillway_plot_axes.append(fig.add_subplot(gs[0,0]))
+        self.spillway_plot_axes.append(fig.add_subplot(gs[1,0]))
+        self.step()
+
+    def replot(self,**kwargs):
+        self.setup_sequences(**kwargs)
+        self.step()
+
+    def step(self):
+        spillway_profile_one = SpillwayProfiler.\
+            extract_spillway_profile(lake_center=
+                                     self.lake_center_one_sequence[self.current_index],
+                                     sinkless_rdirs=
+                                     self.sinkless_rdirs_one_sequence[self.current_index],
+                                     corrected_heights=
+                                     self.orography_one_sequence[self.current_index])
+        spillway_profile_two = SpillwayProfiler.\
+            extract_spillway_profile(lake_center=
+                                     self.lake_center_two_sequence[self.current_index],
+                                     sinkless_rdirs=
+                                     self.sinkless_rdirs_two_sequence[self.current_index],
+                                     corrected_heights=
+                                     self.orography_two_sequence[self.current_index])
+        self.plot_spillway_profile(spillway_profile_one if self.show_plot_one else
+                                   spillway_profile_two,0)
+        self.plot_spillway_profile(spillway_profile_one,1)
+        self.plot_spillway_profile(spillway_profile_two,2)
+
+    def step_back(self):
+        if self.current_index > 0:
+            self.current_index -= 1
+        self.step()
+
+    def step_forward(self):
+        if self.current_index < self.max_index - 1:
+            self.current_index += 1
+        self.step()
+
+    def step_to_date(self,event):
+        self.current_index = self.date_sequence.index(int(event))
+        self.step()
+
+    def toggle_plot_one(self):
+        self.show_plot_one = True
+        self.step()
+
+    def toggle_plot_two(self):
+        self.show_plot_one = False
+        self.step()
+
+    def plot_spillway_profile(self,profile,index):
+        self.spillway_plot_axes[index].clear()
+        self.spillway_plot_axes[index].plot(profile[:-2])
+
+    def get_current_date(self):
+        return self.date_sequence[self.current_index]
+
+    def setup_sequences(self,date_sequence,
+                        lake_center_one_sequence,
+                        lake_center_two_sequence,
+                        sinkless_rdirs_one_sequence,
+                        sinkless_rdirs_two_sequence,
+                        orography_one_sequence,
+                        orography_two_sequence,
+                        **kwargs):
+        self.date_sequence = date_sequence
+        self.lake_center_one_sequence=lake_center_one_sequence
+        self.lake_center_two_sequence=lake_center_two_sequence
+        self.sinkless_rdirs_one_sequence=sinkless_rdirs_one_sequence
+        self.sinkless_rdirs_two_sequence=sinkless_rdirs_two_sequence
+        self.orography_one_sequence = orography_one_sequence
+        self.orography_two_sequence = orography_two_sequence
+        self.current_index = 0
+        self.max_index = min(len(self.orography_one_sequence),
+                             len(self.orography_two_sequence))
+
+class InteractiveTimeSeriesPlots():
+
+    def __init__(self,colors,
+                 **kwargs):
+        mpl.use('TkAgg')
+        self.setup_sequences(**kwargs)
+        self.plot_types = {"none":self.no_plot,
+                           "height1":self.lake_height_plot_one,
+                           "height2":self.lake_height_plot_two,
+                           "volume1":self.lake_volume_plot_one,
+                           "volume2":self.lake_volume_plot_two,
+                           "outflow1":self.lake_outflow_plot_one,
+                           "outflow2":self.lake_outflow_plot_two }
+        self.plot_configuration = ["height1" for _ in range(10)]
+        self.figs = []
+        self.timeseries_plots = []
+        fig = plt.figure(figsize=(9,4),facecolor="#E3F2FD",dpi=200)
+        self.figs.append(fig)
+        gs=gridspec.GridSpec(nrows=1,ncols=1,width_ratios=[1],
+                             height_ratios=[1],
+                             hspace=0.1,
+                             wspace=0.1)
+        self.timeseries_plots.append(TimeSeriesPlot(fig.add_subplot(gs[0,0])))
+        fig = plt.figure(figsize=(9,4),facecolor="#E3F2FD",dpi=200)
+        self.figs.append(fig)
+        gs=gridspec.GridSpec(nrows=2,ncols=1,width_ratios=[1],
+                             height_ratios=[1,1],
+                             hspace=0.1,
+                             wspace=0.1)
+        self.timeseries_plots.append(TimeSeriesPlot(fig.add_subplot(gs[0,0])))
+        self.timeseries_plots.append(TimeSeriesPlot(fig.add_subplot(gs[1,0])))
+        fig = plt.figure(figsize=(9,4),facecolor="#E3F2FD",dpi=200)
+        self.figs.append(fig)
+        gs=gridspec.GridSpec(nrows=3,ncols=1,width_ratios=[1],
+                             height_ratios=[1,1,1],
+                             hspace=0.1,
+                             wspace=0.1)
+        self.timeseries_plots.append(TimeSeriesPlot(fig.add_subplot(gs[0,0])))
+        self.timeseries_plots.append(TimeSeriesPlot(fig.add_subplot(gs[1,0])))
+        self.timeseries_plots.append(TimeSeriesPlot(fig.add_subplot(gs[2,0])))
+        fig = plt.figure(figsize=(9,4),facecolor="#E3F2FD",dpi=200)
+        self.figs.append(fig)
+        gs=gridspec.GridSpec(nrows=4,ncols=1,width_ratios=[1],
+                             height_ratios=[1,1,1,1],
+                             hspace=0.1,
+                             wspace=0.1)
+        self.timeseries_plots.append(TimeSeriesPlot(fig.add_subplot(gs[0,0])))
+        self.timeseries_plots.append(TimeSeriesPlot(fig.add_subplot(gs[1,0])))
+        self.timeseries_plots.append(TimeSeriesPlot(fig.add_subplot(gs[2,0])))
+        self.timeseries_plots.append(TimeSeriesPlot(fig.add_subplot(gs[3,0])))
+        self.step()
+
+    def setup_sequences(self,date_sequence,
+                        lake_heights_one_sequence,
+                        lake_heights_two_sequence,
+                        lake_volume_one_sequence,
+                        lake_volume_two_sequence,
+                        lake_outflow_basin_one_sequence,
+                        lake_outflow_basin_two_sequence,
+                        **kwargs):
+        self.date_sequence = date_sequence
+        self.lake_heights_one_sequence = lake_heights_one_sequence
+        self.lake_heights_two_sequence = lake_heights_two_sequence
+        self.lake_volume_one_sequence = lake_volume_one_sequence
+        self.lake_volume_two_sequence = lake_volume_two_sequence
+        self.lake_outflow_basin_one_sequence = lake_outflow_basin_one_sequence
+        self.lake_outflow_basin_two_sequence = lake_outflow_basin_two_sequence
+
+    def replot(self,**kwargs):
+        self.setup_sequences(**kwargs)
+        self.step()
+
+    def step(self):
+        for index,plot in enumerate(self.plot_configuration):
+            if plot is not None:
+                self.plot_types[plot](index)
+
+    def set_plot_type(self,plot_index,plot_type):
+        self.plot_configuration[plot_index] = plot_type
+        self.plot_types[plot_type](plot_index)
+
+    def no_plot(self,index):
+        self.timeslice_plots[index].ax.set_visible(False)
+
+    def lake_height_plot_base(self,index,lake_height_sequence):
+        self.timeseries_plots[index].ax.clear()
+        self.timeseries_plots[index].ax.plot(lake_height_sequence)
+
+    def lake_height_plot_one(self,index):
+        self.lake_height_plot_base(index,self.lake_heights_one_sequence)
+
+    def lake_height_plot_two(self,index):
+        self.lake_height_plot_base(index,self.lake_heights_two_sequence)
+
+    def lake_volume_plot_base(self,index,lake_volume_sequence):
+        self.timeseries_plots[index].ax.clear()
+        self.timeseries_plots[index].ax.plot(lake_volume_sequence)
+
+    def lake_volume_plot_one(self,index):
+        self.lake_volume_plot_base(index,self.lake_volume_one_sequence)
+
+    def lake_volume_plot_two(self,index):
+        self.lake_volume_plot_base(index,self.lake_volume_two_sequence)
+
+    def lake_outflow_plot_base(self,index,lake_outflow_sequence):
+        self.timeseries_plots[index].ax.clear()
+        carib = np.zeros((len(lake_outflow_sequence)),dtype=np.int32)
+        artic = np.zeros((len(lake_outflow_sequence)),dtype=np.int32)
+        saintlawrence = np.zeros((len(lake_outflow_sequence)),dtype=np.int32)
+        for i,item in enumerate(lake_outflow_sequence):
+            if item == "Carib":
+                carib[i] = 1
+            if item == "Artic":
+                artic[i] = 1
+            if item == "St Lawrence":
+                saintlawrence[i] = 1
+        self.timeseries_plots[index].ax.plot(carib,color="blue")
+        self.timeseries_plots[index].ax.plot(artic,color="red")
+        self.timeseries_plots[index].ax.plot(saintlawrence,color="green")
+
+    def lake_outflow_plot_one(self,index):
+        self.lake_outflow_plot_base(index,self.lake_outflow_basin_one_sequence)
+
+    def lake_outflow_plot_two(self,index):
+        self.lake_outflow_plot_base(index,self.lake_outflow_basin_two_sequence)
+
+class InteractiveTimeSlicePlots:
+
+    def __init__(self,colors,
+                 initial_plot_configuration,
                  minflowcutoff,
                  use_glacier_mask,
                  zoomed,
                  zoomed_section_bounds,
                  zero_slice_only_one=False,
-                 zero_slice_only_two=False):
-        plt.rcParams["backend"] = "TkAgg"
+                 zero_slice_only_two=False,
+                 dynamic_configuration=False,
+                 corrections=None,
+                 **kwargs):
+        mpl.use('TkAgg')
         self.plot_types = {"comp":self.catchment_and_cflow_comp_plot,
                            "none":self.no_plot,
                            "cflow1":self.cflow_plot_one,
@@ -99,6 +586,8 @@ class InteractiveTimeslicePlots:
                            "fcflowcomp":self.fine_cflow_comp_plot,
                            "orog1":self.orography_plot_one,
                            "orog2":self.orography_plot_one,
+                           "morog1":self.modified_orography_plot_one,
+                           "morog2":self.modified_orography_plot_two,
                            "orogcomp":self.orography_comp_plot,
                            "sforog":self.super_fine_orography_plot,
                            "firstcorrorog":self.first_corrected_orography_plot,
@@ -119,13 +608,21 @@ class InteractiveTimeslicePlots:
                            "lakebasinnums1":self.lake_basin_numbers_plot_one,
                            "lakebasinnums2":self.lake_basin_numbers_plot_two}
         self.orog_plot_types  = ["orog1","orog2","orogcomp","sforog",
+                                 "morog1","morog2",
                                  "firstcorrorog","secondcorrorog",
                                  "thirdcorrorog","fourthcorrorog",
                                  "corrorog12comp","corrorog23comp",
                                  "corrorog34comp"]
         self.cflow_plot_types = ["fcflow1","fcflow1","fcflow1comp",
                                  "cflow1","cflow2","comp"]
-        self.configuration = configuration
+        self.plot_configuration = [initial_plot_configuration[0] for _ in range(13)]
+        offset = 0
+        for j in [1,2,4,6]:
+            for i,plot in enumerate(initial_plot_configuration):
+                self.plot_configuration[i + offset] = initial_plot_configuration[i]
+                if i == j-1:
+                    break
+            offset += j
         self.next_command_to_send = None
         self.timeslice_plots = []
         self.minflowcutoff = minflowcutoff
@@ -142,106 +639,117 @@ class InteractiveTimeslicePlots:
                                                   ncolors=256)
         self.zoom_settings = ZoomSettings(zoomed=zoomed,
                                           zoomed_section_bounds=zoomed_section_bounds)
+        self.zero_slice_only_one = zero_slice_only_one
+        self.zero_slice_only_two = zero_slice_only_two
         self.original_zoom_settings = self.zoom_settings.copy()
         self.fine_cutoff_scaling = self.zoom_settings.fine_scale_factor*self.zoom_settings.fine_scale_factor
-        self.date_sequence = date_sequence
-        self.widgets = []
+        self.select_coords = False
+        self.corrections_file = None
+        self.specify_coords_and_height_callback = None
+        self.use_orog_one_for_original_height = True
         self.replot_required = False
-        self.fig = plt.figure(figsize=(16,10))
-        if len(self.configuration) == 2 or len(self.configuration) == 4:
-            if len(self.configuration) == 2:
-                gs=gridspec.GridSpec(nrows=3,ncols=6,width_ratios=[1,1,1,1,1,1],
-                                     height_ratios=[12,1,1])
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[0,0:3])))
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[0,3:6])))
-                wrows_offset = 1
-            elif len(self.configuration) == 4:
-                gs=gridspec.GridSpec(nrows=4,ncols=6,width_ratios=[1,1,1,1,1,1],
-                                     height_ratios=[6,6,1,1])
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[0,0:3])))
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[0,3:6])))
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[1,0:3])))
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[1,3:6])))
-                wrows_offset = 2
-        else:
-            if len(self.configuration) == 1:
-                gs=gridspec.GridSpec(nrows=3,ncols=6,width_ratios=[1,1,1,1,1,1],height_ratios=[12,1,1])
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[0,0:3])))
-                wrows_offset = 1
-            elif len(self.configuration) == 3:
-                gs=gridspec.GridSpec(nrows=3,ncols=6,width_ratios=[1,1,1,1,1,1],height_ratios=[12,1,1])
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[0,0:2])))
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[0,2:4])))
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[0,4:6])))
-                wrows_offset = 1
-            elif len(self.configuration) == 6:
-                gs=gridspec.GridSpec(nrows=4,ncols=6,width_ratios=[1,1,1,1,1,1],height_ratios=[6,6,1,1])
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[0,0:2])))
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[0,2:4])))
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[0,4:6])))
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[1,0:2])))
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[1,2:4])))
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[1,4:6])))
-                wrows_offset = 2
-            elif len(self.configuration) == 9:
-                gs=gridspec.GridSpec(nrows=5,ncols=6,width_ratios=[1,1,1,1,1,1],
-                                     height_ratios=[4,4,4,1,1])
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[0,0:2])))
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[0,2:4])))
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[0,4:6])))
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[1,0:2])))
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[1,2:4])))
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[1,4:6])))
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[2,0:2])))
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[2,2:4])))
-                self.timeslice_plots.append(TimeslicePlot(self.fig.add_subplot(gs[2,4:6])))
-                wrows_offset = 3
-        self.wax1 = self.fig.add_subplot(gs[wrows_offset,0])
-        self.wax2 = self.fig.add_subplot(gs[wrows_offset,1])
-        self.wax3 = self.fig.add_subplot(gs[wrows_offset,2])
-        self.wax4 = self.fig.add_subplot(gs[wrows_offset,4:6])
-        self.wax5 = self.fig.add_subplot(gs[wrows_offset+1,0])
-        self.wax6 = self.fig.add_subplot(gs[wrows_offset+1,1])
-        self.wax7 = self.fig.add_subplot(gs[wrows_offset+1,2])
-        self.wax8 = self.fig.add_subplot(gs[wrows_offset+1,4:6])
-        previous_button = Button(self.wax1,"Previous",color='lightgrey',hovercolor='grey')
-        next_button = Button(self.wax2,"Next",color='lightgrey',hovercolor='grey')
-        text_box = TextBox(self.wax3,"YBP:")
-        if not set(self.configuration).isdisjoint(self.cflow_plot_types):
-            #add zero to list to prevent errors if the two sequences are Nones
-            maxflow =   max([np.max(slice) if slice is not None else 0
-                            for slice in itertools.chain(river_flow_one_sequence if
-                                                         river_flow_one_sequence is
-                                                         not None else [],
-                                                         river_flow_two_sequence if
-                                                         river_flow_two_sequence is
-                                                         not None else [])]+[0])
-            #add zero to list to prevent errors if the two sequences are Nones
-            maxflow_fine =   max([np.max(slice) if slice is not None else 0
-                            for slice in itertools.chain(fine_river_flow_one_sequence if
-                                                         fine_river_flow_one_sequence is
-                                                         not None else [],
-                                                         fine_river_flow_two_sequence if
-                                                         fine_river_flow_two_sequence is
-                                                         not None else [])]+[0])
-            maxflow = max(maxflow,math.ceil(maxflow_fine/self.fine_cutoff_scaling))
-            #Prevent slider from becoming dominated by very high values in anatartica
-            #by capping it at 1500
-            maxflow = min(1000,maxflow)
-            minflowcutoff_slider = Slider(self.wax4,"Minimum Flow Threshold",valmin=0,
-                                          valinit=self.minflowcutoff,valmax=maxflow)
-        else:
-            self.wax4.set_visible(False)
-        zoom_button = Button(self.wax5,"Zoom",color='lightgrey',hovercolor='grey')
-        zoom_reset_button = Button(self.wax6,"Reset Zoom",color='lightgrey',hovercolor='grey')
-        if not set(self.configuration).isdisjoint(self.orog_plot_types):
-            height_text_box = TextBox(self.wax7,"HR:")
-            height_slider = RangeSlider(self.wax8,"Height (m)",self.orog_min,self.orog_max)
-        else:
-            self.wax7.set_visible(False)
-            self.wax8.set_visible(False)
-        lake_and_river_plots_required=(not set(self.configuration).isdisjoint(["cflowandlake1",
+        self.corrections = corrections
+        self.include_date_itself_in_corrected_slices = True
+        self.figs = []
+        fig = plt.figure(figsize=(9,4),facecolor="#E3F2FD",dpi=200)
+        self.figs.append(fig)
+        gs=gridspec.GridSpec(nrows=1,ncols=1,width_ratios=[1],
+                             height_ratios=[1],
+                             hspace=0.1,
+                             wspace=0.1)
+        self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[0,0])))
+        fig = plt.figure(figsize=(9,4),facecolor="#E3F2FD",dpi=200)
+        self.figs.append(fig)
+        gs=gridspec.GridSpec(nrows=2,ncols=1,width_ratios=[1],
+                             height_ratios=[1,1],
+                             hspace=0.1,
+                             wspace=0.1)
+        self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[0,0])))
+        self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[1,0])))
+        fig = plt.figure(figsize=(9,4),facecolor="#E3F2FD",dpi=200)
+        self.figs.append(fig)
+        gs=gridspec.GridSpec(nrows=2,ncols=2,width_ratios=[1,1],
+                             height_ratios=[1,1],
+                             hspace=0.1,
+                             wspace=0.1)
+        self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[0,0])))
+        self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[0,1])))
+        self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[1,0])))
+        self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[1,1])))
+        fig = plt.figure(figsize=(9,4),facecolor="#E3F2FD",dpi=200)
+        self.figs.append(fig)
+        gs=gridspec.GridSpec(nrows=3,ncols=2,width_ratios=[1,1],
+                             height_ratios=[1,1,1],
+                             hspace=0.1,
+                             wspace=0.1)
+        self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[0,0])))
+        self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[0,1])))
+        self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[1,0])))
+        self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[1,1])))
+        self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[2,0])))
+        self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[2,1])))
+        for fig in self.figs:
+            fig.canvas.mpl_connect('button_press_event',
+                                   lambda event: self.set_coords_and_height(event))
+        # if (not set(self.plot_configuration).isdisjoint(self.cflow_plot_types)):
+        #     #add zero to list to prevent errors if the two sequences are Nones
+        #     maxflow =   max([np.max(slice) if slice is not None else 0
+        #                     for slice in itertools.chain(river_flow_one_sequence if
+        #                                                  river_flow_one_sequence is
+        #                                                  not None else [],
+        #                                                  river_flow_two_sequence if
+        #                                                  river_flow_two_sequence is
+        #                                                  not None else [])]+[0])
+        #     #add zero to list to prevent errors if the two sequences are Nones
+        #     maxflow_fine =   max([np.max(slice) if slice is not None else 0
+        #                     for slice in itertools.chain(fine_river_flow_one_sequence if
+        #                                                  fine_river_flow_one_sequence is
+        #                                                  not None else [],
+        #                                                  fine_river_flow_two_sequence if
+        #                                                  fine_river_flow_two_sequence is
+        #                                                  not None else [])]+[0])
+        #     maxflow = max(maxflow,math.ceil(maxflow_fine/self.fine_cutoff_scaling))
+        #     #Prevent slider from becoming dominated by very high values in anatartica
+        #     #by capping it at 1500
+        #     maxflow = min(1000,maxflow)
+        self.lake_and_river_plots_required=((not set(self.plot_configuration).isdisjoint(["cflowandlake1",
                                                                                "cflowandlake1"]))
+                                             or dynamic_configuration)
+        self.lake_and_river_plots_required=False
+        self.setup_generator(**kwargs)
+        self.step()
+        zoom_in_funcs = {PlotScales.NORMAL:self.zoom_in_normal,
+                         PlotScales.FINE:self.zoom_in_fine,
+                         PlotScales.SUPERFINE:self.zoom_in_super_fine}
+
+    def setup_generator(self,
+                        lsmask_sequence,
+                        glacier_mask_sequence,
+                        catchment_nums_one_sequence,
+                        catchment_nums_two_sequence,
+                        river_flow_one_sequence,
+                        river_flow_two_sequence,
+                        river_mouths_one_sequence,
+                        river_mouths_two_sequence,
+                        lake_volumes_one_sequence,
+                        lake_volumes_two_sequence,
+                        lake_basin_numbers_one_sequence,
+                        lake_basin_numbers_two_sequence,
+                        fine_river_flow_one_sequence,
+                        fine_river_flow_two_sequence,
+                        orography_one_sequence,
+                        orography_two_sequence,
+                        filled_orography_one_sequence,
+                        filled_orography_two_sequence,
+                        sinkless_rdirs_one_sequence,
+                        sinkless_rdirs_two_sequence,
+                        super_fine_orography,
+                        first_corrected_orography,
+                        second_corrected_orography,
+                        third_corrected_orography,
+                        fourth_corrected_orography,
+                        true_sinks,
+                        date_sequence):
         combined_sequence_tuples =  prep_combined_sequence_tuples(lsmask_sequence,
                                                                   glacier_mask_sequence,
                                                                   catchment_nums_one_sequence,
@@ -250,8 +758,8 @@ class InteractiveTimeslicePlots:
                                                                   river_flow_two_sequence,
                                                                   river_mouths_one_sequence,
                                                                   river_mouths_two_sequence,
-                                                                  lake_volume_one_sequence,
-                                                                  lake_volume_two_sequence,
+                                                                  lake_volumes_one_sequence,
+                                                                  lake_volumes_two_sequence,
                                                                   lake_basin_numbers_one_sequence,
                                                                   lake_basin_numbers_two_sequence,
                                                                   fine_river_flow_one_sequence,
@@ -259,10 +767,10 @@ class InteractiveTimeslicePlots:
                                                                   orography_one_sequence,
                                                                   orography_two_sequence,
                                                                   ["{} YBP".format(date) for date
-                                                                   in self.date_sequence],
-                                                                   lake_and_river_plots_required,
+                                                                   in date_sequence],
+                                                                   date_sequence,
+                                                                   self.lake_and_river_plots_required,
                                                                    self.minflowcutoff)
-
         self.gen = generate_catchment_and_cflow_sequence_tuple(combined_sequence_tuples,
                                                                super_fine_orography,
                                                                first_corrected_orography,
@@ -273,44 +781,15 @@ class InteractiveTimeslicePlots:
                                                                bidirectional=True,
                                                                zoom_settings=self.zoom_settings,
                                                                return_zero_slice_only_one=
-                                                               zero_slice_only_one,
+                                                               self.zero_slice_only_one,
                                                                return_zero_slice_only_two=
-                                                               zero_slice_only_two)
-        self.step()
-        next_button.on_clicked(self.step_forward)
-        self.widgets.append(next_button)
-        previous_button.on_clicked(self.step_back)
-        self.widgets.append(previous_button)
-        text_box.on_submit(self.step_to_date)
-        self.widgets.append(text_box)
-        if not set(self.configuration).isdisjoint(self.cflow_plot_types):
-            minflowcutoff_slider.on_changed(self.update_minflowcutoff)
-            self.widgets.append(minflowcutoff_slider)
-        zoom_button.on_clicked(self.toggle_zoom)
-        self.widgets.append(zoom_button)
-        zoom_reset_button.on_clicked(self.reset_zoom)
-        self.widgets.append(zoom_reset_button)
-        if not set(self.configuration).isdisjoint(self.orog_plot_types):
-            height_text_box.on_submit(self.change_height_range_text_box)
-            self.widgets.append(height_text_box)
-            height_slider.on_changed(self.change_height_range_slider)
-            self.widgets.append(height_slider)
-        self.fig.canvas.mpl_connect('key_press_event',self.toggle_zoom_keyboard)
-        zoom_in_funcs = {PlotScales.NORMAL:self.zoom_in_normal,
-                         PlotScales.FINE:self.zoom_in_fine,
-                         PlotScales.SUPERFINE:self.zoom_in_super_fine}
-        for plot in self.timeslice_plots:
-            plot.selector = RectangleSelector(plot.ax,zoom_in_funcs[plot.scale],
-                                              drawtype='box',useblit=True,
-                                              button=[1,3],minspanx=3,
-                                              minspany=3,spancoords='pixels')
-            plot.selector.set_active(False)
+                                                               self.zero_slice_only_two)
 
     def step(self):
         (self.lsmask_slice_zoomed,self.glacier_mask_slice_zoomed,
          self.matched_catchment_nums_one,self.matched_catchment_nums_two,
          self.river_flow_one_slice_zoomed,self.river_flow_two_slice_zoomed,
-         self.lake_volume_one_slice_zoomed,self.lake_volume_two_slice_zoomed,
+         self.lake_volumes_one_slice_zoomed,self.lake_volumes_two_slice_zoomed,
          self.lake_basin_numbers_one_slice_zoomed,
          self.lake_basin_numbers_two_slice_zoomed,
          self.fine_river_flow_one_slice_zoomed,self.fine_river_flow_two_slice_zoomed,
@@ -323,36 +802,31 @@ class InteractiveTimeslicePlots:
          self.true_sinks_slice_zoomed,
          self.lake_and_river_colour_codes_one_slice_zoomed,
          self.lake_and_river_colour_codes_two_slice_zoomed,
-         self.date_text) = self.gen.send(self.next_command_to_send)
-        for index,plot in enumerate(self.configuration):
-            self.plot_types[plot](index)
-        self.fig.suptitle("Timeslice: " + self.date_text,fontsize=16)
-        self.fig.canvas.draw()
-        plt.pause(0.001)
+         self.date_text,self.date) = self.gen.send(self.next_command_to_send)
+        for index,plot in enumerate(self.plot_configuration):
+            if plot is not None:
+                self.plot_types[plot](index)
 
-    def step_back(self,event):
+    def replot(self,**kwargs):
+        self.setup_generator(**kwargs)
+        self.next_command_to_send = None
+        self.step()
+
+    def set_plot_type(self,plot_index,plot_type):
+        self.plot_configuration[plot_index] = plot_type
+        self.plot_types[plot_type](plot_index)
+
+    def step_back(self):
         self.next_command_to_send = True
         self.step()
 
-    def step_forward(self,event):
+    def step_forward(self):
         self.next_command_to_send = False
         self.step()
 
     def step_to_date(self,event):
         self.next_command_to_send = self.date_sequence.index(int(event))
         self.step()
-
-    def toggle_zoom(self,event):
-        self.widgets[3].color = next(self.zoom_button_colors)
-        for plot in self.timeslice_plots:
-            if plot.selector.active:
-                plot.selector.set_active(False)
-            else:
-                plot.selector.set_active(True)
-
-    def toggle_zoom_keyboard(self,event):
-        if event.key == 'z':
-            self.toggle_zoom(event)
 
     def plot_from_colour_codes(self,colour_codes,index):
         if not self.timeslice_plots[index].plot or self.replot_required:
@@ -395,7 +869,6 @@ class InteractiveTimeslicePlots:
 
     def no_plot(self,index):
         self.timeslice_plots[index].ax.set_visible(False)
-
 
     def catchments_plot_one(self,index):
         self.catchments_plot_base(index,self.matched_catchment_nums_one)
@@ -473,6 +946,14 @@ class InteractiveTimeslicePlots:
         self.timeslice_plots[index].scale = PlotScales.FINE
         self.orography_plot_base(index,self.orography_two_slice_zoomed)
 
+    def modified_orography_plot_one(self,index):
+        self.timeslice_plots[index].scale = PlotScales.FINE
+        self.modified_orography_plot_base(index,self.orography_one_slice_zoomed)
+
+    def modified_orography_plot_two(self,index):
+        self.timeslice_plots[index].scale = PlotScales.FINE
+        self.modified_orography_plot_base(index,self.orography_two_slice_zoomed)
+
     def orography_comp_plot(self,index):
         self.timeslice_plots[index].scale = PlotScales.FINE
         self.orography_plot_base(index,self.orography_one_slice_zoomed -
@@ -517,6 +998,18 @@ class InteractiveTimeslicePlots:
         self.timeslice_plots[index].scale = PlotScales.FINE
         self.plot_from_colour_codes(self.true_sinks_slice_zoomed,index)
 
+    def modified_orography_plot_base(self,index,orography):
+        modified_orography = np.copy(orography)
+        for correction in self.corrections:
+            if (self.date > correction["date"] or
+                (self.include_date_itself_in_corrected_slices and
+                 self.date == correction["date"])):
+                modified_orography[correction["lat"],correction["lon"]] = \
+                    (orography[correction["lat"],correction["lon"]] +
+                     correction["height_change"])
+        self.orography_plot_base(index,modified_orography)
+
+
     def orography_plot_base(self,index,orography):
         if not self.timeslice_plots[index].plot or self.replot_required:
             if self.replot_required:
@@ -536,20 +1029,20 @@ class InteractiveTimeslicePlots:
             self.timeslice_plots[index].plot.set_data(orography)
 
     def lake_volume_plot_one(self,index):
-        self.lake_volume_plot_base(index,self.lake_volume_one_slice_zoomed)
+        self.lake_volume_plot_base(index,self.lake_volumes_one_slice_zoomed)
 
     def lake_volume_plot_two(self,index):
-        self.lake_volume_plot_base(index,self.lake_volume_two_slice_zoomed)
+        self.lake_volume_plot_base(index,self.lake_volumes_two_slice_zoomed)
 
     def log_lake_volume_plot_one(self,index):
-        self.lake_volume_plot_base(index,self.lake_volume_one_slice_zoomed,True)
+        self.lake_volume_plot_base(index,self.lake_volumes_one_slice_zoomed,True)
 
     def log_lake_volume_plot_two(self,index):
-        self.lake_volume_plot_base(index,self.lake_volume_two_slice_zoomed,True)
+        self.lake_volume_plot_base(index,self.lake_volumes_two_slice_zoomed,True)
 
     def lake_volume_comp_plot(self,index):
-        self.lake_volume_plot_base(index,self.lake_volume_one_slice_zoomed -
-                                            self.lake_volume_two_slice_zoomed)
+        self.lake_volume_plot_base(index,self.lake_volumes_one_slice_zoomed -
+                                            self.lake_volumes_two_slice_zoomed)
 
     def lake_volume_plot_base(self,index,lake_volumes,use_log_scale=False):
         self.timeslice_plots[index].scale = PlotScales.FINE
@@ -585,13 +1078,82 @@ class InteractiveTimeslicePlots:
         self.next_command_to_send = "zoom"
         self.step()
 
-    def reset_zoom(self,event):
-        self.zoom_settings.zoomed = self.original_zoom_settings.zoomed
-        self.zoom_settings.zoomed_section_bounds = dict(self.original_zoom_settings.zoomed_section_bounds)
+    # def reset_zoom(self,event):
+    #     self.zoom_settings.zoomed = self.original_zoom_settings.zoomed
+    #     self.zoom_settings.zoomed_section_bounds = dict(self.original_zoom_settings.zoomed_section_bounds)
+    #     self.next_command_to_send = "zoom"
+    #     self.replot_required = True
+    #     self.step()
+    #     self.replot_required = False
+
+    def set_coords_and_height(self,eclick):
+        if eclick.ydata is None or eclick.xdata is None:
+            return
+        if self.select_coords:
+            if self.zoom_settings.zoomed:
+                min_lat = self.zoom_settings.zoomed_section_bounds["min_lat"]
+                min_lon = self.zoom_settings.zoomed_section_bounds["min_lon"]
+            else:
+                min_lat = 0
+                min_lon = 0
+            orography = (self.orography_one_slice_zoomed
+                         if self.use_orog_one_for_original_height else
+                         self.orography_two_slice_zoomed)
+            self.specify_coords_and_height_callback(lat=
+                                                    round(eclick.ydata)+min_lat,
+                                                    lon=
+                                                    round(eclick.xdata)+min_lon,
+                                                    date=self.date,
+                                                    original_height=
+                                                    orography[round(eclick.ydata),
+                                                              round(eclick.xdata)])
+
+    def write_correction(self,new_height):
+        lat,lon,date,original_height = self.specify_coords_and_height_callback.get_stored_values()
+        height_change = float(new_height)-original_height
+        with open(self.corrections_file,'a') as f:
+            f.write("{}, {}, {}, {} \n".format(lat,lon,date,height_change))
+        self.corrections.append({"lat":lat,"lon":lon,"date":date,"height_change":height_change})
         self.next_command_to_send = "zoom"
         self.replot_required = True
         self.step()
         self.replot_required = False
+
+    def read_corrections(self):
+        self.corrections.clear()
+        if isfile(self.corrections_file):
+            with open(self.corrections_file,'r') as f:
+                for line in f:
+                    data = line.strip().split(",")
+                    self.corrections.append({"lat":int(data[0]),
+                                             "lon":int(data[1]),
+                                             "date":int(data[2]),
+                                             "height_change":float(data[3])})
+        self.next_command_to_send = "zoom"
+        self.replot_required = True
+        self.step()
+        self.replot_required = False
+
+
+    def toggle_include_date_itself_in_corrected_slices(self,value):
+        self.include_date_itself_in_corrected_slices = value
+        self.next_command_to_send = "zoom"
+        self.replot_required = True
+        self.step()
+        self.replot_required = False
+
+    def toggle_use_orog_one_for_original_height(self,value):
+        self.use_orog_one_for_original_height = value
+
+    def toggle_select_coords(self,value):
+        self.select_coords = value
+
+    def set_specify_coords_and_height_callback(self,callback):
+        self.specify_coords_and_height_callback = callback
+
+    def set_corrections_file(self,filepath):
+        self.corrections_file = filepath
+        self.read_corrections()
 
     def zoom_in_normal(self,eclick,erelease):
         self.zoom_in_base(eclick,erelease,scale_factor=1)
@@ -627,24 +1189,16 @@ class InteractiveTimeslicePlots:
         self.step()
         self.replot_required = False
 
-    def change_height_range_slider(self,val):
-        self.change_height_range(val[0],val[1])
-
-    def change_height_range_text_box(self,event):
-        match = self.height_range_text_match.match(event)
-        if match:
-            self.change_height_range(int(match.group(1)),int(match.group(2)))
-
     def change_height_range(self,new_min,new_max):
+        if new_min > new_max:
+            new_min = new_max
         self.orog_min=new_min
         self.orog_max=new_max
-        for index,plot in enumerate(self.configuration):
+        for index,plot in enumerate(self.plot_configuration):
             if plot in self.orog_plot_types:
                 self.replot_required = True
                 self.plot_types[plot](index)
                 self.replot_required = False
-        self.fig.canvas.draw()
-        plt.pause(0.001)
 
     def set_format_coord(self,ax,scale):
         scale_factor = {PlotScales.NORMAL:1,
@@ -657,6 +1211,9 @@ class InteractiveTimeslicePlots:
                                    self.zoom_settings.zoomed_section_bounds["min_lat"]*scale_factor,
                                    add_latlon=True,
                                    scale_factor=scale_factor)
+
+    def get_current_date(self):
+        return self.date
 
 def find_highest_version(base_dir_template):
     split_string = base_dir_template.rsplit("VERSION_NUMBER",1)
@@ -715,25 +1272,25 @@ def generate_colour_codes_comp(lsmask,
     return colour_codes
 
 def generate_colour_codes_lake_and_river_sequence(cumulative_flow_sequence,
-                                                  lake_volume_sequence,
+                                                  lake_volumes_sequence,
                                                   glacier_mask_sequence,
                                                   landsea_mask_sequence,
                                                   minflowcutoff):
     col_codes_lake_and_river_sequence = []
-    for cumulative_flow,lake_volume,glacier_mask,landsea_mask in zip(cumulative_flow_sequence,
-                                                                     lake_volume_sequence,
+    for cumulative_flow,lake_volumes,glacier_mask,landsea_mask in zip(cumulative_flow_sequence,
+                                                                     lake_volumes_sequence,
                                                                       glacier_mask_sequence,
                                                                       landsea_mask_sequence):
         col_codes_lake_and_river_sequence.\
             append(generate_colour_codes_lake_and_river(cumulative_flow,
-                                                        lake_volume,
+                                                        lake_volumes,
                                                         glacier_mask,
                                                         landsea_mask,
                                                         minflowcutoff))
     return col_codes_lake_and_river_sequence
 
 def generate_colour_codes_lake_and_river(cumulative_flow,
-                                         lake_volume,
+                                         lake_volumes,
                                          glacier_mask,
                                          landsea_mask,
                                          minflowcutoff):
@@ -744,7 +1301,7 @@ def generate_colour_codes_lake_and_river(cumulative_flow,
                                                               "LatLong10min").get_data()
     landsea_mask_fine = utilities.downscale_ls_mask(Field(landsea_mask,grid="HD"),
                                                     "LatLong10min").get_data()
-    rivers_and_lakes_fine[lake_volume > 0] = 3
+    rivers_and_lakes_fine[lake_volumes > 0] = 3
     rivers_and_lakes_fine[glacier_mask == 1] = 4
     rivers_and_lakes_fine[landsea_mask_fine == 1] = 0
     return rivers_and_lakes_fine
@@ -794,8 +1351,8 @@ def prep_combined_sequence_tuples(lsmask_sequence,
                                   river_flow_two_sequence,
                                   river_mouths_one_sequence,
                                   river_mouths_two_sequence,
-                                  lake_volume_one_sequence,
-                                  lake_volume_two_sequence,
+                                  lake_volumes_one_sequence,
+                                  lake_volumes_two_sequence,
                                   lake_basin_numbers_one_sequence,
                                   lake_basin_numbers_two_sequence,
                                   fine_river_flow_one_sequence,
@@ -803,24 +1360,25 @@ def prep_combined_sequence_tuples(lsmask_sequence,
                                   orography_one_sequence,
                                   orography_two_sequence,
                                   date_text_sequence,
+                                  date_sequence,
                                   lake_and_river_plots_required=False,
                                   minflowcutoff=100):
     lake_and_river_colour_codes_sequence_one=None
     lake_and_river_colour_codes_sequence_two=None
     if lake_and_river_plots_required:
         if(river_flow_one_sequence is not None and
-           lake_volume_one_sequence is not None):
+           lake_volumes_one_sequence is not None):
             lake_and_river_colour_codes_sequence_one = \
                 generate_colour_codes_lake_and_river_sequence(river_flow_one_sequence,
-                                                              lake_volume_one_sequence,
+                                                              lake_volumes_one_sequence,
                                                               glacier_mask_sequence,
                                                               lsmask_sequence,
                                                               minflowcutoff)
         if (river_flow_two_sequence is not None and
-            lake_volume_two_sequence is not None):
+            lake_volumes_two_sequence is not None):
             lake_and_river_colour_codes_sequence_two = \
                 generate_colour_codes_lake_and_river_sequence(river_flow_two_sequence,
-                                                              lake_volume_two_sequence,
+                                                              lake_volumes_two_sequence,
                                                               glacier_mask_sequence,
                                                               lsmask_sequence,
                                                               minflowcutoff)
@@ -832,8 +1390,8 @@ def prep_combined_sequence_tuples(lsmask_sequence,
                                       change_none_to_list(river_flow_two_sequence),
                                       change_none_to_list(river_mouths_one_sequence),
                                       change_none_to_list(river_mouths_two_sequence),
-                                      change_none_to_list(lake_volume_one_sequence),
-                                      change_none_to_list(lake_volume_two_sequence),
+                                      change_none_to_list(lake_volumes_one_sequence),
+                                      change_none_to_list(lake_volumes_two_sequence),
                                       change_none_to_list(lake_basin_numbers_one_sequence),
                                       change_none_to_list(lake_basin_numbers_two_sequence),
                                       change_none_to_list(fine_river_flow_one_sequence),
@@ -843,6 +1401,7 @@ def prep_combined_sequence_tuples(lsmask_sequence,
                                       change_none_to_list(lake_and_river_colour_codes_sequence_one),
                                       change_none_to_list(lake_and_river_colour_codes_sequence_two),
                                       change_none_to_list(date_text_sequence),
+                                      change_none_to_list(date_sequence),
                                       fillvalue=None))
 
 def generate_catchment_and_cflow_sequence_tuple(combined_sequence_tuples,
@@ -863,40 +1422,40 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequence_tuples,
         (lsmask_slice,glacier_mask_slice,catchment_nums_one_slice,
          catchment_nums_two_slice,river_flow_one_slice,
          river_flow_two_slice,river_mouths_one_slice,
-         river_mouths_two_slice,lake_volume_one_slice,
-         lake_volume_two_slice,lake_basin_numbers_one_slice,
+         river_mouths_two_slice,lake_volumes_one_slice,
+         lake_volumes_two_slice,lake_basin_numbers_one_slice,
          lake_basin_numbers_two_slice,fine_river_flow_one_slice,
          fine_river_flow_two_slice,orography_one_slice,
          orography_two_slice,lake_and_river_colour_codes_one_slice,
-         lake_and_river_colour_codes_two_slice,date_text) = combined_sequence_tuples[i]
+         lake_and_river_colour_codes_two_slice,date_text,date) = combined_sequence_tuples[i]
         if return_zero_slice_only_one:
             if return_zero_slice_only_two:
                 (lsmask_slice,glacier_mask_slice,catchment_nums_one_slice,
                  catchment_nums_two_slice,river_flow_one_slice,
                  river_flow_two_slice,river_mouths_one_slice,
-                 river_mouths_two_slice,lake_volume_one_slice,
-                 lake_volume_two_slice,lake_basin_numbers_one_slice,
+                 river_mouths_two_slice,lake_volumes_one_slice,
+                 lake_volumes_two_slice,lake_basin_numbers_one_slice,
                  lake_basin_numbers_two_slice,fine_river_flow_one_slice,
                  fine_river_flow_two_slice,lake_and_river_colour_codes_one_slice,
-                 lake_and_river_colour_codes_two_slice,date_text) = combined_sequence_tuples[0]
+                 lake_and_river_colour_codes_two_slice,date_text,_) = combined_sequence_tuples[0]
             else:
                 (_,_,catchment_nums_one_slice,
                  _,river_flow_one_slice,
                  _,river_mouths_one_slice,
-                 _,lake_volume_one_slice,
+                 _,lake_volumes_one_slice,
                  _,lake_basin_numbers_one_slice,
                  _,fine_river_flow_one_slice,
                  _,lake_and_river_colour_codes_one_slice,
-                 _,date_text) = combined_sequence_tuples[0]
+                 _,date_text,_) = combined_sequence_tuples[0]
         elif return_zero_slice_only_two:
              (_,_,_,
              catchment_nums_two_slice,_,
              river_flow_two_slice,_,
              river_mouths_two_slice,_,
-             lake_volume_two_slice,_,
+             lake_volumes_two_slice,_,
              lake_basin_numbers_two_slice,_,
              fine_river_flow_two_slice,_,
-             lake_and_river_colour_codes_two_slice,date_text) = combined_sequence_tuples[0]
+             lake_and_river_colour_codes_two_slice,date_text,_) = combined_sequence_tuples[0]
         if zoom_settings.zoomed:
             lsmask_slice_zoomed=extract_zoomed_section(lsmask_slice,zoom_settings.zoomed_section_bounds)
             glacier_mask_slice_zoomed=extract_zoomed_section(glacier_mask_slice,
@@ -913,10 +1472,10 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequence_tuples,
                                                                  zoom_settings.zoomed_section_bounds)
             river_mouths_two_slice_zoomed=extract_zoomed_section(river_mouths_two_slice,
                                                                  zoom_settings.zoomed_section_bounds)
-            lake_volume_one_slice_zoomed=extract_zoomed_section(lake_volume_one_slice,
+            lake_volumes_one_slice_zoomed=extract_zoomed_section(lake_volumes_one_slice,
                                                                 zoom_settings.zoomed_section_bounds,
                                                                 zoom_settings.fine_scale_factor)
-            lake_volume_two_slice_zoomed=extract_zoomed_section(lake_volume_two_slice,
+            lake_volumes_two_slice_zoomed=extract_zoomed_section(lake_volumes_two_slice,
                                                                 zoom_settings.zoomed_section_bounds,
                                                                 zoom_settings.fine_scale_factor)
             lake_basin_numbers_one_slice_zoomed=extract_zoomed_section(lake_basin_numbers_one_slice,
@@ -970,8 +1529,8 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequence_tuples,
             river_flow_two_slice_zoomed=river_flow_two_slice
             river_mouths_one_slice_zoomed=river_mouths_one_slice
             river_mouths_two_slice_zoomed=river_mouths_two_slice
-            lake_volume_one_slice_zoomed=lake_volume_one_slice
-            lake_volume_two_slice_zoomed=lake_volume_two_slice
+            lake_volumes_one_slice_zoomed=lake_volumes_one_slice
+            lake_volumes_two_slice_zoomed=lake_volumes_two_slice
             lake_basin_numbers_one_slice_zoomed=lake_basin_numbers_one_slice
             lake_basin_numbers_two_slice_zoomed=lake_basin_numbers_two_slice
             fine_river_flow_one_slice_zoomed=fine_river_flow_one_slice
@@ -997,8 +1556,8 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequence_tuples,
                                  matched_catchment_nums_two,
                                  river_flow_one_slice_zoomed,
                                  river_flow_two_slice_zoomed,
-                                 lake_volume_one_slice_zoomed,
-                                 lake_volume_two_slice_zoomed,
+                                 lake_volumes_one_slice_zoomed,
+                                 lake_volumes_two_slice_zoomed,
                                  lake_basin_numbers_one_slice_zoomed,
                                  lake_basin_numbers_two_slice_zoomed,
                                  fine_river_flow_one_slice_zoomed,
@@ -1013,7 +1572,7 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequence_tuples,
                                  true_sinks_slice_zoomed,
                                  lake_and_river_colour_codes_one_slice_zoomed,
                                  lake_and_river_colour_codes_two_slice_zoomed,
-                                 date_text)
+                                 date_text,date)
         if bidirectional:
             if not isinstance(input_from_send,bool):
                 if input_from_send == "zoom":
@@ -1022,7 +1581,7 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequence_tuples,
                     skip_to_index = True
                     new_index = input_from_send
                 else:
-                    raise RuntimeError("Generator recieved unknown command")
+                    raise RuntimeError("Generator received unknown command")
             else:
                 skip_to_index = False
                 run_backwards = input_from_send
@@ -1033,10 +1592,8 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequence_tuples,
         if bidirectional:
             if i < 0:
                 i = 0
-                UserWarning("Already at first slice")
             elif i >= len(combined_sequence_tuples):
                 i = len(combined_sequence_tuples) - 1
-                UserWarning("Already at last slice")
 
 def generate_catchment_and_cflow_comp_sequence(colors,
                                                lsmask_sequence,
@@ -1062,13 +1619,13 @@ def generate_catchment_and_cflow_comp_sequence(colors,
                                                              river_mouths_one_sequence,
                                                              river_mouths_two_sequence,
                                                              None,None,None,None,
-                                                             date_text_sequence,False)
+                                                             date_text_sequence,None,False)
     for (lsmask_slice_zoomed,glacier_mask_slice_zoomed,
          matched_catchment_nums_one,matched_catchment_nums_two,
          river_flow_one_slice_zoomed,river_flow_two_slice_zoomed,_,_,_,_,_,_,_,_,_,
-         date_text) in generate_catchment_and_cflow_sequence_tuple(combined_sequence_tuples,
-                                                                   ZoomSettings(zoomed,
-                                                                                zoomed_section_bounds)):
+         date_text,_) in generate_catchment_and_cflow_sequence_tuple(combined_sequence_tuples,
+                                                                    ZoomSettings(zoomed,
+                                                                                 zoomed_section_bounds)):
         im_list.append([generate_catchment_and_cflow_comp_slice(colors,
                                                                 lsmask_slice_zoomed,
                                                                 glacier_mask_slice_zoomed,

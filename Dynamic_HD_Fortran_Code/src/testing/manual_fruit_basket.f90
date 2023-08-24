@@ -1268,6 +1268,17 @@ contains
         end if
         call teardown
 
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testLoopBreakerEight"
+        call set_unit_name('test_something')
+        call run_test_case(testLoopBreakerEight,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","double_loop_test")
+        else
+            call case_passed_xml("test_something","double_loop_test")
+        end if
+        call teardown
+
     end subroutine loop_breaker_all_tests
 
     subroutine latlon_hd_and_lake_model_all_tests
@@ -1473,6 +1484,17 @@ contains
         call teardown
 
         call setup
+        if (verbose) write (*,('(/A)')) "..running test: testLakeModel18"
+        call set_unit_name('Lake model')
+        call run_test_case(testLakeModel18,'Lake model')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake Model test 18")
+        else
+            call case_passed_xml("test_something","Lake Model test 18")
+        end if
+        call teardown
+
+        call setup
         if (verbose) write (*,('(/A)')) "..running test: testLakeNumberRetrieval"
         call set_unit_name('Retreive lake numbers')
         call run_test_case(testLakeNumberRetrieval,'Retrieve lake numbers from lake parameters')
@@ -1483,7 +1505,51 @@ contains
         end if
         call teardown
 
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testReadMergesFromArray"
+        call set_unit_name('Test reading merges from the array')
+        call run_test_case(testReadMergesFromArray,'Test reading merges from the array')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Merge Reading Test")
+        else
+            call case_passed_xml("test_something","Merge Reading Testt")
+        end if
+        call teardown
+
     end subroutine latlon_hd_and_lake_model_all_tests
+
+    subroutine latlon_lake_model_tree_all_tests
+    use latlon_lake_model_tree_test_mod
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testRootedTrees"
+        call set_unit_name('Test rooted trees')
+        call run_test_case(testRootedTrees,'General tests of rooted trees')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Rooted Tree Test")
+        else
+            call case_passed_xml("test_something","Rooted Tree Test")
+        end if
+        call teardown
+
+    end subroutine latlon_lake_model_tree_all_tests
+
+    subroutine latlon_lake_model_merges_io_tests
+    use latlon_lake_model_merges_io_test_mod
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testMergeIO"
+        call set_unit_name('Test rooted trees')
+        call run_test_case(testLakeModelMergeIO,'Test loading merge data')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Merge Data Loading Test")
+        else
+            call case_passed_xml("test_something","Merge Data Loading Test")
+        end if
+        call teardown
+
+    end subroutine latlon_lake_model_merges_io_tests
 
     subroutine icosohedral_hd_and_lake_model_all_tests
     use icosohedral_hd_and_lake_model_test_mod

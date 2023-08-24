@@ -5,8 +5,9 @@ Created on Jan 16, 2018
 '''
 from abc import ABCMeta, abstractmethod
 import inspect
+import warnings
 
-class InputField(object):
+class InputField:
 
     def __init__(self,name,conditions=[]):
         self.name = name
@@ -46,7 +47,7 @@ class ExtendedInputField(InputField):
     def get_requires_netcdf_fieldname(self):
         return self.requires_netcdf_fieldname
 
-class Condition(object):
+class Condition:
   pass
 
 class valid_option_helper(Condition):
@@ -94,7 +95,7 @@ class printable_lambda(Condition):
   def __str__(self):
     return self.func_string
 
-class CheckIfOptionalNetCDFFilepathHasFieldName(object):
+class CheckIfOptionalNetCDFFilepathHasFieldName:
 
     def __init__(self,filepath_sectionname,fieldname_sectionname,
                  filepath_optionname,fieldname_optionname):
@@ -232,13 +233,13 @@ class GenericConfig(Config):
 
     def get_operation_name(self):
         if not self.terminal_node:
-          raise UserWarning("Non terminal nodes don't have operation names")
+          warnings.warn("Non terminal nodes don't have operation names")
         else:
           generic_config_index = inspect.getmro(type(self)).index(GenericConfig)
           for key,value in list(self.valid_operations_and_associated_layouts.items()):
             if str(inspect.getmro(type(self))[generic_config_index-1].__name__) == value:
               return key
-          raise UserWarning("Operation name for {0} not found".format(type(self).__name__))
+          warnings.warn("Operation name for {0} not found".format(type(self).__name__))
 
     def get_subtitle(self):
         generic_config_index = inspect.getmro(type(self)).index(GenericConfig)

@@ -6,6 +6,9 @@ Created on April 16, 2018
 '''
 import unittest
 import numpy as np
+import os
+import cdo
+from tests.context import data_dir
 from Dynamic_HD_Scripts.base import field
 from Dynamic_HD_Scripts.tools import dynamic_lake_operators
 from Dynamic_HD_Scripts.interface.cpp_interface.libs import lake_operators_wrapper
@@ -5135,6 +5138,26 @@ class TestConnectedAreaReduction(unittest.TestCase):
 
 class BasinEvaluationDriver(unittest.TestCase):
 
+  merge_data_file = os.path.join(data_dir,"temp/merge_test_data.nc")
+  merge_data_file_evaluate_basins_one = os.path.join(data_dir,
+                                                     "temp/merge_test_data_eval_basins_one.nc")
+  merge_data_expected_output_file = os.path.join(data_dir,
+                                                 "unit_test_data/merge_test_data_expected_out.nc")
+  merge_data_expected_output_file_evaluate_basins_one = \
+    os.path.join(data_dir,
+                 "unit_test_data/merge_test_data_eval_basins_one_expected_out.nc")
+  def setUp(self):
+    self.cdo_instance = cdo.Cdo()
+
+  def tearDown(self):
+    files_to_remove = [self.merge_data_file,
+                       self.merge_data_file_evaluate_basins_one]
+    for filename in files_to_remove:
+      try:
+        os.remove(filename)
+      except:
+        pass
+
   def testEvaluateBasinsOne(self):
     coarse_catchment_nums_in = np.array([[3,3,2,2],
                                          [3,3,2,2],
@@ -5280,6 +5303,10 @@ class BasinEvaluationDriver(unittest.TestCase):
     connection_volume_thresholds_in.fill(0.0)
     flood_volume_thresholds_in = np.zeros((20,20),dtype=np.float64)
     flood_volume_thresholds_in.fill(0.0)
+    connection_heights_in = np.zeros((20,20),dtype=np.float64)
+    connection_heights_in.fill(0.0)
+    flood_heights_in = np.zeros((20,20),dtype=np.float64)
+    flood_heights_in.fill(0.0)
     flood_next_cell_lat_index_in = np.zeros((20,20),dtype=np.int32)
     flood_next_cell_lat_index_in.fill(-1)
     flood_next_cell_lon_index_in = np.zeros((20,20),dtype=np.int32)
@@ -5288,40 +5315,10 @@ class BasinEvaluationDriver(unittest.TestCase):
     connect_next_cell_lat_index_in.fill(-1)
     connect_next_cell_lon_index_in = np.zeros((20,20),dtype=np.int32)
     connect_next_cell_lon_index_in.fill(-1)
-    flood_force_merge_lat_index_in = np.zeros((20,20),dtype=np.int32)
-    flood_force_merge_lat_index_in.fill(-1)
-    flood_force_merge_lon_index_in = np.zeros((20,20),dtype=np.int32)
-    flood_force_merge_lon_index_in.fill(-1)
-    connect_force_merge_lat_index_in = np.zeros((20,20),dtype=np.int32)
-    connect_force_merge_lat_index_in.fill(-1)
-    connect_force_merge_lon_index_in = np.zeros((20,20),dtype=np.int32)
-    connect_force_merge_lon_index_in.fill(-1)
-    flood_redirect_lat_index_in = np.zeros((20,20),dtype=np.int32)
-    flood_redirect_lat_index_in.fill(-1)
-    flood_redirect_lon_index_in = np.zeros((20,20),dtype=np.int32)
-    flood_redirect_lon_index_in.fill(-1)
-    connect_redirect_lat_index_in = np.zeros((20,20),dtype=np.int32)
-    connect_redirect_lat_index_in.fill(-1)
-    connect_redirect_lon_index_in = np.zeros((20,20),dtype=np.int32)
-    connect_redirect_lon_index_in.fill(-1)
-    flood_local_redirect_in = np.zeros((20,20),dtype=np.int32)
-    flood_local_redirect_in.fill(False)
-    connect_local_redirect_in = np.zeros((20,20),dtype=np.int32)
-    connect_local_redirect_in.fill(False)
-    merge_points_in = np.zeros((20,20),dtype=np.int32)
-    merge_points_in.fill(0)
-    additional_flood_redirect_lat_index_in = np.zeros((20,20),dtype=np.int32)
-    additional_flood_redirect_lat_index_in.fill(-1)
-    additional_flood_redirect_lon_index_in = np.zeros((20,20),dtype=np.int32)
-    additional_flood_redirect_lon_index_in.fill(-1)
-    additional_connect_redirect_lat_index_in = np.zeros((20,20),dtype=np.int32)
-    additional_connect_redirect_lat_index_in.fill(-1)
-    additional_connect_redirect_lon_index_in = np.zeros((20,20),dtype=np.int32)
-    additional_connect_redirect_lon_index_in.fill(-1)
-    additional_flood_local_redirect_in = np.zeros((20,20),dtype=np.int32)
-    additional_flood_local_redirect_in.fill(0)
-    additional_connect_local_redirect_in = np.zeros((20,20),dtype=np.int32)
-    additional_connect_local_redirect_in.fill(0)
+    connect_merge_and_redirect_indices_index_in = np.zeros((20,20),dtype=np.int32)
+    connect_merge_and_redirect_indices_index_in.fill(-1)
+    flood_merge_and_redirect_indices_index_in = np.zeros((20,20),dtype=np.int32)
+    flood_merge_and_redirect_indices_index_in.fill(-1)
     flood_volume_thresholds_expected_out =\
     np.array([[-1,  -1,   -1,   -1,   -1, -1,   -1, -1,  -1,  -1, -1, -1,   -1,   -1,   -1,  -1,   -1,  -1, -1,   -1],
       [-1,  -1,   -1,   -1,   -1, -1,   -1,    -1,  -1,  -1, -1, -1,   -1,   -1,   -1,  -1,   -1,  -1,     -1,   5.0],
@@ -5369,14 +5366,14 @@ class BasinEvaluationDriver(unittest.TestCase):
     flood_next_cell_lat_index_expected_out = \
     np.array([[-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
               [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,   3],
-              [ 2,  3,   5,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,   2,   2,   4,   5,  -1,  -1, -1,   1],
-              [-1,  4,   2,  -1,  -1,  8,  2,  -1,  -1,  -1, -1,  2,   5,   3,   9,   2,  -1,  -1, -1,  -1],
-              [-1,  3,   4,  -1,  -1,  6,  4,   6,   3,  -1, -1, -1,   7,   3,   4,   3,   6,  -1, -1,  -1],
-              [-1,  6,   5,   3,   6,  7, -1,   4,   4,  -1,  5,  7,   6,   6,   4,   8,   4,   3, -1,  -1],
-              [ 7,  6,   6,  -1,   5,  5,  6,   5,   5,  -1,  5,  5,   4,   8,   6,   6,   5,   5, -1,  -1],
-              [-1,  6,   7,  -1,  -1,  6, -1,   4,  -1,  -1, -1,  5,   6,   6,   8,   7,   5,  -1, -1,  -1],
-              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1,  8,   7,   7,   8,   6,   7,  -1, -1,  -1],
-              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,   8,   9,  -1,  -1,  -1,  -1, -1,  -1],
+              [ 2,  3,   5,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,   2,   2,   5,   5,  -1,  -1, -1,   1],
+              [-1,  4,   2,  -1,  -1,  8,  2,  -1,  -1,  -1, -1,  2,   8,   3,   9,   2,  -1,  -1, -1,  -1],
+              [-1,  3,   4,  -1,  -1,  6,  4,   6,   3,  -1, -1, -1,   7,   7,   4,   3,   6,  -1, -1,  -1],
+              [-1,  6,   5,   3,   6,  7, -1,   4,   4,  -1,  5,  7,   4,   6,   5,   8,   4,   3, -1,  -1],
+              [ 7,  6,   6,  -1,   5,  5,  6,   5,   5,  -1,  5,  5,   4,   5,   6,   6,   5,   5, -1,  -1],
+              [-1,  6,   7,  -1,  -1,  6, -1,   4,  -1,  -1, -1,  3,   6,   6,   8,   7,   3,  -1, -1,  -1],
+              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1,  9,   6,   7,   8,   6,   7,  -1, -1,  -1],
+              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,   8,   8,  -1,  -1,  -1,  -1, -1,  -1],
               [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
               [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
               [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
@@ -5387,28 +5384,29 @@ class BasinEvaluationDriver(unittest.TestCase):
               [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
               [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
               [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1]],
-              dtype=np.int32)
+                                dtype=np.int32)
+
     flood_next_cell_lon_index_expected_out = \
     np.array([[ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
-              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,   1],
-              [ 19,  5,   2,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  15,  12,  16,   3,  -1,  -1, -1,  19],
-              [ -1,  2,   2,  -1,  -1, 18,  1,  -1,  -1,  -1, -1, 13,  15,  12,  13,  14,  -1,  -1, -1,  -1],
-              [ -1,  2,   1,  -1,  -1,  8,  5,  10,   6,  -1, -1, -1,  12,  13,  13,  14,  17,  -1, -1,  -1],
-              [ -1,  2,   1,   5,   7,  5, -1,   6,   8,  -1, 14, 14,  10,  12,  14,  15,  15,  11, -1,  -1],
-              [  2,  0,   1,  -1,   4,  5,  4,   7,   8,  -1, 10, 11,  12,  12,  13,  14,  16,  17, -1,  -1],
-              [ -1,  4,   1,  -1,  -1,  6, -1,   7,  -1,  -1, -1, 12,  11,  15,  14,  13,   9,  -1, -1,  -1],
-              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, 16,  11,  15,  13,  16,  16,  -1, -1,  -1],
-              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  11,  12,  -1,  -1,  -1,  -1, -1,  -1],
-              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
-              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
-              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
-              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  15,  16,  18, 15,  -1],
-              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  16,  17,  17, -1,  -1],
-              [ -1, -1,  -1,   3,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
-              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
-              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
-              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
-              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1]],
+              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,   1],
+              [19,  5,   2,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  15,  12,   9,   3,  -1,  -1, -1,  19],
+              [-1,  2,   2,  -1,  -1, 18,  1,  -1,  -1,  -1, -1, 13,  12,  12,  13,  14,  -1,  -1, -1,  -1],
+              [-1,  2,   1,  -1,  -1,  8,  5,  10,   6,  -1, -1, -1,  12,  11,  13,  14,  17,  -1, -1,  -1],
+              [-1,  2,   1,   5,   7,  5, -1,   6,   8,  -1, 15, 14,  14,  12,  12,  15,  15,  11, -1,  -1],
+              [ 2,  0,   1,  -1,   4,  5,  4,   7,   8,  -1, 10, 11,  12,  14,  13,  14,  16,  17, -1,  -1],
+              [-1,  4,   1,  -1,  -1,  6, -1,   7,  -1,  -1, -1, 13,  11,  15,  14,  13,  15,  -1, -1,  -1],
+              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, 12,  10,  15,  13,  16,  16,  -1, -1,  -1],
+              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  16,  11,  -1,  -1,  -1,  -1, -1,  -1],
+              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
+              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
+              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
+              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  15,  16,  18, 15,  -1],
+              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  16,  17,  17, -1,  -1],
+              [-1, -1,  -1,   3,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
+              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
+              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
+              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
+              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1]],
               dtype=np.int32)
     connect_next_cell_lat_index_expected_out = \
     np.array([[-1, -1, -1, -1, -1,  -1,      -1,  -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
@@ -5416,7 +5414,7 @@ class BasinEvaluationDriver(unittest.TestCase):
               [-1, -1, -1, -1, -1,  -1,      -1,  -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,   3,       7,  -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1,      -1,  -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1,      -1,  -1,  -1,  3,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
+              [-1, -1, -1, -1, -1,  -1,      -1,  -1,  -1,  4,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
@@ -5438,7 +5436,7 @@ class BasinEvaluationDriver(unittest.TestCase):
               [-1, -1, -1, -1, -1,  -1,      -1,  -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,   6,       7,  -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1,      -1,  -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, 15,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
+              [-1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, 16,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
@@ -5454,302 +5452,93 @@ class BasinEvaluationDriver(unittest.TestCase):
               [-1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,   -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,   -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1]],
               dtype=np.int32)
-    flood_redirect_lat_index_expected_out = \
-    np.array([[-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,   1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,   1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1,  7, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1,  7, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1,  1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1,  6, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1,  5,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1,  3, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1,  3, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1]],
+    connect_merge_and_redirect_indices_index_expected_out = \
+      np.array([[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]],
               dtype=np.int32)
-    flood_redirect_lon_index_expected_out = \
-    np.array([[-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,   0, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,   3, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, 14, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, 14, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1,  0, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1,  5, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, 13,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1,  3, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1,  0, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1]],
+    flood_merge_and_redirect_indices_index_expected_out = \
+      np.array([[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 5, 6,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1, 7,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1, 2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 3,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1, 1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 4,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 8,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]],
               dtype=np.int32)
-    connect_redirect_lat_index_expected_out = \
-    np.array([[-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1]],
+    connection_heights_expected_out  = \
+        np.array([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 7, 4 ,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],
               dtype=np.int32)
-    connect_redirect_lon_index_expected_out = \
-    np.array([[-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1]],
-              dtype=np.int32)
-    additional_flood_redirect_lat_index_expected_out = np.zeros((20,20),dtype=np.int32)
-    additional_flood_redirect_lat_index_expected_out.fill(-1)
-    additional_flood_redirect_lon_index_expected_out = np.zeros((20,20),dtype=np.int32)
-    additional_flood_redirect_lon_index_expected_out.fill(-1)
-    additional_connect_redirect_lat_index_expected_out = np.zeros((20,20),dtype=np.int32)
-    additional_connect_redirect_lat_index_expected_out.fill(-1)
-    additional_connect_redirect_lon_index_expected_out = np.zeros((20,20),dtype=np.int32)
-    additional_connect_redirect_lon_index_expected_out.fill(-1)
-    additional_flood_local_redirect_expected_out = np.zeros((20,20),dtype=np.int32)
-    additional_flood_local_redirect_expected_out.fill(0)
-    additional_connect_local_redirect_expected_out = np.zeros((20,20),dtype=np.int32)
-    additional_connect_local_redirect_expected_out.fill(0)
-    flood_local_redirect_expected_out =  \
-    np.array([[False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False, False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False, True,False,False, False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False, False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False, False,
-              True,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False, False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False]],
-              dtype=np.int32)
-    connect_local_redirect_expected_out = \
-    np.array([[False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False, False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False, False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False, False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False, False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False, False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False],
-              [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
-              False,False,False,False]],
-              dtype=np.int32)
-    merge_points_expected_out = \
-     np.array([[0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
-               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
-               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 9,0,0,0,0],
-               [0,0,0,0,0, 10,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
-               [0,0,0,0,0, 0,0,10,0,0,0,0,0,0,0, 0,0,0,0,0],
-
-               [0,0,0,0,0, 0,0,0,0,0,0,10,0,0,0, 0,0,0,0,0],
-               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
-               [0,10,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,9,0,0,0],
-               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,9, 0,0,0,0,0],
-               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
-
-               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
-               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
-               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
-               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,10,0],
-               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
-
-               [0,0,0,10,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
-               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
-               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
-               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
-               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0]],
-               dtype=np.int32)
-    flood_force_merge_lat_index_expected_out = \
-    np.array([[-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,   2, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1,  6, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1,  5,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1]],
-              dtype=np.int32)
-    flood_force_merge_lon_index_expected_out = \
-    np.array([[-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,   0, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1,  5, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, 13,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1]],
-              dtype=np.int32)
-    connect_force_merge_lat_index_expected_out = \
-    np.array([[-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1]],
-              dtype=np.int32)
-    connect_force_merge_lon_index_expected_out = \
-    np.array([[-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1]],
+    flood_heights_expected_out  = \
+        np.array([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
+                  [1, 8, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 5, 6, 0, 0, 0, 2],
+                  [0, 3, 3, 0, 0, 9, 8, 0, 0, 0, 0, 6, 3, 3, 5, 5, 0, 0, 0, 0],
+                  [0, 3, 3, 0, 0, 3, 3, 5, 3, 0, 0, 0, 2, 3, 3, 4, 5, 0, 0, 0],
+                  [0, 3, 3, 7, 2, 2, 0, 3, 3, 0, 3, 3, 3, 2, 3, 4, 4, 6, 0, 0],
+                  [4, 4, 4, 0, 2, 1, 2, 2, 3, 0, 3, 2, 2, 3, 3, 3, 4, 5, 0, 0],
+                  [0, 6, 4, 0, 0, 2, 0, 4, 0, 0, 0, 3, 2, 3, 3, 3, 5, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 3, 3, 3, 4, 5, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 3, 4, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 3, 0, 0],
+                  [0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],
               dtype=np.int32)
     evaluate_basins_wrapper.evaluate_basins(minima_in,
                                             raw_orography_in,
@@ -5757,6 +5546,8 @@ class BasinEvaluationDriver(unittest.TestCase):
                                             cell_areas_in,
                                             connection_volume_thresholds_in,
                                             flood_volume_thresholds_in,
+                                            connection_heights_in,
+                                            flood_heights_in,
                                             prior_fine_rdirs_in,
                                             prior_coarse_rdirs_in,
                                             prior_fine_catchments_in,
@@ -5765,23 +5556,9 @@ class BasinEvaluationDriver(unittest.TestCase):
                                             flood_next_cell_lon_index_in,
                                             connect_next_cell_lat_index_in,
                                             connect_next_cell_lon_index_in,
-                                            flood_force_merge_lat_index_in,
-                                            flood_force_merge_lon_index_in,
-                                            connect_force_merge_lat_index_in,
-                                            connect_force_merge_lon_index_in,
-                                            flood_redirect_lat_index_in,
-                                            flood_redirect_lon_index_in,
-                                            connect_redirect_lat_index_in,
-                                            connect_redirect_lon_index_in,
-                                            additional_flood_redirect_lat_index_in,
-                                            additional_flood_redirect_lon_index_in,
-                                            additional_connect_redirect_lat_index_in,
-                                            additional_connect_redirect_lon_index_in,
-                                            flood_local_redirect_in,
-                                            connect_local_redirect_in,
-                                            additional_flood_local_redirect_in,
-                                            additional_connect_local_redirect_in,
-                                            merge_points_in)
+                                            connect_merge_and_redirect_indices_index_in,
+                                            flood_merge_and_redirect_indices_index_in,
+                                            self.merge_data_file_evaluate_basins_one)
     np.testing.assert_array_equal(flood_volume_thresholds_in,
                                   flood_volume_thresholds_expected_out)
     np.testing.assert_array_equal(connection_volume_thresholds_in,
@@ -5794,40 +5571,31 @@ class BasinEvaluationDriver(unittest.TestCase):
                                   connect_next_cell_lat_index_expected_out)
     np.testing.assert_array_equal(connect_next_cell_lon_index_in,
                                   connect_next_cell_lon_index_expected_out)
-    np.testing.assert_array_equal(flood_redirect_lat_index_in,
-                                  flood_redirect_lat_index_expected_out)
-    np.testing.assert_array_equal(flood_redirect_lon_index_in,
-                                  flood_redirect_lon_index_expected_out)
-    np.testing.assert_array_equal(connect_redirect_lat_index_in,
-                                  connect_redirect_lat_index_expected_out)
-    np.testing.assert_array_equal(connect_redirect_lon_index_in,
-                                  connect_redirect_lon_index_expected_out)
-    np.testing.assert_array_equal(flood_local_redirect_in,
-                                 flood_local_redirect_expected_out)
-    np.testing.assert_array_equal(connect_local_redirect_in,
-                                  connect_local_redirect_expected_out)
-    np.testing.assert_array_equal(merge_points_in,
-                                  merge_points_expected_out)
-    np.testing.assert_array_equal(flood_force_merge_lat_index_in,
-                                  flood_force_merge_lat_index_expected_out)
-    np.testing.assert_array_equal(flood_force_merge_lon_index_in,
-                                  flood_force_merge_lon_index_expected_out)
-    np.testing.assert_array_equal(connect_force_merge_lat_index_in,
-                                  connect_force_merge_lat_index_expected_out)
-    np.testing.assert_array_equal(connect_force_merge_lon_index_in,
-                                  connect_force_merge_lon_index_expected_out)
-    np.testing.assert_array_equal(additional_flood_redirect_lat_index_in,
-                                  additional_flood_redirect_lat_index_expected_out)
-    np.testing.assert_array_equal(additional_flood_redirect_lon_index_in,
-                                  additional_flood_redirect_lon_index_expected_out)
-    np.testing.assert_array_equal(additional_connect_redirect_lat_index_in,
-                                  additional_connect_redirect_lat_index_expected_out)
-    np.testing.assert_array_equal(additional_connect_redirect_lon_index_in,
-                                  additional_connect_redirect_lon_index_expected_out)
-    np.testing.assert_array_equal(additional_flood_local_redirect_in,
-                                  additional_flood_local_redirect_expected_out)
-    np.testing.assert_array_equal(additional_connect_local_redirect_in,
-                                  additional_connect_local_redirect_expected_out)
+    np.testing.assert_array_equal(connect_merge_and_redirect_indices_index_in,
+                                  connect_merge_and_redirect_indices_index_expected_out)
+    np.testing.assert_array_equal(flood_merge_and_redirect_indices_index_in,
+                                  flood_merge_and_redirect_indices_index_expected_out)
+    np.testing.assert_array_equal(connection_heights_in,
+                                  connection_heights_expected_out)
+    np.testing.assert_array_equal(flood_heights_in,
+                                  flood_heights_expected_out)
+    self.cdo_instance.sinfon(input=[self.merge_data_file_evaluate_basins_one,
+                                    self.merge_data_expected_output_file_evaluate_basins_one])
+    diff_out  = \
+      self.cdo_instance.diff(input=[self.merge_data_file_evaluate_basins_one,
+                                    self.merge_data_expected_output_file_evaluate_basins_one])
+    self.assertTrue(not diff_out and diff_out is not None,
+                    "Basin evaluation test doesn't produce expected merge file")
+
+  def testWritingMergesToFile(self):
+    lake_operators_wrapper.create_merge_structure_test_data(self.merge_data_file)
+    self.cdo_instance.sinfon(input=[self.merge_data_file,
+                                    self.merge_data_expected_output_file])
+    diff_out  = self.cdo_instance.diff(input=[self.merge_data_file,
+                                              self.merge_data_expected_output_file])
+    self.assertTrue(not diff_out and diff_out is not None,
+                    "Trial of writing merges doesn't produce expected results")
+
 
 class TestWaterRedistributionDriver(unittest.TestCase):
 

@@ -10,8 +10,8 @@ BRB_ICON_SI_OBJS :=
 
 
 ifeq ($(shell uname -s),Darwin)
-LIBS :=  -L"$(NETCDFCXX)/lib" -lnetcdf-cxx4
-else ifeq ($(shell hostname -d),atos.local)
+LIBS :=  -L"$(NETCDFCXX)/lib" -lnetcdf-cxx4 -L"$(NETCDFC)/lib" -lnetcdf
+else ifeq ($(shell hostname -d),lvt.dkrz.de)
 LIBS := -L"$(NETCDFCXX)/lib" -lnetcdf_c++4 -L"$(NETCDFC)/lib" -lnetcdf
 else ifeq ($(shell uname -s),Linux)
 LIBS := -L"$(NETCDFCXX)/lib" -lnetcdf_c++4

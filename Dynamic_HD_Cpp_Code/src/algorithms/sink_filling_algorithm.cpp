@@ -998,7 +998,7 @@ void sink_filling_algorithm::process_neighbors(vector<coords*>* neighbors_coords
 						continue;
 					}
 				}
-				push_neighbor();
+				if (! nbr_orog_is_no_data) push_neighbor();
 				delete nbr_coords;
 			}
 }
@@ -1047,12 +1047,15 @@ void sink_filling_algorithm_1::process_neighbor(){
 void sink_filling_algorithm_4::process_neighbor(){
 	nbr_orog = (*orography)(nbr_coords);
 	nbr_rim_height = max(nbr_orog,center_rim_height);
-	if (nbr_orog == no_data_value) set_cell_to_no_data_value(nbr_coords);
-	else {
+	if (nbr_orog == no_data_value) {
+		set_cell_to_no_data_value(nbr_coords);
+		nbr_orog_is_no_data = true;
+	} else {
 		set_index_based_rdirs(nbr_coords,center_coords);
 		if(not index_based_rdirs_only) {
 			static_cast<sink_filling_algorithm_4_latlon*>(this)->calculate_direction_from_neighbor_to_cell();
 		}
+		nbr_orog_is_no_data = false;
 	}
 	(*completed_cells)(nbr_coords) = true;
 	(*catchment_nums)(nbr_coords) = center_catchment_num;

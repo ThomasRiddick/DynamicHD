@@ -13,7 +13,7 @@ import xarray
 import scipy.ndimage as ndi
 from Dynamic_HD_Scripts.base import grid as gd
 
-class Field(object):
+class Field:
     """A general class to store and manipulate fields on a given grid type
 
     Public methods:
@@ -257,7 +257,7 @@ class Field(object):
         If the underlying grid doesn't have orientation information then do nothing and return a warning
         """
         if not self.grid.has_orientation_information():
-            UserWarning('Unable to reorient; grid has no/insufficient orientation information')
+            warnings.warn('Unable to reorient; grid has no/insufficient orientation information')
         else:
             if self.grid.needs_ud_flip():
                 self.flip_data_ud()
@@ -628,8 +628,8 @@ class RiverDirections(Field):
             self.data = np.ma.filled(data_as_masked_array,
                                      float(self.grid.get_sea_point_flow_direction_value()))
         if not -1.0 in np.unique(self.data):
-            raise UserWarning("No sea points are marked in the river flow direction field thus"
-                              " no river mouths can be marked")
+            warnings.warn("No sea points are marked in the river flow direction field thus"
+                          " no river mouths can be marked")
             return
         self.data = self.grid.mark_river_mouths(self.data)
 

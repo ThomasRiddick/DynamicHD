@@ -12,10 +12,10 @@ import math
 import itertools
 from Dynamic_HD_Scripts.base import grid
 from Dynamic_HD_Scripts.base import field
-from HD_Plots.utilities import river_names
+from plotting_utilities import river_names
 
 
-class OrogCoordFormatter(object):
+class OrogCoordFormatter:
     """Class that creates an object to call to give cursor position)"""
 
     def __init__(self,xoffset,yoffset,add_latlon=False,
@@ -40,7 +40,7 @@ class OrogCoordFormatter(object):
                                            scale_factor=self.scale_factor,
                                            precision=2))
 
-class LonAxisFormatter(object):
+class LonAxisFormatter:
     """Class that creates an object to call to give longitude axis tick labels"""
 
     def __init__(self,xoffset,scale_factor=1,precision=0):
@@ -52,7 +52,7 @@ class LonAxisFormatter(object):
         return calculate_lon_label(x,self.xoffset,self.scale_factor,
                                    precision=self.precision)
 
-class LatAxisFormatter(object):
+class LatAxisFormatter:
     """Class that creates an object to call to give latitude axis tick labels"""
 
     def __init__(self,yoffset,scale_factor=1,precision=0):

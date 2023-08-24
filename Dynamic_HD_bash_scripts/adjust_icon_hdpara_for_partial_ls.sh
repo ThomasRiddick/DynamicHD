@@ -16,7 +16,7 @@ cdo merge hdpara_temp_altered_int.nc hdpara_temp_altered_float.nc  hdpara_temp_a
 cdo chcode,-1,701,-2,702,-3,703,-4,706,-5,714 hdpara_temp_altered.nc hdpara_temp_altered_fixed_codes.nc
 cdo merge  hdpara_temp_unaltered.nc  hdpara_temp_altered_fixed_codes.nc hdpara_orig_order.nc
 cdo splitcode hdpara_orig_order.nc hdpara_split 
-cdo merge hdpara_split701.nc hdpara_split702.nc hdpara_split703.nc hdpara_split704.nc hdpara_split705.nc hdpara_split706.nc hdpara_split707.nc hdpara_split708.nc hdpara_split709.nc hdpara_split710.nc hdpara_split711.nc hdpara_split712.nc hdpara_split713.nc hdpara_split720.nc hdpara_split721.nc hdpara_split722.nc hdpara_split714.nc hdpara_split715.nc ${output_hdpara}
+cdo merge hdpara_split701.nc hdpara_split702.nc hdpara_split703.nc hdpara_split704.nc hdpara_split705.nc hdpara_split706.nc hdpara_split708.nc hdpara_split709.nc hdpara_split714.nc hdpara_split715.nc ${output_hdpara}
 rm difference_in_masks.nc
 rm hdpara_temp.nc
 rm hdpara_temp_altered_int.nc
@@ -25,4 +25,4 @@ rm hdpara_temp_altered_fixed_codes.nc
 rm hdpara_temp_altered.nc
 rm hdpara_temp_unaltered.nc
 rm hdpara_orig_order.nc
-rm hdpara_split701.nc hdpara_split702.nc hdpara_split703.nc hdpara_split704.nc hdpara_split705.nc hdpara_split706.nc hdpara_split707.nc hdpara_split708.nc hdpara_split709.nc hdpara_split710.nc hdpara_split711.nc hdpara_split712.nc hdpara_split713.nc hdpara_split720.nc hdpara_split721.nc hdpara_split722.nc hdpara_split714.nc hdpara_split715.nc
+rm hdpara_split701.nc hdpara_split702.nc hdpara_split703.nc hdpara_split704.nc hdpara_split705.nc hdpara_split706.nc hdpara_split708.nc hdpara_split709.nc hdpara_split714.nc hdpara_split715.nc

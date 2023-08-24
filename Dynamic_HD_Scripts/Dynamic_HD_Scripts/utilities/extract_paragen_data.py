@@ -5,7 +5,7 @@ from Dynamic_HD_Scripts.base.field import Field
 from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers \
     import dynamic_hd_driver
 
-class Paragen_Data_Extractor(object):
+class Paragen_Data_Extractor:
 
     def extract_data_to_run_paragen_model(self,
                                           rdirs_filename,

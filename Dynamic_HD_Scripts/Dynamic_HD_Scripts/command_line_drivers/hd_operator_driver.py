@@ -27,7 +27,7 @@ def get_boolean_option_if_defined(config,section,option,default):
     return (config.getboolean(section,option)
             if config.has_option(section,option) else default)
 
-class HDOperatorDrivers(object):
+class HDOperatorDrivers:
     '''
     classdocs
     '''
@@ -476,7 +476,7 @@ def setup_and_run_hd_operator_driver_from_command_line_arguments(args):
     else:
         driver_object.primary_driver(args.run_hd_driver_script)
 
-class Arguments(object):
+class Arguments:
     pass
 
 def parse_arguments():

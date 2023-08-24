@@ -30,4 +30,8 @@ void latlon_filter_out_shallow_lakes(double* unfilled_orography,double* filled_o
       unfilled_orography[i] = filled_orography[i];
     }
   }
+  delete[] lakes;
+  delete[] all_lakes;
+  delete[] deep_lakes;
+  delete[] orography_difference;
 }

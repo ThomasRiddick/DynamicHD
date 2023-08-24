@@ -303,7 +303,7 @@ def setup_and_run_icon_para_gen_from_command_line_arguments(args):
     driver_object = Icon_Coarse_River_Directions_Creation_Drivers(**vars(args))
     driver_object.no_intermediaries_combine_hydrosheds_plus_rdirs_from_corrected_orog_driver()
 
-class Arguments(object):
+class Arguments:
     """An empty class used to pass namelist arguments into the main routine as keyword arguments."""
 
     pass

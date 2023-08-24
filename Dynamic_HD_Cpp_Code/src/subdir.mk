@@ -2,6 +2,8 @@
 CPP_SRCS += \
 ../src/base/cell.cpp \
 ../src/base/grid.cpp \
+../src/base/disjoint_set.cpp \
+../src/base/merges_and_redirects.cpp \
 ../src/algorithms/connected_lsmask_generation_algorithm.cpp \
 ../src/algorithms/basin_evaluation_algorithm.cpp \
 ../src/algorithms/lake_filling_algorithm.cpp \
@@ -9,7 +11,6 @@ CPP_SRCS += \
 ../src/algorithms/water_redistribution_algorithm.cpp \
 ../src/algorithms/catchment_computation_algorithm.cpp \
 ../src/algorithms/reduce_connected_areas_to_points_algorithm.cpp \
-../src/algorithms/basin_post_processing_algorithm.cpp \
 ../src/algorithms/river_direction_determination_algorithm.cpp \
 ../src/algorithms/stream_following_algorithm.cpp \
 ../src/algorithms/carved_river_direction_burning_algorithm.cpp \
@@ -30,11 +31,13 @@ CPP_SRCS += \
 ../src/drivers/follow_streams.cpp \
 ../src/drivers/create_orography.cpp \
 ../src/drivers/bifurcate_rivers_basic.cpp \
+../src/drivers/create_merge_structure_test_data.cpp \
 ../src/testing/test_fill_inks.cpp  \
 ../src/testing/test_lake_operators.cpp \
 ../src/testing/test_catchment_computation.cpp \
 ../src/testing/test_evaluate_basins.cpp \
 ../src/testing/test_grid.cpp \
+../src/testing/test_disjoint_set.cpp \
 ../src/testing/test_determine_river_directions.cpp \
 ../src/testing/test_orography_creation.cpp \
 ../src/testing/test_bifurcate_rivers_basic.cpp \
@@ -47,6 +50,8 @@ CPP_SRCS += \
 USER_OBJS += \
 ./src/base/cell.o \
 ./src/base/grid.o \
+./src/base/disjoint_set.o \
+./src/base/merges_and_redirects.o \
 ./src/algorithms/sink_filling_algorithm.o \
 ./src/algorithms/connected_lsmask_generation_algorithm.o \
 ./src/algorithms/carved_river_direction_burning_algorithm.o \
@@ -54,7 +59,6 @@ USER_OBJS += \
 ./src/algorithms/catchment_computation_algorithm.o \
 ./src/algorithms/lake_filling_algorithm.o \
 ./src/algorithms/basin_evaluation_algorithm.o \
-./src/algorithms/basin_post_processing_algorithm.o \
 ./src/algorithms/river_direction_determination_algorithm.o \
 ./src/algorithms/water_redistribution_algorithm.o \
 ./src/algorithms/stream_following_algorithm.o \
@@ -74,7 +78,8 @@ USER_OBJS += \
 ./src/drivers/filter_out_shallow_lakes.o \
 ./src/drivers/follow_streams.o \
 ./src/drivers/create_orography.o \
-./src/drivers/bifurcate_rivers_basic.o
+./src/drivers/bifurcate_rivers_basic.o \
+./src/drivers/create_merge_structure_test_data.o
 
 FS_ICON_SI_OBJS += \
 ./src/command_line_drivers/sink_filling_icon_simple_interface.o
@@ -97,6 +102,7 @@ TEST_OBJS += \
 ./src/testing/test_catchment_computation.o \
 ./src/testing/test_evaluate_basins.o \
 ./src/testing/test_grid.o \
+./src/testing/test_disjoint_set.o \
 ./src/testing/test_determine_river_directions.o \
 ./src/testing/test_orography_creation.o \
 ./src/testing/test_bifurcate_rivers_basic.o
@@ -104,13 +110,14 @@ TEST_OBJS += \
 CPP_DEPS += \
 ./src/base/cell.d \
 ./src/base/grid.d \
+./src/base/disjoint_set.d \
+./src/base/merges_and_redirects.d \
 ./src/algorithms/connected_lsmask_generation_algorithm.d \
 ./src/algorithms/carved_river_direction_burning_algorithm.d \
 ./src/algorithms/reduce_connected_areas_to_points_algorithm.d \
 ./src/algorithms/sink_filling_algorithm.d \
 ./src/algorithms/catchment_computation_algorithm.d \
 ./src/algorithms/basin_evaluation_algorithm.d \
-./src/algorithms/basin_post_processing_algorithm.d \
 ./src/algorithms/lake_filling_algorithm.d \
 ./src/algorithms/water_redistribution_algorithm.d \
 ./src/algorithms/river_direction_determination_algorithm.d \
@@ -132,10 +139,12 @@ CPP_DEPS += \
 ./src/drivers/filter_out_shallow_lakes.d \
 ./src/drivers/create_orography.d \
 ./src/drivers/bifurcate_rivers_basic.d \
+./src/drivers/create_merge_structure_test_data.d \
 ./src/testing/test_lake_operators.d \
 ./src/testing/test_catchment_computation.d \
 ./src/testing/test_evaluate_basins.d \
 ./src/testing/test_grid.d \
+./src/testing/test_disjoint_set.d \
 ./src/testing/test_determine_river_directions.d \
 ./src/testing/test_fill_sinks.d \
 ./src/testing/test_orography_creation.d \
@@ -150,35 +159,35 @@ CPP_DEPS += \
 src/base/%.o: ../src/base/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	$(GPLUSPLUS) -I"../include" -I"../." -I"../src" $(INCLUDE) -O3 -Wall -c -fmessage-length=0 -std=gnu++11 $(FLAGS) $(STDLIB_OPT) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
+	$(GPLUSPLUS) -I"../include" -I"../." -I"../src" $(INCLUDE) -O0 -Wall -c -fmessage-length=0 -std=gnu++11 $(FLAGS) $(STDLIB_OPT) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
 src/algorithms/%.o: ../src/algorithms/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	$(GPLUSPLUS) -I"../include" -I"../." -I"../src" $(INCLUDE) -O3 -Wall -c -fmessage-length=0 -std=gnu++11 $(FLAGS) $(STDLIB_OPT) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
+	$(GPLUSPLUS) -I"../include" -I"../." -I"../src" $(INCLUDE) -O0 -Wall -c -fmessage-length=0 -std=gnu++11 $(FLAGS) $(STDLIB_OPT) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
 src/drivers/%.o: ../src/drivers/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	$(GPLUSPLUS) -I"../include" -I"../." -I"../src" $(INCLUDE) -O3 -Wall -c -fmessage-length=0 -std=gnu++11 $(FLAGS) $(STDLIB_OPT) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
+	$(GPLUSPLUS) -I"../include" -I"../." -I"../src" $(INCLUDE) -O0 -Wall -c -fmessage-length=0 -std=gnu++11 $(FLAGS) $(STDLIB_OPT) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
 src/testing/%.o: ../src/testing/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	$(GPLUSPLUS) -I"../include" -I"../." -I"../src" $(INCLUDE) -O3 -Wall -c -fmessage-length=0 -std=gnu++11 $(FLAGS) $(STDLIB_OPT) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
+	$(GPLUSPLUS) -I"../include" -I"../." -I"../src" $(INCLUDE) -O0 -Wall -c -fmessage-length=0 -std=gnu++11 $(FLAGS) $(STDLIB_OPT) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
 src/command_line_drivers/%.o: ../src/command_line_drivers/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	$(GPLUSPLUS) -I"../include" -I"../." -I"../src" $(INCLUDE) -O3 -Wall -c -fmessage-length=0 -std=gnu++11 $(FLAGS) $(STDLIB_OPT) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
+	$(GPLUSPLUS) -I"../include" -I"../." -I"../src" $(INCLUDE) -O0 -Wall -c -fmessage-length=0 -std=gnu++11 $(FLAGS) $(STDLIB_OPT) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

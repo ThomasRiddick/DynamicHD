@@ -127,7 +127,8 @@ def advanced_basin_evaluation_driver(input_minima_file,
                                      combined_output_filename,
                                      output_filepath,
                                      output_filelabel,
-                                     output_basin_catchment_nums_filepath=None):
+                                     output_basin_catchment_nums_filepath=None,
+                                     output_sinkless_rdirs_filepath=None):
     input_minima    = iodriver.advanced_field_loader(input_minima_file,
                                                      field_type='Generic',
                                                      fieldname=input_minima_fieldname)
@@ -157,31 +158,28 @@ def advanced_basin_evaluation_driver(input_minima_file,
     fine_shape = input_raw_orography.get_data().shape
     connection_volume_thresholds = field.Field(np.zeros(fine_shape,dtype=np.float64,order='C'),fine_grid)
     flood_volume_thresholds = field.Field(np.zeros(fine_shape,dtype=np.float64,order='C'),fine_grid)
+    connection_heights = field.Field(np.zeros(fine_shape,dtype=np.float64,order='C'),fine_grid)
+    flood_heights = field.Field(np.zeros(fine_shape,dtype=np.float64,order='C'),fine_grid)
     flood_next_cell_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
     flood_next_cell_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
     connect_next_cell_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
     connect_next_cell_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-    flood_force_merge_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-    flood_force_merge_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-    connect_force_merge_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-    connect_force_merge_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-    flood_redirect_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-    flood_redirect_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-    connect_redirect_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-    connect_redirect_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-    additional_flood_redirect_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-    additional_flood_redirect_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-    additional_connect_redirect_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-    additional_connect_redirect_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-    flood_local_redirect = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-    connect_local_redirect = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-    additional_flood_local_redirect = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-    additional_connect_local_redirect = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-    merge_points = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+    connect_merge_and_redirect_indices_index = \
+        field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+    flood_merge_and_redirect_indices_index = \
+        field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
     if output_basin_catchment_nums_filepath is not None:
         basin_catchment_numbers = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        if output_sinkless_rdirs_filepath is not None:
+            sinkless_rdirs = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        else:
+            sinkless_rdirs = None
     else:
         basin_catchment_numbers = None
+        sinkless_rdirs = None
+    merges_filename = path.join(output_filepath,
+                                "merges_" +
+                                output_filelabel + ".nc")
     evaluate_basins_wrapper.evaluate_basins(minima_in_int=
                                             np.ascontiguousarray(input_minima.get_data(),dtype=np.int32),
                                             raw_orography_in=
@@ -197,6 +195,10 @@ def advanced_basin_evaluation_driver(input_minima_file,
                                             connection_volume_thresholds.get_data(),
                                             flood_volume_thresholds_in=
                                             flood_volume_thresholds.get_data(),
+                                            connection_heights_in=
+                                                connection_heights.get_data(),
+                                            flood_heights_in=
+                                                flood_heights.get_data(),
                                             prior_fine_rdirs_in=
                                             np.ascontiguousarray(input_prior_fine_rdirs.get_data(),
                                                                  dtype=np.float64),
@@ -217,42 +219,15 @@ def advanced_basin_evaluation_driver(input_minima_file,
                                             connect_next_cell_lat_index.get_data(),
                                             connect_next_cell_lon_index_in=
                                             connect_next_cell_lon_index.get_data(),
-                                            flood_force_merge_lat_index_in=
-                                            flood_force_merge_lat_index.get_data(),
-                                            flood_force_merge_lon_index_in=
-                                            flood_force_merge_lon_index.get_data(),
-                                            connect_force_merge_lat_index_in=
-                                            connect_force_merge_lat_index.get_data(),
-                                            connect_force_merge_lon_index_in=
-                                            connect_force_merge_lon_index.get_data(),
-                                            flood_redirect_lat_index_in=
-                                            flood_redirect_lat_index.get_data(),
-                                            flood_redirect_lon_index_in=
-                                            flood_redirect_lon_index.get_data(),
-                                            connect_redirect_lat_index_in=
-                                            connect_redirect_lat_index.get_data(),
-                                            connect_redirect_lon_index_in=
-                                            connect_redirect_lon_index.get_data(),
-                                            additional_flood_redirect_lat_index_in=
-                                            additional_flood_redirect_lat_index.get_data(),
-                                            additional_flood_redirect_lon_index_in=
-                                            additional_flood_redirect_lon_index.get_data(),
-                                            additional_connect_redirect_lat_index_in=
-                                            additional_connect_redirect_lat_index.get_data(),
-                                            additional_connect_redirect_lon_index_in=
-                                            additional_connect_redirect_lon_index.get_data(),
-                                            flood_local_redirect_out_int=
-                                            flood_local_redirect.get_data(),
-                                            connect_local_redirect_out_int=
-                                            connect_local_redirect.get_data(),
-                                            additional_flood_local_redirect_out_int=
-                                            additional_flood_local_redirect.get_data(),
-                                            additional_connect_local_redirect_out_int=
-                                            additional_connect_local_redirect.get_data(),
-                                            merge_points_out_int=
-                                            merge_points.get_data(),
+                                            connect_merge_and_redirect_indices_index_in=
+                                            connect_merge_and_redirect_indices_index.get_data(),
+                                            flood_merge_and_redirect_indices_index_in=
+                                            flood_merge_and_redirect_indices_index.get_data(),
+                                            merges_filepath=merges_filename,
                                             basin_catchment_numbers_in=
-                                            basin_catchment_numbers.get_data())
+                                            basin_catchment_numbers.get_data(),
+                                            sinkless_rdirs_in=
+                                            sinkless_rdirs.get_data())
     connection_volume_thresholds_filename = path.join(output_filepath,
                                                       "connect_vts_" +
                                                       output_filelabel + ".nc")
@@ -265,6 +240,30 @@ def advanced_basin_evaluation_driver(input_minima_file,
     iodriver.advanced_field_writer(flood_volume_thresholds_filename,
                                    flood_volume_thresholds,
                                    fieldname='flood_volume_thresholds')
+    connection_heights_filename = path.join(output_filepath,
+                                            "connect_h_" +
+                                            output_filelabel + ".nc")
+    iodriver.advanced_field_writer(connection_heights_filename,
+                                   connection_heights,
+                                   fieldname='connection_heights')
+    flood_heights_filename = path.join(output_filepath,
+                                       "flood_h_" +
+                                       output_filelabel + ".nc")
+    iodriver.advanced_field_writer(flood_heights_filename,
+                                   flood_heights,
+                                   fieldname='flood_heights')
+    corrected_heights_filename = path.join(output_filepath,
+                                           "corrected_h_" +
+                                           output_filelabel + ".nc")
+    iodriver.advanced_field_writer(corrected_heights_filename,
+                                   input_corrected_orography,
+                                   fieldname='corrected_heights')
+    raw_heights_filename = path.join(output_filepath,
+                                     "raw_h_" +
+                                     output_filelabel + ".nc")
+    iodriver.advanced_field_writer(raw_heights_filename,
+                                   input_raw_orography,
+                                   fieldname='raw_heights')
     flood_next_cell_lat_index_filename = path.join(output_filepath,
                                                    "flood_nci_lat_" +
                                                    output_filelabel + ".nc")
@@ -289,108 +288,18 @@ def advanced_basin_evaluation_driver(input_minima_file,
     iodriver.advanced_field_writer(connect_next_cell_lon_index_filename,
                                    connect_next_cell_lon_index,
                                    fieldname='connect_next_cell_lon_index')
-    flood_force_merge_lat_index_filename = path.join(output_filepath,
-                                                     "flood_fmi_lat_" +
-                                                     output_filelabel + ".nc")
-    iodriver.advanced_field_writer(flood_force_merge_lat_index_filename,
-                                   flood_force_merge_lat_index,
-                                   fieldname='flood_force_merge_lat_index')
-    flood_force_merge_lon_index_filename = path.join(output_filepath,
-                                                     "flood_fmi_lon_" +
-                                                     output_filelabel + ".nc")
-    iodriver.advanced_field_writer(flood_force_merge_lon_index_filename,
-                                   flood_force_merge_lon_index,
-                                   fieldname='flood_force_merge_lon_index')
-    connect_force_merge_lat_index_filename = path.join(output_filepath,
-                                                       "connect_fmi_lat_" +
-                                                       output_filelabel + ".nc")
-    iodriver.advanced_field_writer(connect_force_merge_lat_index_filename,
-                                   connect_force_merge_lat_index,
-                                   fieldname='connect_force_merge_lat_index')
-    connect_force_merge_lon_index_filename = path.join(output_filepath,
-                                                       "connect_fmi_lon_" +
-                                                       output_filelabel + ".nc")
-    iodriver.advanced_field_writer(connect_force_merge_lon_index_filename,
-                                   connect_force_merge_lon_index,
-                                   fieldname='connect_force_merge_lon_index')
-    flood_redirect_lat_index_filename = path.join(output_filepath,
-                                                  "flood_ri_lat_" +
-                                                  output_filelabel + ".nc")
-    iodriver.advanced_field_writer(flood_redirect_lat_index_filename,
-                                   flood_redirect_lat_index,
-                                   fieldname='flood_redirect_lat_index')
-    flood_redirect_lon_index_filename = path.join(output_filepath,
-                                                  "flood_ri_lon_" +
-                                                  output_filelabel + ".nc")
-    iodriver.advanced_field_writer(flood_redirect_lon_index_filename,
-                                   flood_redirect_lon_index,
-                                   fieldname='flood_redirect_lon_index')
-    connect_redirect_lat_index_filename = path.join(output_filepath,
-                                                    "connect_ri_lat_" +
-                                                    output_filelabel + ".nc")
-    iodriver.advanced_field_writer(connect_redirect_lat_index_filename,
-                                   connect_redirect_lat_index,
-                                   fieldname='connect_redirect_lat_index')
-    connect_redirect_lon_index_filename = path.join(output_filepath,
-                                                    "connect_ri_lon_" +
-                                                    output_filelabel + ".nc")
-    iodriver.advanced_field_writer(connect_redirect_lon_index_filename,
-                                   connect_redirect_lon_index,
-                                   fieldname='connect_redirect_lon_index')
-    additional_flood_redirect_lat_index_filename = path.join(output_filepath,
-                                                  "additional_flood_ri_lat_" +
-                                                  output_filelabel + ".nc")
-    iodriver.advanced_field_writer(additional_flood_redirect_lat_index_filename,
-                                   additional_flood_redirect_lat_index,
-                                   fieldname='additional_flood_redirect_lat_index')
-    additional_flood_redirect_lon_index_filename = path.join(output_filepath,
-                                                  "additional_flood_ri_lon_" +
-                                                  output_filelabel + ".nc")
-    iodriver.advanced_field_writer(additional_flood_redirect_lon_index_filename,
-                                   additional_flood_redirect_lon_index,
-                                   fieldname='additional_flood_redirect_lon_index')
-    additional_connect_redirect_lat_index_filename = path.join(output_filepath,
-                                                    "additional_connect_ri_lat_" +
-                                                    output_filelabel + ".nc")
-    iodriver.advanced_field_writer(additional_connect_redirect_lat_index_filename,
-                                   additional_connect_redirect_lat_index,
-                                   fieldname='additional_connect_redirect_lat_index')
-    additional_connect_redirect_lon_index_filename = path.join(output_filepath,
-                                                    "additional_connect_ri_lon_" +
-                                                    output_filelabel + ".nc")
-    iodriver.advanced_field_writer(additional_connect_redirect_lon_index_filename,
-                                   additional_connect_redirect_lon_index,
-                                   fieldname='additional_connect_redirect_lon_index')
-    flood_local_redirect_filename = path.join(output_filepath,
-                                              "flood_local_r_" +
-                                              output_filelabel + ".nc")
-    iodriver.advanced_field_writer(flood_local_redirect_filename,
-                                   flood_local_redirect,
-                                   fieldname='flood_local_redirect')
-    connect_local_redirect_filename = path.join(output_filepath,
-                                                "connect_local_r_" +
-                                                output_filelabel + ".nc")
-    iodriver.advanced_field_writer(connect_local_redirect_filename,
-                                   connect_local_redirect,
-                                   fieldname='connect_local_redirect')
-    additional_flood_local_redirect_filename = path.join(output_filepath,
-                                              "additional_flood_local_r_" +
-                                              output_filelabel + ".nc")
-    iodriver.advanced_field_writer(additional_flood_local_redirect_filename,
-                                   additional_flood_local_redirect,
-                                   fieldname='additional_flood_local_redirect')
-    additional_connect_local_redirect_filename = path.join(output_filepath,
-                                                "additional_connect_local_r_" +
-                                                output_filelabel + ".nc")
-    iodriver.advanced_field_writer(additional_connect_local_redirect_filename,
-                                   additional_connect_local_redirect,
-                                   fieldname='additional_connect_local_redirect')
-    merge_points_filename = path.join(output_filepath,
-                                      "merge_points_" +
-                                      output_filelabel + ".nc")
-    iodriver.advanced_field_writer(merge_points_filename,
-                                   merge_points,
-                                   fieldname='merge_points')
+    connect_merge_and_redirect_indices_index_filename = path.join(output_filepath,
+                                                                  "connect_mergeredir_indices_index_" +
+                                                                  output_filelabel + ".nc")
+    iodriver.advanced_field_writer(connect_merge_and_redirect_indices_index_filename,
+                                   connect_merge_and_redirect_indices_index,
+                                   fieldname='connect_merge_and_redirect_indices_index')
+    flood_merge_and_redirect_indices_index_filename = path.join(output_filepath,
+                                                                  "flood_mergeredir_indices_index_" +
+                                                                  output_filelabel + ".nc")
+    iodriver.advanced_field_writer(flood_merge_and_redirect_indices_index_filename,
+                                   flood_merge_and_redirect_indices_index,
+                                   fieldname='flood_merge_and_redirect_indices_index')
     lake_centers_filename = path.join(output_filepath,
                                       "lake_centers_" +
                                       output_filelabel + ".nc")
@@ -399,28 +308,18 @@ def advanced_basin_evaluation_driver(input_minima_file,
                                    fieldname="lake_centers")
     individual_field_filenames = [connection_volume_thresholds_filename,
                                   flood_volume_thresholds_filename,
+                                  connection_heights_filename,
+                                  flood_heights_filename,
+                                  corrected_heights_filename,
+                                  raw_heights_filename,
                                   flood_next_cell_lat_index_filename,
                                   flood_next_cell_lon_index_filename,
                                   connect_next_cell_lat_index_filename,
                                   connect_next_cell_lon_index_filename,
-                                  flood_force_merge_lat_index_filename,
-                                  flood_force_merge_lon_index_filename,
-                                  connect_force_merge_lat_index_filename,
-                                  connect_force_merge_lon_index_filename,
-                                  flood_redirect_lat_index_filename,
-                                  flood_redirect_lon_index_filename,
-                                  connect_redirect_lat_index_filename,
-                                  connect_redirect_lon_index_filename,
-                                  additional_flood_redirect_lat_index_filename,
-                                  additional_flood_redirect_lon_index_filename,
-                                  additional_connect_redirect_lat_index_filename,
-                                  additional_connect_redirect_lon_index_filename,
-                                  flood_local_redirect_filename,
-                                  connect_local_redirect_filename,
-                                  additional_flood_local_redirect_filename,
-                                  additional_connect_local_redirect_filename,
-                                  merge_points_filename,
-                                  lake_centers_filename]
+                                  connect_merge_and_redirect_indices_index,
+                                  flood_merge_and_redirect_indices_index,
+                                  lake_centers_filename,
+                                  merges_filename]
     cdo_inst = cdo.Cdo()
     cdo_inst.merge(input=" ".join(individual_field_filenames),
                    output=combined_output_filename)
@@ -430,6 +329,10 @@ def advanced_basin_evaluation_driver(input_minima_file,
         iodriver.advanced_field_writer(output_basin_catchment_nums_filepath,
                                        basin_catchment_numbers,
                                        fieldname="basin_catchment_numbers")
+        if output_sinkless_rdirs_filepath is not None:
+            iodriver.advanced_field_writer(output_sinkless_rdirs_filepath,
+                                           sinkless_rdirs,
+                                           fieldname="rdir")
 
 def advanced_water_redistribution_driver(input_lake_numbers_file,
                                          input_lake_numbers_fieldname,
@@ -526,7 +429,7 @@ def add_lake_bathymetry_driver(input_orography_file,
   lake_mask = iodriver.advanced_field_loader(lake_mask_file,
                                              field_type='Generic',
                                              fieldname=lake_mask_fieldname)
-  lake_mask.change_dtype(np.bool)
+  lake_mask.change_dtype(bool)
   output_orography = add_lake_bathymetry(input_orography,
                                          input_bathymetry,
                                          lake_mask)
@@ -555,7 +458,7 @@ def filter_narrow_lakes(input_unfilled_orography,
       greater_than_or_equal_to_value(interior_cell_min_masked_neighbors)
     dilated_interior_cell_mask.dilate(np.array([[True,True,True],
                                         [True,True,True],
-                                        [True,True,True]],dtype=np.bool_),
+                                        [True,True,True]],dtype=bool),
                                        iterations=max_range)
     filtered_lake_mask = non_edge_cell_mask.logical_or(dilated_interior_cell_mask.\
                                                        logical_and(edge_cell_mask))

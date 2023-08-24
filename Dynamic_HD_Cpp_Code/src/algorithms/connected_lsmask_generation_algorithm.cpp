@@ -68,8 +68,8 @@ void create_connected_landsea_mask::add_ls_seed_points_to_q()
 //the non-diagonal neighbors come first in the returned vector
 void create_connected_landsea_mask::process_neighbors()
 {
-	if(use_diagonals) _grid->for_all_nbrs(center_coords,[&](coords* coords_in)
-	                                      {process_neighbor(coords_in);});
+	if(use_diagonals) _grid->for_all_nbrs_wrapped(center_coords,[&](coords* coords_in)
+	                                              {process_neighbor(coords_in);});
 	else _grid->for_non_diagonal_nbrs(center_coords,[&](coords* coords_in)
 	                                  {process_neighbor(coords_in);});
 }
