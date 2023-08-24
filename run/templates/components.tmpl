@@ -30,9 +30,39 @@ working_directory=${repository_path}/projects/${project_name}/workdir
 
 {% macro set_variables_post_user_input() %}
 etop01_filepath=/work/mj0060/m300468/data/ETOPO1_Ice_g_gmt4_grid_registered.nc
-config_filepath=
+config_filepath=${working_directory}/bash_script.cfg
+python_config_filepath=${working_directory}/python_script.cfg
 binary_lsmask_filepath=${working_directory}/binary_lsmask.nc
 orography_filepath=${working_directory}/orography.nc
+
+cat << EOF > ${config_filepath}
+source_directory=${repository_path}
+no_conda=false
+no_modules=false
+no_env_gen=true
+python_config_filepath=${python_config_filepath}
+EOF
+
+cat << EOF > ${config_filepath}
+#Output option for test run of dynamic hd production code
+[input_options]
+ten_minute_corrected_orography_filename=/home/m/m300468/les_workdir/workdirs/icon_rdirs_r2b5_workdir_sc_0030_0035_seamless_p3/corrected_orog_intermediary_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_20170517_003802_with_grid.nc
+ten_minute_hydrosheds_au_auf_sa_river_directions_filename=/home/m/m300468/les_workdir/workdirs/icon_rdirs_r2b5_workdir_sc_0030_0035_seamless_p3/rdirs_hydrosheds_au_af_sa_upscaled_10min_20200203_163646_corrg.nc
+[input_fieldname_options]
+ten_minute_hydrosheds_au_auf_sa_river_directions_fieldname=rdirs
+ten_minute_corrected_orography_fieldname=field_value
+input_landsea_mask_fieldname=lsm
+input_truesinks_fieldname=true_sinks
+[output_fieldname_options]
+output_river_directions_fieldname=rdirs
+output_catchments_fieldname=catchments
+output_cumulative_flow_fieldname=acc
+[general_options]
+keep_all_internal_basins=False
+replace_internal_basins_with_rdirs_with_truesinks=False
+replace_only_catchments=
+exclude_catchments=
+EOF
 {%- endmacro -%}
 
 {% macro create_project_dirs() %}
