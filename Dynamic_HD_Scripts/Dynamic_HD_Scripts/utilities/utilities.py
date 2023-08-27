@@ -1735,10 +1735,9 @@ class LineTypes(Enum):
     DATEANDHEIGHTVALUES = enum.auto()
     NOTSET = enum.auto()
 
-def apply_date_based_sill_height_corrections(input_orography,
+def apply_date_based_sill_height_corrections(orography_field,
                                              date_based_sill_height_corrections_list_filename,
-                                             current_date,
-                                             output_orography):
+                                             current_date):
     """
     """
     new_entry_line_pattern = re.compile(r"-*new *entry-*")
