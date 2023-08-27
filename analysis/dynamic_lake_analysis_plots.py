@@ -561,7 +561,8 @@ def latest_lake_version_vs_previous_analysis_lakes_comparison():
     initial_configuration["use_latest_version_for_sequence_two"] = True
     initial_configuration["sequence_two_fixed_version"] = -1
     plotter = DynamicLakeAnalysisPlotter(colors,
-                                         initial_configuration_in=initial_configuration)
+                                         initial_configuration_in=initial_configuration,
+                                         debug_plots=False)
     plotter.run()
 
 def main():

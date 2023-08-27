@@ -14,20 +14,23 @@ from plotting_utilities.color_palette import ColorPalette
 from plotting_utilities import dynamic_lake_analysis_gui as dla_gui
 from plotting_utilities.lake_analysis_tools import LakeHeightAndVolumeExtractor
 from plotting_utilities.lake_analysis_tools import LakePointExtractor,OutflowBasinIdentifier
+from plotting_utilities.lake_analysis_tools import LakeAnalysisDebuggingPlots
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
 class DynamicLakeAnalysisPlotter:
 
-    lake_defs = {"Agassiz":{"initial_lake_center":(270,520),
-                            "input_area_bounds":{"min_lat":180,
-                                                 "max_lat":350,
-                                                 "min_lon":440,
-                                                 "max_lon":525}}}
+    lake_defs = {"Agassiz":{"initial_lake_center":(233,500),
+                            "lake_emergence_date":13450,
+                            "input_area_bounds":{"min_lat":25,
+                                                 "max_lat":125,
+                                                 "min_lon":125,
+                                                 "max_lon":225}}}
 
     def __init__(self,colors_in,
                  initial_configuration_filepath=None,
-                 initial_configuration_in=None):
+                 initial_configuration_in=None,
+                 debug_plots=False):
         self.colors = colors_in
         if (initial_configuration_filepath is not None and
             initial_configuration_in is not None):
@@ -38,6 +41,7 @@ class DynamicLakeAnalysisPlotter:
         else:
             self.configuration = initial_configuration_in
         self.setup_configuration(self.configuration)
+        self.dbg_plts = LakeAnalysisDebuggingPlots() if debug_plots else None
 
     def load_initial_configuration_from_file(self,initial_configuration_filepath):
         config = configparser.ConfigParser()
@@ -73,9 +77,11 @@ class DynamicLakeAnalysisPlotter:
         self.configuration = configuration
         self.time_sequences = TimeSequences(**self.configuration)
         if reprocessing:
-            self.interactive_plots.replot(**vars(self.time_sequences))
-            self.interactive_lake_plots.replot(**vars(self.time_sequences))
             self.generate_lake_stats()
+            self.interactive_plots.replot(None,None,**vars(self.time_sequences))
+            self.interactive_lake_plots.replot(self.lake_stats_one["Agassiz"]["lake_points"],
+                                               self.lake_stats_two["Agassiz"]["lake_points"],
+                                               **vars(self.time_sequences))
             self.interactive_spillway_plots.replot(lake_center_one_sequence=
                                                    self.lake_stats_one["Agassiz"]["lake_points"],
                                                    lake_center_two_sequence=
@@ -101,10 +107,11 @@ class DynamicLakeAnalysisPlotter:
         for lake_name,lake in self.lake_defs.items():
             lake_points = self.lake_point_extractor.\
                 extract_lake_point_sequence(initial_lake_center=lake["initial_lake_center"],
+                                            lake_emergence_date=lake["lake_emergence_date"],
                                             dates=self.time_sequences.date_sequence,
                                             input_area_bounds=lake["input_area_bounds"],
-                                            lake_basin_numbers_sequence=
-                                            self.time_sequences.lake_basin_numbers_one_sequence)
+                                            connected_lake_basin_numbers_sequence=
+                                            self.time_sequences.connected_lake_basin_numbers_one_sequence)
             lake_heights,lake_volumes = self.lake_height_and_volume_extractor.\
                 extract_lake_height_and_volume_sequence(lake_point_sequence=lake_points,
                                                         filled_orography_sequence=
@@ -124,10 +131,11 @@ class DynamicLakeAnalysisPlotter:
                                               "lake_outflow_basins":lake_outflow_basins}
             lake_points = self.lake_point_extractor.\
                 extract_lake_point_sequence(initial_lake_center=lake["initial_lake_center"],
+                                            lake_emergence_date=lake["lake_emergence_date"],
                                             dates=self.time_sequences.date_sequence,
                                             input_area_bounds=lake["input_area_bounds"],
-                                            lake_basin_numbers_sequence=
-                                            self.time_sequences.lake_basin_numbers_two_sequence)
+                                            connected_lake_basin_numbers_sequence=
+                                            self.time_sequences.connected_lake_basin_numbers_two_sequence)
             lake_heights,lake_volumes = self.lake_height_and_volume_extractor.\
                 extract_lake_height_and_volume_sequence(lake_point_sequence=lake_points,
                                                         filled_orography_sequence=
@@ -149,6 +157,10 @@ class DynamicLakeAnalysisPlotter:
     def run(self):
         timeseries = []
         self.corrections = []
+        self.lake_height_and_volume_extractor = LakeHeightAndVolumeExtractor()
+        self.ocean_basin_identifier = OutflowBasinIdentifier("30minLatLong",self.dbg_plts)
+        self.lake_point_extractor = LakePointExtractor()
+        self.generate_lake_stats()
         self.interactive_plots = InteractiveTimeSlicePlots(self.colors,
                                                       self.configuration['plots'],
                                                       **vars(self.time_sequences),
@@ -167,16 +179,14 @@ class DynamicLakeAnalysisPlotter:
                                                                 zoomed=True,
                                                                 zoomed_section_bounds=
                                                                 self.lake_defs["Agassiz"]['input_area_bounds'],
+                                                                lake_points_one=self.lake_stats_one["Agassiz"]["lake_points"],
+                                                                lake_points_two=self.lake_stats_two["Agassiz"]["lake_points"],
                                                                 corrections=self.corrections)
 
         build_dict = lambda figs,nums,prefix : { f'-{prefix}CANVAS{i}-':figure for i,figure in zip(nums,figs) }
         figures = build_dict(self.interactive_plots.figs,[1,2,4,6],'GM')
         #Don't assume python 3.9 and the | syntax
         figures = {**figures,**build_dict(self.interactive_lake_plots.figs,[1,2,4,6],"LM")}
-        self.lake_height_and_volume_extractor = LakeHeightAndVolumeExtractor()
-        self.ocean_basin_identifier = OutflowBasinIdentifier("30minLatLong")
-        self.lake_point_extractor = LakePointExtractor()
-        self.generate_lake_stats()
         self.interactive_spillway_plots = \
             InteractiveSpillwayPlots(self.colors,
                                      date_sequence=
@@ -213,7 +223,7 @@ class DynamicLakeAnalysisPlotter:
         figures = {**figures,**build_dict(self.interactive_timeseries_plots.figs,[1,2,3,4],"TS")}
         gui = dla_gui.DynamicLakeAnalysisGUI(list(self.interactive_plots.plot_types.keys()),
                                              list(self.interactive_timeseries_plots.plot_types.keys()),
-                                             self.configuration)
+                                             self.configuration,self.dbg_plts)
         gui.run_main_event_loop(figures,self.interactive_timeseries_plots,
                                 self.interactive_plots,self.interactive_lake_plots,
                                 self.interactive_spillway_plots,self.setup_configuration)

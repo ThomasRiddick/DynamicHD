@@ -50,7 +50,8 @@ class DynamicLakeAnalysisGUI:
         default_corrections_file = ("/Users/thomasriddick/Documents/"
                                     "data/temp/erosion_corrections.txt")
 
-        def __init__(self,avail_plots,avail_ts_plots,initial_configuration):
+        def __init__(self,avail_plots,avail_ts_plots,initial_configuration,
+                     dbg_plts=None):
                 mpl.use('TkAgg')
                 sg.theme("light blue")
                 self.avail_plots = avail_plots
@@ -58,6 +59,7 @@ class DynamicLakeAnalysisGUI:
                 self.visible_column = {"GM":0, "LM":0, "CS":0, "TS":0}
                 self.configuration = initial_configuration
                 self.initial_configuration = copy.deepcopy(initial_configuration)
+                self.dbg_plts = dbg_plts
                 self.layout = self.setup_layout()
 
         @staticmethod
@@ -422,6 +424,16 @@ class DynamicLakeAnalysisGUI:
                 if self.event in backward_stepping_events:
                         event_handler.step_back()
                         self.update_date(key_prefix,event_handler)
+                fast_forward_stepping_events = [f'-{key_prefix}'+ event_label + 'FFORWARD' + '-' for
+                                                event_label in ["1","2","4","6"]]
+                fast_backward_stepping_events = [f'-{key_prefix}'+ event_label + 'FREWIND' + '-' for
+                                                 event_label in ["1","2","4","6"]]
+                if (self.event in fast_forward_stepping_events or
+                    self.event in fast_backward_stepping_events):
+                        date = (event_handler.get_current_date() +
+                                (500 if (self.event in fast_forward_stepping_events) else -500))
+                        event_handler.step_to_date(date)
+                        self.update_date(key_prefix,event_handler)
 
         def check_for_select_coords_events(self,key_prefix,event_handler):
                 labels = [f'-{key_prefix}SELECTCOORDS{event_label}-' for
@@ -526,7 +538,8 @@ class DynamicLakeAnalysisGUI:
                         update(value="Current file: {}".format(self.values["-CORRECTIONSFILE-"]))
 
         def setup_layout(self):
-                menu_def = [['File',['Exit',]],]
+                menu_def = [['File',['Exit',]],['Debug',['Show Plots']]] \
+                                if self.dbg_plts is not None else [['File',['Exit',]],]
 
                 input_data_tab_layout = [[sg.Frame("",[[sg.Radio('Lake Agassiz', 'LAKERADIO',default=True)]]),
                                           sg.Frame("",[[sg.Radio('Other lake', 'LAKERADIO'),
@@ -539,9 +552,9 @@ class DynamicLakeAnalysisGUI:
                                           sg.InputText('{}'.format(self.configuration["dates"][-1]),
                                                        size=10,key='-ENDDATE-')],
                                           [sg.Text('Run interval: '),
-                                          sg.InputText('{}'.format(self.configuration["dates"][0] -
-                                                                   self.configuration["dates"][1]),size=10,
-                                                                   key="-INTERVAL-")],
+                                           sg.InputText('{}'.format(self.configuration["dates"][0] -
+                                                                    self.configuration["dates"][1]),size=10,
+                                                                    key="-INTERVAL-")],
                                           [sg.Checkbox('Include 0 YBP in list of dates',key="-INCLUDEZEROYBP-")],
                                           [sg.Text('Data source 1:'),
                                            sg.InputText(self.configuration["sequence_one_base_dir"],
@@ -666,6 +679,8 @@ class DynamicLakeAnalysisGUI:
                         logging.info(self.event)
                         if self.event in (sg.WIN_CLOSED,'Exit'):
                                 break
+                        if self.event == 'Show Plots':
+                                self.dbg_plts.show_debugging_plots()
                         active_tab = self.values['-TABS-'].strip('-')
                         self.process_config_main_switches_for_time_series()
                         self.process_config_main_switches_for_maps(active_tab)

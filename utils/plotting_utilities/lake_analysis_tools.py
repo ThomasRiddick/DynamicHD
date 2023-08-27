@@ -3,6 +3,7 @@ import scipy.ndimage as ndimage
 from collections import deque
 from copy import deepcopy
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import sys
 import warnings
 
@@ -21,13 +22,30 @@ def get_neighbors(coords):
                 nbr_coords.append((k+i,j+l))
     return nbr_coords
 
+class LakeAnalysisDebuggingPlots:
+
+    def __init__(self):
+        mpl.use('TkAgg')
+        self.figs = []
+
+    def get_new_fig_for_debug(self):
+        fig = plt.figure()
+        fig.add_subplot(111)
+        self.figs.append(fig)
+        return fig
+
+    def show_debugging_plots(self):
+        for fig in self.figs:
+            fig.show()
+
+dbg_plts = LakeAnalysisDebuggingPlots()
+
 class LakeTracker:
 
-    def __init__(self,initial_lake_mask,initial_lake_center):
+    def __init__(self,initial_connected_lake_numbers,initial_lake_center):
         initial_lake_center = tuple(initial_lake_center)
-        initial_lake_numbers = self.number_lakes(initial_lake_mask)
-        initial_lake_number = initial_lake_numbers[initial_lake_center]
-        self.lake = (initial_lake_numbers == initial_lake_number)
+        initial_lake_number = initial_connected_lake_numbers[initial_lake_center]
+        self.lake = (initial_connected_lake_numbers == initial_lake_number)
 
     def get_current_lake_mask(self):
         return self.lake
@@ -56,9 +74,8 @@ class LakeTracker:
         return lake_numbers
 
 
-    def track_lake(self,lake_mask):
-        new_lake_numbers = self.number_lakes(lake_mask)
-        intersecting_lakes = new_lake_numbers[self.lake]
+    def track_lake(self,connected_lake_numbers):
+        intersecting_lakes = connected_lake_numbers[self.lake]
         (intersecting_lake_numbers,
          intersecting_lake_cell_counts) = np.unique(intersecting_lakes,return_counts=True)
         zero_mask = (intersecting_lake_numbers == 0)
@@ -66,7 +83,7 @@ class LakeTracker:
         intersecting_lake_cell_counts = np.delete(intersecting_lake_cell_counts,zero_mask)
         max_index = np.argmax(intersecting_lake_cell_counts)
         new_lake_number = intersecting_lake_numbers[max_index]
-        self.lake = (new_lake_number == new_lake_numbers)
+        self.lake = (new_lake_number == connected_lake_numbers)
         return self.lake
 
 class LakePointExtractor:
@@ -75,27 +92,49 @@ class LakePointExtractor:
         self.lake_tracker = None
 
     def extract_lake_point_sequence(self,
-                                   initial_lake_center,
-                                   dates,
-                                   input_area_bounds,
-                                   lake_basin_numbers_sequence):
+                                    initial_lake_center,
+                                    lake_emergence_date,
+                                    dates,
+                                    input_area_bounds,
+                                    connected_lake_basin_numbers_sequence):
         self.lake_tracker = None
         self.initial_lake_center = initial_lake_center
-        lake_point_sequence = []
-        for date,lake_basin_numbers in \
+        lake_emergence_date_index = dates.index(lake_emergence_date)
+        lake_point_sequence = [ None for _ in
+                               range(lake_emergence_date_index)]
+        for date,connected_lake_basin_numbers in \
               zip(dates,
-                  lake_basin_numbers_sequence):
-              lake_point_sequence.append(self.extract_lake(lake_basin_numbers))
+                  connected_lake_basin_numbers_sequence):
+              if date <= lake_emergence_date:
+                lake_point_sequence.append(self.extract_lake(connected_lake_basin_numbers))
         return lake_point_sequence
 
-    def extract_lake(self,lake_basin_numbers):
-        all_lake_mask = np.logical_not(lake_basin_numbers <= 0)
+    def extract_lake(self,connected_lake_basin_numbers):
         if self.lake_tracker is None:
-           self.lake_tracker = LakeTracker(all_lake_mask,self.initial_lake_center)
-           this_lake_mask = self.lake_tracker.get_current_lake_mask()
+           self.lake_tracker = LakeTracker(connected_lake_basin_numbers,self.initial_lake_center)
+           lake_mask = self.lake_tracker.get_current_lake_mask()
         else:
-           this_lake_mask = self.lake_tracker.track_lake(all_lake_mask)
-        return tuple(np.argwhere(this_lake_mask)[0])
+           lake_mask = self.lake_tracker.track_lake(connected_lake_basin_numbers)
+        lake_points = np.argwhere(lake_mask)
+        num_lake_points = len(lake_points)
+        lat_sum = 0
+        lon_sum = 0
+        for point in lake_points:
+            lat_sum += point[0]
+            lon_sum += point[1]
+        avg_lat = lat_sum/num_lake_points
+        avg_lon = lon_sum/num_lake_points
+        optimal_point = None
+        optimal_distance_from_center_squared = float('Infinity')
+        for point in lake_points:
+            point_distance_from_center_squared = \
+                (point[0] - avg_lat)**2 + (point[1]-avg_lon)**2
+            if (point_distance_from_center_squared <
+                optimal_distance_from_center_squared):
+                optimal_point = point
+                optimal_distance_from_center_squared = \
+                    point_distance_from_center_squared
+        return tuple(optimal_point)
 
 class LakeHeightAndVolumeExtractor:
 
@@ -109,8 +148,12 @@ class LakeHeightAndVolumeExtractor:
               zip(lake_point_sequence,
                   filled_orography_sequence,
                   lake_volumes_sequence):
-              lake_heights.append(filled_orography[tuple(lake_point)])
-              lake_volumes.append(lake_volumes_array[tuple(lake_point)])
+              if lake_point is None:
+                lake_heights.append(None)
+                lake_volumes.append(None)
+              else:
+                lake_heights.append(filled_orography[tuple(lake_point)])
+                lake_volumes.append(lake_volumes_array[tuple(lake_point)])
         return lake_heights,lake_volumes
 
 class CoastlineIdentifier:
@@ -214,12 +257,13 @@ class OutflowBasinIdentifier:
     ocean_basins_definitions = {"30minLatLong":ocean_basins_30min_latlon}
     field_shapes = {"30minLatLong":(360,720)}
 
-    def __init__(self,grid_type):
+    def __init__(self,grid_type,dbg_plts=None):
         ocean_basins_definitions = self.ocean_basins_definitions[grid_type]
         field_shape = self.field_shapes[grid_type]
         self.ocean_basin_numbers = -1*np.ones(field_shape,dtype=np.int32)
         self.ocean_basin_names = []
         self.coastline_identifiers = []
+        self.dbg_plts = dbg_plts
         for key,value in ocean_basins_definitions.items():
             self.coastline_identifiers.append(CoastlineIdentifier(*value,field_shape))
             self.ocean_basin_names.append(key)
@@ -228,16 +272,22 @@ class OutflowBasinIdentifier:
         for i,coastline_identifier in enumerate(self.coastline_identifiers):
             _,coastal_ocean_cells = coastline_identifier.identify_coastline(lsmask)
             self.ocean_basin_numbers[coastal_ocean_cells] = i
+        if self.dbg_plts is not None:
+            fig = self.dbg_plts.get_new_fig_for_debug()
+            fig.axes[0].imshow(self.ocean_basin_numbers)
 
     def identify_ocean_basin_for_lake_outflow(self,
                                               lsmask,
                                               connected_catchments,
                                               lake_point,
                                               input_area_bounds):
+        if lake_point is None:
+            return -1
         self.set_lsmask(lsmask)
         catchment = connected_catchments[tuple(lake_point)]
-        ocean_basin_number = self.ocean_basin_numbers[np.logical_and(connected_catchments == catchment,
-                                                                     self.ocean_basin_numbers >= 0)].flatten()[0]
+        ocean_basin_number_opt = self.ocean_basin_numbers[np.logical_and(connected_catchments == catchment,
+                                                                     self.ocean_basin_numbers >= 0)].flatten()
+        ocean_basin_number = ocean_basin_number_opt[0] if len(ocean_basin_number_opt) > 0 else -1
         return self.ocean_basin_names[ocean_basin_number]
 
     def extract_ocean_basin_for_lake_outflow_sequence(self,
@@ -288,8 +338,8 @@ class SpillwayProfiler:
 
     #Again no wrapping as no known case where wrapping would be required
     @staticmethod
-    def find_downstream_cell(working_coords,sinkless_rdirs):
-        rdir = sinkless_rdirs[tuple(working_coords)]
+    def find_downstream_cell(working_coords,rdirs):
+        rdir = rdirs[tuple(working_coords)]
         inc_i = 0
         inc_j = 0
         if rdir == 5 or rdir == 0:
@@ -311,32 +361,41 @@ class SpillwayProfiler:
         return working_coords
 
     @classmethod
+    def extract_spillway_mask(cls,lake_center,sinkless_rdirs):
+        if lake_center is None:
+            return []
+        spillway_mask = np.full(sinkless_rdirs.shape,False)
+        working_coords = list(deepcopy(lake_center))
+        while cls.find_downstream_cell(working_coords,sinkless_rdirs):
+            spillway_mask[tuple(working_coords)] = True
+        return spillway_mask
+
+    @classmethod
     def extract_spillway_profile(cls,lake_center,sinkless_rdirs,
                                  corrected_heights):
+        if lake_center is None:
+            return []
         spillway_height_profile = [corrected_heights[tuple(lake_center)]]
         working_coords = list(deepcopy(lake_center))
         while cls.find_downstream_cell(working_coords,sinkless_rdirs):
             spillway_height_profile.append(corrected_heights[tuple(working_coords)])
         return spillway_height_profile
 
-if __name__ == '__main__':
-    from Dynamic_HD_Scripts.base.iodriver import advanced_field_loader
-    rdirs = advanced_field_loader(filename="/Users/thomasriddick/Documents/data/lake_analysis_runs/lake_analysis_two_26_Mar_2022/lakes/results/diag_version_35_date_14900/30min_rdirs.nc",
-                                  time_slice=None,
-                                  field_type="RiverDirections",
-                                  fieldname="rdirs",
-                                  adjust_orientation=True)
-    connected_catchments = advanced_field_loader(filename="/Users/thomasriddick/Documents/data/lake_analysis_runs/lake_analysis_two_26_Mar_2022/lakes/results/diag_version_35_date_14900/30min_connected_catchments.nc",
-                                                 time_slice=None,
-                                                 field_type="Generic",
-                                                 fieldname="catchments",
-                                                 adjust_orientation=True)
-    lsmask_data = rdirs.get_lsmask()
-    shape = lsmask_data.shape
-    lake_center = [266//3,521//3]
-    basin_identifier = OutflowBasinIdentifier("30minLatLong")
-    print(basin_identifier.identify_ocean_basin_for_lake_outflow(lsmask=lsmask_data,
-                                                                 connected_catchments=
-                                                                 connected_catchments.get_data(),
-                                                                 lake_point=lake_center,
-                                                                 input_area_bounds=[]))
+class FlowPathExtractor:
+
+    @staticmethod
+    def extract_flowpath(lake_center,rdirs,rdirs_jumps_lat,rdirs_jumps_lon):
+        working_coords = list(deepcopy(lake_center))
+        flowpath_mask = np.full(rdirs.shape,False)
+        initial_section = True
+        while True:
+            while SpillwayProfiler.find_downstream_cell(working_coords,rdirs):
+                if not initial_section:
+                    flowpath_mask[tuple(working_coords)] = True
+            if rdirs[tuple(working_coords)] == 0:
+                break
+            working_coords = [rdirs_jumps_lat[tuple(working_coords)],
+                              rdirs_jumps_lon[tuple(working_coords)]]
+            print(working_coords)
+            initial_section = False
+        return flowpath_mask

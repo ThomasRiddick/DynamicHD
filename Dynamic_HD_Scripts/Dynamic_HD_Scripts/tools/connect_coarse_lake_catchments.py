@@ -158,14 +158,9 @@ def update_cumulative_flow(upstream_catchment_center,
                                           downstream_cells_out,True)
     cumulative_flow.get_data()[downstream_cells_out == 1] += additional_cumulative_flow
 
-def update_river_directions(upstream_catchment_center,
-                            downstream_catchment_entry_point,
-                            river_directions,
-                            corrected_river_directions,
-                            rdirs_jump_next_cell_indices):
-    #Use code 10 to indicate jump
-    corrected_river_directions.get_data()[tuple(upstream_catchment_center)] = \
-        river_directions.get_data()[tuple(upstream_catchment_center)]
+def mark_jumps(upstream_catchment_center,
+               downstream_catchment_entry_point,
+               rdirs_jump_next_cell_indices):
     rdirs_jump_next_cell_indices[0].get_data()[tuple(upstream_catchment_center)] = \
         downstream_catchment_entry_point[0]
     rdirs_jump_next_cell_indices[1].get_data()[tuple(upstream_catchment_center)] = \
@@ -185,8 +180,6 @@ def connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
                                           connected_cumulative_flow_out_filepath=None,
                                           cumulative_flow_fieldname = None,
                                           connected_cumulative_flow_out_fieldname=None,
-                                          corrected_river_directions_filepath=None,
-                                          corrected_river_directions_fieldname=None,
                                           rdirs_jump_next_cell_indices_filepath=None,
                                           rdirs_jump_next_cell_indices_fieldname=None,
                                           scale_factor = 3):
@@ -229,7 +222,14 @@ def connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
                                                          field_type='Generic',
                                                          fieldname=\
                                                          cumulative_flow_fieldname)
-    catchments, corrected_cumulative_flow = \
+    if rdirs_jump_next_cell_indices_filepath is not None:
+        rdirs_jump_next_cell_indices = (field.makeField(np.full(cumulative_flow.get_data().shape,-1),
+                                                        'Generic',grid_type=cumulative_flow.get_grid()),
+                                        field.makeField(np.full(cumulative_flow.get_data().shape,-1),
+                                                        'Generic',grid_type=cumulative_flow.get_grid()))
+    else:
+        rdirs_jump_next_cell_indices = None
+    results = \
         connect_coarse_lake_catchments(coarse_catchments,lake_centers,basin_catchment_numbers,
                                        flood_next_cell_index_lat,flood_next_cell_index_lon,
                                        flood_merge_and_redirect_indices_index,
@@ -237,10 +237,19 @@ def connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
                                        cumulative_flow=cumulative_flow,
                                        correct_cumulative_flow=(True if cumulative_flow_filepath
                                                                 is not None else False),
-                                       corrected_river_directions = corrected_river_directions_filepath,
-                                       rdirs_jump_next_cell_indices = rdirs_jump_next_cell_indices_filepath,
-                                       correct_rdirs=(True if corrected_river_directions_filepath
-                                                      is not None else False))
+                                       mark_rdir_jumps=(True if rdirs_jump_next_cell_indices_filepath
+                                                        is not None else False),
+                                       rdirs_jump_next_cell_indices=rdirs_jump_next_cell_indices)
+    if rdirs_jump_next_cell_indices_filepath is not None or cumulative_flow_filepath is not None:
+        if (rdirs_jump_next_cell_indices_filepath is not None and
+            cumulative_flow_filepath is not None):
+            catchments, corrected_cumulative_flow,rdirs_jump_next_cell_indices = results
+        elif cumulative_flow_filepath is not None:
+            catchments, corrected_cumulative_flow = results
+        else:
+            catchments, rdirs_jump_next_cell_indices = results
+    else:
+        catchments = results
     iodriver.advanced_field_writer(connected_coarse_catchments_out_filename,
                                    field=catchments,
                                    fieldname=connected_coarse_catchments_out_fieldname)
@@ -248,18 +257,11 @@ def connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
         iodriver.advanced_field_writer(connected_cumulative_flow_out_filepath,
                                        field=corrected_cumulative_flow,
                                        fieldname=connected_cumulative_flow_out_fieldname)
-    if corrected_river_directions_filepath is not None:
-        iodriver.advanced_field_writer(corrected_river_directions_filepath,
-                                       field=corrected_river_directions,
-                                       fieldname=corrected_river_directions_fieldname)
     if rdirs_jump_next_cell_indices_filepath is not None:
         iodriver.advanced_field_writer(rdirs_jump_next_cell_indices_filepath,
-                                       field=rdirs_jump_next_cell_indices[0],
-                                       fieldname=rdirs_jump_next_cell_indices_fieldname+"lat")
-        iodriver.advanced_field_writer(rdirs_jump_next_cell_indices_filepath,
-                                       field=rdirs_jump_next_cell_indices[1],
-                                       fieldname=rdirs_jump_next_cell_indices_fieldname+"lon")
-
+                                       field=list(rdirs_jump_next_cell_indices),
+                                       fieldname=[rdirs_jump_next_cell_indices_fieldname+"lat",
+                                                  rdirs_jump_next_cell_indices_fieldname+"lon"])
 
 #Remember - Tuples trigger basic indexing, lists don't
 def connect_coarse_lake_catchments(coarse_catchments,lake_centers,basin_catchment_numbers,
@@ -268,8 +270,7 @@ def connect_coarse_lake_catchments(coarse_catchments,lake_centers,basin_catchmen
                                    merges_and_redirects,river_directions,scale_factor = 3,
                                    correct_cumulative_flow=False,
                                    cumulative_flow=None,
-                                   correct_rdirs=False,
-                                   corrected_river_directions=None,
+                                   mark_rdir_jumps=False,
                                    rdirs_jump_next_cell_indices=None):
     if correct_cumulative_flow:
         if cumulative_flow is None or river_directions is None:
@@ -362,7 +363,7 @@ def connect_coarse_lake_catchments(coarse_catchments,lake_centers,basin_catchmen
                 supercatchment_number
     coarse_catchments_field = field.Field(cc.renumber_catchments_by_size(coarse_catchments.get_data()),type="Generic",
                                           grid=coarse_catchments.get_grid())
-    if correct_cumulative_flow or correct_rdirs:
+    if correct_cumulative_flow or mark_rdir_jumps:
         while catchment_trees.all_catchments:
             upstream_catchments = catchment_trees.pop_leaves()
             for upstream_catchment in upstream_catchments:
@@ -378,17 +379,17 @@ def connect_coarse_lake_catchments(coarse_catchments,lake_centers,basin_catchmen
                                                (sink_point_cumulative_flow_redirect_lat.get_data()[upstream_catchment_center],
                                                 sink_point_cumulative_flow_redirect_lon.get_data()[upstream_catchment_center]),
                                                cumulative_flow,river_directions)
-                    if correct_rdirs:
-                        update_river_directions(upstream_catchment_center,
-                                                (sink_point_cumulative_flow_redirect_lat.get_data()[upstream_catchment_center],
-                                                 sink_point_cumulative_flow_redirect_lon.get_data()[upstream_catchment_center]),
-                                                 river_directions,
-                                                 corrected_river_directions,
-                                                 rdirs_jump_next_cell_indices)
-        if correct_cumulative_flow and correct_rdirs:
-            return coarse_catchments_field,cumulative_flow,corrected_rdirs,rdirs_jump_next_cell_indices
+                    if mark_rdir_jumps:
+                        mark_jumps(upstream_catchment_center,
+                                   (sink_point_cumulative_flow_redirect_lat.\
+                                    get_data()[upstream_catchment_center],
+                                    sink_point_cumulative_flow_redirect_lon.\
+                                    get_data()[upstream_catchment_center]),
+                                    rdirs_jump_next_cell_indices)
+        if correct_cumulative_flow and mark_rdir_jumps:
+            return coarse_catchments_field,cumulative_flow,rdirs_jump_next_cell_indices
         elif correct_cumulative_flow:
             return coarse_catchments_field,cumulative_flow
         else:
-            return coarse_catchments_field,corrected_rdirs,rdirs_jump_next_cell_indices
+            return coarse_catchments_field,rdirs_jump_next_cell_indices
     return coarse_catchments_field
