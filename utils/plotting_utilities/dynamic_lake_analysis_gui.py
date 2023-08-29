@@ -431,7 +431,7 @@ class DynamicLakeAnalysisGUI:
                 if (self.event in fast_forward_stepping_events or
                     self.event in fast_backward_stepping_events):
                         date = (event_handler.get_current_date() +
-                                (500 if (self.event in fast_forward_stepping_events) else -500))
+                                (-500 if (self.event in fast_forward_stepping_events) else 500))
                         event_handler.step_to_date(date)
                         self.update_date(key_prefix,event_handler)
 

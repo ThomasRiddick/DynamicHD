@@ -22,6 +22,11 @@ def get_neighbors(coords):
                 nbr_coords.append((k+i,j+l))
     return nbr_coords
 
+def in_bounds(coords,array):
+    return (all(coord >= 0 for coord in coords) and
+            coords[0] < array.shape[0]
+            and coords[1] < array.shape[1])
+
 class LakeAnalysisDebuggingPlots:
 
     def __init__(self):
@@ -339,6 +344,8 @@ class SpillwayProfiler:
     #Again no wrapping as no known case where wrapping would be required
     @staticmethod
     def find_downstream_cell(working_coords,rdirs):
+        if not in_bounds(working_coords,rdirs):
+            return False
         rdir = rdirs[tuple(working_coords)]
         inc_i = 0
         inc_j = 0
@@ -390,12 +397,13 @@ class FlowPathExtractor:
         initial_section = True
         while True:
             while SpillwayProfiler.find_downstream_cell(working_coords,rdirs):
-                if not initial_section:
+                if in_bounds(working_coords,rdirs) and not initial_section:
                     flowpath_mask[tuple(working_coords)] = True
-            if rdirs[tuple(working_coords)] == 0:
+            if not in_bounds(working_coords,rdirs):
+                break
+            if (rdirs[tuple(working_coords)] == 0):
                 break
             working_coords = [rdirs_jumps_lat[tuple(working_coords)],
                               rdirs_jumps_lon[tuple(working_coords)]]
-            print(working_coords)
             initial_section = False
         return flowpath_mask

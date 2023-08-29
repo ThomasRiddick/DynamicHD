@@ -60,6 +60,27 @@ class ZoomSettings():
     def copy(self):
         return ZoomSettings(self.zoomed,dict(self.zoomed_section_bounds))
 
+    def translate_point_to_zoomed_coords(self,point,scale_factor):
+        if point is None:
+            return None
+        if not self.zoomed:
+            return tuple(point)
+        #Because of array offset need to subtract min_lat/lon ...
+        #Calculation is old_coords - (min_lat_new_coords - min_lat_old_coords)
+        #and min_lat_old_coord is 0
+        return (point[0] - (self.zoomed_section_bounds["min_lat"]*scale_factor),
+                point[1] - (self.zoomed_section_bounds["min_lon"]*scale_factor))
+
+    def translate_jumps_to_zoomed_coords(self,jumps,scale_factor,dim_name):
+        if jumps is None:
+            return None
+        #See comment above on array index
+        if not self.zoomed:
+            return jumps
+        translated_jumps = jumps.copy()
+        translated_jumps[jumps >= 0] -= (self.zoomed_section_bounds[f'min_{dim_name}']*scale_factor)
+        return translated_jumps
+
 class TimeSequences:
     def __init__(self,dates,
                  sequence_one_base_dir,
@@ -467,8 +488,9 @@ class InteractiveSpillwayPlots:
         self.step()
 
     def step_to_date(self,event):
-        self.current_index = self.date_sequence.index(int(event))
-        self.step()
+        if int(event) in self.date_sequence:
+            self.current_index = self.date_sequence.index(int(event))
+            self.step()
 
     def toggle_plot_one(self):
         self.show_plot_one = True
@@ -610,19 +632,28 @@ class InteractiveTimeSeriesPlots():
 
     def lake_outflow_plot_base(self,index,lake_outflow_sequence):
         self.timeseries_plots[index].ax.clear()
-        carib = np.zeros((len(lake_outflow_sequence)),dtype=np.int32)
-        artic = np.zeros((len(lake_outflow_sequence)),dtype=np.int32)
-        saintlawrence = np.zeros((len(lake_outflow_sequence)),dtype=np.int32)
+        basins = ["Carib","Artic","St Lawrence"]
+        bars = { name:[] for name in basins }
+        current_basin=None
         for i,item in enumerate(lake_outflow_sequence):
-            if item == "Carib":
-                carib[i] = 1
-            if item == "Artic":
-                artic[i] = 1
-            if item == "St Lawrence":
-                saintlawrence[i] = 1
-        self.timeseries_plots[index].ax.plot(carib,color="blue")
-        self.timeseries_plots[index].ax.plot(artic,color="red")
-        self.timeseries_plots[index].ax.plot(saintlawrence,color="green")
+            for basin in basins:
+                if item == basin:
+                    if current_basin == basin:
+                        bar_section_length += 1
+                    else:
+                        if current_basin is not None:
+                            bars[current_basin].append(tuple([bar_section_start,
+                                                              bar_section_length]))
+                        current_basin = basin
+                        bar_section_start = i
+                        bar_section_length = 1
+        bars[current_basin].append(tuple([bar_section_start,
+                                          bar_section_length]))
+        self.timeseries_plots[index].ax.set_ylim(0,30)
+        self.timeseries_plots[index].ax.set_xlim(0,len(lake_outflow_sequence))
+        self.timeseries_plots[index].ax.broken_barh(bars["Carib"],(20,9),facecolor="tab:blue")
+        self.timeseries_plots[index].ax.broken_barh(bars["Artic"],(10,9),facecolor="tab:red")
+        self.timeseries_plots[index].ax.broken_barh(bars["St Lawrence"],(0,9),facecolor="tab:green")
 
     def lake_outflow_plot_one(self,index):
         self.lake_outflow_plot_base(index,self.lake_outflow_basin_one_sequence)
@@ -879,10 +910,11 @@ class InteractiveTimeSlicePlots:
         self.step()
 
     def step_to_date(self,event):
-        step_to_index = self.date_sequence.index(int(event))
-        self.time_index = step_to_index
-        self.next_command_to_send = step_to_index
-        self.step()
+        if int(event) in self.date_sequence:
+            step_to_index = self.date_sequence.index(int(event))
+            self.time_index = step_to_index
+            self.next_command_to_send = step_to_index
+            self.step()
 
     def plot_from_colour_codes(self,colour_codes,index):
         if not self.timeslice_plots[index].plot or self.replot_required:
@@ -1141,8 +1173,11 @@ class InteractiveTimeSlicePlots:
     def selected_lake_plot_one(self,index):
         if self.lake_points_one is not None:
             lake_number = \
-                self.slice_data["connected_lake_basin_numbers_one_slice"]\
-                    [self.lake_points_one[self.time_index]]
+                self.slice_data["connected_lake_basin_numbers_one_slice_zoomed"]\
+                    [self.zoom_settings.\
+                     translate_point_to_zoomed_coords(
+                        self.lake_points_one[self.time_index],
+                        self.zoom_settings.fine_scale_factor)]
             self.catchments_plot_base(index,
                                       self.slice_data["connected_lake_basin_numbers_one_slice_zoomed"] ==
                                       lake_number)
@@ -1150,8 +1185,11 @@ class InteractiveTimeSlicePlots:
     def selected_lake_plot_two(self,index):
         if self.lake_points_two is not None:
             lake_number = \
-                self.slice_data["connected_lake_basin_numbers_two_slice"]\
-                    [self.lake_points_two[self.time_index]]
+                self.slice_data["connected_lake_basin_numbers_two_slice_zoomed"]\
+                    [self.zoom_settings.\
+                     translate_point_to_zoomed_coords(
+                        self.lake_points_two[self.time_index],
+                        self.zoom_settings.fine_scale_factor)]
             self.catchments_plot_base(index,
                                       self.slice_data["connected_lake_basin_numbers_two_slice_zoomed"] ==
                                       lake_number)
@@ -1165,10 +1203,19 @@ class InteractiveTimeSlicePlots:
                     lake_point_coarse = [round(coord/self.zoom_settings.fine_scale_factor)
                                          for coord in lake_points[self.time_index]]
                     flowpath_masks[self.time_index] = \
-                        FlowPathExtractor.extract_flowpath(lake_center=lake_point_coarse,
+                        FlowPathExtractor.extract_flowpath(lake_center=
+                                                           self.zoom_settings.\
+                                                           translate_point_to_zoomed_coords(
+                                                            lake_point_coarse,1),
                                                            rdirs=rdirs,
-                                                           rdirs_jumps_lat=rdirs_jumps_lat,
-                                                           rdirs_jumps_lon=rdirs_jumps_lon)
+                                                           rdirs_jumps_lat=
+                                                           self.zoom_settings.\
+                                                           translate_jumps_to_zoomed_coords(
+                                                           rdirs_jumps_lat,1,"lat"),
+                                                           rdirs_jumps_lon=
+                                                           self.zoom_settings.\
+                                                           translate_jumps_to_zoomed_coords(
+                                                           rdirs_jumps_lon,1,"lon"))
                 self.timeslice_plots[index].ax.imshow(flowpath_masks[self.time_index])
 
     def selected_lake_flowpath_one(self,index):
@@ -1178,11 +1225,11 @@ class InteractiveTimeSlicePlots:
                                          flowpath_masks=
                                          self.lake_flowpath_masks_one,
                                          rdirs=
-                                         self.slice_data["rdirs_one_slice"],
+                                         self.slice_data["rdirs_one_slice_zoomed"],
                                          rdirs_jumps_lat=
-                                         self.slice_data["rdirs_jump_next_cell_lat_one_slice"],
+                                         self.slice_data["rdirs_jump_next_cell_lat_one_slice_zoomed"],
                                          rdirs_jumps_lon=
-                                         self.slice_data["rdirs_jump_next_cell_lon_one_slice"])
+                                         self.slice_data["rdirs_jump_next_cell_lon_one_slice_zoomed"])
 
     def selected_lake_flowpath_two(self,index):
         self.selected_lake_flowpath_base(index,
@@ -1191,11 +1238,11 @@ class InteractiveTimeSlicePlots:
                                          flowpath_masks=
                                          self.lake_flowpath_masks_two,
                                          rdirs=
-                                         self.slice_data["rdirs_two_slice"],
+                                         self.slice_data["rdirs_two_slice_zoomed"],
                                          rdirs_jumps_lat=
-                                         self.slice_data["rdirs_jump_next_cell_lat_two_slice"],
+                                         self.slice_data["rdirs_jump_next_cell_lat_two_slice_zoomed"],
                                          rdirs_jumps_lon=
-                                         self.slice_data["rdirs_jump_next_cell_lon_two_slice"])
+                                         self.slice_data["rdirs_jump_next_cell_lon_two_slice_zoomed"])
 
     def selected_lake_spillway_base(self,index,lake_points,spillway_masks,sinkless_rdirs):
         if lake_points is not None:
@@ -1204,7 +1251,10 @@ class InteractiveTimeSlicePlots:
                 if spillway_masks[self.time_index] is None:
                     spillway_masks[self.time_index] = \
                         SpillwayProfiler.extract_spillway_mask(lake_center=
+                                                               self.zoom_settings.\
+                                                               translate_point_to_zoomed_coords(
                                                                lake_points[self.time_index],
+                                                               self.zoom_settings.fine_scale_factor),
                                                                sinkless_rdirs=
                                                                sinkless_rdirs)
                 self.timeslice_plots[index].ax.imshow(spillway_masks[self.time_index])
@@ -1216,7 +1266,7 @@ class InteractiveTimeSlicePlots:
                                          spillway_masks=
                                          self.lake_spillway_masks_one,
                                          sinkless_rdirs=
-                                         self.slice_data["sinkless_rdirs_one_slice"])
+                                         self.slice_data["sinkless_rdirs_one_slice_zoomed"])
 
     def selected_lake_spillway_two(self,index):
         self.selected_lake_spillway_base(index,
@@ -1225,13 +1275,15 @@ class InteractiveTimeSlicePlots:
                                          spillway_masks=
                                          self.lake_spillway_masks_two,
                                          sinkless_rdirs=
-                                         self.slice_data["sinkless_rdirs_two_slice"])
+                                         self.slice_data["sinkless_rdirs_two_slice_zoomed"])
 
     def debug_lake_points_one(self,index):
         if self.lake_points_one is not None:
             if self.lake_points_one[self.time_index] is not None:
-                array = self.slice_data["connected_lake_basin_numbers_one_slice"].copy()
-                array[tuple(self.lake_points_one[self.time_index])] = -500
+                array = self.slice_data["connected_lake_basin_numbers_one_slice_zoomed"].copy()
+                array[self.zoom_settings.translate_point_to_zoomed_coords(
+                      self.lake_points_one[self.time_index],
+                      self.zoom_settings.fine_scale_factor)] = -500
                 self.timeslice_plots[index].ax.clear()
                 self.timeslice_plots[index].ax.imshow(array)
 
@@ -1648,26 +1700,6 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequences,
                                                zoomed_slice_data["river_mouths_two_slice_zoomed"])
         zoomed_slice_data["date_text"] = slice_data["date_text"]
         zoomed_slice_data["date"] = slice_data["date"]
-        zoomed_slice_data["connected_lake_basin_numbers_one_slice"] = \
-            slice_data["connected_lake_basin_numbers_one_slice"]
-        zoomed_slice_data["connected_lake_basin_numbers_two_slice"] = \
-            slice_data["connected_lake_basin_numbers_two_slice"]
-        zoomed_slice_data["sinkless_rdirs_one_slice"] = \
-            slice_data["sinkless_rdirs_one_slice"]
-        zoomed_slice_data["sinkless_rdirs_two_slice"] = \
-            slice_data["sinkless_rdirs_two_slice"]
-        zoomed_slice_data["rdirs_one_slice"] = \
-            slice_data["rdirs_one_slice"]
-        zoomed_slice_data["rdirs_two_slice"] = \
-            slice_data["rdirs_two_slice"]
-        zoomed_slice_data["rdirs_jump_next_cell_lat_one_slice"] = \
-            slice_data["rdirs_jump_next_cell_lat_one_slice"]
-        zoomed_slice_data["rdirs_jump_next_cell_lon_one_slice"] = \
-            slice_data["rdirs_jump_next_cell_lon_one_slice"]
-        zoomed_slice_data["rdirs_jump_next_cell_lat_two_slice"] = \
-            slice_data["rdirs_jump_next_cell_lat_two_slice"]
-        zoomed_slice_data["rdirs_jump_next_cell_lon_two_slice"] = \
-            slice_data["rdirs_jump_next_cell_lon_two_slice"]
         input_from_send = yield zoomed_slice_data
         if bidirectional:
             if not isinstance(input_from_send,bool):

@@ -533,7 +533,7 @@ def latest_lake_version_vs_base_version_lakes_comparison():
 
 def latest_lake_version_vs_previous_analysis_lakes_comparison():
     dates = []#[0]
-    dates.extend(list(range(15000,14700,-100)))
+    dates.extend(list(range(13500,13000,-50)))
     colors = ColorPalette('default')
     current_analysis_base_dir = ("/Users/thomasriddick/Documents/data/"
                                  "lake_analysis_runs/lake_analysis_two_26_Mar_2022/")
@@ -545,7 +545,7 @@ def latest_lake_version_vs_previous_analysis_lakes_comparison():
                      "data/simulation_data/lake_transient_data/run_1/"
                      "10min_glac_DATEk.nc")
     initial_configuration = {}
-    initial_configuration["plots"] = ["cflow1"]
+    initial_configuration["plots"] = ["debuglakepoints1"]
     initial_configuration["dates"] = dates
     initial_configuration["sequence_one_base_dir"] = current_analysis_base_dir
     initial_configuration["sequence_two_base_dir"] = previous_analysis_base_dir
@@ -554,8 +554,7 @@ def latest_lake_version_vs_previous_analysis_lakes_comparison():
                                                                   "Documents/data/HDdata/orographys",
                                                                   "srtm30plus_v6.nc")
     initial_configuration["use_connected_catchments"] = False
-    initial_configuration["missing_fields"] = ["fine_river_flow_one","fine_river_flow_two",
-                                               "corrected_orographies"]
+    initial_configuration["missing_fields"] = ["fine_river_flow_one","fine_river_flow_two"]
     initial_configuration["use_latest_version_for_sequence_one"] = True
     initial_configuration["sequence_one_fixed_version"] = -1
     initial_configuration["use_latest_version_for_sequence_two"] = True
