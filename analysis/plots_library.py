@@ -2259,7 +2259,7 @@ class FlowMapPlots(Plots):
         #cbar = plt.colorbar(ctrs)
         cbar = plt.colorbar()
         cbar.ax.set_ylabel('Number of cells flowing to cell')
-        pts.remove_ticks()
+        pts.set_ticks_to_zero()
         if self.save:
             #plt.savefig('')
             pass
@@ -4312,7 +4312,7 @@ class Ice5GComparisonPlots(OrographyPlots):
         plt.figure()
         plt.contour(self.difference_in_ice_5g_orography,levels=levels)
         plt.title(title)
-        pts.remove_ticks()
+        pts.set_ticks_to_zero()
         #if self.save:
             #plt.savefig('something')
         print("Line contour plot created")
@@ -4327,7 +4327,7 @@ class Ice5GComparisonPlots(OrographyPlots):
         plt.figure()
         plt.contourf(self.difference_in_ice_5g_orography,levels=levels)
         plt.title(title)
-        pts.remove_ticks()
+        pts.set_ticks_to_zero()
         cbar = plt.colorbar()
         cbar.ax.set_ylabel('Orography difference in meters')
         #if self.save:
@@ -4371,7 +4371,7 @@ class Ice5GComparisonPlots(OrographyPlots):
         artists = ufartists + ofartists
         labels  = uflabels + oflabels
         plt.title(title)
-        pts.remove_ticks()
+        pts.set_ticks_to_zero()
         axbounds = ax.get_position()
         #Shrink box by 5%
         ax.set_position([axbounds.x0,axbounds.y0 + axbounds.height*0.05,

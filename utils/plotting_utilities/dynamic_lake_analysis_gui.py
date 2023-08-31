@@ -97,6 +97,13 @@ class DynamicLakeAnalysisGUI:
                         sg.Text(self.configuration["dates"][-1],key=f'-{key_prefix}ENDDATE-'))
 
         @staticmethod
+        def match_zoom_buttons_factory(key_prefix,number):
+                buttons = []
+                for i in range(number):
+                        buttons.append(sg.Button(f'Match {i+1}',key=f'-{key_prefix}MATCH{number}{i+1}-'))
+                return tuple(buttons)
+
+        @staticmethod
         def corrections_editor_factory(key_prefix,key_number):
                 return [sg.pin(sg.Column([[sg.Text("Correction Editor"),
                                            sg.Checkbox("Select Coordinates",
@@ -200,8 +207,8 @@ class DynamicLakeAnalysisGUI:
 
         def prepare_maps(self,key_prefix):
                 maps_tab_layout_main_1 = [[*self.config_and_save_button_factory(key_prefix,'1'),
-                                           *self.stepping_buttons_factory(f"{key_prefix}1"),
-                                           *self.sliders_factory(f"{key_prefix}1")],
+                                           *self.stepping_buttons_factory(f"{key_prefix}1")],
+                                          [*self.sliders_factory(f"{key_prefix}1")],
                                           self.corrections_editor_factory(key_prefix,'1'),
                                           [sg.Canvas(key=f"-{key_prefix}CANVAS1-",
                                                      size=(1800,800))],
@@ -209,7 +216,8 @@ class DynamicLakeAnalysisGUI:
 
                 maps_tab_layout_main_2 =  [[*self.config_and_save_button_factory(key_prefix,'2'),
                                            *self.stepping_buttons_factory(f"{key_prefix}2"),
-                                           *self.sliders_factory(f"{key_prefix}2")],
+                                           *self.match_zoom_buttons_factory(key_prefix,2)],
+                                           [*self.sliders_factory(f"{key_prefix}2")],
                                            self.corrections_editor_factory(key_prefix,'2'),
                                            [sg.Canvas(key=f"-{key_prefix}CANVAS2-",
                                                       size=(1800,800))],
@@ -217,7 +225,8 @@ class DynamicLakeAnalysisGUI:
 
                 maps_tab_layout_main_4 = [[*self.config_and_save_button_factory(key_prefix,'4'),
                                            *self.stepping_buttons_factory(f"{key_prefix}4"),
-                                           *self.sliders_factory(f"{key_prefix}4")],
+                                           *self.match_zoom_buttons_factory(key_prefix,4)],
+                                          [*self.sliders_factory(f"{key_prefix}4")],
                                           self.corrections_editor_factory(key_prefix,'4'),
                                           [sg.Canvas(key=f"-{key_prefix}CANVAS4-",
                                                      size=(1800,800))],
@@ -225,7 +234,8 @@ class DynamicLakeAnalysisGUI:
 
                 maps_tab_layout_main_6 = [[*self.config_and_save_button_factory(key_prefix,'6'),
                                            *self.stepping_buttons_factory(f"{key_prefix}6"),
-                                           *self.sliders_factory(f"{key_prefix}6")],
+                                           *self.match_zoom_buttons_factory(key_prefix,6)],
+                                          [*self.sliders_factory(f"{key_prefix}6")],
                                           self.corrections_editor_factory(key_prefix,'6'),
                                           [sg.Canvas(key=f"-{key_prefix}CANVAS6-",
                                                      size=(1800,800))],
@@ -462,6 +472,20 @@ class DynamicLakeAnalysisGUI:
                                 event_handler.\
                                 toggle_include_date_itself_in_corrected_slices(
                                         self.values["-INCLUDETHRESINCORRS-"])
+
+        def check_for_match_zoom_events(self,key_prefix,event_handler):
+                if self.event.startswith(f'-{key_prefix}MATCH'):
+                        i = int(self.event[-3])
+                        j = int(self.event[-2])
+                        #Remembering array offset - this is included
+                        #in the equation for plot index
+                        if i == 2:
+                                plot_index = j
+                        if i == 4:
+                                plot_index = 2 + j
+                        if i == 6:
+                                plot_index = 6 + j
+                        event_handler.match_zoom(plot_index)
 
         def update_date(self,key_prefix,event_handler):
                 nums_for_labels = [1,2,4,6] if (self.event.startswith("-GM") or
@@ -701,6 +725,8 @@ class DynamicLakeAnalysisGUI:
                                                                  self.interactive_lake_plots])
                         self.check_for_include_threshold_in_corrected_slices_events(
                                 [self.interactive_plots,self.interactive_lake_plots])
+                        self.check_for_match_zoom_events("GM",self.interactive_plots)
+                        self.check_for_match_zoom_events("LM",self.interactive_lake_plots)
                         if self.event == "-UPDATEPLOTS-":
                                 self.update_plots()
                         if self.event == "-RETURNTODEFAULT-":

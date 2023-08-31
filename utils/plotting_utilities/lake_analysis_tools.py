@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import sys
 import warnings
+from enum import Enum
 
 warnings.warn("What does the input area bounds variable do???? Ditto dates")
 
@@ -26,6 +27,11 @@ def in_bounds(coords,array):
     return (all(coord >= 0 for coord in coords) and
             coords[0] < array.shape[0]
             and coords[1] < array.shape[1])
+
+class Basins(Enum):
+    CAR = 1
+    ART = 2
+    NATL = 3
 
 class LakeAnalysisDebuggingPlots:
 
@@ -256,9 +262,9 @@ class CoastlineIdentifier:
 
 class OutflowBasinIdentifier:
 
-    ocean_basins_30min_latlon = {"Artic":[[[30,88],[60,88]],[[12,190],[45,190]]],
-                                 "Carib":[[[133,167],[122,167]],[[112,221],[106,202]]],
-                                 "St Lawrence":[[[112,221],[106,202]],[[80,262],[80,230]]]}
+    ocean_basins_30min_latlon = {Basins.ART:[[[30,88],[60,88]],[[12,190],[45,190]]],
+                                 Basins.CAR:[[[133,167],[122,167]],[[112,221],[106,202]]],
+                                 Basins.NATL:[[[112,221],[106,202]],[[80,262],[80,230]]]}
     ocean_basins_definitions = {"30minLatLong":ocean_basins_30min_latlon}
     field_shapes = {"30minLatLong":(360,720)}
 
@@ -374,7 +380,8 @@ class SpillwayProfiler:
         spillway_mask = np.full(sinkless_rdirs.shape,False)
         working_coords = list(deepcopy(lake_center))
         while cls.find_downstream_cell(working_coords,sinkless_rdirs):
-            spillway_mask[tuple(working_coords)] = True
+            if in_bounds(working_coords,sinkless_rdirs):
+                spillway_mask[tuple(working_coords)] = True
         return spillway_mask
 
     @classmethod
@@ -385,7 +392,8 @@ class SpillwayProfiler:
         spillway_height_profile = [corrected_heights[tuple(lake_center)]]
         working_coords = list(deepcopy(lake_center))
         while cls.find_downstream_cell(working_coords,sinkless_rdirs):
-            spillway_height_profile.append(corrected_heights[tuple(working_coords)])
+            if in_bounds(working_coords,sinkless_rdirs):
+                spillway_height_profile.append(corrected_heights[tuple(working_coords)])
         return spillway_height_profile
 
 class FlowPathExtractor:

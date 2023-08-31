@@ -143,7 +143,7 @@ def plot_whole_river_flowmap(ax,pair,ref_flowtocellfield,data_flowtocellfield,rd
 
 def plot_flowmap(ax,section,reduced_map=False,cax=None,
                  interpolation='none',alternative_colors=False,
-                 remove_ticks_flag=True,colors=None):
+                 set_ticks_to_zero_flag=True,colors=None):
     if reduced_map:
         num_colors = 5
     else:
@@ -152,8 +152,8 @@ def plot_flowmap(ax,section,reduced_map=False,cax=None,
                                               alternative_colors=alternative_colors,
                                               colors=colors)
     ax.imshow(section,interpolation=interpolation,cmap=cmap_wholec,norm=norm_wholec,rasterized=True)
-    if remove_ticks_flag:
-        pts.remove_ticks(ax)
+    if set_ticks_to_zero_flag:
+        pts.set_ticks_to_zero(ax)
     if reduced_map:
         mappable_wc = mpl.cm.ScalarMappable(norm=norm_wholec,cmap=cmap_wholec)
         mappable_wc.set_array(section)
@@ -193,7 +193,7 @@ def plot_river_rmouth_flowmap(ax,ref_flowtocellfield,data_flowtocellfield,rdirs_
                                                                           point_label_coords_scaling))
     mappable = mpl.cm.ScalarMappable(norm=norm,cmap=cmap)
     mappable.set_array(rmap_section)
-    pts.remove_ticks(ax)
+    pts.set_ticks_to_zero(ax)
     cb = plt.colorbar(mappable,ax=ax)
     tic_loc = np.arange(7) + 0.5
     tic_labels = ['Sea', 'Land','Reference River Path','Common River Path','Data River Path',
@@ -272,7 +272,7 @@ def plot_catchment_and_histogram_for_river(ax_hist,ax_catch,ref_catchment_field,
                    simplified_colorscheme=use_simplified_catchment_colorscheme,
                    cax=None,use_upscaling_labels=use_upscaling_labels,
                    format_coords=True,
-                   remove_ticks_flag=False)
+                   set_ticks_to_zero_flag=False)
     if return_catchment_plotter:
         catchment_plotter = CatchmentPlotter(catchment_section,colors,
                                              lat_offset=catchment_bounds[0],
@@ -280,7 +280,7 @@ def plot_catchment_and_histogram_for_river(ax_hist,ax_catch,ref_catchment_field,
                                              simplified_colorscheme=use_simplified_catchment_colorscheme,
                                              cax=None,use_upscaling_labels=use_upscaling_labels,
                                              format_coords=True,
-                                             remove_ticks_flag=False)
+                                             set_ticks_to_zero_flag=False)
     axis_tick_label_scale_factor=ref_grid.get_scale_factor_for_geographic_coords()
     catch_x_axis_major_locator = mpl.ticker.IndexLocator(5//axis_tick_label_scale_factor,
                                                              -catchment_bounds[2])
@@ -317,7 +317,7 @@ def plot_catchment_and_histogram_for_river(ax_hist,ax_catch,ref_catchment_field,
 class CatchmentPlotter:
 
     def __init__(self,catchment_section,colors,simplified_colorscheme=False,
-                 cax=None,legend=True,remove_ticks_flag=True,
+                 cax=None,legend=True,set_ticks_to_zero_flag=True,
                  format_coords=False,lat_offset=0,lon_offset=0,
                  use_upscaling_labels=False):
         self.catchment_section=catchment_section
@@ -325,7 +325,7 @@ class CatchmentPlotter:
         self.simplified_colorscheme = simplified_colorscheme
         self.cax = cax
         self.legend = legend
-        self.remove_ticks_flag = remove_ticks_flag
+        self.set_ticks_to_zero_flag = set_ticks_to_zero_flag
         self.format_coords = format_coords
         self.lat_offset = lat_offset
         self.lon_offset = lon_offset
@@ -356,14 +356,14 @@ class CatchmentPlotter:
                        simplified_colorscheme=self.colors,
                        cax=self.cax,
                        legend=self.legend,
-                       remove_ticks_flag=self.remove_ticks_flag,
+                       set_ticks_to_zero_flag=self.set_ticks_to_zero_flag,
                        format_coords=self.format_coords,
                        lat_offset=self.lat_offset,
                        lon_offset=self.lon_offset,
                        use_upscaling_labels=self.use_upscaling_labels)
 
 def plot_catchment(ax,catchment_section,colors,simplified_colorscheme=False,
-                   cax=None,legend=True,remove_ticks_flag=True,
+                   cax=None,legend=True,set_ticks_to_zero_flag=True,
                    format_coords=False,lat_offset=0,lon_offset=0,
                    use_upscaling_labels=False,
                    point_label_coords_scaling=1):
@@ -375,8 +375,8 @@ def plot_catchment(ax,catchment_section,colors,simplified_colorscheme=False,
     if format_coords:
         ax.format_coord = pts.OrogCoordFormatter(lon_offset,lat_offset,add_latlon=True,
                                                  scale_factor=point_label_coords_scaling)
-    if remove_ticks_flag:
-        pts.remove_ticks(ax)
+    if set_ticks_to_zero_flag:
+        pts.set_ticks_to_zero(ax)
     if legend:
         mappable_catch = mpl.cm.ScalarMappable(norm=norm_catch,cmap=cmap_catch)
         mappable_catch.set_array(catchment_section)
@@ -549,7 +549,7 @@ class SimpleCatchmentAndFlowMapPlt:
 
 def simple_catchment_and_flowmap_plot(ax,catchment_field,catchment_field_for_lsmask,flowtocell,
                                       catchment_bounds,catchment_num,flowtocell_threshold,colors,
-                                      remove_ticks=False):
+                                      set_ticks_to_zero=False):
     """Simple version of overlaid catchment and flowmaps plot"""
     working_catchment = np.copy(catchment_field)
     imin,imax,jmin,jmax = catchment_bounds
@@ -561,8 +561,8 @@ def simple_catchment_and_flowmap_plot(ax,catchment_field,catchment_field_for_lsm
     cmap_catch = mpl.colors.ListedColormap(colors.simple_catchment_and_flowmap_colors)
     norm_catch = mpl.colors.BoundaryNorm(list(range(5)),cmap_catch.N)
     ax.imshow(working_catchment_section,interpolation='none',cmap=cmap_catch,norm=norm_catch,rasterized=True)
-    if remove_ticks:
-        pts.remove_ticks(ax)
+    if set_ticks_to_zero:
+        pts.set_ticks_to_zero(ax)
     else:
             #Assume HD Grid
             axis_tick_label_scale_factor=0.5

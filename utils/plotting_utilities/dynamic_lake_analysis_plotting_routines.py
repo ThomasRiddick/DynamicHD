@@ -22,7 +22,8 @@ from plotting_utilities import plotting_tools as pts
 from plotting_utilities.lake_analysis_tools import SpillwayProfiler
 from plotting_utilities.lake_analysis_tools import LakeTracker
 from plotting_utilities.lake_analysis_tools import FlowPathExtractor
-from Dynamic_HD_Scripts import utilities
+from plotting_utilities.lake_analysis_tools import Basins
+from Dynamic_HD_Scripts.utilities import utilities
 from Dynamic_HD_Scripts.base.iodriver import advanced_field_loader
 from Dynamic_HD_Scripts.base.field import Field
 from os.path import join, isfile
@@ -38,7 +39,6 @@ class TimeSlicePlot():
     def __init__(self,ax):
         self.ax = ax
         self.plot = None
-        self.selector = None
         self.scale = PlotScales.NORMAL
 
 class TimeSeriesPlot:
@@ -50,12 +50,19 @@ class ZoomSettings():
 
     fine_scale_factor = 3
     super_fine_scale_factor = 60
+    scale_factors = {PlotScales.NORMAL:1,
+                     PlotScales.FINE:fine_scale_factor,
+                     PlotScales.SUPERFINE:super_fine_scale_factor}
+
     def __init__(self,zoomed,zoomed_section_bounds):
         self.zoomed = zoomed
         self.zoomed_section_bounds = zoomed_section_bounds
         if not self.zoomed:
             self.zoomed_section_bounds = {"min_lat":0,
                                           "min_lon":0}
+
+    def get_scale_factor(self,plot_scale):
+        return self.scale_factors[plot_scale]
 
     def copy(self):
         return ZoomSettings(self.zoomed,dict(self.zoomed_section_bounds))
@@ -80,6 +87,12 @@ class ZoomSettings():
         translated_jumps = jumps.copy()
         translated_jumps[jumps >= 0] -= (self.zoomed_section_bounds[f'min_{dim_name}']*scale_factor)
         return translated_jumps
+
+    def calculate_scale_factor_adjustment(self,old_plot_scale,new_plot_scale):
+        if old_plot_scale == new_plot_scale:
+            return 1
+        else:
+            return self.scale_factors[new_plot_scale]/self.scale_factors[old_plot_scale]
 
 class TimeSequences:
     def __init__(self,dates,
@@ -503,6 +516,9 @@ class InteractiveSpillwayPlots:
     def plot_spillway_profile(self,profile,index):
         self.spillway_plot_axes[index].clear()
         self.spillway_plot_axes[index].plot(profile[:-2])
+        self.spillway_plot_axes[index].set_title("Spillway Profile")
+        self.spillway_plot_axes[index].set_xlabel("Distance from Lake Center (10min cells)")
+        self.spillway_plot_axes[index].set_ylabel("Spillway Height (m)")
 
     def get_current_date(self):
         return self.date_sequence[self.current_index]
@@ -613,6 +629,12 @@ class InteractiveTimeSeriesPlots():
     def lake_height_plot_base(self,index,lake_height_sequence):
         self.timeseries_plots[index].ax.clear()
         self.timeseries_plots[index].ax.plot(lake_height_sequence)
+        if index == 0:
+            self.timeseries_plots[index].ax.set_title("Lake Height Evolution")
+        else:
+            self.timeseries_plots[index].ax.text(0.05,0.05,"Lake Height Evolution",
+                                                 transform=
+                                                 self.timeseries_plots[index].ax.transAxes)
 
     def lake_height_plot_one(self,index):
         self.lake_height_plot_base(index,self.lake_heights_one_sequence)
@@ -623,6 +645,12 @@ class InteractiveTimeSeriesPlots():
     def lake_volume_plot_base(self,index,lake_volume_sequence):
         self.timeseries_plots[index].ax.clear()
         self.timeseries_plots[index].ax.plot(lake_volume_sequence)
+        if index == 0:
+            self.timeseries_plots[index].ax.set_title("Lake Volume Evolution")
+        else:
+            self.timeseries_plots[index].ax.text(0.05,0.85,"Lake Volume Evolution",
+                                                 transform=
+                                                 self.timeseries_plots[index].ax.transAxes)
 
     def lake_volume_plot_one(self,index):
         self.lake_volume_plot_base(index,self.lake_volume_one_sequence)
@@ -632,8 +660,8 @@ class InteractiveTimeSeriesPlots():
 
     def lake_outflow_plot_base(self,index,lake_outflow_sequence):
         self.timeseries_plots[index].ax.clear()
-        basins = ["Carib","Artic","St Lawrence"]
-        bars = { name:[] for name in basins }
+        basins = {Basins.CAR:"Carib.",Basins.ART:"Artic",Basins.NATL:"N. Atl."}
+        bars = { name:[] for name in basins.keys() }
         current_basin=None
         for i,item in enumerate(lake_outflow_sequence):
             for basin in basins:
@@ -647,13 +675,18 @@ class InteractiveTimeSeriesPlots():
                         current_basin = basin
                         bar_section_start = i
                         bar_section_length = 1
-        bars[current_basin].append(tuple([bar_section_start,
-                                          bar_section_length]))
+        if current_basin is not None:
+            bars[current_basin].append(tuple([bar_section_start,
+                                              bar_section_length]))
         self.timeseries_plots[index].ax.set_ylim(0,30)
         self.timeseries_plots[index].ax.set_xlim(0,len(lake_outflow_sequence))
-        self.timeseries_plots[index].ax.broken_barh(bars["Carib"],(20,9),facecolor="tab:blue")
-        self.timeseries_plots[index].ax.broken_barh(bars["Artic"],(10,9),facecolor="tab:red")
-        self.timeseries_plots[index].ax.broken_barh(bars["St Lawrence"],(0,9),facecolor="tab:green")
+        self.timeseries_plots[index].ax.broken_barh(bars[Basins.NATL],(20,9),facecolor="tab:green")
+        self.timeseries_plots[index].ax.broken_barh(bars[Basins.ART],(10,9),facecolor="tab:blue")
+        self.timeseries_plots[index].ax.broken_barh(bars[Basins.CAR],(0,9),facecolor="tab:red")
+        ypos = (4.5,15.5,24.5)
+        self.timeseries_plots[index].ax.set_yticks(ypos,tuple(basins.values()))
+        if index == 0:
+            self.timeseries_plots[index].ax.set_title("Lake Agassiz Outflow Ocean")
 
     def lake_outflow_plot_one(self,index):
         self.lake_outflow_plot_base(index,self.lake_outflow_basin_one_sequence)
@@ -683,9 +716,9 @@ class InteractiveTimeSlicePlots:
                            "cflow2":self.cflow_plot_two,
                            "catch1":self.catchments_plot_one,
                            "catch2":self.catchments_plot_two,
-                           "fcflow1":self.fine_cflow_plot_one,
-                           "fcflow2":self.fine_cflow_plot_two,
-                           "fcflowcomp":self.fine_cflow_comp_plot,
+                           #"fcflow1":self.fine_cflow_plot_one,
+                           #"fcflow2":self.fine_cflow_plot_two,
+                           #"fcflowcomp":self.fine_cflow_comp_plot,
                            "orog1":self.orography_plot_one,
                            "orog2":self.orography_plot_one,
                            "morog1":self.modified_orography_plot_one,
@@ -807,8 +840,9 @@ class InteractiveTimeSlicePlots:
         self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[2,0])))
         self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[2,1])))
         for fig in self.figs:
-            fig.canvas.mpl_connect('button_press_event',
+            fig.canvas.mpl_connect('button_release_event',
                                    lambda event: self.set_coords_and_height(event))
+
         # if (not set(self.plot_configuration).isdisjoint(self.cflow_plot_types)):
         #     #add zero to list to prevent errors if the two sequences are Nones
         #     maxflow =   max([np.max(slice) if slice is not None else 0
@@ -833,13 +867,9 @@ class InteractiveTimeSlicePlots:
         self.lake_and_river_plots_required=((not set(self.plot_configuration).isdisjoint(["cflowandlake1",
                                                                                "cflowandlake1"]))
                                              or dynamic_configuration)
-        self.lake_and_river_plots_required = False
         self.setup_generator(**kwargs)
         self.date_sequence = kwargs["date_sequence"]
         self.step()
-        zoom_in_funcs = {PlotScales.NORMAL:self.zoom_in_normal,
-                         PlotScales.FINE:self.zoom_in_fine,
-                         PlotScales.SUPERFINE:self.zoom_in_super_fine}
 
     def setup_generator(self,
                         filled_orography_one_sequence,
@@ -876,7 +906,24 @@ class InteractiveTimeSlicePlots:
         self.date = self.slice_data["date"]
         for index,plot in enumerate(self.plot_configuration):
             if plot is not None:
+                if self.timeslice_plots[index].plot is not None:
+                    plot_limits = {"ylims":self.timeslice_plots[index].ax.get_ylim(),
+                                   "xlims":self.timeslice_plots[index].ax.get_xlim()}
+                    old_plot_scale = self.timeslice_plots[index].scale
+                else:
+                    plot_limits = None
+                self.timeslice_plots[index].ax.set_visible(True)
                 self.plot_types[plot](index)
+                if plot_limits is not None:
+                    new_plot_scale = self.timeslice_plots[index].scale
+                    scale_factor = self.zoom_settings.\
+                                   calculate_scale_factor_adjustment(old_plot_scale,
+                                                                     new_plot_scale)
+                    self.timeslice_plots[index].ax.set_ylim([ scale_factor*val for val in
+                                                              plot_limits["ylims"]])
+                    self.timeslice_plots[index].ax.set_xlim([ scale_factor*val for val in
+                                                              plot_limits["xlims"]])
+
 
     def replot(self,lake_points_one,lake_points_two,**kwargs):
         self.lake_points_one = lake_points_one
@@ -895,6 +942,7 @@ class InteractiveTimeSlicePlots:
 
     def set_plot_type(self,plot_index,plot_type):
         self.plot_configuration[plot_index] = plot_type
+        self.timeslice_plots[plot_index].ax.set_visible(True)
         self.plot_types[plot_type](plot_index)
 
     def step_back(self):
@@ -923,10 +971,7 @@ class InteractiveTimeSlicePlots:
             self.timeslice_plots[index].plot = \
                 self.timeslice_plots[index].ax.imshow(colour_codes,cmap=self.cmap,
                                                          norm=self.norm,interpolation="none")
-            self.timeslice_plots[index].ax.tick_params(axis="x",which='both',bottom=False,
-                                                       top=False,labelbottom=False)
-            self.timeslice_plots[index].ax.tick_params(axis="y",which='both',left=False,
-                                                       right=False,labelleft=False)
+            pts.set_ticks_to_zero(self.timeslice_plots[index].ax)
             self.set_format_coord(self.timeslice_plots[index].ax,
                                   self.timeslice_plots[index].scale)
         else:
@@ -1114,10 +1159,7 @@ class InteractiveTimeSlicePlots:
             self.timeslice_plots[index].plot = \
                 self.timeslice_plots[index].ax.imshow(orography,vmin=self.orog_min,
                                                       vmax=self.orog_max)
-            self.timeslice_plots[index].ax.tick_params(axis="x",which='both',bottom=False,
-                                                       top=False,labelbottom=False)
-            self.timeslice_plots[index].ax.tick_params(axis="y",which='both',left=False,
-                                                       right=False,labelleft=False)
+            pts.set_ticks_to_zero(self.timeslice_plots[index].ax)
             self.set_format_coord(self.timeslice_plots[index].ax,
                                   self.timeslice_plots[index].scale)
         elif self.timeslice_plots[index].scale == PlotScales.SUPERFINE:
@@ -1153,10 +1195,7 @@ class InteractiveTimeSlicePlots:
             else:
                 self.timeslice_plots[index].plot = \
                     self.timeslice_plots[index].ax.imshow(lake_volumes)
-            self.timeslice_plots[index].ax.tick_params(axis="x",which='both',bottom=False,
-                                                       top=False,labelbottom=False)
-            self.timeslice_plots[index].ax.tick_params(axis="y",which='both',left=False,
-                                                       right=False,labelleft=False)
+            pts.set_ticks_to_zero(self.timeslice_plots[index].ax)
             self.set_format_coord(self.timeslice_plots[index].ax,
                                   self.timeslice_plots[index].scale)
         else:
@@ -1202,6 +1241,7 @@ class InteractiveTimeSlicePlots:
                 if flowpath_masks[self.time_index] is None:
                     lake_point_coarse = [round(coord/self.zoom_settings.fine_scale_factor)
                                          for coord in lake_points[self.time_index]]
+                    print(lake_point_coarse)
                     flowpath_masks[self.time_index] = \
                         FlowPathExtractor.extract_flowpath(lake_center=
                                                            self.zoom_settings.\
@@ -1217,6 +1257,7 @@ class InteractiveTimeSlicePlots:
                                                            translate_jumps_to_zoomed_coords(
                                                            rdirs_jumps_lon,1,"lon"))
                 self.timeslice_plots[index].ax.imshow(flowpath_masks[self.time_index])
+                pts.set_ticks_to_zero(self.timeslice_plots[index].ax)
 
     def selected_lake_flowpath_one(self,index):
         self.selected_lake_flowpath_base(index,
@@ -1258,6 +1299,7 @@ class InteractiveTimeSlicePlots:
                                                                sinkless_rdirs=
                                                                sinkless_rdirs)
                 self.timeslice_plots[index].ax.imshow(spillway_masks[self.time_index])
+                pts.set_ticks_to_zero(self.timeslice_plots[index].ax)
 
     def selected_lake_spillway_one(self,index):
         self.selected_lake_spillway_base(index,
@@ -1280,25 +1322,23 @@ class InteractiveTimeSlicePlots:
     def debug_lake_points_one(self,index):
         if self.lake_points_one is not None:
             if self.lake_points_one[self.time_index] is not None:
+                self.timeslice_plots[index].scale = PlotScales.FINE
                 array = self.slice_data["connected_lake_basin_numbers_one_slice_zoomed"].copy()
                 array[self.zoom_settings.translate_point_to_zoomed_coords(
                       self.lake_points_one[self.time_index],
                       self.zoom_settings.fine_scale_factor)] = -500
                 self.timeslice_plots[index].ax.clear()
                 self.timeslice_plots[index].ax.imshow(array)
+                pts.set_ticks_to_zero(self.timeslice_plots[index].ax)
+            else:
+                self.timeslice_plots[index].ax.set_visible(False)
+        else:
+            self.timeslice_plots[index].ax.set_visible(False)
 
     def update_minflowcutoff(self,val):
         self.minflowcutoff = val
         self.next_command_to_send = "zoom"
         self.step()
-
-    # def reset_zoom(self,event):
-    #     self.zoom_settings.zoomed = self.original_zoom_settings.zoomed
-    #     self.zoom_settings.zoomed_section_bounds = dict(self.original_zoom_settings.zoomed_section_bounds)
-    #     self.next_command_to_send = "zoom"
-    #     self.replot_required = True
-    #     self.step()
-    #     self.replot_required = False
 
     def set_coords_and_height(self,eclick):
         if eclick.ydata is None or eclick.xdata is None:
@@ -1369,39 +1409,21 @@ class InteractiveTimeSlicePlots:
         self.corrections_file = filepath
         self.read_corrections()
 
-    def zoom_in_normal(self,eclick,erelease):
-        self.zoom_in_base(eclick,erelease,scale_factor=1)
-
-    def zoom_in_fine(self,eclick,erelease):
-        self.zoom_in_base(eclick,erelease,scale_factor=
-                          self.zoom_settings.fine_scale_factor)
-
-    def zoom_in_super_fine(self,eclick,erelease):
-        self.zoom_in_base(eclick,erelease,scale_factor=
-                          self.zoom_settings.super_fine_scale_factor)
-
-    def zoom_in_base(self,eclick,erelease,scale_factor):
-        if self.zoom_settings.zoomed:
-            old_min_lat = self.zoom_settings.zoomed_section_bounds["min_lat"]
-            old_min_lon = self.zoom_settings.zoomed_section_bounds["min_lon"]
+    def match_zoom(self,index):
+        zoomed_plot = self.timeslice_plots[index]
+        if zoomed_plot.plot is not None:
+            scale_factor = self.zoom_settings.get_scale_factor(zoomed_plot.scale)
+            min_lat,max_lat = [round(value/scale_factor) for
+                               value in zoomed_plot.ax.get_ylim()]
+            min_lon,max_lon = [round(value/scale_factor) for
+                               value in zoomed_plot.ax.get_xlim()]
         else:
-            old_min_lat = 0
-            old_min_lon = 0
-        min_lat = round(min(eclick.ydata,erelease.ydata)/scale_factor) + old_min_lat
-        max_lat = round(max(eclick.ydata,erelease.ydata)/scale_factor) + old_min_lat
-        min_lon = round(min(eclick.xdata,erelease.xdata)/scale_factor) + old_min_lon
-        max_lon = round(max(eclick.xdata,erelease.xdata)/scale_factor) + old_min_lon
-        if min_lat == max_lat or min_lon == max_lon:
             return
-        self.zoom_settings.zoomed = True
-        self.zoom_settings.zoomed_section_bounds = {"min_lat":min_lat,
-                                                    "min_lon":min_lon,
-                                                    "max_lat":max_lat,
-                                                    "max_lon":max_lon}
-        self.next_command_to_send = "zoom"
-        self.replot_required = True
-        self.step()
-        self.replot_required = False
+        for plot in self.timeslice_plots:
+            if plot.plot is not None and plot != zoomed_plot:
+                scale_factor = self.zoom_settings.get_scale_factor(plot.scale)
+                plot.ax.set_ylim(min_lat*scale_factor,max_lat*scale_factor)
+                plot.ax.set_xlim(min_lon*scale_factor,max_lon*scale_factor)
 
     def change_height_range(self,new_min,new_max):
         if new_min > new_max:
