@@ -1554,9 +1554,14 @@ class InteractiveTimeSlicePlots:
         self.orog_max=new_max
         for index,plot in enumerate(self.plot_configuration):
             if plot in self.orog_plot_types:
+                plot_limits = {"ylims":self.timeslice_plots[index].ax.get_ylim(),
+                               "xlims":self.timeslice_plots[index].ax.get_xlim()}
+                self.timeslice_plots[index].ax.set_visible(True)
                 self.replot_required = True
                 self.plot_types[plot](index)
                 self.replot_required = False
+                self.timeslice_plots[index].ax.set_ylim(plot_limits["ylims"])
+                self.timeslice_plots[index].ax.set_xlim(plot_limits["xlims"])
 
     def set_format_coord(self,ax,scale):
         scale_factor = {PlotScales.NORMAL:1,

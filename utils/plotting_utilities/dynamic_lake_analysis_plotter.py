@@ -20,8 +20,8 @@ import matplotlib.gridspec as gridspec
 
 class DynamicLakeAnalysisPlotter:
 
-    lake_defs = {"Agassiz":{"initial_lake_center":(233,500),
-                            "lake_emergence_date":13450,
+    lake_defs = {"Agassiz":{"initial_lake_center":(260,500),
+                            "lake_emergence_date":14450,
                             "input_area_bounds":{"min_lat":25,
                                                  "max_lat":125,
                                                  "min_lon":125,
