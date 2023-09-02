@@ -283,9 +283,6 @@ class OutflowBasinIdentifier:
         for i,coastline_identifier in enumerate(self.coastline_identifiers):
             _,coastal_ocean_cells = coastline_identifier.identify_coastline(lsmask)
             self.ocean_basin_numbers[coastal_ocean_cells] = i
-        if self.dbg_plts is not None:
-            fig = self.dbg_plts.get_new_fig_for_debug()
-            fig.axes[0].imshow(self.ocean_basin_numbers)
 
     def identify_ocean_basin_for_lake_outflow(self,
                                               lsmask,
@@ -298,6 +295,12 @@ class OutflowBasinIdentifier:
         catchment = connected_catchments[tuple(lake_point)]
         ocean_basin_number_opt = self.ocean_basin_numbers[np.logical_and(connected_catchments == catchment,
                                                                      self.ocean_basin_numbers >= 0)].flatten()
+        if self.dbg_plts is not None:
+            fig = self.dbg_plts.get_new_fig_for_debug()
+            ocean_basin_number_with_outflow = np.copy(self.ocean_basin_numbers)
+            ocean_basin_number_with_outflow[np.logical_and(connected_catchments == catchment,
+                                                           self.ocean_basin_numbers >= 0)] = 3
+            fig.axes[0].imshow(ocean_basin_number_with_outflow,interpolation='none')
         ocean_basin_number = ocean_basin_number_opt[0] if len(ocean_basin_number_opt) > 0 else -1
         return self.ocean_basin_names[ocean_basin_number]
 
@@ -306,14 +309,20 @@ class OutflowBasinIdentifier:
                                                       input_area_bounds,
                                                       lsmask_sequence,
                                                       lake_point_sequence,
-                                                      connected_catchments_sequence):
+                                                      connected_catchments_sequence,
+                                                      scale_factor):
         lake_outflow_basins = []
         for date,lsmask,lake_point,connected_catchments in \
               zip(dates,lsmask_sequence,lake_point_sequence,
                   connected_catchments_sequence):
+              if lake_point is not None:
+                lake_point_coarse = [round(coord/scale_factor)
+                                     for coord in lake_point]
+              else:
+                lake_point_coarse = None
               basin_name = self.identify_ocean_basin_for_lake_outflow(lsmask,
                                                                       connected_catchments,
-                                                                      lake_point,
+                                                                      lake_point_coarse,
                                                                       input_area_bounds)
               lake_outflow_basins.append(basin_name)
         return lake_outflow_basins

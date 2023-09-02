@@ -166,15 +166,19 @@ class TimeSequences:
         if not "rdirs_jump_next_cell_indices_one" in missing_fields:
             self.rdirs_jump_next_cell_lat_one_sequence = []
             self.rdirs_jump_next_cell_lon_one_sequence = []
+            self.coarse_lake_outflows_one_sequence = []
         else:
             self.rdirs_jump_next_cell_lat_one_sequence = None
             self.rdirs_jump_next_cell_lon_one_sequence = None
+            self.coarse_lake_outflows_one_sequence = None
         if not "rdirs_jump_next_cell_indices_two" in missing_fields:
             self.rdirs_jump_next_cell_lat_two_sequence = []
             self.rdirs_jump_next_cell_lon_two_sequence = []
+            self.coarse_lake_outflows_two_sequence = []
         else:
             self.rdirs_jump_next_cell_lat_two_sequence = None
             self.rdirs_jump_next_cell_lon_two_sequence = None
+            self.coarse_lake_outflows_two_sequence = None
         self.date_sequence = dates
         for date in self.date_sequence:
             #Note latest version may differ between dates hence calculate this
@@ -369,6 +373,15 @@ class TimeSequences:
                 rdirs_jump_next_cell_lon_one.change_dtype(np.int64)
                 self.rdirs_jump_next_cell_lon_one_sequence.\
                 append(rdirs_jump_next_cell_lon_one.get_data())
+                coarse_lake_outflows_one = \
+                    advanced_field_loader(filename=join(sequence_one_results_base_dir,
+                                                        "30min_rdirs_jump_next_cell_indices.nc"),
+                                                        time_slice=None,
+                                                        fieldname="outflow_points",
+                                                        adjust_orientation=True)
+                coarse_lake_outflows_one.change_dtype(bool)
+                self.coarse_lake_outflows_one_sequence.\
+                append(coarse_lake_outflows_one.get_data())
             if not "rdirs_jump_next_cell_indices_two" in missing_fields:
                 rdirs_jump_next_cell_lat_two = \
                     advanced_field_loader(filename=join(sequence_two_results_base_dir,
@@ -388,6 +401,15 @@ class TimeSequences:
                 rdirs_jump_next_cell_lon_two.change_dtype(np.int64)
                 self.rdirs_jump_next_cell_lon_two_sequence.\
                     append(rdirs_jump_next_cell_lon_two.get_data())
+                coarse_lake_outflows_two = \
+                    advanced_field_loader(filename=join(sequence_two_results_base_dir,
+                                                        "30min_rdirs_jump_next_cell_indices.nc"),
+                                                        time_slice=None,
+                                                        fieldname="outflow_points",
+                                                        adjust_orientation=True)
+                coarse_lake_outflows_two.change_dtype(bool)
+                self.coarse_lake_outflows_two_sequence.\
+                append(coarse_lake_outflows_two.get_data())
         if not "super_fine_orography" in missing_fields:
             self.super_fine_orography = advanced_field_loader(filename=join(super_fine_orography_filepath),
                                                          time_slice=None,
@@ -517,7 +539,6 @@ class InteractiveSpillwayPlots:
         self.spillway_plot_axes[index].clear()
         self.spillway_plot_axes[index].plot(profile[:-2])
         self.spillway_plot_axes[index].set_title("Spillway Profile")
-        self.spillway_plot_axes[index].set_xlabel("Distance from Lake Center (10min cells)")
         self.spillway_plot_axes[index].set_ylabel("Spillway Height (m)")
 
     def get_current_date(self):
@@ -685,6 +706,9 @@ class InteractiveTimeSeriesPlots():
         self.timeseries_plots[index].ax.broken_barh(bars[Basins.CAR],(0,9),facecolor="tab:red")
         ypos = (4.5,15.5,24.5)
         self.timeseries_plots[index].ax.set_yticks(ypos,tuple(basins.values()))
+        self.timeseries_plots[index].ax.set_xticks(range(len(lake_outflow_sequence))[0::10],
+                                                   labels=self.date_sequence[0::10])
+
         if index == 0:
             self.timeseries_plots[index].ax.set_title("Lake Agassiz Outflow Ocean")
 
@@ -739,6 +763,8 @@ class InteractiveTimeSlicePlots:
                            "loglakev2":self.log_lake_volume_plot_two,
                            "cflowandlake1":self.cflow_and_lake_plot_one,
                            "cflowandlake2":self.cflow_and_lake_plot_two,
+                           "cflowandlakeselhigh1":self.cflow_and_lake_plot_sel_highlight_one,
+                           "cflowandlakeselhigh2":self.cflow_and_lake_plot_sel_highlight_two,
                            "lakevcomp":self.lake_volume_comp_plot,
                            "lakebasinnums1":self.lake_basin_numbers_plot_one,
                            "lakebasinnums2":self.lake_basin_numbers_plot_two,
@@ -772,12 +798,20 @@ class InteractiveTimeSlicePlots:
         self.cmap = mpl.colors.ListedColormap(['blue','peru','black','green','red','white','yellow'])
         self.bounds = list(range(8))
         self.norm = mpl.colors.BoundaryNorm(self.bounds,self.cmap.N)
+        self.cmap_comp_hl = mpl.colors.ListedColormap(['darkblue','peru','black','lightblue','white','blue','slateblue'])
+        self.bounds_comp_hl = list(range(8))
+        self.norm_comp_hl = mpl.colors.BoundaryNorm(self.bounds_comp_hl,self.cmap_comp_hl.N)
         N_catch = 50
         self.cmap_catch = 'jet'
         self.orog_min = -9999.0
         self.orog_max = 9999.0
         self.bounds_catch = np.linspace(0,N_catch,N_catch+1)
         self.norm_catch = mpl.colors.BoundaryNorm(boundaries=self.bounds_catch,
+                                                  ncolors=256)
+        N_lakeoutline = 3
+        self.cmap_lakeoutline = 'jet'
+        self.bounds_lakeoutline = np.linspace(0,N_lakeoutline,N_lakeoutline+1)
+        self.norm_lakeoutline = mpl.colors.BoundaryNorm(boundaries=self.bounds_lakeoutline,
                                                   ncolors=256)
         self.zoom_settings = ZoomSettings(zoomed=zoomed,
                                           zoomed_section_bounds=zoomed_section_bounds)
@@ -943,7 +977,9 @@ class InteractiveTimeSlicePlots:
     def set_plot_type(self,plot_index,plot_type):
         self.plot_configuration[plot_index] = plot_type
         self.timeslice_plots[plot_index].ax.set_visible(True)
+        self.replot_required = True
         self.plot_types[plot_type](plot_index)
+        self.replot_required = False
 
     def step_back(self):
         if self.time_index > 0:
@@ -964,49 +1000,89 @@ class InteractiveTimeSlicePlots:
             self.next_command_to_send = step_to_index
             self.step()
 
-    def plot_from_colour_codes(self,colour_codes,index):
+    def plot_from_color_codes(self,color_codes,index,
+                              cmap=None,norm=None):
+        if cmap is None:
+            cmap = self.cmap
+        if norm is None:
+            norm = self.norm
         if not self.timeslice_plots[index].plot or self.replot_required:
             if self.replot_required:
                 self.timeslice_plots[index].ax.clear()
             self.timeslice_plots[index].plot = \
-                self.timeslice_plots[index].ax.imshow(colour_codes,cmap=self.cmap,
-                                                         norm=self.norm,interpolation="none")
+                self.timeslice_plots[index].ax.imshow(color_codes,cmap=cmap,
+                                                      norm=norm,interpolation="none")
             pts.set_ticks_to_zero(self.timeslice_plots[index].ax)
             self.set_format_coord(self.timeslice_plots[index].ax,
                                   self.timeslice_plots[index].scale)
         else:
-            self.timeslice_plots[index].plot.set_data(colour_codes)
+            self.timeslice_plots[index].plot.set_data(color_codes)
 
     def catchment_and_cflow_comp_plot(self,index):
-        colour_codes = generate_colour_codes_comp(self.slice_data["lsmask_slice_zoomed"],
-                                                  self.slice_data["glacier_mask_slice_zoomed"],
-                                                  self.slice_data["matched_catchment_nums_one"],
-                                                  self.slice_data["matched_catchment_nums_two"],
-                                                  self.slice_data["river_flow_one_slice_zoomed"],
-                                                  self.slice_data["river_flow_two_slice_zoomed"],
-                                                  minflowcutoff=
-                                                  self.minflowcutoff,
-                                                  use_glacier_mask=
-                                                  self.use_glacier_mask)
-        self.plot_from_colour_codes(colour_codes,index)
+        color_codes = generate_color_codes_comp(self.slice_data["lsmask_slice_zoomed"],
+                                                self.slice_data["glacier_mask_slice_zoomed"],
+                                                self.slice_data["matched_catchment_nums_one"],
+                                                self.slice_data["matched_catchment_nums_two"],
+                                                self.slice_data["river_flow_one_slice_zoomed"],
+                                                self.slice_data["river_flow_two_slice_zoomed"],
+                                                minflowcutoff=
+                                                self.minflowcutoff,
+                                                use_glacier_mask=
+                                                self.use_glacier_mask)
+        self.plot_from_color_codes(color_codes,index)
 
     def cflow_and_lake_plot_one(self,index):
         self.timeslice_plots[index].scale = PlotScales.FINE
-        self.plot_from_colour_codes(self.slice_data["lake_and_river_colour_codes_one_slice_zoomed"],
+        self.plot_from_color_codes(self.slice_data["lake_and_river_color_codes_one_slice_zoomed"],
                                     index)
 
     def cflow_and_lake_plot_two(self,index):
         self.timeslice_plots[index].scale = PlotScales.FINE
-        self.plot_from_colour_codes(self.slice_data["lake_and_river_colour_codes_two_slice_zoomed"],
+        self.plot_from_color_codes(self.slice_data["lake_and_river_color_codes_two_slice_zoomed"],
                                     index)
+
+    def cflow_and_lake_plot_sel_highlight_one(self,index):
+        self.timeslice_plots[index].scale = PlotScales.FINE
+        color_codes = self.slice_data["lake_and_river_color_codes_one_slice_zoomed"]
+        if self.lake_points_one and self.lake_points_one[self.time_index]:
+            lake_mask = self.generate_selected_lake_mask(
+                            self.lake_points_one,
+                            self.slice_data["connected_lake_basin_numbers_one_slice_zoomed"],
+                            self.slice_data["coarse_lake_outflows_one_slice_zoomed"])
+            color_codes[lake_mask == 1] = 5
+            color_codes[lake_mask == 2] = 6
+            if self.lake_flowpath_masks_one[self.time_index] is None:
+                self.generate_flowpaths(self.lake_points_one,
+                                        flowpath_masks=
+                                        self.lake_flowpath_masks_one,
+                                        rdirs=
+                                        self.slice_data["rdirs_one_slice_zoomed"],
+                                        rdirs_jumps_lat=
+                                        self.slice_data["rdirs_jump_next_cell_lat_one_slice_zoomed"],
+                                        rdirs_jumps_lon=
+                                        self.slice_data["rdirs_jump_next_cell_lon_one_slice_zoomed"])
+            for coords in np.argwhere(self.lake_flowpath_masks_one[self.time_index]):
+                fine_coords = [coord*self.zoom_settings.fine_scale_factor
+                               for coord in coords]
+                color_codes[fine_coords[0]-1:fine_coords[0]+2,
+                            fine_coords[1]-1:fine_coords[1]+2] = 7
+        self.plot_from_color_codes(color_codes,
+                                   index,
+                                   cmap=self.cmap_comp_hl,
+                                   norm=self.norm_comp_hl)
+
+    def cflow_and_lake_plot_sel_highlight_two(self,index):
+        pass
 
     def no_plot(self,index):
         self.timeslice_plots[index].ax.set_visible(False)
 
     def catchments_plot_one(self,index):
+        self.timeslice_plots[index].scale = PlotScales.NORMAL
         self.catchments_plot_base(index,self.slice_data["matched_catchment_nums_one"])
 
     def catchments_plot_two(self,index):
+        self.timeslice_plots[index].scale = PlotScales.NORMAL
         self.catchments_plot_base(index,self.slice_data["matched_catchment_nums_two"])
 
     def catchments_plot_base(self,index,catchment_slice):
@@ -1014,13 +1090,11 @@ class InteractiveTimeSlicePlots:
             if self.replot_required:
                 self.timeslice_plots[index].ax.clear()
             self.timeslice_plots[index].plot = \
-                self.timeslice_plots[index].ax.imshow(catchment_slice,cmap=self.cmap_catch,
-                                                         norm=self.norm_catch,interpolation="none")
-
-            self.timeslice_plots[index].ax.tick_params(axis="x",which='both',bottom=False,
-                                                       top=False,labelbottom=False)
-            self.timeslice_plots[index].ax.tick_params(axis="y",which='both',left=False,
-                                                       right=False,labelleft=False)
+                self.timeslice_plots[index].ax.imshow(catchment_slice,
+                                                      cmap=self.cmap_catch,
+                                                      norm=self.norm_catch,
+                                                      interpolation="none")
+            pts.set_ticks_to_zero(self.timeslice_plots[index].ax)
             self.set_format_coord(self.timeslice_plots[index].ax,
                                   self.timeslice_plots[index].scale)
         else:
@@ -1033,16 +1107,16 @@ class InteractiveTimeSlicePlots:
         self.cflow_plot_base(index,False)
 
     def cflow_plot_base(self,index,use_first_sequence_set):
-        colour_codes_cflow = np.zeros(self.slice_data["lsmask_slice_zoomed"].shape)
-        colour_codes_cflow[self.slice_data["lsmask_slice_zoomed"] == 0] = 1
+        color_codes_cflow = np.zeros(self.slice_data["lsmask_slice_zoomed"].shape)
+        color_codes_cflow[self.slice_data["lsmask_slice_zoomed"] == 0] = 1
         river_flow_slice = (self.slice_data["river_flow_one_slice_zoomed"]
                             if use_first_sequence_set
                             else self.slice_data["river_flow_two_slice_zoomed"])
-        colour_codes_cflow[river_flow_slice >= self.minflowcutoff] = 2
+        color_codes_cflow[river_flow_slice >= self.minflowcutoff] = 2
         if self.use_glacier_mask:
-            colour_codes_cflow[self.slice_data["glacier_mask_slice_zoomed"] == 1] = 3
-        colour_codes_cflow[self.slice_data["lsmask_slice_zoomed"] == 1] = 0
-        self.plot_from_colour_codes(colour_codes_cflow,index)
+            color_codes_cflow[self.slice_data["glacier_mask_slice_zoomed"] == 1] = 3
+        color_codes_cflow[self.slice_data["lsmask_slice_zoomed"] == 1] = 0
+        self.plot_from_color_codes(color_codes_cflow,index)
 
     def fine_cflow_plot_one(self,index):
         self.fine_cflow_plot_base(index,True)
@@ -1052,33 +1126,33 @@ class InteractiveTimeSlicePlots:
 
     def fine_cflow_plot_base(self,index,use_first_sequence_set):
         self.timeslice_plots[index].scale = PlotScales.FINE
-        colour_codes_cflow = np.zeros(self.slice_data["fine_river_flow_one_slice_zoomed"].shape
-                                      if use_first_sequence_set
-                                      else self.slice_data["fine_river_flow_two_slice_zoomed"].shape)
-        colour_codes_cflow[:,:] = 1
+        color_codes_cflow = np.zeros(self.slice_data["fine_river_flow_one_slice_zoomed"].shape
+                                     if use_first_sequence_set
+                                     else self.slice_data["fine_river_flow_two_slice_zoomed"].shape)
+        color_codes_cflow[:,:] = 1
         river_flow_slice = (self.slice_data["self.fine_river_flow_one_slice_zoomed"]
                             if use_first_sequence_set
                             else self.slice_data["fine_river_flow_two_slice_zoomed"])
-        colour_codes_cflow[river_flow_slice >= self.minflowcutoff*self.fine_cutoff_scaling] = 2
-        self.plot_from_colour_codes(colour_codes_cflow,index)
+        color_codes_cflow[river_flow_slice >= self.minflowcutoff*self.fine_cutoff_scaling] = 2
+        self.plot_from_color_codes(color_codes_cflow,index)
 
     def fine_cflow_comp_plot(self,index):
         self.timeslice_plots[index].scale = PlotScales.FINE
-        colour_codes_cflow = np.zeros(self.slice_data["fine_river_flow_one_slice_zoomed"].shape)
-        colour_codes_cflow[:,:] = 1
-        colour_codes_cflow[np.logical_and(self.slice_data["fine_river_flow_one_slice_zoomed"]
-                                          >= self.minflowcutoff*self.fine_cutoff_scaling,
-                                          self.slice_data["fine_river_flow_two_slice_zoomed"]
-                                          >= self.minflowcutoff*self.fine_cutoff_scaling)] = 2
-        colour_codes_cflow[np.logical_and(self.slice_data["fine_river_flow_one_slice_zoomed"]
-                                          >= self.minflowcutoff*self.fine_cutoff_scaling,
-                                          self.slice_data["fine_river_flow_two_slice_zoomed"]
-                                          < self.minflowcutoff*self.fine_cutoff_scaling)] = 0
-        colour_codes_cfow[np.logical_and(self.slice_data["fine_river_flow_one_slice_zoomed"]
+        color_codes_cflow = np.zeros(self.slice_data["fine_river_flow_one_slice_zoomed"].shape)
+        color_codes_cflow[:,:] = 1
+        color_codes_cflow[np.logical_and(self.slice_data["fine_river_flow_one_slice_zoomed"]
+                                         >= self.minflowcutoff*self.fine_cutoff_scaling,
+                                         self.slice_data["fine_river_flow_two_slice_zoomed"]
+                                         >= self.minflowcutoff*self.fine_cutoff_scaling)] = 2
+        color_codes_cflow[np.logical_and(self.slice_data["fine_river_flow_one_slice_zoomed"]
+                                         >= self.minflowcutoff*self.fine_cutoff_scaling,
+                                         self.slice_data["fine_river_flow_two_slice_zoomed"]
+                                         < self.minflowcutoff*self.fine_cutoff_scaling)] = 0
+        color_codes_cflow[np.logical_and(self.slice_data["fine_river_flow_one_slice_zoomed"]
                                          < self.minflowcutoff*self.fine_cutoff_scaling,
                                          self.slice_data["fine_river_flow_two_slice_zoomed"]
                                          >= self.minflowcutoff*self.fine_cutoff_scaling)] = 0
-        self.plot_from_colour_codes(colour_codes_cflow,index)
+        self.plot_from_color_codes(color_codes_cflow,index)
 
     def orography_plot_one(self,index):
         self.timeslice_plots[index].scale = PlotScales.FINE
@@ -1138,7 +1212,7 @@ class InteractiveTimeSlicePlots:
 
     def true_sinks_plot(self,index):
         self.timeslice_plots[index].scale = PlotScales.FINE
-        self.plot_from_colour_codes(self.slice_data["true_sinks_slice_zoomed"],index)
+        self.plot_from_color_codes(self.slice_data["true_sinks_slice_zoomed"],index)
 
     def modified_orography_plot_base(self,index,orography):
         modified_orography = np.copy(orography)
@@ -1158,7 +1232,8 @@ class InteractiveTimeSlicePlots:
                 self.timeslice_plots[index].ax.clear()
             self.timeslice_plots[index].plot = \
                 self.timeslice_plots[index].ax.imshow(orography,vmin=self.orog_min,
-                                                      vmax=self.orog_max)
+                                                      vmax=self.orog_max,
+                                                      interpolation="none")
             pts.set_ticks_to_zero(self.timeslice_plots[index].ax)
             self.set_format_coord(self.timeslice_plots[index].ax,
                                   self.timeslice_plots[index].scale)
@@ -1191,10 +1266,11 @@ class InteractiveTimeSlicePlots:
             if use_log_scale and not np.all(lake_volumes<=0):
                 self.timeslice_plots[index].plot = \
                     self.timeslice_plots[index].ax.imshow(lake_volumes,
-                                                          norm=LogNorm(clip=True))
+                                                          norm=LogNorm(clip=True),
+                                                          interpolation="none")
             else:
                 self.timeslice_plots[index].plot = \
-                    self.timeslice_plots[index].ax.imshow(lake_volumes)
+                    self.timeslice_plots[index].ax.imshow(lake_volumes,interpolation="none")
             pts.set_ticks_to_zero(self.timeslice_plots[index].ax)
             self.set_format_coord(self.timeslice_plots[index].ax,
                                   self.timeslice_plots[index].scale)
@@ -1209,55 +1285,96 @@ class InteractiveTimeSlicePlots:
         self.timeslice_plots[index].scale = PlotScales.FINE
         self.catchments_plot_base(index,self.slice_data["lake_basin_numbers_two_slice_zoomed"])
 
+    def generate_selected_lake_mask(self,lake_points,
+                                    connected_lake_basin_numbers,
+                                    coarse_lake_outflows):
+        lake_number = connected_lake_basin_numbers\
+                [self.zoom_settings.\
+                 translate_point_to_zoomed_coords(
+                    lake_points[self.time_index],
+                    self.zoom_settings.fine_scale_factor)]
+        lake_mask = np.array(connected_lake_basin_numbers ==
+                             lake_number,dtype=np.int32)
+        for coords in np.argwhere(coarse_lake_outflows):
+            fine_coords = [coord*self.zoom_settings.fine_scale_factor
+                                   for coord in coords]
+            #Assuming scale factor is 3
+            lake_mask[tuple(fine_coords)] = (2 if
+                (np.any(lake_mask[fine_coords[0]-1:fine_coords[0]+2,
+                 fine_coords[1]-1:fine_coords[1]+2] == 1)) else 0)
+        return lake_mask
+
+    def selected_lake_plot_base(self,index,lake_points,
+                                connected_lake_basin_numbers,
+                                coarse_lake_outflows):
+        if (lake_points is not None and lake_points[self.time_index] is not None):
+            self.timeslice_plots[index].scale = PlotScales.FINE
+            lake_mask = self.generate_selected_lake_mask(lake_points,
+                                                         connected_lake_basin_numbers,
+                                                         coarse_lake_outflows)
+            self.plot_from_color_codes(lake_mask,index,
+                                       cmap=self.cmap_lakeoutline,
+                                       norm=self.norm_lakeoutline)
+        else:
+            self.timeslice_plots[index].ax.set_visible(False)
+
     def selected_lake_plot_one(self,index):
         if self.lake_points_one is not None:
-            lake_number = \
-                self.slice_data["connected_lake_basin_numbers_one_slice_zoomed"]\
-                    [self.zoom_settings.\
-                     translate_point_to_zoomed_coords(
-                        self.lake_points_one[self.time_index],
-                        self.zoom_settings.fine_scale_factor)]
-            self.catchments_plot_base(index,
-                                      self.slice_data["connected_lake_basin_numbers_one_slice_zoomed"] ==
-                                      lake_number)
+            self.selected_lake_plot_base(index,
+                                         lake_points=
+                                         self.lake_points_one,
+                                         connected_lake_basin_numbers=
+                                         self.slice_data["connected_lake_basin_numbers_one_slice_zoomed"],
+                                         coarse_lake_outflows=
+                                         self.slice_data["coarse_lake_outflows_one_slice_zoomed"])
 
     def selected_lake_plot_two(self,index):
         if self.lake_points_two is not None:
-            lake_number = \
-                self.slice_data["connected_lake_basin_numbers_two_slice_zoomed"]\
-                    [self.zoom_settings.\
-                     translate_point_to_zoomed_coords(
-                        self.lake_points_two[self.time_index],
-                        self.zoom_settings.fine_scale_factor)]
-            self.catchments_plot_base(index,
-                                      self.slice_data["connected_lake_basin_numbers_two_slice_zoomed"] ==
-                                      lake_number)
+            self.selected_lake_plot_base(index,
+                                         lake_points=
+                                         self.lake_points_two,
+                                         connected_lake_basin_numbers=
+                                         self.slice_data["connected_lake_basin_numbers_two_slice_zoomed"],
+                                         coarse_lake_outflows=
+                                         self.slice_data["coarse_lake_outflows_two_slice_zoomed"])
+
+
+    def generate_flowpaths(self,lake_points,flowpath_masks,rdirs,
+                           rdirs_jumps_lat,rdirs_jumps_lon):
+        lake_point_coarse = [round(coord/self.zoom_settings.fine_scale_factor)
+                             for coord in lake_points[self.time_index]]
+        flowpath_masks[self.time_index] = \
+            FlowPathExtractor.extract_flowpath(lake_center=
+                                               self.zoom_settings.\
+                                               translate_point_to_zoomed_coords(
+                                                lake_point_coarse,1),
+                                               rdirs=rdirs,
+                                               rdirs_jumps_lat=
+                                               self.zoom_settings.\
+                                               translate_jumps_to_zoomed_coords(
+                                               rdirs_jumps_lat,1,"lat"),
+                                               rdirs_jumps_lon=
+                                               self.zoom_settings.\
+                                               translate_jumps_to_zoomed_coords(
+                                               rdirs_jumps_lon,1,"lon"))
 
     def selected_lake_flowpath_base(self,index,lake_points,flowpath_masks,rdirs,
                                     rdirs_jumps_lat,rdirs_jumps_lon):
         if lake_points is not None:
+            self.timeslice_plots[index].scale = PlotScales.FINE
             self.timeslice_plots[index].ax.clear()
             if lake_points[self.time_index] is not None:
                 if flowpath_masks[self.time_index] is None:
-                    lake_point_coarse = [round(coord/self.zoom_settings.fine_scale_factor)
-                                         for coord in lake_points[self.time_index]]
-                    print(lake_point_coarse)
-                    flowpath_masks[self.time_index] = \
-                        FlowPathExtractor.extract_flowpath(lake_center=
-                                                           self.zoom_settings.\
-                                                           translate_point_to_zoomed_coords(
-                                                            lake_point_coarse,1),
-                                                           rdirs=rdirs,
-                                                           rdirs_jumps_lat=
-                                                           self.zoom_settings.\
-                                                           translate_jumps_to_zoomed_coords(
-                                                           rdirs_jumps_lat,1,"lat"),
-                                                           rdirs_jumps_lon=
-                                                           self.zoom_settings.\
-                                                           translate_jumps_to_zoomed_coords(
-                                                           rdirs_jumps_lon,1,"lon"))
-                self.timeslice_plots[index].ax.imshow(flowpath_masks[self.time_index])
+                    self.generate_flowpaths(lake_points,flowpath_masks,rdirs,
+                                            rdirs_jumps_lat,rdirs_jumps_lon)
+                self.timeslice_plots[index].plot = \
+                    self.timeslice_plots[index].ax.imshow(flowpath_masks[self.time_index],
+                                                          interpolation="none")
                 pts.set_ticks_to_zero(self.timeslice_plots[index].ax)
+            else:
+                self.timeslice_plots[index].ax.set_visible(False)
+        else:
+            self.timeslice_plots[index].ax.set_visible(False)
 
     def selected_lake_flowpath_one(self,index):
         self.selected_lake_flowpath_base(index,
@@ -1298,8 +1415,14 @@ class InteractiveTimeSlicePlots:
                                                                self.zoom_settings.fine_scale_factor),
                                                                sinkless_rdirs=
                                                                sinkless_rdirs)
-                self.timeslice_plots[index].ax.imshow(spillway_masks[self.time_index])
+                self.timeslice_plots[index].plot = \
+                    self.timeslice_plots[index].ax.imshow(spillway_masks[self.time_index],
+                                                          interpolation="none")
                 pts.set_ticks_to_zero(self.timeslice_plots[index].ax)
+            else:
+                self.timeslice_plots[index].ax.set_visible(False)
+        else:
+            self.timeslice_plots[index].ax.set_visible(False)
 
     def selected_lake_spillway_one(self,index):
         self.selected_lake_spillway_base(index,
@@ -1320,18 +1443,17 @@ class InteractiveTimeSlicePlots:
                                          self.slice_data["sinkless_rdirs_two_slice_zoomed"])
 
     def debug_lake_points_one(self,index):
-        if self.lake_points_one is not None:
-            if self.lake_points_one[self.time_index] is not None:
-                self.timeslice_plots[index].scale = PlotScales.FINE
-                array = self.slice_data["connected_lake_basin_numbers_one_slice_zoomed"].copy()
-                array[self.zoom_settings.translate_point_to_zoomed_coords(
-                      self.lake_points_one[self.time_index],
-                      self.zoom_settings.fine_scale_factor)] = -500
-                self.timeslice_plots[index].ax.clear()
-                self.timeslice_plots[index].ax.imshow(array)
-                pts.set_ticks_to_zero(self.timeslice_plots[index].ax)
-            else:
-                self.timeslice_plots[index].ax.set_visible(False)
+        if (self.lake_points_one is not None and
+            self.lake_points_one[self.time_index] is not None):
+            self.timeslice_plots[index].scale = PlotScales.FINE
+            array = self.slice_data["connected_lake_basin_numbers_one_slice_zoomed"].copy()
+            array[self.zoom_settings.translate_point_to_zoomed_coords(
+                  self.lake_points_one[self.time_index],
+                  self.zoom_settings.fine_scale_factor)] = -5
+            self.timeslice_plots[index].ax.clear()
+            self.timeslice_plots[index].plot = \
+                self.timeslice_plots[index].ax.imshow(array,interpolation="none")
+            pts.set_ticks_to_zero(self.timeslice_plots[index].ax)
         else:
             self.timeslice_plots[index].ax.set_visible(False)
 
@@ -1479,53 +1601,53 @@ def prepare_matched_catchment_numbers(catchments_one,
         matched_catchments_two[catchments_two == catchment_num_two] = catchment_num_one
     return matched_catchments_one, matched_catchments_two
 
-def generate_colour_codes_comp(lsmask,
-                               glacier_mask,
-                               matched_catchment_nums_one,
-                               matched_catchment_nums_two,
-                               river_flow_one,
-                               river_flow_two,
-                               minflowcutoff,
-                               use_glacier_mask=True):
-    colour_codes = np.zeros(lsmask.shape)
-    colour_codes[lsmask == 0] = 1
-    colour_codes[np.logical_and(matched_catchment_nums_one != 0,
-                                matched_catchment_nums_one ==
-                                matched_catchment_nums_two) ] = 5
-    colour_codes[np.logical_and(np.logical_or(matched_catchment_nums_one != 0,
-                                              matched_catchment_nums_two != 0),
-                                matched_catchment_nums_one !=
-                                matched_catchment_nums_two) ] = 6
-    colour_codes[np.logical_and(river_flow_one >= minflowcutoff,
-                                river_flow_two >= minflowcutoff)] = 2
-    colour_codes[np.logical_and(river_flow_one >= minflowcutoff,
-                                river_flow_two < minflowcutoff)]  = 3
-    colour_codes[np.logical_and(river_flow_one < minflowcutoff,
-                                river_flow_two >= minflowcutoff)] = 4
+def generate_color_codes_comp(lsmask,
+                              glacier_mask,
+                              matched_catchment_nums_one,
+                              matched_catchment_nums_two,
+                              river_flow_one,
+                              river_flow_two,
+                              minflowcutoff,
+                              use_glacier_mask=True):
+    color_codes = np.zeros(lsmask.shape)
+    color_codes[lsmask == 0] = 1
+    color_codes[np.logical_and(matched_catchment_nums_one != 0,
+                               matched_catchment_nums_one ==
+                               matched_catchment_nums_two) ] = 5
+    color_codes[np.logical_and(np.logical_or(matched_catchment_nums_one != 0,
+                                             matched_catchment_nums_two != 0),
+                               matched_catchment_nums_one !=
+                               matched_catchment_nums_two) ] = 6
+    color_codes[np.logical_and(river_flow_one >= minflowcutoff,
+                               river_flow_two >= minflowcutoff)] = 2
+    color_codes[np.logical_and(river_flow_one >= minflowcutoff,
+                               river_flow_two < minflowcutoff)]  = 3
+    color_codes[np.logical_and(river_flow_one < minflowcutoff,
+                               river_flow_two >= minflowcutoff)] = 4
     if use_glacier_mask:
-        colour_codes[glacier_mask == 1] = 7
-    colour_codes[lsmask == 1] = 0
-    return colour_codes
+        color_codes[glacier_mask == 1] = 7
+    color_codes[lsmask == 1] = 0
+    return color_codes
 
-def generate_colour_codes_lake_and_river_sequence(cumulative_flow_sequence,
-                                                  lake_volumes_sequence,
-                                                  glacier_mask_sequence,
-                                                  landsea_mask_sequence,
-                                                  minflowcutoff):
+def generate_color_codes_lake_and_river_sequence(cumulative_flow_sequence,
+                                                 lake_volumes_sequence,
+                                                 glacier_mask_sequence,
+                                                 landsea_mask_sequence,
+                                                 minflowcutoff):
     col_codes_lake_and_river_sequence = []
     for cumulative_flow,lake_volumes,glacier_mask,landsea_mask in zip(cumulative_flow_sequence,
-                                                                     lake_volumes_sequence,
+                                                                      lake_volumes_sequence,
                                                                       glacier_mask_sequence,
                                                                       landsea_mask_sequence):
         col_codes_lake_and_river_sequence.\
-            append(generate_colour_codes_lake_and_river(cumulative_flow,
-                                                        lake_volumes,
-                                                        glacier_mask,
-                                                        landsea_mask,
-                                                        minflowcutoff))
+            append(generate_color_codes_lake_and_river(cumulative_flow,
+                                                       lake_volumes,
+                                                       glacier_mask,
+                                                       landsea_mask,
+                                                       minflowcutoff))
     return col_codes_lake_and_river_sequence
 
-def generate_colour_codes_lake_and_river(cumulative_flow,
+def generate_color_codes_lake_and_river(cumulative_flow,
                                          lake_volumes,
                                          glacier_mask,
                                          landsea_mask,
@@ -1551,18 +1673,18 @@ def generate_catchment_and_cflow_comp_slice(colors,
                                             river_flow_two,
                                             minflowcutoff,
                                             use_glacier_mask=True):
-    colour_codes = generate_colour_codes_comp(lsmask,
-                                              glacier_mask,
-                                              matched_catchment_nums_one,
-                                              matched_catchment_nums_two,
-                                              river_flow_one,
-                                              river_flow_two,
-                                              minflowcutoff,
-                                              use_glacier_mask=use_glacier_mask)
+    color_codes = generate_color_codes_comp(lsmask,
+                                            glacier_mask,
+                                            matched_catchment_nums_one,
+                                            matched_catchment_nums_two,
+                                            river_flow_one,
+                                            river_flow_two,
+                                            minflowcutoff,
+                                            use_glacier_mask=use_glacier_mask)
     cmap = mpl.colors.ListedColormap(['blue','peru','black','green','red','white','yellow'])
     bounds = list(range(8))
     norm = mpl.colors.BoundaryNorm(bounds,cmap.N)
-    im = plt.imshow(colour_codes,cmap=cmap,norm=norm,interpolation="none")
+    im = plt.imshow(color_codes,cmap=cmap,norm=norm,interpolation="none")
     return im
 
 def extract_zoomed_section(data_in,zoomed_section_bounds,scale_factor=1):
@@ -1584,28 +1706,28 @@ def prep_combined_sequences(date_text_sequence,
                             lake_and_river_plots_required=False,
                             minflowcutoff=100,
                             **kwargs):
-    lake_and_river_colour_codes_sequence_one=[None]
-    lake_and_river_colour_codes_sequence_two=[None]
+    lake_and_river_color_codes_sequence_one=[None]
+    lake_and_river_color_codes_sequence_two=[None]
     if lake_and_river_plots_required:
         if(kwargs["river_flow_one_sequence"] is not None and
            kwargs["lake_volumes_one_sequence"] is not None):
-            lake_and_river_colour_codes_sequence_one = \
-                generate_colour_codes_lake_and_river_sequence(kwargs["river_flow_one_sequence"],
-                                                              kwargs["lake_volumes_one_sequence"],
-                                                              kwargs["glacier_mask_sequence"],
-                                                              kwargs["lsmask_sequence"],
-                                                              minflowcutoff)
+            lake_and_river_color_codes_sequence_one = \
+                generate_color_codes_lake_and_river_sequence(kwargs["river_flow_one_sequence"],
+                                                             kwargs["lake_volumes_one_sequence"],
+                                                             kwargs["glacier_mask_sequence"],
+                                                             kwargs["lsmask_sequence"],
+                                                             minflowcutoff)
         if (kwargs["river_flow_two_sequence"] is not None and
             kwargs["lake_volumes_two_sequence"] is not None):
-            lake_and_river_colour_codes_sequence_two = \
-                generate_colour_codes_lake_and_river_sequence(kwargs["river_flow_two_sequence"],
-                                                              kwargs["lake_volumes_two_sequence"],
-                                                              kwargs["glacier_mask_sequence"],
-                                                              kwargs["lsmask_sequence"],
-                                                              minflowcutoff)
+            lake_and_river_color_codes_sequence_two = \
+                generate_color_codes_lake_and_river_sequence(kwargs["river_flow_two_sequence"],
+                                                             kwargs["lake_volumes_two_sequence"],
+                                                             kwargs["glacier_mask_sequence"],
+                                                             kwargs["lsmask_sequence"],
+                                                             minflowcutoff)
     combined_sequences = {re.sub("_sequence","",name):change_none_to_list(sequence) for name,sequence in kwargs.items()}
-    combined_sequences['lake_and_river_colour_codes_one'] = lake_and_river_colour_codes_sequence_one
-    combined_sequences['lake_and_river_colour_codes_two'] = lake_and_river_colour_codes_sequence_two
+    combined_sequences['lake_and_river_color_codes_one'] = lake_and_river_color_codes_sequence_one
+    combined_sequences['lake_and_river_color_codes_two'] = lake_and_river_color_codes_sequence_two
     combined_sequences['date_text'] = change_none_to_list(date_text_sequence)
     combined_sequences['date'] = change_none_to_list(date_sequence)
     longest_sequence = 0
@@ -1639,10 +1761,12 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequences,
                       "rdirs_jump_next_cell_lon_one",
                       "rdirs_jump_next_cell_lat_two",
                       "rdirs_jump_next_cell_lon_two",
+                      "coarse_lake_outflows_one",
+                      "coarse_lake_outflows_two",
                       "sinkless_rdirs_one",
                       "sinkless_rdirs_two",
-                      "lake_and_river_colour_codes_one",
-                      "lake_and_river_colour_codes_two"]
+                      "lake_and_river_color_codes_one",
+                      "lake_and_river_color_codes_two"]
     while i < len(combined_sequences) or bidirectional:
         slice_data = {f'{name}_slice':combined_sequences[name][i] for name in sequence_names }
         slice_data["date_text"] = combined_sequences["date_text"][i]
@@ -1674,7 +1798,9 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequences,
                                        "rdirs_jump_next_cell_lat_one_slice",
                                        "rdirs_jump_next_cell_lon_one_slice",
                                        "rdirs_jump_next_cell_lat_two_slice",
-                                       "rdirs_jump_next_cell_lon_two_slice",]
+                                       "rdirs_jump_next_cell_lon_two_slice",
+                                       "coarse_lake_outflows_one_slice",
+                                       "coarse_lake_outflows_two_slice"]
         for slice_name in slices_to_zoom_normal_scale:
             zoomed_slice_data[f"{slice_name}_zoomed"] = \
                 extract_zoomed_section(slice_data[slice_name],
@@ -1691,8 +1817,8 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequences,
                                      "orography_two_slice",
                                      "sinkless_rdirs_one_slice",
                                      "sinkless_rdirs_two_slice",
-                                     "lake_and_river_colour_codes_one_slice",
-                                     "lake_and_river_colour_codes_two_slice"]
+                                     "lake_and_river_color_codes_one_slice",
+                                     "lake_and_river_color_codes_two_slice"]
         for slice_name in slices_to_zoom_fine_scale:
             zoomed_slice_data[f"{slice_name}_zoomed"] = \
                 extract_zoomed_section(slice_data[slice_name],

@@ -182,6 +182,7 @@ def connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
                                           connected_cumulative_flow_out_fieldname=None,
                                           rdirs_jump_next_cell_indices_filepath=None,
                                           rdirs_jump_next_cell_indices_fieldname=None,
+                                          coarse_lake_outflows_fieldname=None,
                                           scale_factor = 3):
     coarse_catchments = iodriver.advanced_field_loader(coarse_catchments_filepath,
                                                        field_type='Generic',
@@ -243,11 +244,12 @@ def connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
     if rdirs_jump_next_cell_indices_filepath is not None or cumulative_flow_filepath is not None:
         if (rdirs_jump_next_cell_indices_filepath is not None and
             cumulative_flow_filepath is not None):
-            catchments, corrected_cumulative_flow,rdirs_jump_next_cell_indices = results
+            catchments, corrected_cumulative_flow,\
+            rdirs_jump_next_cell_indices,coarse_lake_outflows = results
         elif cumulative_flow_filepath is not None:
             catchments, corrected_cumulative_flow = results
         else:
-            catchments, rdirs_jump_next_cell_indices = results
+            catchments, rdirs_jump_next_cell_indices,coarse_lake_outflows = results
     else:
         catchments = results
     iodriver.advanced_field_writer(connected_coarse_catchments_out_filename,
@@ -259,9 +261,11 @@ def connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
                                        fieldname=connected_cumulative_flow_out_fieldname)
     if rdirs_jump_next_cell_indices_filepath is not None:
         iodriver.advanced_field_writer(rdirs_jump_next_cell_indices_filepath,
-                                       field=list(rdirs_jump_next_cell_indices),
+                                       field=[*rdirs_jump_next_cell_indices,
+                                              coarse_lake_outflows],
                                        fieldname=[rdirs_jump_next_cell_indices_fieldname+"lat",
-                                                  rdirs_jump_next_cell_indices_fieldname+"lon"])
+                                                  rdirs_jump_next_cell_indices_fieldname+"lon",
+                                                  coarse_lake_outflows_fieldname])
 
 #Remember - Tuples trigger basic indexing, lists don't
 def connect_coarse_lake_catchments(coarse_catchments,lake_centers,basin_catchment_numbers,
@@ -291,6 +295,10 @@ def connect_coarse_lake_catchments(coarse_catchments,lake_centers,basin_catchmen
     secondary_merge_locations = field.makeEmptyField(field_type='Generic',dtype=np.bool_,
                                                      grid_type=lake_centers.get_grid())
     secondary_merge_locations.set_all(False)
+    if mark_rdir_jumps:
+        lake_outflows = field.makeEmptyField(field_type='Generic',dtype=np.bool_,
+                                             grid_type=lake_centers.get_grid())
+        lake_outflows.set_all(False)
     for merge_coords in merge_coords_list:
         working_index = flood_merge_and_redirect_indices_index.get_data()[tuple(merge_coords)]
         if merges_and_redirects[working_index].secondary_merge:
@@ -308,6 +316,8 @@ def connect_coarse_lake_catchments(coarse_catchments,lake_centers,basin_catchmen
             basin_number = basin_catchment_numbers.get_data()[working_secondary_merge.merge_target_lat_index,
                                                               working_secondary_merge.merge_target_lon_index]
             if basin_number == 0:
+                if mark_rdir_jumps:
+                    lake_outflows.get_data()[tuple(secondary_merge_coords)] = True
                 if working_secondary_merge.local_redirect:
                     basin_number = \
                         basin_catchment_numbers.\
@@ -323,6 +333,13 @@ def connect_coarse_lake_catchments(coarse_catchments,lake_centers,basin_catchmen
         overflow_catchments.get_data()[tuple(lake_center_coords)] = overflow_catchment
         overflow_coords_lats.get_data()[tuple(lake_center_coords)] = overflow_coords[0]
         overflow_coords_lons.get_data()[tuple(lake_center_coords)] = overflow_coords[1]
+    if mark_rdir_jumps:
+        coarse_lake_outflows = field.makeEmptyField(field_type='Generic',dtype=np.bool_,
+                                                    grid_type=coarse_catchments.get_grid())
+        coarse_lake_outflows.set_all(False)
+        for coords in np.argwhere(lake_outflows.get_data()):
+            coarse_lake_outflows.get_data()[tuple([coord//scale_factor for
+                                                    coord in coords])] = True
     #specific to latlon grid
     sink_points_array = np.argwhere(np.logical_or(river_directions.get_data() == 5,
                                                   river_directions.get_data() == -2))
@@ -387,9 +404,9 @@ def connect_coarse_lake_catchments(coarse_catchments,lake_centers,basin_catchmen
                                     get_data()[upstream_catchment_center]),
                                     rdirs_jump_next_cell_indices)
         if correct_cumulative_flow and mark_rdir_jumps:
-            return coarse_catchments_field,cumulative_flow,rdirs_jump_next_cell_indices
+            return coarse_catchments_field,cumulative_flow,rdirs_jump_next_cell_indices,coarse_lake_outflows
         elif correct_cumulative_flow:
             return coarse_catchments_field,cumulative_flow
         else:
-            return coarse_catchments_field,rdirs_jump_next_cell_indices
+            return coarse_catchments_field,rdirs_jump_next_cell_indices,coarse_lake_outflows
     return coarse_catchments_field

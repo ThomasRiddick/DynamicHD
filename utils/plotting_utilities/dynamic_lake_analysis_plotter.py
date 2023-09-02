@@ -124,7 +124,8 @@ class DynamicLakeAnalysisPlotter:
                                                               lsmask_sequence=self.time_sequences.lsmask_sequence,
                                                               lake_point_sequence=lake_points,
                                                               connected_catchments_sequence=
-                                                              self.time_sequences.catchment_nums_one_sequence)
+                                                              self.time_sequences.catchment_nums_one_sequence,
+                                                              scale_factor=3)
             self.lake_stats_one[lake_name] = {"lake_points":lake_points,
                                               "lake_heights":lake_heights,
                                               "lake_volumes":lake_volumes,
@@ -148,7 +149,8 @@ class DynamicLakeAnalysisPlotter:
                                                               lsmask_sequence=self.time_sequences.lsmask_sequence,
                                                               lake_point_sequence=lake_points,
                                                               connected_catchments_sequence=
-                                                              self.time_sequences.catchment_nums_two_sequence)
+                                                              self.time_sequences.catchment_nums_two_sequence,
+                                                              scale_factor=3)
             self.lake_stats_two[lake_name] = {"lake_points":lake_points,
                                               "lake_heights":lake_heights,
                                               "lake_volumes":lake_volumes,

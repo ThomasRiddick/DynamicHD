@@ -58,7 +58,7 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
       #base_filepath = "/Users/thomasriddick/Documents/data/lake_analysis_runs/lake_analysis_one_21_Jun_2021/lakes/results"
       base_filepath = "/Users/thomasriddick/Documents/data/lake_analysis_runs/lake_analysis_two_26_Mar_2022/lakes/results"
       #dates = range(15990,15980,-10)
-      dates = range(12050,11000,-50)
+      dates = range(12200,11000,-50)
       #dates = [0]
       for date in dates:
         #river_directions_filepath = ("{0}/diag_version_13_date_{1}/30min_rdirs.nc".format(base_filepath,date))
@@ -90,10 +90,13 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
         rdirs_jump_next_cell_indices_filepath=("{0}/diag_version_41_date_{1}/"
                                                "30min_rdirs_jump_next_cell_indices.nc".format(base_filepath,date))
         rdirs_jump_next_cell_indices_fieldname="rdirs_jump_"
+        coarse_lake_outflows_fieldname = "outflow_points"
         if os.path.isfile(connected_coarse_catchments_out_filename):
             os.remove(connected_coarse_catchments_out_filename)
         if os.path.isfile(cumulative_flow_out_filename):
             os.remove(cumulative_flow_out_filename)
+        if os.path.isfile(rdirs_jump_next_cell_indices_filepath):
+            os.remove(rdirs_jump_next_cell_indices_filepath)
         cclc.connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
                                                    lake_parameters_filepath,
                                                    basin_numbers_filepath,
@@ -108,7 +111,8 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                                    cumulative_flow_fieldname,
                                                    cumulative_flow_out_fieldname,
                                                    rdirs_jump_next_cell_indices_filepath,
-                                                   rdirs_jump_next_cell_indices_fieldname)
+                                                   rdirs_jump_next_cell_indices_fieldname,
+                                                   coarse_lake_outflows_fieldname)
         # river_mouth_marking_driver.\
         # advanced_flow_to_rivermouth_calculation_driver(input_river_directions_filename=
         #                                                river_directions_filepath,
