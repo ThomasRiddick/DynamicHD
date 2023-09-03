@@ -14,24 +14,20 @@ class SetCoordsAndHeight:
                 self.window = window
                 self.lat = None
                 self.lon = None
-                self.date = None
                 self.original_height = None
 
         def get_stored_values(self):
-                return self.lat,self.lon,self.date,self.original_height
+                return self.lat,self.lon,self.original_height
 
-        def __call__(self,lat,lon,date,original_height):
+        def __call__(self,lat,lon,original_height):
                 self.lat = lat
                 self.lon = lon
-                self.date = date
                 self.original_height = original_height
                 for key_number in ["1","2","4","6"]:
                         self.window[f'-{self.key_prefix}CORRLAT{key_number}-'].\
                                 update(value=str(lat))
                         self.window[f'-{self.key_prefix}CORRLON{key_number}-'].\
                                 update(value=str(lon))
-                        self.window[f'-{self.key_prefix}CORRDATE{key_number}-'].\
-                                update(value=date)
                         self.window[f'-{self.key_prefix}CORRHEIGHTOUT{key_number}-'].\
                                 update(value=str(original_height))
 
@@ -109,9 +105,6 @@ class DynamicLakeAnalysisGUI:
                                            sg.Checkbox("Select Coordinates",
                                                        key=f'-{key_prefix}SELECTCOORDS{key_number}-',
                                                        enable_events=True),
-                                           sg.Text("Date:"),
-                                           sg.Text("",
-                                                   key=f'-{key_prefix}CORRDATE{key_number}-'),
                                            sg.Text("Coords: "),
                                            sg.Text("lat= "),
                                            sg.Text("",
@@ -124,10 +117,15 @@ class DynamicLakeAnalysisGUI:
                                                    key=f'-{key_prefix}CORRHEIGHTOUT{key_number}-'),
                                            sg.Text("Adjusted Height:"),
                                            sg.InputText("0",
-                                                        key=f'-{key_prefix}CORRHEIGHTIN{key_number}-'),
+                                                        key=f'-{key_prefix}CORRHEIGHTIN{key_number}-',
+                                                        size=10),
+                                           sg.Text("Up until date (exclusive):"),
+                                           sg.InputText("0",
+                                                        key=f'-{key_prefix}CORRUNTILDATE{key_number}-',
+                                                        size=10),
                                            sg.Button("Write",
                                                      key=f'-{key_prefix}WRITECORR{key_number}-'),
-                                           sg.Text("Written: 0 0 0 0",visible=False,
+                                           sg.Text("Written: 0,0,0,0",visible=False,
                                                    key=f'-{key_prefix}WRITTENCORR{key_number}-')]],
                                          key=f"-{key_prefix}CORREDIT{key_number}-",
                                          visible=False))]
@@ -456,8 +454,16 @@ class DynamicLakeAnalysisGUI:
                                            event_label in ["1","2","4","6"]]
                 if self.event in labels:
                         key_number = re.match(f"-{key_prefix}WRITECORR(\d)-",self.event).group(1)
-                        event_handler.write_correction(new_height=
-                                                       self.values[f'-{key_prefix}CORRHEIGHTIN{key_number}-'])
+                        output = event_handler.write_correction(new_height=
+                                        self.values[f'-{key_prefix}CORRHEIGHTIN{key_number}-'],
+                                        corr_until_date=
+                                        self.values[f'-{key_prefix}CORRUNTILDATE{key_number}-'])
+                        self.window[f'-{key_prefix}WRITTENCORR{key_number}-'].\
+                                    update(visible=True)
+                        self.window[f'-{key_prefix}WRITTENCORR{key_number}-'].\
+                                    update(value=f'Written: {output}')
+
+
 
         def check_for_correction_source_events(self,event_handlers):
                 if self.event == "-CORRSOURCERADIO1-" or self.event == "-CORRSOURCERADIO2-":
@@ -465,13 +471,6 @@ class DynamicLakeAnalysisGUI:
                                 event_handler.\
                                 toggle_use_orog_one_for_original_height(self.event ==
                                                                         "-CORRSOURCERADIO1-")
-
-        def check_for_include_threshold_in_corrected_slices_events(self,event_handlers):
-                if self.event == "-INCLUDETHRESINCORRS-":
-                        for event_handler in event_handlers:
-                                event_handler.\
-                                toggle_include_date_itself_in_corrected_slices(
-                                        self.values["-INCLUDETHRESINCORRS-"])
 
         def check_for_match_zoom_events(self,key_prefix,event_handler):
                 if self.event.startswith(f'-{key_prefix}MATCH'):
@@ -646,10 +645,7 @@ class DynamicLakeAnalysisGUI:
                                     enable_events=True),
                            sg.Radio("Corrections for data source 2","CORRSOURCERADIO",
                                     default=False,key="-CORRSOURCERADIO2-",
-                                    enable_events=True)],
-                           [sg.Checkbox("Include threshold date in corrected slices",
-                                        default=True,key="-INCLUDETHRESINCORRS-",
-                                        enable_events=True)]]
+                                    enable_events=True)]]
 
                 layout = [[sg.Menu(menu_def)],
                           [sg.TabGroup([[sg.Tab('Input data',input_data_tab_layout,key="-ID-"),
@@ -723,8 +719,6 @@ class DynamicLakeAnalysisGUI:
                         self.check_for_write_correction_events("LM",self.interactive_lake_plots)
                         self.check_for_correction_source_events([self.interactive_plots,
                                                                  self.interactive_lake_plots])
-                        self.check_for_include_threshold_in_corrected_slices_events(
-                                [self.interactive_plots,self.interactive_lake_plots])
                         self.check_for_match_zoom_events("GM",self.interactive_plots)
                         self.check_for_match_zoom_events("LM",self.interactive_lake_plots)
                         if self.event == "-UPDATEPLOTS-":

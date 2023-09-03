@@ -28,6 +28,7 @@ from Dynamic_HD_Scripts.base.iodriver import advanced_field_loader
 from Dynamic_HD_Scripts.base.field import Field
 from os.path import join, isfile
 from enum import Enum
+import warnings
 
 class PlotScales(Enum):
     NORMAL = 1
@@ -825,7 +826,6 @@ class InteractiveTimeSlicePlots:
         self.use_orog_one_for_original_height = True
         self.replot_required = False
         self.corrections = corrections
-        self.include_date_itself_in_corrected_slices = True
         self.lake_points_one = lake_points_one
         self.lake_points_two = lake_points_two
         if self.lake_points_one is not None:
@@ -1217,12 +1217,9 @@ class InteractiveTimeSlicePlots:
     def modified_orography_plot_base(self,index,orography):
         modified_orography = np.copy(orography)
         for correction in self.corrections:
-            if (self.date > correction["date"] or
-                (self.include_date_itself_in_corrected_slices and
-                 self.date == correction["date"])):
-                modified_orography[correction["lat"],correction["lon"]] = \
-                    (orography[correction["lat"],correction["lon"]] +
-                     correction["height_change"])
+            if self.date > correction["date"]:
+                modified_orography[correction["lat"],correction["lon"]] += \
+                     correction["height_change"]
         self.orography_plot_base(index,modified_orography)
 
 
@@ -1479,21 +1476,36 @@ class InteractiveTimeSlicePlots:
                                                     round(eclick.ydata)+min_lat,
                                                     lon=
                                                     round(eclick.xdata)+min_lon,
-                                                    date=self.date,
                                                     original_height=
                                                     orography[round(eclick.ydata),
                                                               round(eclick.xdata)])
 
-    def write_correction(self,new_height):
-        lat,lon,date,original_height = self.specify_coords_and_height_callback.get_stored_values()
-        height_change = float(new_height)-original_height
+    def write_correction(self,new_height,corr_until_date):
+        lat,lon,original_height = self.specify_coords_and_height_callback.get_stored_values()
+        original_height_plus_other_corrections = original_height
+        for correction in self.corrections:
+            if correction["lat"] == lat and correction["lon"] == lon:
+                if int(corr_until_date) > correction["date"]:
+                    original_height_plus_other_corrections += correction["height_change"]
+                else:
+                    warnings.warn("Can't write corrections for more recent "
+                                  "date at point that already has correction - "
+                                  "corrections should always be defined starting "
+                                  "from the most recent and working back in time for "
+                                  "a given point.")
+                    return "Write Failed!"
+        height_change = float(new_height)-original_height_plus_other_corrections
+        output_string = "{}, {}, {}, {} \n".format(lat,lon,int(corr_until_date),
+                                                   height_change)
         with open(self.corrections_file,'a') as f:
-            f.write("{}, {}, {}, {} \n".format(lat,lon,date,height_change))
-        self.corrections.append({"lat":lat,"lon":lon,"date":date,"height_change":height_change})
+            f.write(output_string)
+        self.corrections.append({"lat":lat,"lon":lon,"date":int(corr_until_date),
+                                 "height_change":height_change})
         self.next_command_to_send = "zoom"
         self.replot_required = True
         self.step()
         self.replot_required = False
+        return output_string
 
     def read_corrections(self):
         self.corrections.clear()
@@ -1505,14 +1517,6 @@ class InteractiveTimeSlicePlots:
                                              "lon":int(data[1]),
                                              "date":int(data[2]),
                                              "height_change":float(data[3])})
-        self.next_command_to_send = "zoom"
-        self.replot_required = True
-        self.step()
-        self.replot_required = False
-
-
-    def toggle_include_date_itself_in_corrected_slices(self,value):
-        self.include_date_itself_in_corrected_slices = value
         self.next_command_to_send = "zoom"
         self.replot_required = True
         self.step()
