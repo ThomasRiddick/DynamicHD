@@ -377,12 +377,12 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                        "lake_analysis_two_26_Mar_2022_correction_field_version_34.nc")
         if self.date_based_sill_height_corrections_list_filename is None:
             if config.has_option("general_options",
-                                 "date_based_sill_height_corrections_list_filename")
-                self.date_based_sill_height_corrections_list_filename =
+                                 "date_based_sill_height_corrections_list_filename"):
+                self.date_based_sill_height_corrections_list_filename =\
                     config.get("general_options",
                                "date_based_sill_height_corrections_list_filename")
         elif config.has_option("general_options",
-                                 "date_based_sill_height_corrections_list_filename")
+                                 "date_based_sill_height_corrections_list_filename"):
             raise RuntimeError("More than one date based sill height correction file specified")
         #Change ls mask to correct type
         ls_mask_10min = iodriver.advanced_field_loader(self.original_ls_mask_filename,
@@ -419,7 +419,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                       field_type='Orography')
         orography_uncorrected_10min = orography_10min.copy()
         orography_10min.add(orography_corrections_10min)
-        if self.date_based_sill_height_corrections_list_filename is not None
+        if self.date_based_sill_height_corrections_list_filename is not None:
             utilities.apply_date_based_sill_height_corrections(orography_10min,
                 date_based_sill_height_corrections_list_filename,int(current_date))
         truesinks = field.Field(np.empty((1,1),dtype=np.int32),grid='HD')
@@ -450,7 +450,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                                     orography_uncorrected_10min,
                                                                                     input_glacier_mask=
                                                                                     glacier_mask_10min)
-            if self.additional_orography_corrections_filename is not None
+            if self.additional_orography_corrections_filename is not None:
                 additional_corrections_10min = \
                     iodriver.advanced_field_loader(
                         self.additional_orography_corrections_filename,
