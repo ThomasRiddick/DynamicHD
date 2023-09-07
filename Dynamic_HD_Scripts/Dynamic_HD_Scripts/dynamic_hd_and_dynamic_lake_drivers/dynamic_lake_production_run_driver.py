@@ -47,7 +47,10 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                  output_lakestart_filepath=None,ancillary_data_directory=None,
                  working_directory=None,output_hdstart_filepath=None,
                  present_day_base_orography_filepath=None,glacier_mask_filepath=None,
-                 non_standard_orog_correction_filename=None):
+                 non_standard_orog_correction_filename=None,
+                 date_based_sill_height_corrections_list_filename=None,
+                 current_date=None,
+                 additional_orography_corrections_filepath=None):
         """Class constructor.
 
         Deliberately does NOT call constructor of Dynamic_HD_Drivers so the many paths
@@ -67,6 +70,11 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.glacier_mask_filename=glacier_mask_filepath
         self.tarasov_based_orog_correction=True
         self.non_standard_orog_correction_filename=non_standard_orog_correction_filename
+        self.date_based_sill_height_corrections_list_filename = \
+             date_based_sill_height_corrections_list_filename
+        self.current_date = current_date
+        self.additional_orography_corrections_filename = \
+             additional_orography_corrections_filepath
         if self.ancillary_data_path is not None:
             self.python_config_filename=path.join(self.ancillary_data_path,
                                                   "dynamic_lake_production_driver.cfg")
@@ -279,6 +287,9 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                            "Ice6g_c_VM5a_10min_0k.nc")
         self.non_standard_orog_correction_filename=path.join(self.ancillary_data_path,
                                                              "ice5g_0k_lake_corrs_no_intermediaries_lake_corrections_driver_20200726_181304.nc")
+        self.current_date = 0
+        self.date_based_sill_height_corrections_list_filename = path.join(self.ancillary_data_path,
+                                                                          "southern_exit_agassiz_corrections.txt")
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_dynamic_lake_driver()
         return (self.output_hdparas_filepath,self.output_hdstart_filepath,
@@ -295,8 +306,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                       "temp_workdir_lake_14440/hdpara_{0}_14440.nc".format(file_label))
         self.output_hdstart_filepath=("/Users/thomasriddick/Documents/data/temp/"
                                       "temp_workdir_lake_14440/hdstart_{0}_14440.nc".format(file_label))
-        self.ancillary_data_path=("/Users/thomasriddick/Documents/data/simulation_data/laketestdata/"
-                                  "files_for_14440_timeslice/hd_ancillary_data_dirs/HDancillarydata_lakes")
+        self.ancillary_data_path=("/Users/thomasriddick/Documents/data/hd_ancillary_data_dirs/HDancillarydata_lakes_v2")
         self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_lake_14440"
         self.output_lakeparas_filepath = "/Users/thomasriddick/Documents/data/temp/temp_workdir_lake_14440/lakeparas_{0}_14440.nc".format(file_label)
         self.output_lakestart_filepath = "/Users/thomasriddick/Documents/data/temp/temp_workdir_lake_14440/lakestart_{0}_14440.nc".format(file_label)
@@ -308,9 +318,14 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.glacier_mask_filename=data_directory+"/glac01_14440.nc"
         self.present_day_base_orography_filename=data_directory+"/GLAC1D_Top01_surf_0000.nc"
         self.non_standard_orog_correction_filename=path.join(self.ancillary_data_path,
-                                                             "ice5g_0k_lake_corrs_no_intermediaries_lake_corrections_driver_20200726_181304.nc")
+                                                             "lake_analysis_two_26_Mar_2022_correction_field_version_34.nc")
+        self.current_date = 14440
+        self.date_based_sill_height_corrections_list_filename = path.join(self.ancillary_data_path,
+                                                                          "southern_exit_agassiz_corrections.txt")
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_dynamic_lake_driver()
+        return (self.output_hdparas_filepath,self.output_hdstart_filepath,
+                self.output_lakeparas_filepath,self.output_lakestart_filepath)
 
     def trial_run_for_mid_deglaciation(self):
         super(Dynamic_Lake_Production_Run_Drivers,self).__init__()
@@ -336,6 +351,9 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                   "updated_orog__extracted_for_1250prepare_basins_from_glac1D_20210205_135817_1250.nc")
         self.non_standard_orog_correction_filename=path.join(self.ancillary_data_path,
                                                              "ice5g_0k_lake_corrs_no_intermediaries_lake_corrections_driver_20200726_181304.nc")
+        self.current_date = 12500
+        self.date_based_sill_height_corrections_list_filename = path.join(self.ancillary_data_path,
+                                                                          "southern_exit_agassiz_corrections.txt")
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_dynamic_lake_driver()
         return (self.output_hdparas_filepath,self.output_hdstart_filepath,
@@ -368,6 +386,15 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         else:
             orography_corrections_filename = path.join(self.ancillary_data_path,
                                                        "lake_analysis_two_26_Mar_2022_correction_field_version_34.nc")
+        if self.date_based_sill_height_corrections_list_filename is None:
+            if config.has_option("general_options",
+                                 "date_based_sill_height_corrections_list_filename"):
+                self.date_based_sill_height_corrections_list_filename =\
+                    config.get("general_options",
+                               "date_based_sill_height_corrections_list_filename")
+        elif config.has_option("general_options",
+                                 "date_based_sill_height_corrections_list_filename"):
+            raise RuntimeError("More than one date based sill height correction file specified")
         #Change ls mask to correct type
         ls_mask_10min = iodriver.advanced_field_loader(self.original_ls_mask_filename,
                                                        field_type='Generic',
@@ -403,6 +430,9 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                       field_type='Orography')
         orography_uncorrected_10min = orography_10min.copy()
         orography_10min.add(orography_corrections_10min)
+        if self.date_based_sill_height_corrections_list_filename is not None:
+            utilities.apply_date_based_sill_height_corrections(orography_10min,
+                self.date_based_sill_height_corrections_list_filename,int(self.current_date))
         truesinks = field.Field(np.empty((1,1),dtype=np.int32),grid='HD')
         if print_timing_info:
             time_before_glacier_mask_application = timer()
@@ -431,6 +461,14 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                                     orography_uncorrected_10min,
                                                                                     input_glacier_mask=
                                                                                     glacier_mask_10min)
+            if self.additional_orography_corrections_filename is not None:
+                additional_corrections_10min = \
+                    iodriver.advanced_field_loader(
+                        self.additional_orography_corrections_filename,
+                        fieldname=config.get("input_fieldname_options",
+                                         "input_additional_orography_corrections_fieldname"),
+                        field_type='Orography')
+                orography_10min.add(additional_corrections_10min)
             orography_10min.change_dtype(np.float64)
             orography_10min.make_contiguous()
             inverted_glacier_mask_10min = glacier_mask_10min.copy()
@@ -1094,6 +1132,14 @@ def parse_arguments():
                         type=str)
     parser.add_argument('-s','--output-hdstart-filepath',
                         help='Full path to target destination for output hdstart file',
+                        type=str,
+                        default=None)
+    parser.add_argument('-d','--current-date',
+                        help='Current date for date based orography corrections',
+                        type=str,
+                        default=None)
+    parser.add_argument('-a' '--additional-orography-corrections-filepath',
+                        help='Field with custom relative orography corrections to apply',
                         type=str,
                         default=None)
     #Adding the variables to a namespace other than that of the parser keeps the namespace clean

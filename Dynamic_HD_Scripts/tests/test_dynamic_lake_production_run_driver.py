@@ -24,13 +24,22 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
                                                                 "hdpara_trial_run_for_present_day_20221115_190605_pd.nc")
     hdstart_offline_run_result_for_comparison_pd = os.path.join(data_dir,"unit_test_data",
                                                                 "hdstart_trial_run_for_present_day_20221115_190605_pd.nc")
+    lakepara_offline_run_result_for_comparison_14440  = os.path.join(data_dir,"unit_test_data",
+                                                                     "lakeparas_trial_run_for_14440_20230907_172958_14440.nc")
+    lakestart_offline_run_result_for_comparison_14440 = os.path.join(data_dir,"unit_test_data",
+                                                                     "lakestart_trial_run_for_14440_20230907_172958_14440.nc")
+    hdpara_offline_run_result_for_comparison_14440  = os.path.join(data_dir,"unit_test_data",
+                                                                   "hdpara_trial_run_for_14440_20230907_172958_14440.nc")
+    hdstart_offline_run_result_for_comparison_14440 = os.path.join(data_dir,"unit_test_data",
+                                                                    "hdstart_trial_run_for_14440_20230907_172958_14440.nc")
 
     def setUp(self):
         """Class constructor. Create a Dynamic_HD_Production_Run_Driver object."""
         self.driver = Dynamic_Lake_Production_Run_Drivers()
         self.cdo_instance = cdo.Cdo()
         self.temp_dirs = [os.path.join(data_dir,'temp','temp_workdir_lake_deglac'),
-                          os.path.join(data_dir,'temp','temp_workdir_pd')]
+                          os.path.join(data_dir,'temp','temp_workdir_pd'),
+                          os.path.join(data_dir,'temp','temp_workdir_lake_14440')]
         self.clean_up()
         for temp_dir in self.temp_dirs:
             try:
@@ -65,7 +74,8 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
                            "30min_flowtorivermouths_connected.nc",
                            "merges_and_redirects_temp.nc",
                            "fields_temp.nc",
-                           "basin_catchment_numbers_temp.nc",
+                           "10min_basin_catchment_numbers.nc",
+                           "10min_sinkless_rdirs.nc",
                            "loops_10min.log","loops_30min.log"]
         directories_to_remove = self.temp_dirs
         for directory in directories_to_remove:
@@ -146,6 +156,39 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
                         "lakepara file for mid-deglaciation doesn't match expected result")
         self.assertTrue(not lakestart_diff_out and lakestart_diff_out is not None,
                         "lakestart file for mid-deglaciation doesn't match expected result")
+
+    def testTrialUsing14440Data(self):
+        """Run a trial using data for 14440 YBP data"""
+
+        (output_hdparas_filepath,output_hdstart_filepath,
+         output_lakeparas_filepath,output_lakestart_filepath) =\
+            self.driver.trial_run_for_14440()
+        #sinfon tests for file existance and validity ... diff does not output an error
+        #if file doesn't exist!
+        self.cdo_instance.sinfon(input=[output_hdparas_filepath,
+                                 self.hdpara_offline_run_result_for_comparison_14440])
+        hdpara_diff_out = self.cdo_instance.diff(input=[output_hdparas_filepath,
+                          self.hdpara_offline_run_result_for_comparison_14440])
+        self.cdo_instance.sinfon(input=[output_hdstart_filepath,
+                                 self.hdstart_offline_run_result_for_comparison_14440 ])
+        hdstart_diff_out  = self.cdo_instance.diff(input=[output_hdstart_filepath,
+                            self.hdstart_offline_run_result_for_comparison_14440 ])
+        self.cdo_instance.sinfon(input=[output_lakeparas_filepath,
+                                 self.lakepara_offline_run_result_for_comparison_14440])
+        lakepara_diff_out = self.cdo_instance.diff(input=[output_lakeparas_filepath,
+                            self.lakepara_offline_run_result_for_comparison_14440])
+        self.cdo_instance.sinfon(input=[output_lakestart_filepath,
+                                        self.lakestart_offline_run_result_for_comparison_14440])
+        lakestart_diff_out  = self.cdo_instance.diff(input=[output_lakestart_filepath,
+                              self.lakestart_offline_run_result_for_comparison_14440])
+        self.assertTrue(not hdpara_diff_out and hdpara_diff_out is not None,
+                        "hdpara file for 14440 YBP doesn't match expected result")
+        self.assertTrue(not hdstart_diff_out and hdstart_diff_out is not None,
+                        "hdstart file for 14440 YBP doesn't match expected result")
+        self.assertTrue(not lakepara_diff_out and lakepara_diff_out is not None,
+                        "lakepara file for 14440 YBP doesn't match expected result")
+        self.assertTrue(not lakestart_diff_out and lakestart_diff_out is not None,
+                        "lakestart file for 14440 YBP doesn't match expected result")
 
 if __name__ == "__main__":
     unittest.main()
