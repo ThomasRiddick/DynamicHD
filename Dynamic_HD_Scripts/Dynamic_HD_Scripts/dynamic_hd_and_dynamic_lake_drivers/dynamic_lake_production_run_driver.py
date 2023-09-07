@@ -72,6 +72,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.non_standard_orog_correction_filename=non_standard_orog_correction_filename
         self.date_based_sill_height_corrections_list_filename = \
              date_based_sill_height_corrections_list_filename
+        self.current_date = current_date
         self.additional_orography_corrections_filename = \
              additional_orography_corrections_filepath
         if self.ancillary_data_path is not None:
@@ -286,6 +287,9 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                            "Ice6g_c_VM5a_10min_0k.nc")
         self.non_standard_orog_correction_filename=path.join(self.ancillary_data_path,
                                                              "ice5g_0k_lake_corrs_no_intermediaries_lake_corrections_driver_20200726_181304.nc")
+        self.current_date = 0
+        self.date_based_sill_height_corrections_list_filename = path.join(self.ancillary_data_path,
+                                                                          "southern_exit_agassiz_corrections.txt")
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_dynamic_lake_driver()
         return (self.output_hdparas_filepath,self.output_hdstart_filepath,
@@ -302,8 +306,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                       "temp_workdir_lake_14440/hdpara_{0}_14440.nc".format(file_label))
         self.output_hdstart_filepath=("/Users/thomasriddick/Documents/data/temp/"
                                       "temp_workdir_lake_14440/hdstart_{0}_14440.nc".format(file_label))
-        self.ancillary_data_path=("/Users/thomasriddick/Documents/data/simulation_data/laketestdata/"
-                                  "files_for_14440_timeslice/hd_ancillary_data_dirs/HDancillarydata_lakes")
+        self.ancillary_data_path=("/Users/thomasriddick/Documents/data/hd_ancillary_data_dirs/HDancillarydata_lakes_v2")
         self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_lake_14440"
         self.output_lakeparas_filepath = "/Users/thomasriddick/Documents/data/temp/temp_workdir_lake_14440/lakeparas_{0}_14440.nc".format(file_label)
         self.output_lakestart_filepath = "/Users/thomasriddick/Documents/data/temp/temp_workdir_lake_14440/lakestart_{0}_14440.nc".format(file_label)
@@ -315,9 +318,14 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.glacier_mask_filename=data_directory+"/glac01_14440.nc"
         self.present_day_base_orography_filename=data_directory+"/GLAC1D_Top01_surf_0000.nc"
         self.non_standard_orog_correction_filename=path.join(self.ancillary_data_path,
-                                                             "ice5g_0k_lake_corrs_no_intermediaries_lake_corrections_driver_20200726_181304.nc")
+                                                             "lake_analysis_two_26_Mar_2022_correction_field_version_34.nc")
+        self.current_date = 14440
+        self.date_based_sill_height_corrections_list_filename = path.join(self.ancillary_data_path,
+                                                                          "southern_exit_agassiz_corrections.txt")
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_dynamic_lake_driver()
+        return (self.output_hdparas_filepath,self.output_hdstart_filepath,
+                self.output_lakeparas_filepath,self.output_lakestart_filepath)
 
     def trial_run_for_mid_deglaciation(self):
         super(Dynamic_Lake_Production_Run_Drivers,self).__init__()
@@ -343,6 +351,9 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                   "updated_orog__extracted_for_1250prepare_basins_from_glac1D_20210205_135817_1250.nc")
         self.non_standard_orog_correction_filename=path.join(self.ancillary_data_path,
                                                              "ice5g_0k_lake_corrs_no_intermediaries_lake_corrections_driver_20200726_181304.nc")
+        self.current_date = 12500
+        self.date_based_sill_height_corrections_list_filename = path.join(self.ancillary_data_path,
+                                                                          "southern_exit_agassiz_corrections.txt")
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_dynamic_lake_driver()
         return (self.output_hdparas_filepath,self.output_hdstart_filepath,
@@ -421,7 +432,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         orography_10min.add(orography_corrections_10min)
         if self.date_based_sill_height_corrections_list_filename is not None:
             utilities.apply_date_based_sill_height_corrections(orography_10min,
-                date_based_sill_height_corrections_list_filename,int(current_date))
+                self.date_based_sill_height_corrections_list_filename,int(self.current_date))
         truesinks = field.Field(np.empty((1,1),dtype=np.int32),grid='HD')
         if print_timing_info:
             time_before_glacier_mask_application = timer()
