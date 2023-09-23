@@ -1,12 +1,16 @@
 import numpy as np
 import scipy.ndimage as ndimage
-from collections import deque
+from collections import deque, namedtuple
 from copy import deepcopy
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import sys
 import warnings
 from enum import Enum
+from Dynamic_HD_Scripts.interface.cpp_interface.libs \
+    import fill_sinks_wrapper
+from Dynamic_HD_Scripts.utilities.utilities import downscale_ls_mask
+from Dynamic_HD_Scripts.base.field import Field
 
 warnings.warn("What does the input area bounds variable do???? Ditto dates")
 
@@ -175,12 +179,15 @@ class CoastlineIdentifier:
         self.shape = shape
         self.first_transect_endpoints = first_transect_endpoints
         self.second_transect_endpoints = second_transect_endpoints
-        first_transect_mask = self.generate_transect(first_transect_endpoints)
-        second_transect_mask = self.generate_transect(second_transect_endpoints)
+        first_transect_mask = self.generate_transect(self.shape,
+                                                     first_transect_endpoints)
+        second_transect_mask = self.generate_transect(self.shape,
+                                                      second_transect_endpoints)
         self.limiting_transect_mask = np.logical_or(first_transect_mask,
                                                     second_transect_mask)
         self.midpoint_transect_mask = \
-            self.generate_transect(self.get_midpoints(first_transect_endpoints,
+            self.generate_transect(self.shape,
+                                   self.get_midpoints(first_transect_endpoints,
                                                       second_transect_endpoints))
 
     #See above comment on not wrapping
@@ -194,26 +201,44 @@ class CoastlineIdentifier:
 
     #This is fairly ineffecient - a distance from
     #end pointed sorted priority queue might be better
-    def generate_transect(self,endpoints):
+    @staticmethod
+    def generate_transect(shape,endpoints):
         starting_point_coords = tuple(endpoints[0])
         end_point_coords = tuple(endpoints[1])
-        cells_in_transect = np.zeros(self.shape,
+        cells_in_transect = np.zeros(shape,
                                    dtype=np.bool_)
         working_coords = starting_point_coords
+        remaining_y_change = end_point_coords[0] - starting_point_coords[0]
+        remaining_x_change = end_point_coords[1] - starting_point_coords[1]
+        ratio = abs(remaining_y_change)/abs(remaining_x_change) if remaining_x_change != 0 else 0
         while True:
             if working_coords == end_point_coords:
                 break
-            closest_nbr_coords = None
-            working_distance = sys.float_info.max
-            for nbr_coords in get_neighbors(working_coords):
-                nbr_to_endpoint_distance = pow((end_point_coords[0] - nbr_coords[0])**2 +
-                                               (end_point_coords[1] - nbr_coords[1])**2,0.5)
-                if (closest_nbr_coords is None or
-                    nbr_to_endpoint_distance < working_distance):
-                    closest_nbr_coords = nbr_coords
-                    working_distance = nbr_to_endpoint_distance
-            cells_in_transect[closest_nbr_coords] = True
-            working_coords = closest_nbr_coords
+            new_y = working_coords[0]
+            new_x = working_coords[1]
+            y_change = 1 if remaining_y_change > 0 else -1
+            x_change = 1 if remaining_x_change > 0 else -1
+            if abs(remaining_x_change) == abs(remaining_y_change):
+                new_y += y_change
+                remaining_y_change -= y_change
+                new_x += x_change
+                remaining_x_change -= x_change
+            elif abs(remaining_x_change) > abs(remaining_y_change):
+                new_x += x_change
+                remaining_x_change -= x_change
+                if (remaining_y_change != 0 and
+                    abs(remaining_y_change)/ratio > abs(remaining_x_change)):
+                    new_y += y_change
+                    remaining_y_change -= y_change
+            else:
+                new_y += y_change
+                remaining_y_change -= y_change
+                if (remaining_x_change != 0 and
+                    abs(remaining_x_change)*ratio > abs(remaining_y_change)):
+                    new_x += x_change
+                    remaining_x_change -= x_change
+            cells_in_transect[working_coords] = True
+            working_coords = (new_y,new_x)
         cells_in_transect = \
             ndimage.binary_dilation(cells_in_transect,
                                     structure=
@@ -263,43 +288,49 @@ class CoastlineIdentifier:
 class OutflowBasinIdentifier:
 
     ocean_basins_30min_latlon = {Basins.ART:[[[30,88],[60,88]],[[12,190],[45,190]]],
-                                 Basins.CAR:[[[133,167],[122,167]],[[112,221],[106,202]]],
-                                 Basins.NATL:[[[112,221],[106,202]],[[80,262],[80,230]]]}
+                                 Basins.CAR:[[[133,167],[122,167]],[[107,190],[121,207]]],
+                                 Basins.NATL:[[[112,221],[104,188]],[[80,262],[80,200]]]}
     ocean_basins_definitions = {"30minLatLong":ocean_basins_30min_latlon}
     field_shapes = {"30minLatLong":(360,720)}
 
     def __init__(self,grid_type,dbg_plts=None):
         ocean_basins_definitions = self.ocean_basins_definitions[grid_type]
-        field_shape = self.field_shapes[grid_type]
-        self.ocean_basin_numbers = -1*np.ones(field_shape,dtype=np.int32)
+        self.field_shape = self.field_shapes[grid_type]
+        self.ocean_basin_numbers_sequence = []
         self.ocean_basin_names = []
         self.coastline_identifiers = []
         self.dbg_plts = dbg_plts
         for key,value in ocean_basins_definitions.items():
-            self.coastline_identifiers.append(CoastlineIdentifier(*value,field_shape))
+            self.coastline_identifiers.append(CoastlineIdentifier(*value,self.field_shape))
             self.ocean_basin_names.append(key)
 
-    def set_lsmask(self,lsmask):
-        for i,coastline_identifier in enumerate(self.coastline_identifiers):
-            _,coastal_ocean_cells = coastline_identifier.identify_coastline(lsmask)
-            self.ocean_basin_numbers[coastal_ocean_cells] = i
+    def set_lsmask_sequence(self,lsmask_sequence):
+        for lsmask in lsmask_sequence:
+            ocean_basin_numbers = -1*np.ones(self.field_shape,dtype=np.int32)
+            for i,coastline_identifier in enumerate(self.coastline_identifiers):
+                _,coastal_ocean_cells = coastline_identifier.identify_coastline(lsmask)
+                plt.show()
+                ocean_basin_numbers[coastal_ocean_cells] = i
+            self.ocean_basin_numbers_sequence.append(ocean_basin_numbers)
+
+    def get_ocean_basin_numbers_sequence(self):
+        return self.ocean_basin_numbers_sequence
 
     def identify_ocean_basin_for_lake_outflow(self,
-                                              lsmask,
+                                              ocean_basin_numbers,
                                               connected_catchments,
                                               lake_point,
                                               input_area_bounds):
         if lake_point is None:
             return -1
-        self.set_lsmask(lsmask)
         catchment = connected_catchments[tuple(lake_point)]
-        ocean_basin_number_opt = self.ocean_basin_numbers[np.logical_and(connected_catchments == catchment,
-                                                                     self.ocean_basin_numbers >= 0)].flatten()
+        ocean_basin_number_opt = ocean_basin_numbers[np.logical_and(connected_catchments == catchment,
+                                                                     ocean_basin_numbers >= 0)].flatten()
         if self.dbg_plts is not None:
             fig = self.dbg_plts.get_new_fig_for_debug()
-            ocean_basin_number_with_outflow = np.copy(self.ocean_basin_numbers)
+            ocean_basin_number_with_outflow = np.copy(ocean_basin_numbers)
             ocean_basin_number_with_outflow[np.logical_and(connected_catchments == catchment,
-                                                           self.ocean_basin_numbers >= 0)] = 3
+                                                           ocean_basin_numbers >= 0)] = 3
             fig.axes[0].imshow(ocean_basin_number_with_outflow,interpolation='none')
         ocean_basin_number = ocean_basin_number_opt[0] if len(ocean_basin_number_opt) > 0 else -1
         return self.ocean_basin_names[ocean_basin_number]
@@ -307,20 +338,19 @@ class OutflowBasinIdentifier:
     def extract_ocean_basin_for_lake_outflow_sequence(self,
                                                       dates,
                                                       input_area_bounds,
-                                                      lsmask_sequence,
                                                       lake_point_sequence,
                                                       connected_catchments_sequence,
                                                       scale_factor):
         lake_outflow_basins = []
-        for date,lsmask,lake_point,connected_catchments in \
-              zip(dates,lsmask_sequence,lake_point_sequence,
+        for date,ocean_basin_numbers,lake_point,connected_catchments in \
+              zip(dates,self.ocean_basin_numbers_sequence,lake_point_sequence,
                   connected_catchments_sequence):
               if lake_point is not None:
                 lake_point_coarse = [round(coord/scale_factor)
                                      for coord in lake_point]
               else:
                 lake_point_coarse = None
-              basin_name = self.identify_ocean_basin_for_lake_outflow(lsmask,
+              basin_name = self.identify_ocean_basin_for_lake_outflow(ocean_basin_numbers,
                                                                       connected_catchments,
                                                                       lake_point_coarse,
                                                                       input_area_bounds)
@@ -328,29 +358,25 @@ class OutflowBasinIdentifier:
         return lake_outflow_basins
 
     def calculate_discharge_to_ocean_basins(self,
-                                            lsmask,
+                                            ocean_basin_numbers,
                                             discharge_to_ocean,
                                             input_area_bounds):
-        self.set_lsmask(lsmask)
         discharge_to_ocean_basins = []
         for ocean_basin_number in range(len(self.coastline_identifiers)):
-            discharge_to_ocean_basins.append(sum(discharge_to_ocean[self.ocean_basin_numbers ==
-                                                                         ocean_basin_number]))
+            discharge_to_ocean_basins.append(sum(discharge_to_ocean[ocean_basin_numbers ==
+                                                                    ocean_basin_number]))
         return discharge_to_ocean_basins
-
-
-
 
     def calculate_discharge_to_ocean_basins_sequence(self,
                                                      dates,
-                                                     lsmask_sequence,
                                                      discharge_to_ocean_sequence):
         discharge_to_ocean_basin_timeseries = []
-        for date,lsmask,discharge_to_ocean in \
-              zip(dates,lsmask_sequence,discharge_to_ocean_sequence):
-              discharge_to_ocean_basins = self.calculate_discharge_to_ocean_basins(lsmask,
-                                                                                   discharge_to_ocean,
-                                                                                   input_area_bounds)
+        for date,ocean_basin_numbers,discharge_to_ocean in \
+              zip(dates,self.ocean_basin_numbers_sequence,discharge_to_ocean_sequence):
+              discharge_to_ocean_basins = \
+                self.calculate_discharge_to_ocean_basins(ocean_basin_numbers,
+                                                         discharge_to_ocean,
+                                                         input_area_bounds)
               discharge_to_ocean_basin_timeseries.append(discharge_to_ocean_basins)
         return discharge_to_ocean_basin_timeseries
 
@@ -424,3 +450,145 @@ class FlowPathExtractor:
                               rdirs_jumps_lon[tuple(working_coords)]]
             initial_section = False
         return flowpath_mask
+
+class ExitProfiler:
+
+    EndPoints = namedtuple("EndPoints",["start","end","adjust"])
+    blocking_ridges = [EndPoints((200,507),(5,520),True),
+                       EndPoints((323,582),(545,995),True),
+                       EndPoints((274,457),(630,187),True)]
+    reference_lake_center = (260,500)
+    section_bounds = ((0,0),(450,750))
+    height_bound = 1000.0
+
+    @classmethod
+    def prepare_orography(cls,lake_center,orography,lsmask):
+        orography = np.copy(orography)
+        offset_y =  lake_center[0] - cls.reference_lake_center[0]
+        offset_x  = lake_center[1] - cls.reference_lake_center[1]
+        for blocking_ridge in cls.blocking_ridges:
+            if blocking_ridge.adjust:
+                modified_blocking_ridge = cls.EndPoints((blocking_ridge.start[0] - offset_y,
+                                                         blocking_ridge.start[1] - offset_x),
+                                                         blocking_ridge.end,False)
+            else:
+                modified_blocking_ridge = blocking_ridge
+            transect = CoastlineIdentifier.generate_transect(orography.shape,
+                                                             modified_blocking_ridge)
+            expanded_transect = \
+                ndimage.binary_dilation(transect,
+                                        structure=
+                                        ndimage.generate_binary_structure(2,4))
+            orography[expanded_transect] = sys.float_info.max
+        orography[lsmask] = sys.float_info.max
+        return orography
+
+    def profile_exits(self,lake_center,ocean_basin_numbers,rdirs,
+                      corrected_heights):
+        spillway_height_profiles = []
+        spillway_masks = []
+        if lake_center is None:
+            return [],[]
+        lsmask = np.logical_or(rdirs == -1,rdirs == 0)
+        orography = self.prepare_orography(lake_center,corrected_heights,lsmask)
+        for basin_number in range(np.amax(ocean_basin_numbers)+1):
+            coastline = (ocean_basin_numbers == basin_number)
+            coastline_fine = downscale_ls_mask(Field(coastline,grid="HD"),
+                                               "LatLong10min").get_data()
+            ymin,ymax = self.section_bounds[0][0],self.section_bounds[1][0],
+            xmin,xmax = self.section_bounds[0][1],self.section_bounds[1][1]
+            sinkless_rdirs_section = \
+                np.ascontiguousarray(
+                    np.zeros(rdirs.shape,dtype=np.float64)[ymin:ymax,xmin:xmax])
+            lsmask_without_coastline = \
+                ndimage.binary_erosion(np.logical_and(lsmask,
+                                                      np.logical_not(coastline_fine)),
+                                       structure=
+                                       ndimage.generate_binary_structure(2,4))
+            area_to_exclude = np.logical_or(lsmask_without_coastline,
+                                            orography > self.height_bound)
+            fill_sinks_wrapper.\
+            fill_sinks_cpp_func(orography_array= np.ascontiguousarray(
+                                orography[ymin:ymax,xmin:xmax]),
+                                method = 4,
+                                use_ls_mask = True,
+                                landsea_in = np.ascontiguousarray(
+                                coastline_fine.astype(np.int32)[ymin:ymax,xmin:xmax]),
+                                set_ls_as_no_data_flag = False,
+                                use_true_sinks = False,
+                                true_sinks_in = np.zeros((1,1),dtype=np.int32),
+                                next_cell_lat_index_in = np.ascontiguousarray(
+                                np.zeros(rdirs.shape,dtype=np.int32)[ymin:ymax,xmin:xmax]),
+                                next_cell_lon_index_in = np.ascontiguousarray(
+                                np.zeros(rdirs.shape,dtype=np.int32)[ymin:ymax,xmin:xmax]),
+                                rdirs_in = sinkless_rdirs_section,
+                                catchment_nums_in = np.ascontiguousarray(
+                                np.zeros(rdirs.shape,dtype=np.int32)[ymin:ymax,xmin:xmax]),
+                                prefer_non_diagonal_initial_dirs = False,
+                                no_data_in = np.ascontiguousarray(
+                                lsmask_without_coastline.astype(np.int32)[ymin:ymax,xmin:xmax]))
+            sinkless_rdirs = np.zeros(rdirs.shape,dtype=np.float64)
+            sinkless_rdirs[ymin:ymax,xmin:xmax] = sinkless_rdirs_section
+            spillway_height_profile = \
+                SpillwayProfiler.extract_spillway_profile(lake_center,sinkless_rdirs,
+                                                          corrected_heights)
+            spillway_height_profiles.append(spillway_height_profile)
+            spillway_mask = \
+                SpillwayProfiler.extract_spillway_mask(lake_center,sinkless_rdirs)
+            spillway_masks.append(spillway_mask)
+        return spillway_height_profiles,spillway_masks
+
+    def profile_exit_sequence(self,lake_center_sequence,
+                              ocean_basin_numbers_sequence,
+                              rdirs_sequence,
+                              corrected_heights_sequence):
+        spillway_height_profiles_sequence = []
+        spillway_masks_sequence = []
+        for lake_center,ocean_basin_numbers,rdirs,corrected_heights in\
+             zip(lake_center_sequence,ocean_basin_numbers_sequence,
+                 rdirs_sequence,corrected_heights_sequence):
+            spillway_height_profiles,spillway_masks =\
+                self.profile_exits(lake_center,ocean_basin_numbers,rdirs,
+                                   corrected_heights)
+            spillway_height_profiles_sequence.append(spillway_height_profiles)
+            spillway_masks_sequence.append(spillway_masks)
+        return spillway_height_profiles_sequence,spillway_masks_sequence
+
+# if __name__ == '__main__':
+#     from Dynamic_HD_Scripts.base.iodriver import advanced_field_loader
+#     lake_center = (260,500)
+#     ocean_basin_identifier = OutflowBasinIdentifier("30minLatLong")
+#     rdirs = advanced_field_loader(filename="/Users/thomasriddick/Documents/data/"
+#         "lake_analysis_runs/lake_analysis_two_26_Mar_2022/lakes/results/"
+#         "diag_version_41_date_11100/10min_rdirs.nc",
+#                                   time_slice=None,
+#                                   field_type="RiverDirections",
+#                                   fieldname="rdirs",
+#                                   adjust_orientation=True).get_data()
+#     finelsmask = np.logical_or(rdirs == 0,rdirs == -1)
+#     crdirs = advanced_field_loader(filename="/Users/thomasriddick/Documents/data/"
+#         "lake_analysis_runs/lake_analysis_two_26_Mar_2022/lakes/results/"
+#         "diag_version_41_date_11100/30min_rdirs.nc",
+#                                   time_slice=None,
+#                                   field_type="RiverDirections",
+#                                   fieldname="rdirs",
+#                                   adjust_orientation=True).get_data()
+#     lsmask = np.logical_or(crdirs == 0,crdirs == -1)
+#     corrected_heights = advanced_field_loader(filename="/Users/thomasriddick/Documents/data/"
+#         "lake_analysis_runs/lake_analysis_two_26_Mar_2022/lakes/results/"
+#         "diag_version_41_date_11100/10min_corrected_orog.nc",
+#                                               time_slice=None,
+#                                               fieldname="corrected_orog",
+#                                               adjust_orientation=True).get_data()
+#     ocean_basin_identifier.set_lsmask_sequence([lsmask])
+#     ocean_basin_numbers = ocean_basin_identifier.ocean_basin_numbers_sequence[0]
+#     exit_profiler = ExitProfiler()
+#     spillway_height_profiles,spillway_masks =\
+#         exit_profiler.profile_exits(lake_center,ocean_basin_numbers,rdirs,
+#                                    corrected_heights)
+#     print(spillway_height_profiles)
+#     for mask in spillway_masks:
+#         mask[finelsmask] = 2
+#         plt.imshow(mask)
+#         plt.show()
+

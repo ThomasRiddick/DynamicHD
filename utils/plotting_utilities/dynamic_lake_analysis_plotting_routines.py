@@ -23,6 +23,7 @@ from plotting_utilities.lake_analysis_tools import SpillwayProfiler
 from plotting_utilities.lake_analysis_tools import LakeTracker
 from plotting_utilities.lake_analysis_tools import FlowPathExtractor
 from plotting_utilities.lake_analysis_tools import Basins
+from plotting_utilities.dataset_manager import DatasetManager
 from Dynamic_HD_Scripts.utilities import utilities
 from Dynamic_HD_Scripts.base.iodriver import advanced_field_loader
 from Dynamic_HD_Scripts.base.field import Field
@@ -94,6 +95,27 @@ class ZoomSettings():
             return 1
         else:
             return self.scale_factors[new_plot_scale]/self.scale_factors[old_plot_scale]
+
+class DataConfiguration:
+
+    def __init__(self,dataset_catalog_filepath):
+        self.configuration = {}
+        self.dataset_manager = DatasetManager(dataset_catalog_filepath)
+
+    def set_configuration(self,datatype,dataset_name):
+        self.configuration[datatype] = (dataset_name if dataset_name !=
+                                        "None" else None)
+
+    def get_data_for_datatype(self,datatype):
+         if (datatype in self.configuration and
+             self.configuration[datatype] is not None):
+            return self.dataset_manager.\
+                get_dataset(datatype,self.configuration[datatype]).get_data()
+         else:
+            return None,None
+
+    def get_datasets_by_type(self,datatype):
+        return self.dataset_manager.get_datasets_by_type(datatype)
 
 class TimeSequences:
     def __init__(self,dates,
@@ -567,6 +589,7 @@ class InteractiveSpillwayPlots:
 class InteractiveTimeSeriesPlots():
 
     def __init__(self,colors,
+                 data_configuration,
                  **kwargs):
         mpl.use('TkAgg')
         self.setup_sequences(**kwargs)
@@ -576,8 +599,11 @@ class InteractiveTimeSeriesPlots():
                            "volume1":self.lake_volume_plot_one,
                            "volume2":self.lake_volume_plot_two,
                            "outflow1":self.lake_outflow_plot_one,
-                           "outflow2":self.lake_outflow_plot_two }
+                           "outflow2":self.lake_outflow_plot_two,
+                           "sillheight1":self.lake_sill_height_plot_one,
+                           "sillheight2":self.lake_sill_height_plot_two, }
         self.plot_configuration = ["height1" for _ in range(10)]
+        self.data_configuration = data_configuration
         self.figs = []
         self.timeseries_plots = []
         fig = plt.figure(figsize=(9,4),facecolor="#E3F2FD",dpi=200)
@@ -623,6 +649,8 @@ class InteractiveTimeSeriesPlots():
                         lake_volume_two_sequence,
                         lake_outflow_basin_one_sequence,
                         lake_outflow_basin_two_sequence,
+                        lake_sill_heights_one_sequence,
+                        lake_sill_heights_two_sequence,
                         **kwargs):
         self.date_sequence = date_sequence
         self.lake_heights_one_sequence = lake_heights_one_sequence
@@ -631,6 +659,8 @@ class InteractiveTimeSeriesPlots():
         self.lake_volume_two_sequence = lake_volume_two_sequence
         self.lake_outflow_basin_one_sequence = lake_outflow_basin_one_sequence
         self.lake_outflow_basin_two_sequence = lake_outflow_basin_two_sequence
+        self.lake_sill_heights_one_sequence = lake_sill_heights_one_sequence
+        self.lake_sill_heights_two_sequence = lake_sill_heights_two_sequence
 
     def replot(self,**kwargs):
         self.setup_sequences(**kwargs)
@@ -712,12 +742,63 @@ class InteractiveTimeSeriesPlots():
 
         if index == 0:
             self.timeseries_plots[index].ax.set_title("Lake Agassiz Outflow Ocean")
+        data_dates, data_to_add = \
+            self.data_configuration.get_data_for_datatype("agassizoutlet-time")
+        if data_to_add is not None:
+            self.timeseries_plots[index].ax.set_ylim(0,60)
+            data_bars = { name:[] for name in basins.keys() }
+            last_outlet = None
+            last_outlet_start = None
+            for date,entry in zip(data_dates,data_to_add):
+                if last_outlet:
+                    if min(self.date_sequence) > int(date):
+                        last_outlet_end = min(self.date_sequence)
+                    elif max(self.date_sequence) < int(date):
+                        last_outlet_end = max(self.date_sequence)
+                    else:
+                        last_outlet_end = self.date_sequence.index(int(date))
+                    if last_outlet_end != last_outlet_start:
+                        data_bars[last_outlet].append(tuple([last_outlet_start,
+                                                             last_outlet_end -
+                                                             last_outlet_start]))
+                last_outlet = {"E":Basins.NATL,
+                               "N":Basins.ART,
+                               "S":Basins.CAR,
+                               "-":None}[entry.strip()]
+                if min(self.date_sequence) > int(date):
+                    last_outlet_start = min(self.date_sequence)
+                elif max(self.date_sequence) < int(date):
+                    last_outlet_start = max(self.date_sequence)
+                else:
+                    last_outlet_start = self.date_sequence.index(int(date))
+            self.timeseries_plots[index].ax.broken_barh(data_bars[Basins.NATL],(50,9),facecolor="tab:green")
+            self.timeseries_plots[index].ax.broken_barh(data_bars[Basins.ART],(40,9),facecolor="tab:blue")
+            self.timeseries_plots[index].ax.broken_barh(data_bars[Basins.CAR],(30,9),facecolor="tab:red")
+            ypos = (4.5,15.5,24.5,34.5,45.5,54.5)
+            self.timeseries_plots[index].ax.set_yticks(ypos,
+                                                       tuple(["S","NW","E",
+                                                              "Data S","Data NW","Data E"]))
 
     def lake_outflow_plot_one(self,index):
         self.lake_outflow_plot_base(index,self.lake_outflow_basin_one_sequence)
 
     def lake_outflow_plot_two(self,index):
         self.lake_outflow_plot_base(index,self.lake_outflow_basin_two_sequence)
+
+    def lake_sill_height_plot_base(self,index,lake_sill_heights_sequence):
+        self.timeseries_plots[index].ax.clear()
+        seperate_sill_height_sequences = [[] for _ in lake_sill_heights_sequence[0]]
+        for sill_heights in lake_sill_heights_sequence:
+            for i,sill_height in enumerate(sill_heights):
+                seperate_sill_height_sequences[i].append(sill_height)
+        for sill_height_sequence in seperate_sill_height_sequences:
+            self.timeseries_plots[index].ax.plot(sill_height_sequence)
+
+    def lake_sill_height_plot_one(self,index):
+        self.lake_sill_height_plot_base(index,self.lake_sill_heights_one_sequence)
+
+    def lake_sill_height_plot_two(self,index):
+        self.lake_sill_height_plot_base(index,self.lake_sill_heights_two_sequence)
 
 class InteractiveTimeSlicePlots:
 
@@ -732,6 +813,8 @@ class InteractiveTimeSlicePlots:
                  dynamic_configuration=False,
                  lake_points_one=None,
                  lake_points_two=None,
+                 lake_potential_spillway_masks_one=None,
+                 lake_potential_spillway_masks_two=None,
                  corrections=None,
                  **kwargs):
         mpl.use('TkAgg')
@@ -757,6 +840,8 @@ class InteractiveTimeSlicePlots:
                            "corrorog12comp":self.first_vs_second_corrected_orography_plot,
                            "corrorog23comp":self.second_vs_third_corrected_orography_plot,
                            "corrorog34comp":self.third_vs_fourth_corrected_orography_plot,
+                           "orogplusspillway1":self.orography_plus_lake_spillway_one,
+                           "orogplusspillway2":self.orography_plus_lake_spillway_two,
                            "truesinks":self.true_sinks_plot,
                            "lakev1":self.lake_volume_plot_one,
                            "lakev2":self.lake_volume_plot_two,
@@ -775,13 +860,17 @@ class InteractiveTimeSlicePlots:
                            "selflowpath2":self.selected_lake_flowpath_two,
                            "selspill1":self.selected_lake_spillway_one,
                            "selspill2":self.selected_lake_spillway_two,
+                           "selpspill1":self.selected_lake_potential_spillways_one,
+                           "selpspill2":self.selected_lake_potential_spillways_two,
                            "debuglakepoints1":self.debug_lake_points_one}
         self.orog_plot_types  = ["orog1","orog2","orogcomp","sforog",
                                  "morog1","morog2",
                                  "firstcorrorog","secondcorrorog",
                                  "thirdcorrorog","fourthcorrorog",
                                  "corrorog12comp","corrorog23comp",
-                                 "corrorog34comp"]
+                                 "corrorog34comp",
+                                 "orogplusspillway1",
+                                 "orogplusspillway2"]
         self.cflow_plot_types = ["fcflow1","fcflow1","fcflow1comp",
                                  "cflow1","cflow2","comp"]
         self.plot_configuration = [initial_plot_configuration[0] for _ in range(13)]
@@ -814,6 +903,10 @@ class InteractiveTimeSlicePlots:
         self.bounds_lakeoutline = np.linspace(0,N_lakeoutline,N_lakeoutline+1)
         self.norm_lakeoutline = mpl.colors.BoundaryNorm(boundaries=self.bounds_lakeoutline,
                                                   ncolors=256)
+        self.cmap_spillway = mpl.colors.ListedColormap(['red','red'])
+        self.bounds_spillway = list(range(2))
+        self.norm_spillway = mpl.colors.BoundaryNorm(self.bounds_spillway,
+                                                     self.cmap_spillway.N)
         self.zoom_settings = ZoomSettings(zoomed=zoomed,
                                           zoomed_section_bounds=zoomed_section_bounds)
         self.zero_slice_only_one = zero_slice_only_one
@@ -828,6 +921,8 @@ class InteractiveTimeSlicePlots:
         self.corrections = corrections
         self.lake_points_one = lake_points_one
         self.lake_points_two = lake_points_two
+        self.lake_potential_spillway_masks_one = lake_potential_spillway_masks_one
+        self.lake_potential_spillway_masks_two = lake_potential_spillway_masks_two
         if self.lake_points_one is not None:
             self.lake_spillway_masks_one = len(self.lake_points_one)*[None]
             self.lake_flowpath_masks_one = len(self.lake_points_one)*[None]
@@ -959,9 +1054,14 @@ class InteractiveTimeSlicePlots:
                                                               plot_limits["xlims"]])
 
 
-    def replot(self,lake_points_one,lake_points_two,**kwargs):
+    def replot(self,lake_points_one,lake_points_two,
+               lake_potential_spillway_masks_one,
+               lake_potential_spillway_masks_two,
+               **kwargs):
         self.lake_points_one = lake_points_one
         self.lake_points_two = lake_points_two
+        self.lake_potential_spillway_masks_one = self.lake_potential_spillway_masks_one
+        self.lake_potential_spillway_masks_two = self.lake_potential_spillway_masks_two
         if self.lake_points_one is not None:
             self.lake_spillway_masks_one = len(self.lake_points_one)*[None]
             self.lake_flowpath_masks_one = len(self.lake_points_one)*[None]
@@ -1175,6 +1275,30 @@ class InteractiveTimeSlicePlots:
         self.orography_plot_base(index,self.slice_data["orography_one_slice_zoomed"] -
                                        self.slice_data["self.orography_two_slice_zoomed"])
 
+    def orography_plus_lake_spillway_one(self,index):
+        self.timeslice_plots[index].scale = PlotScales.FINE
+        self.orography_plot_base(index,
+                                 self.slice_data["orography_one_slice_zoomed"],
+                                 add_spillway=True,
+                                 lake_points=
+                                 self.lake_points_one,
+                                 spillway_masks=
+                                 self.lake_spillway_masks_one,
+                                 sinkless_rdirs=
+                                 self.slice_data["sinkless_rdirs_one_slice_zoomed"])
+
+    def orography_plus_lake_spillway_two(self,index):
+        self.timeslice_plots[index].scale = PlotScales.FINE
+        self.orography_plot_base(index,
+                                 self.slice_data["orography_two_slice_zoomed"],
+                                 add_spillway=True,
+                                 lake_points=
+                                 self.lake_points_two,
+                                 spillway_masks=
+                                 self.lake_spillway_masks_two,
+                                 sinkless_rdirs=
+                                 self.slice_data["sinkless_rdirs_two_slice_zoomed"])
+
     def super_fine_orography_plot(self,index):
         self.timeslice_plots[index].scale = PlotScales.SUPERFINE
         self.orography_plot_base(index,self.slice_data["super_fine_orography_slice_zoomed"])
@@ -1223,7 +1347,36 @@ class InteractiveTimeSlicePlots:
         self.orography_plot_base(index,modified_orography)
 
 
-    def orography_plot_base(self,index,orography):
+    def orography_plot_base(self,index,orography,add_spillway=False,
+                            lake_points=None,
+                            spillway_masks=None,
+                            sinkless_rdirs=None):
+        if (add_spillway and
+            (lake_points is not None) and
+            (spillway_masks is not None) and
+            (sinkless_rdirs is not None) and
+            (lake_points[self.time_index] is not None)):
+                if spillway_masks[self.time_index] is None:
+                    spillway_masks[self.time_index] = \
+                        SpillwayProfiler.extract_spillway_mask(lake_center=
+                                                               self.zoom_settings.\
+                                                               translate_point_to_zoomed_coords(
+                                                               lake_points[self.time_index],
+                                                               self.zoom_settings.fine_scale_factor),
+                                                               sinkless_rdirs=
+                                                               sinkless_rdirs)
+                spillway_mask = \
+                    np.ma.masked_array(spillway_masks[self.time_index],
+                                       mask=np.logical_not(spillway_masks[self.time_index]))
+                if not self.timeslice_plots[index].plot or self.replot_required:
+                    self.timeslice_plots[index].ax.imshow(spillway_mask,
+                                                          cmap=
+                                                          self.cmap_spillway,
+                                                          norm=self.norm_spillway)
+                else:
+                    self.timeslice_plots[index].plot.set_data(spillway_mask)
+                orography = np.ma.masked_array(orography,
+                                               mask=spillway_masks[self.time_index])
         if not self.timeslice_plots[index].plot or self.replot_required:
             if self.replot_required:
                 self.timeslice_plots[index].ax.clear()
@@ -1238,6 +1391,7 @@ class InteractiveTimeSlicePlots:
             pass
         else:
             self.timeslice_plots[index].plot.set_data(orography)
+
 
     def lake_volume_plot_one(self,index):
         self.lake_volume_plot_base(index,self.slice_data["lake_volumes_one_slice_zoomed"])
@@ -1438,6 +1592,27 @@ class InteractiveTimeSlicePlots:
                                          self.lake_spillway_masks_two,
                                          sinkless_rdirs=
                                          self.slice_data["sinkless_rdirs_two_slice_zoomed"])
+
+    def selected_lake_potential_spillways_base(self,index,lake_potential_spillways):
+        if lake_potential_spillways is not None:
+            self.timeslice_plots[index].ax.clear()
+            if lake_potential_spillways[self.time_index] is not None:
+                spillways_mask = np.copy(lake_potential_spillways[self.time_index][0])
+                for spillway in lake_potential_spillways[self.time_index][1:]:
+                    spillways_mask[spillway] = True
+                self.timeslice_plots[index].plot = \
+                    self.timeslice_plots[index].ax.imshow(spillways_mask,
+                                                          interpolation="none")
+            else:
+                self.timeslice_plots[index].ax.set_visible(False)
+        else:
+            self.timeslice_plots[index].ax.set_visible(False)
+
+    def selected_lake_potential_spillways_one(self,index):
+        self.selected_lake_potential_spillways_base(index,self.lake_potential_spillway_masks_one)
+
+    def selected_lake_potential_spillways_two(self,index):
+        self.selected_lake_potential_spillways_base(index,self.lake_potential_spillway_masks_two)
 
     def debug_lake_points_one(self,index):
         if (self.lake_points_one is not None and

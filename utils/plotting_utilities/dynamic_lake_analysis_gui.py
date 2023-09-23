@@ -46,6 +46,9 @@ class DynamicLakeAnalysisGUI:
         default_corrections_file = ("/Users/thomasriddick/Documents/"
                                     "data/temp/erosion_corrections.txt")
 
+        datatypes = {"agassizoutlet-time":"-TSDSOUTLETDATE-"}
+        reversed_datatypes = {value:key for key,value in datatypes.items()}
+
         def __init__(self,avail_plots,avail_ts_plots,initial_configuration,
                      dbg_plts=None):
                 mpl.use('TkAgg')
@@ -188,7 +191,11 @@ class DynamicLakeAnalysisGUI:
                                                      sg.Column(time_series_subpanel_layout_configure_3,
                                                                key=f'-TSLC3-',visible=False),
                                                      sg.Column(time_series_subpanel_layout_configure_4,
-                                                               key=f'-TSLC4-',visible=False)]]
+                                                               key=f'-TSLC4-',visible=False)],
+                                                     [sg.Text("Agassiz Outlet vs Date"),
+                                                      sg.Combo([],enable_events=True,
+                                                               key='-TSDSOUTLETDATE-',
+                                                               size=(30,1))]]
                 self.visible_column['TS'] = 1
 
                 time_series_tab_layout_wrapper = [[sg.Column(time_series_tab_layout_main_1,
@@ -486,6 +493,17 @@ class DynamicLakeAnalysisGUI:
                                 plot_index = 6 + j
                         event_handler.match_zoom(plot_index)
 
+        def check_for_dataset_combo_events(self,key_prefix,event_handler):
+                if self.event.startswith(f'-{key_prefix}DS'):
+                        self.data_configuration.set_configuration(
+                                self.reversed_datatypes[self.event],
+                                self.values[self.event])
+                        if key_prefix == "TS":
+                                event_handler.step()
+                        else:
+                                raise RuntimeError("Dataset addition not configured for "
+                                                   "given plot type")
+
         def update_date(self,key_prefix,event_handler):
                 nums_for_labels = [1,2,4,6] if (self.event.startswith("-GM") or
                                                 self.event.startswith("-LM")) else [1]
@@ -658,6 +676,12 @@ class DynamicLakeAnalysisGUI:
                                          key='-TABS-',enable_events=True)]]
                 return layout
 
+        def configure_dataset_combos(self):
+                for datatype in self.datatypes.keys():
+                        datasets_for_datatype = ["None"]
+                        datasets_for_datatype.extend(
+                                self.data_configuration.get_datasets_by_type(datatype))
+                        self.window[self.datatypes[datatype]].update(values=datasets_for_datatype)
 
         def setup_figure(self,figure,canvas_key):
                 fig_canvas = FigureCanvasTkAgg(figure,self.window[canvas_key].TKCanvas)
@@ -674,11 +698,13 @@ class DynamicLakeAnalysisGUI:
                                 interactive_timeseries_plots,
                                 interactive_plots,
                                 interactive_lake_plots,spillway_plots,
+                                data_configuration,
                                 setup_configuration_func):
                 self.interactive_timeseries_plots = interactive_timeseries_plots
                 self.interactive_plots = interactive_plots
                 self.interactive_lake_plots = interactive_lake_plots
                 self.spillway_plots = spillway_plots
+                self.data_configuration = data_configuration
                 self.setup_configuration_func = setup_configuration_func
                 self.window = sg.Window("Paleo Lake Analysis Plots",self.layout,finalize=True,
                                         resizable=True,location=(1852+75,0))
@@ -686,6 +712,7 @@ class DynamicLakeAnalysisGUI:
                 self.tbar_canvas = {}
                 for key,fig in figures.items():
                         self.setup_figure(fig,key)
+                self.configure_dataset_combos()
                 self.interactive_plots.set_corrections_file(self.default_corrections_file)
                 self.interactive_lake_plots.set_corrections_file(self.default_corrections_file)
                 self.interactive_plots.\
@@ -721,6 +748,7 @@ class DynamicLakeAnalysisGUI:
                                                                  self.interactive_lake_plots])
                         self.check_for_match_zoom_events("GM",self.interactive_plots)
                         self.check_for_match_zoom_events("LM",self.interactive_lake_plots)
+                        self.check_for_dataset_combo_events("TS",self.interactive_timeseries_plots)
                         if self.event == "-UPDATEPLOTS-":
                                 self.update_plots()
                         if self.event == "-RETURNTODEFAULT-":
