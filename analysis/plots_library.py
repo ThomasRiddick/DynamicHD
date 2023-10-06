@@ -2259,7 +2259,7 @@ class FlowMapPlots(Plots):
         #cbar = plt.colorbar(ctrs)
         cbar = plt.colorbar()
         cbar.ax.set_ylabel('Number of cells flowing to cell')
-        pts.remove_ticks()
+        pts.set_ticks_to_zero()
         if self.save:
             #plt.savefig('')
             pass
@@ -2272,7 +2272,7 @@ class FlowMapPlots(Plots):
                                          first_datasource_name="Reference",
                                          second_datasource_name="Data",
                                          add_title=True,**kwargs):
-        """Help compare two two-colour flow maps"""
+        """Help compare two two-color flow maps"""
         flowmap_ref_field = iodriver.load_field(ref_filename,
                                                 file_type=iodriver.get_file_extension(ref_filename),
                                                 field_type='Generic',
@@ -2312,7 +2312,7 @@ class FlowMapPlots(Plots):
     def FlowMapTwoColourPlotHelper(self,filename,lsmask_filename=None,grid_type='HD',
                                    minflowcutoff=100,flip_data=False,flip_mask=False,
                                    **kwargs):
-        """Help produce two colour flow maps"""
+        """Help produce two color flow maps"""
         flowmap_object = iodriver.load_field(filename,
                                              file_type=iodriver.get_file_extension(filename),
                                              field_type='Generic',
@@ -2343,7 +2343,7 @@ class FlowMapPlots(Plots):
                               'flowmap_etopo1_data_ALG4_sinkless_20160603_114215.nc')
         self.SimpleFlowMapPlotHelper(filename,'LatLong1min')
 
-    def Etopo1FlowMap_two_colour(self):
+    def Etopo1FlowMap_two_color(self):
         filename=os.path.join(self.plots_data_dir,
                               'flowmap_etopo1_data_ALG4_sinkless_20160603_112520.nc')
         lsmask_filename = os.path.join(self.plots_data_dir,
@@ -2352,7 +2352,7 @@ class FlowMapPlots(Plots):
                                         grid_type='LatLong1min',
                                         minflowcutoff=25000,flip_data=True,flip_mask=True)
 
-    def Etopo1FlowMap_two_colour_directly_upscaled_fields(self):
+    def Etopo1FlowMap_two_color_directly_upscaled_fields(self):
         filename=os.path.join(self.plots_data_dir,
                               'flowmap__etopo1_data_ALG4_sinkless_upscale_riverflows'
                               '_and_river_mouth_flows_20160603_114215.nc')
@@ -2363,7 +2363,7 @@ class FlowMapPlots(Plots):
                                         grid_type='HD',
                                         minflowcutoff=50,flip_data=True,flip_mask=False)
 
-    def Corrected_HD_Rdirs_FlowMap_two_colour(self):
+    def Corrected_HD_Rdirs_FlowMap_two_color(self):
         filename=os.path.join(self.plots_data_dir,
                               'flowmap_corrected_HD_rdirs_post_processing_20160427_141158.nc')
         lsmask_filename = os.path.join(self.plots_data_dir,
@@ -2559,7 +2559,7 @@ class FlowMapPlots(Plots):
                                               flip_ref=True,
                                               rotate_ref=True)
 
-    def ICE5G_data_all_points_0k_alg4_two_colour(self):
+    def ICE5G_data_all_points_0k_alg4_two_color(self):
         filename=os.path.join(self.plots_data_dir,
                               'flowmap_ICE5G_data_ALG4_sinkless_0k_20160603_112512.nc')
         lsmask_filename = os.path.join(self.plots_data_dir,
@@ -2569,7 +2569,7 @@ class FlowMapPlots(Plots):
                                         minflowcutoff=250,flip_data=True,
                                         flip_mask=True)
 
-    def ICE5G_data_all_points_21k_alg4_two_colour(self):
+    def ICE5G_data_all_points_21k_alg4_two_color(self):
         filename=os.path.join(self.plots_data_dir,
                               'flowmap_ICE5G_data_ALG4_sinkless_21k_20160603_132009.nc')
         lsmask_filename = os.path.join(self.plots_data_dir,
@@ -2671,7 +2671,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                        flip_glacier_mask=False,
                                                        rotate_glacier_mask=False,
                                                        **grid_kwargs):
-        """Help compare two two-colour flow maps"""
+        """Help compare two two-color flow maps"""
         if grid_type == "LatLong10min":
             scale_factor = 3
         else:
@@ -4312,7 +4312,7 @@ class Ice5GComparisonPlots(OrographyPlots):
         plt.figure()
         plt.contour(self.difference_in_ice_5g_orography,levels=levels)
         plt.title(title)
-        pts.remove_ticks()
+        pts.set_ticks_to_zero()
         #if self.save:
             #plt.savefig('something')
         print("Line contour plot created")
@@ -4327,7 +4327,7 @@ class Ice5GComparisonPlots(OrographyPlots):
         plt.figure()
         plt.contourf(self.difference_in_ice_5g_orography,levels=levels)
         plt.title(title)
-        pts.remove_ticks()
+        pts.set_ticks_to_zero()
         cbar = plt.colorbar()
         cbar.ax.set_ylabel('Orography difference in meters')
         #if self.save:
@@ -4371,7 +4371,7 @@ class Ice5GComparisonPlots(OrographyPlots):
         artists = ufartists + ofartists
         labels  = uflabels + oflabels
         plt.title(title)
-        pts.remove_ticks()
+        pts.set_ticks_to_zero()
         axbounds = ax.get_position()
         #Shrink box by 5%
         ax.set_position([axbounds.x0,axbounds.y0 + axbounds.height*0.05,
@@ -4816,11 +4816,11 @@ def main():
     #flowmapplot.Etopo1FlowMap()
     #flowmapplot.ICE5G_data_all_points_0k()
     #flowmapplot.ICE5G_data_all_points_0k_no_sink_filling()
-    #flowmapplot.ICE5G_data_all_points_0k_alg4_two_colour()
-    #flowmapplot.ICE5G_data_all_points_21k_alg4_two_colour()
-    #flowmapplot.Etopo1FlowMap_two_colour()
-    #flowmapplot.Etopo1FlowMap_two_colour_directly_upscaled_fields()
-    #flowmapplot.Corrected_HD_Rdirs_FlowMap_two_colour()
+    #flowmapplot.ICE5G_data_all_points_0k_alg4_two_color()
+    #flowmapplot.ICE5G_data_all_points_21k_alg4_two_color()
+    #flowmapplot.Etopo1FlowMap_two_color()
+    #flowmapplot.Etopo1FlowMap_two_color_directly_upscaled_fields()
+    #flowmapplot.Corrected_HD_Rdirs_FlowMap_two_color()
     #flowmapplot.ICE5G_data_ALG4_true_sinks_21k_And_ICE5G_data_ALG4_true_sinks_0k_FlowMap_comparison()
     #flowmapplot.Corrected_HD_Rdirs_And_Etopo1_ALG4_sinkless_directly_upscaled_fields_FlowMap_comparison()
     #flowmapplot.Corrected_HD_Rdirs_And_Etopo1_ALG4_true_sinks_directly_upscaled_fields_FlowMap_comparison()

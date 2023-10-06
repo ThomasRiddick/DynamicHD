@@ -14,24 +14,20 @@ class SetCoordsAndHeight:
                 self.window = window
                 self.lat = None
                 self.lon = None
-                self.date = None
                 self.original_height = None
 
         def get_stored_values(self):
-                return self.lat,self.lon,self.date,self.original_height
+                return self.lat,self.lon,self.original_height
 
-        def __call__(self,lat,lon,date,original_height):
+        def __call__(self,lat,lon,original_height):
                 self.lat = lat
                 self.lon = lon
-                self.date = date
                 self.original_height = original_height
                 for key_number in ["1","2","4","6"]:
                         self.window[f'-{self.key_prefix}CORRLAT{key_number}-'].\
                                 update(value=str(lat))
                         self.window[f'-{self.key_prefix}CORRLON{key_number}-'].\
                                 update(value=str(lon))
-                        self.window[f'-{self.key_prefix}CORRDATE{key_number}-'].\
-                                update(value=date)
                         self.window[f'-{self.key_prefix}CORRHEIGHTOUT{key_number}-'].\
                                 update(value=str(original_height))
 
@@ -50,7 +46,11 @@ class DynamicLakeAnalysisGUI:
         default_corrections_file = ("/Users/thomasriddick/Documents/"
                                     "data/temp/erosion_corrections.txt")
 
-        def __init__(self,avail_plots,avail_ts_plots,initial_configuration):
+        datatypes = {"agassizoutlet-time":"-TSDSOUTLETDATE-"}
+        reversed_datatypes = {value:key for key,value in datatypes.items()}
+
+        def __init__(self,avail_plots,avail_ts_plots,initial_configuration,
+                     dbg_plts=None):
                 mpl.use('TkAgg')
                 sg.theme("light blue")
                 self.avail_plots = avail_plots
@@ -58,6 +58,7 @@ class DynamicLakeAnalysisGUI:
                 self.visible_column = {"GM":0, "LM":0, "CS":0, "TS":0}
                 self.configuration = initial_configuration
                 self.initial_configuration = copy.deepcopy(initial_configuration)
+                self.dbg_plts = dbg_plts
                 self.layout = self.setup_layout()
 
         @staticmethod
@@ -95,14 +96,18 @@ class DynamicLakeAnalysisGUI:
                         sg.Text(self.configuration["dates"][-1],key=f'-{key_prefix}ENDDATE-'))
 
         @staticmethod
+        def match_zoom_buttons_factory(key_prefix,number):
+                buttons = []
+                for i in range(number):
+                        buttons.append(sg.Button(f'Match {i+1}',key=f'-{key_prefix}MATCH{number}{i+1}-'))
+                return tuple(buttons)
+
+        @staticmethod
         def corrections_editor_factory(key_prefix,key_number):
                 return [sg.pin(sg.Column([[sg.Text("Correction Editor"),
                                            sg.Checkbox("Select Coordinates",
                                                        key=f'-{key_prefix}SELECTCOORDS{key_number}-',
                                                        enable_events=True),
-                                           sg.Text("Date:"),
-                                           sg.Text("",
-                                                   key=f'-{key_prefix}CORRDATE{key_number}-'),
                                            sg.Text("Coords: "),
                                            sg.Text("lat= "),
                                            sg.Text("",
@@ -115,10 +120,15 @@ class DynamicLakeAnalysisGUI:
                                                    key=f'-{key_prefix}CORRHEIGHTOUT{key_number}-'),
                                            sg.Text("Adjusted Height:"),
                                            sg.InputText("0",
-                                                        key=f'-{key_prefix}CORRHEIGHTIN{key_number}-'),
+                                                        key=f'-{key_prefix}CORRHEIGHTIN{key_number}-',
+                                                        size=10),
+                                           sg.Text("Up until date (exclusive):"),
+                                           sg.InputText("0",
+                                                        key=f'-{key_prefix}CORRUNTILDATE{key_number}-',
+                                                        size=10),
                                            sg.Button("Write",
                                                      key=f'-{key_prefix}WRITECORR{key_number}-'),
-                                           sg.Text("Written: 0 0 0 0",visible=False,
+                                           sg.Text("Written: 0,0,0,0",visible=False,
                                                    key=f'-{key_prefix}WRITTENCORR{key_number}-')]],
                                          key=f"-{key_prefix}CORREDIT{key_number}-",
                                          visible=False))]
@@ -181,7 +191,11 @@ class DynamicLakeAnalysisGUI:
                                                      sg.Column(time_series_subpanel_layout_configure_3,
                                                                key=f'-TSLC3-',visible=False),
                                                      sg.Column(time_series_subpanel_layout_configure_4,
-                                                               key=f'-TSLC4-',visible=False)]]
+                                                               key=f'-TSLC4-',visible=False)],
+                                                     [sg.Text("Agassiz Outlet vs Date"),
+                                                      sg.Combo([],enable_events=True,
+                                                               key='-TSDSOUTLETDATE-',
+                                                               size=(30,1))]]
                 self.visible_column['TS'] = 1
 
                 time_series_tab_layout_wrapper = [[sg.Column(time_series_tab_layout_main_1,
@@ -198,8 +212,8 @@ class DynamicLakeAnalysisGUI:
 
         def prepare_maps(self,key_prefix):
                 maps_tab_layout_main_1 = [[*self.config_and_save_button_factory(key_prefix,'1'),
-                                           *self.stepping_buttons_factory(f"{key_prefix}1"),
-                                           *self.sliders_factory(f"{key_prefix}1")],
+                                           *self.stepping_buttons_factory(f"{key_prefix}1")],
+                                          [*self.sliders_factory(f"{key_prefix}1")],
                                           self.corrections_editor_factory(key_prefix,'1'),
                                           [sg.Canvas(key=f"-{key_prefix}CANVAS1-",
                                                      size=(1800,800))],
@@ -207,7 +221,8 @@ class DynamicLakeAnalysisGUI:
 
                 maps_tab_layout_main_2 =  [[*self.config_and_save_button_factory(key_prefix,'2'),
                                            *self.stepping_buttons_factory(f"{key_prefix}2"),
-                                           *self.sliders_factory(f"{key_prefix}2")],
+                                           *self.match_zoom_buttons_factory(key_prefix,2)],
+                                           [*self.sliders_factory(f"{key_prefix}2")],
                                            self.corrections_editor_factory(key_prefix,'2'),
                                            [sg.Canvas(key=f"-{key_prefix}CANVAS2-",
                                                       size=(1800,800))],
@@ -215,7 +230,8 @@ class DynamicLakeAnalysisGUI:
 
                 maps_tab_layout_main_4 = [[*self.config_and_save_button_factory(key_prefix,'4'),
                                            *self.stepping_buttons_factory(f"{key_prefix}4"),
-                                           *self.sliders_factory(f"{key_prefix}4")],
+                                           *self.match_zoom_buttons_factory(key_prefix,4)],
+                                          [*self.sliders_factory(f"{key_prefix}4")],
                                           self.corrections_editor_factory(key_prefix,'4'),
                                           [sg.Canvas(key=f"-{key_prefix}CANVAS4-",
                                                      size=(1800,800))],
@@ -223,7 +239,8 @@ class DynamicLakeAnalysisGUI:
 
                 maps_tab_layout_main_6 = [[*self.config_and_save_button_factory(key_prefix,'6'),
                                            *self.stepping_buttons_factory(f"{key_prefix}6"),
-                                           *self.sliders_factory(f"{key_prefix}6")],
+                                           *self.match_zoom_buttons_factory(key_prefix,6)],
+                                          [*self.sliders_factory(f"{key_prefix}6")],
                                           self.corrections_editor_factory(key_prefix,'6'),
                                           [sg.Canvas(key=f"-{key_prefix}CANVAS6-",
                                                      size=(1800,800))],
@@ -276,12 +293,16 @@ class DynamicLakeAnalysisGUI:
 
         def prepare_cross_sections(self):
                 cross_sections_tab_layout_configure = [[sg.Button('Back',key='-CSBACK-')],
-                                                       [sg.Radio('Show source 1 data','CSRADIO',default=True,
+                                                       [sg.Radio('Show source 1 data','CSRADIO1',default=True,
                                                                  key="-CSPLOTOPTRADIO1-"),
-                                                        sg.Radio('Show source 2 data','CSRADIO',
+                                                        sg.Radio('Show source 2 data','CSRADIO1',
                                                                  key="-CSPLOTOPTRADIO2-"),
-                                                        sg.Radio('Show data from both sources','CSRADIO',
-                                                                 key="-CSPLOTOPTRADIOBOTH-")]]
+                                                        sg.Radio('Show data from both sources','CSRADIO1',
+                                                                 key="-CSPLOTOPTRADIOBOTH-")],
+                                                        [sg.Radio('Show active spillway only','CSRADIO2',
+                                                                  default=True,key="-CSACTIVEONLY-"),
+                                                         sg.Radio('Show all potential spillways','CSRADIO2',
+                                                                  key="-CSALLPOTENTIAL-")]]
 
                 cross_sections_tab_layout_main_1 = [[sg.Button('Configure',key='-CSCONFIGURE1-'),
                                                      sg.Button('Save'),*self.stepping_buttons_factory(f"CS1")],
@@ -370,6 +391,10 @@ class DynamicLakeAnalysisGUI:
 
         def process_config_main_switches_for_cross_sections(self,event_handler):
                 if self.event == "-CSBACK-":
+                        if self.values["-CSACTIVEONLY-"]:
+                                event_handler.set_plot_active_only(True)
+                        if self.values["-CSALLPOTENTIAL-"]:
+                                event_handler.set_plot_active_only(False)
                         if self.values["-CSPLOTOPTRADIO1-"]:
                                 self.change_visible_column("CSLM",1,[1,2])
                                 self.visible_column["CS"] = 1
@@ -381,7 +406,7 @@ class DynamicLakeAnalysisGUI:
                         if self.values["-CSPLOTOPTRADIOBOTH-"]:
                                 self.change_visible_column("CSLM",2,[1,2])
                                 self.visible_column["CS"] = 2
-                                event_handler.replot()
+                                event_handler.step()
                         self.window['-CSLC-'].update(visible=False)
                 if self.event == "-CSCONFIGURE1-" or self.event == "-CSCONFIGURE2-":
                         self.window['-CSLM1-'].update(visible=False)
@@ -422,6 +447,16 @@ class DynamicLakeAnalysisGUI:
                 if self.event in backward_stepping_events:
                         event_handler.step_back()
                         self.update_date(key_prefix,event_handler)
+                fast_forward_stepping_events = [f'-{key_prefix}'+ event_label + 'FFORWARD' + '-' for
+                                                event_label in ["1","2","4","6"]]
+                fast_backward_stepping_events = [f'-{key_prefix}'+ event_label + 'FREWIND' + '-' for
+                                                 event_label in ["1","2","4","6"]]
+                if (self.event in fast_forward_stepping_events or
+                    self.event in fast_backward_stepping_events):
+                        date = (event_handler.get_current_date() +
+                                (-500 if (self.event in fast_forward_stepping_events) else 500))
+                        event_handler.step_to_date(date)
+                        self.update_date(key_prefix,event_handler)
 
         def check_for_select_coords_events(self,key_prefix,event_handler):
                 labels = [f'-{key_prefix}SELECTCOORDS{event_label}-' for
@@ -434,8 +469,16 @@ class DynamicLakeAnalysisGUI:
                                            event_label in ["1","2","4","6"]]
                 if self.event in labels:
                         key_number = re.match(f"-{key_prefix}WRITECORR(\d)-",self.event).group(1)
-                        event_handler.write_correction(new_height=
-                                                       self.values[f'-{key_prefix}CORRHEIGHTIN{key_number}-'])
+                        output = event_handler.write_correction(new_height=
+                                        self.values[f'-{key_prefix}CORRHEIGHTIN{key_number}-'],
+                                        corr_until_date=
+                                        self.values[f'-{key_prefix}CORRUNTILDATE{key_number}-'])
+                        self.window[f'-{key_prefix}WRITTENCORR{key_number}-'].\
+                                    update(visible=True)
+                        self.window[f'-{key_prefix}WRITTENCORR{key_number}-'].\
+                                    update(value=f'Written: {output}')
+
+
 
         def check_for_correction_source_events(self,event_handlers):
                 if self.event == "-CORRSOURCERADIO1-" or self.event == "-CORRSOURCERADIO2-":
@@ -444,12 +487,30 @@ class DynamicLakeAnalysisGUI:
                                 toggle_use_orog_one_for_original_height(self.event ==
                                                                         "-CORRSOURCERADIO1-")
 
-        def check_for_include_threshold_in_corrected_slices_events(self,event_handlers):
-                if self.event == "-INCLUDETHRESINCORRS-":
-                        for event_handler in event_handlers:
-                                event_handler.\
-                                toggle_include_date_itself_in_corrected_slices(
-                                        self.values["-INCLUDETHRESINCORRS-"])
+        def check_for_match_zoom_events(self,key_prefix,event_handler):
+                if self.event.startswith(f'-{key_prefix}MATCH'):
+                        i = int(self.event[-3])
+                        j = int(self.event[-2])
+                        #Remembering array offset - this is included
+                        #in the equation for plot index
+                        if i == 2:
+                                plot_index = j
+                        if i == 4:
+                                plot_index = 2 + j
+                        if i == 6:
+                                plot_index = 6 + j
+                        event_handler.match_zoom(plot_index)
+
+        def check_for_dataset_combo_events(self,key_prefix,event_handler):
+                if self.event.startswith(f'-{key_prefix}DS'):
+                        self.data_configuration.set_configuration(
+                                self.reversed_datatypes[self.event],
+                                self.values[self.event])
+                        if key_prefix == "TS":
+                                event_handler.step()
+                        else:
+                                raise RuntimeError("Dataset addition not configured for "
+                                                   "given plot type")
 
         def update_date(self,key_prefix,event_handler):
                 nums_for_labels = [1,2,4,6] if (self.event.startswith("-GM") or
@@ -526,7 +587,8 @@ class DynamicLakeAnalysisGUI:
                         update(value="Current file: {}".format(self.values["-CORRECTIONSFILE-"]))
 
         def setup_layout(self):
-                menu_def = [['File',['Exit',]],]
+                menu_def = [['File',['Exit',]],['Debug',['Show Plots']]] \
+                                if self.dbg_plts is not None else [['File',['Exit',]],]
 
                 input_data_tab_layout = [[sg.Frame("",[[sg.Radio('Lake Agassiz', 'LAKERADIO',default=True)]]),
                                           sg.Frame("",[[sg.Radio('Other lake', 'LAKERADIO'),
@@ -539,9 +601,9 @@ class DynamicLakeAnalysisGUI:
                                           sg.InputText('{}'.format(self.configuration["dates"][-1]),
                                                        size=10,key='-ENDDATE-')],
                                           [sg.Text('Run interval: '),
-                                          sg.InputText('{}'.format(self.configuration["dates"][0] -
-                                                                   self.configuration["dates"][1]),size=10,
-                                                                   key="-INTERVAL-")],
+                                           sg.InputText('{}'.format(self.configuration["dates"][0] -
+                                                                    self.configuration["dates"][1]),size=10,
+                                                                    key="-INTERVAL-")],
                                           [sg.Checkbox('Include 0 YBP in list of dates',key="-INCLUDEZEROYBP-")],
                                           [sg.Text('Data source 1:'),
                                            sg.InputText(self.configuration["sequence_one_base_dir"],
@@ -609,10 +671,7 @@ class DynamicLakeAnalysisGUI:
                                     enable_events=True),
                            sg.Radio("Corrections for data source 2","CORRSOURCERADIO",
                                     default=False,key="-CORRSOURCERADIO2-",
-                                    enable_events=True)],
-                           [sg.Checkbox("Include threshold date in corrected slices",
-                                        default=True,key="-INCLUDETHRESINCORRS-",
-                                        enable_events=True)]]
+                                    enable_events=True)]]
 
                 layout = [[sg.Menu(menu_def)],
                           [sg.TabGroup([[sg.Tab('Input data',input_data_tab_layout,key="-ID-"),
@@ -625,6 +684,12 @@ class DynamicLakeAnalysisGUI:
                                          key='-TABS-',enable_events=True)]]
                 return layout
 
+        def configure_dataset_combos(self):
+                for datatype in self.datatypes.keys():
+                        datasets_for_datatype = ["None"]
+                        datasets_for_datatype.extend(
+                                self.data_configuration.get_datasets_by_type(datatype))
+                        self.window[self.datatypes[datatype]].update(values=datasets_for_datatype)
 
         def setup_figure(self,figure,canvas_key):
                 fig_canvas = FigureCanvasTkAgg(figure,self.window[canvas_key].TKCanvas)
@@ -641,11 +706,13 @@ class DynamicLakeAnalysisGUI:
                                 interactive_timeseries_plots,
                                 interactive_plots,
                                 interactive_lake_plots,spillway_plots,
+                                data_configuration,
                                 setup_configuration_func):
                 self.interactive_timeseries_plots = interactive_timeseries_plots
                 self.interactive_plots = interactive_plots
                 self.interactive_lake_plots = interactive_lake_plots
                 self.spillway_plots = spillway_plots
+                self.data_configuration = data_configuration
                 self.setup_configuration_func = setup_configuration_func
                 self.window = sg.Window("Paleo Lake Analysis Plots",self.layout,finalize=True,
                                         resizable=True,location=(1852+75,0))
@@ -653,6 +720,7 @@ class DynamicLakeAnalysisGUI:
                 self.tbar_canvas = {}
                 for key,fig in figures.items():
                         self.setup_figure(fig,key)
+                self.configure_dataset_combos()
                 self.interactive_plots.set_corrections_file(self.default_corrections_file)
                 self.interactive_lake_plots.set_corrections_file(self.default_corrections_file)
                 self.interactive_plots.\
@@ -666,6 +734,8 @@ class DynamicLakeAnalysisGUI:
                         logging.info(self.event)
                         if self.event in (sg.WIN_CLOSED,'Exit'):
                                 break
+                        if self.event == 'Show Plots':
+                                self.dbg_plts.show_debugging_plots()
                         active_tab = self.values['-TABS-'].strip('-')
                         self.process_config_main_switches_for_time_series()
                         self.process_config_main_switches_for_maps(active_tab)
@@ -684,8 +754,9 @@ class DynamicLakeAnalysisGUI:
                         self.check_for_write_correction_events("LM",self.interactive_lake_plots)
                         self.check_for_correction_source_events([self.interactive_plots,
                                                                  self.interactive_lake_plots])
-                        self.check_for_include_threshold_in_corrected_slices_events(
-                                [self.interactive_plots,self.interactive_lake_plots])
+                        self.check_for_match_zoom_events("GM",self.interactive_plots)
+                        self.check_for_match_zoom_events("LM",self.interactive_lake_plots)
+                        self.check_for_dataset_combo_events("TS",self.interactive_timeseries_plots)
                         if self.event == "-UPDATEPLOTS-":
                                 self.update_plots()
                         if self.event == "-RETURNTODEFAULT-":

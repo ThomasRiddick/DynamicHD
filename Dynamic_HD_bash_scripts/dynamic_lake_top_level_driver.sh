@@ -47,6 +47,8 @@ input_lake_volumes_filepath=${13}
 output_lakepara_filepath=${14}
 output_hdstart_filepath=${15}
 output_lakestart_filepath=${16}
+date=${17}
+additional_corrections_filepath=${18}
 
 #Change first_timestep into a bash command for true or false
 shopt -s nocasematch
@@ -61,8 +63,8 @@ fi
 shopt -u nocasematch
 
 #Check number of arguments makes sense
-if [[ $# -ne 16 ]]; then
-	echo "Wrong number of positional arguments ($# supplied), script only takes 16"	1>&2
+if [[ $# -ne 17 ]] && [[ $# -ne 18 ]]; then
+	echo "Wrong number of positional arguments ($# supplied), script only takes 17 or 18"	1>&2
 	exit 1
 fi
 
@@ -96,6 +98,9 @@ input_lake_volumes_filepath=$(find_abs_path $input_lake_volumes_filepath)
 output_lakepara_filepath=$(find_abs_path $output_lakepara_filepath)
 output_hdstart_filepath=$(find_abs_path $output_hdstart_filepath)
 output_lakestart_filepath=$(find_abs_path $output_lakestart_filepath)
+if [[ -z ${additional_corrections_filepath} ]]; then
+	additional_corrections_filepath=$(find_abs_path $additional_corrections_filepath)
+fi
 
 #Check input files, ancillary data directory and diagnostic output directory exist
 
@@ -152,6 +157,13 @@ fi
 if ! [[ -d ${output_lakestart_filepath%/*} ]]; then
 	echo "Filepath of output lakestart.nc does not exist" 1>&2
   exit 1
+fi
+
+
+if [[ -z ${additional_corrections_filepath} ]] &&
+	 ! [[ -e ${additional_corrections_filepath} ]]; then
+	 	echo "Additional corrections file doesn't exist"
+	 	exit 1
 fi
 
 # Define config file
@@ -335,9 +347,15 @@ else
 output_hdstart_argument="-s ${output_hdstart_filepath}"
 fi
 
+if [[ -z ${additional_corrections_filepath} ]]; then
+additional_corrections_argument="-a ${additional_corrections_filepath}"
+else
+additional_corrections_argument=""
+fi
+
 #Run
 echo "Running Dynamic HD Code" 1>&2
-python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_hd_and_dynamic_lake_drivers/dynamic_lake_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${input_lake_volumes_filepath} ${present_day_base_orography_filepath} ${glacier_mask_filepath} ${working_directory}/hdpara_out_temp.nc ${output_lakepara_filepath} ${ancillary_data_directory} ${working_directory} ${output_lakestart_filepath} ${output_hdstart_argument}
+python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_hd_and_dynamic_lake_drivers/dynamic_lake_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${input_lake_volumes_filepath} ${present_day_base_orography_filepath} ${glacier_mask_filepath} ${working_directory}/hdpara_out_temp.nc ${output_lakepara_filepath} ${ancillary_data_directory} ${working_directory} ${output_lakestart_filepath} ${output_hdstart_argument} -d ${date} ${additional_corrections_argument}
 
 #Change lake centers FDIR from 5 to -2
 ncap2 -s 'where(FDIR == 5.0) FDIR=-2.0' hdpara_out_temp.nc ${output_hdpara_filepath}

@@ -128,7 +128,7 @@ class Interactive_Plots:
         self.using_numbers_ref.append(False)
         self.using_numbers_data.append(False)
         self.use_super_fine_orog_flags.append(False)
-        rc_pts.plot_catchment(ax_catch, self.catchment_section, cax=cax_cct,remove_ticks_flag=False,
+        rc_pts.plot_catchment(ax_catch, self.catchment_section, cax=cax_cct,set_ticks_to_zero_flag=False,
                               format_coords=True,
                               lat_offset=self.catchment_bounds[0],
                               lon_offset=self.catchment_bounds[2],
@@ -344,7 +344,7 @@ class Update:
         ref_ylim = ax_catch.get_ylim()
         plt.cla()
         rc_pts.plot_catchment(ax_catch, self.po.catchment_sections[self.orog_plot_num],
-                              cax=None,legend=False,remove_ticks_flag=False,
+                              cax=None,legend=False,set_ticks_to_zero_flag=False,
                               format_coords=True,
                               lat_offset=self.lat_offset,
                               lon_offset=self.lon_offset,
@@ -443,7 +443,7 @@ class Update:
                                                         ,catchment_rmap_section)
             if not self.po.use_super_fine_orog_flags[self.orog_plot_num]:
                 rc_pts.plot_flowmap(ax, section=catchment_rmap_section,reduced_map=True,cax=cax_fmap,interpolation='none',
-                                    alternative_colors=True,remove_ticks_flag=False)
+                                    alternative_colors=True,set_ticks_to_zero_flag=False)
             elif (len(self.po.super_fine_data_flowtocellfield_sections) != 0 and
                   self.po.overlay_flowmap_on_super_fine_orog_buttons_list[self.orog_plot_num].lines[0][0].get_visible()):
                 super_fine_catchment_rmap_section = rc_pts.select_rivermaps_section(self.po.super_fine_data_flowtocellfield_sections[self.orog_plot_num],
@@ -461,9 +461,9 @@ class Update:
                                                                        ,super_fine_catchment_rmap_section)
                 super_fine_catchment_rmap_section[super_fine_catchment_rmap_section == 3] = 4
                 rc_pts.plot_flowmap(ax, section=super_fine_catchment_rmap_section,reduced_map=True,cax=cax_fmap,interpolation='none',
-                                    alternative_colors=True,remove_ticks_flag=False)
+                                    alternative_colors=True,set_ticks_to_zero_flag=False)
             rc_pts.plot_flowmap(ax_catch, section=catchment_rmap_section,reduced_map=True,cax=cax_fmap,interpolation='none',
-                                alternative_colors=True,remove_ticks_flag=False)
+                                alternative_colors=True,set_ticks_to_zero_flag=False)
         else:
             cax_fmap.set_visible(False)
             ax13.set_visible(False)

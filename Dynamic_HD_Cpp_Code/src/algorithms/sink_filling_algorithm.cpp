@@ -162,7 +162,8 @@ void sink_filling_algorithm_4_latlon::setup_flags(bool set_ls_as_no_data_flag_in
 }
 
 void sink_filling_algorithm::setup_fields(double* orography_in, bool* landsea_in,
-									      bool* true_sinks_in,grid_params* grid_params)
+									      bool* true_sinks_in,grid_params* grid_params,
+									      bool* no_data_in)
 {
 	_grid_params = grid_params;
 	if (tarasov_mod) _grid_params->set_nowrap(true);
@@ -172,6 +173,14 @@ void sink_filling_algorithm::setup_fields(double* orography_in, bool* landsea_in
 	completed_cells->set_all(false);
 	landsea = landsea_in ? new field<bool>(landsea_in,grid_params): nullptr;
 	true_sinks = true_sinks_in ? new field<bool>(true_sinks_in,grid_params): nullptr;
+	if (no_data_in) {
+		field<bool>* no_data = new field<bool>(no_data_in,grid_params);
+		_grid->for_all([&](coords* coords_in) {
+			if((*no_data)(coords_in)) (*orography)(coords_in) = no_data_value;
+			delete coords_in;
+		});
+		delete no_data;
+	}
 	tarasov_path_initial_heights = tarasov_mod ? new field<double>(grid_params): nullptr;
 	catchment_nums = tarasov_mod ? new field<int>(grid_params): nullptr;
 	tarasov_landsea_neighbors = tarasov_mod ? new field<bool>(grid_params): nullptr;
@@ -192,9 +201,10 @@ void sink_filling_algorithm::setup_fields(double* orography_in, bool* landsea_in
 
 void sink_filling_algorithm_4::setup_fields(double* orography_in, bool* landsea_in,
 								            bool* true_sinks_in, grid_params* grid_params_in,
-											int* catchment_nums_in)
+											int* catchment_nums_in,bool* no_data_in)
 {
-	sink_filling_algorithm::setup_fields(orography_in,landsea_in,true_sinks_in,grid_params_in);
+	sink_filling_algorithm::setup_fields(orography_in,landsea_in,true_sinks_in,grid_params_in,
+	                                     no_data_in);
 	if (! catchment_nums) catchment_nums = new field<int>(catchment_nums_in,grid_params_in);
 }
 
@@ -202,10 +212,11 @@ void sink_filling_algorithm_4_latlon::setup_fields(double* orography_in, bool* l
 								            	   bool* true_sinks_in, int * next_cell_lat_index_in,
 												   int * next_cell_lon_index_in,
 												   grid_params* grid_params_in,
-												   short* rdirs_in, int* catchment_nums_in)
+												   short* rdirs_in, int* catchment_nums_in,
+									         bool* no_data_in)
 {
 	sink_filling_algorithm_4::setup_fields(orography_in,landsea_in,true_sinks_in,grid_params_in,
-										   catchment_nums_in);
+										   catchment_nums_in,no_data_in);
 	rdirs = new field<short>(rdirs_in,grid_params_in);
 	next_cell_lat_index = new field<int>(next_cell_lat_index_in,grid_params_in);
 	next_cell_lon_index = new field<int>(next_cell_lon_index_in,grid_params_in);
@@ -216,24 +227,28 @@ void sink_filling_algorithm_4_latlon::setup_fields(double* orography_in, bool* l
 void sink_filling_algorithm_4_icon_single_index::setup_fields(double* orography_in, bool* landsea_in,
 								            	   															bool* true_sinks_in, int * next_cell_index_in,
 												   																	 	grid_params* grid_params_in,
-												   																	  int* catchment_nums_in) {
+												   																	  int* catchment_nums_in,
+									      																			bool* no_data_in) {
 	sink_filling_algorithm_4::setup_fields(orography_in,landsea_in,true_sinks_in,grid_params_in,
-										   									catchment_nums_in);
+										   									catchment_nums_in,no_data_in);
 	next_cell_index = new field<int>(next_cell_index_in,grid_params_in);
 	auto* grid_icon_single_index = dynamic_cast<icon_single_index_grid*>(_grid);
 	ncells = grid_icon_single_index->get_npoints();
 }
 
 void sink_filling_algorithm_1_latlon::setup_fields(double* orography_in, bool* landsea_in,
-									      	  	   bool* true_sinks_in,grid_params* grid_params){
-	sink_filling_algorithm::setup_fields(orography_in,landsea_in,true_sinks_in,grid_params);
+									      	  	   bool* true_sinks_in,grid_params* grid_params,
+									      				 bool* no_data_in){
+	sink_filling_algorithm::setup_fields(orography_in,landsea_in,true_sinks_in,grid_params,
+	                                     no_data_in);
 	auto* grid_latlon = dynamic_cast<latlon_grid*>(_grid);
 	nlat = grid_latlon->get_nlat(); nlon = grid_latlon->get_nlon();
 }
 
 void sink_filling_algorithm_1_icon_single_index::setup_fields(double* orography_in, bool* landsea_in,
-									      	  	   						bool* true_sinks_in,grid_params* grid_params) {
-	sink_filling_algorithm::setup_fields(orography_in,landsea_in,true_sinks_in,grid_params);
+									      	  	   						bool* true_sinks_in,grid_params* grid_params,
+									      										bool* no_data_in) {
+	sink_filling_algorithm::setup_fields(orography_in,landsea_in,true_sinks_in,grid_params,no_data_in);
 	auto* grid_icon_single_index = dynamic_cast<icon_single_index_grid*>(_grid);
 	ncells = grid_icon_single_index->get_npoints();
 }

@@ -58,7 +58,7 @@ def make_basic_flowmap_comparison_plot(ax,flowmap_ref_field,flowmap_data_field,m
     ax.imshow(flowmap_ref_field,cmap=cmap,norm=norm,interpolation='none',rasterized=True)
     if add_title:
         plt.title('Cells with cumulative flow greater than or equal to {0}'.format(minflowcutoff))
-    pts.remove_ticks(ax)
+    pts.set_ticks_to_zero(ax)
     ax.format_coord = pts.OrogCoordFormatter(0,0)
     mappable = mpl.cm.ScalarMappable(norm=norm,cmap=cmap)
     mappable.set_array(flowmap_ref_field)
@@ -131,7 +131,7 @@ def combine_image(original_image,catchment_section,use_alt_color,alt_color_num,u
 def plot_composite_image(ax,image,minflowcutoff,first_datasource_name,second_datasource_name,
                          use_single_color_for_discrepancies,use_only_one_color_for_flowmap,
                          use_title=True,colors=None,use_only_one_common_catchment_label=True,
-                         difference_in_catchment_label="Discrepancy",remove_ticks=False,
+                         difference_in_catchment_label="Discrepancy",set_ticks_to_zero=False,
                          flowmap_grid=None,plot_glaciers=False,second_ls_mask=False,
                          no_extra_sea=True,show_true_sinks=False):
     if second_ls_mask:
@@ -224,8 +224,8 @@ def plot_composite_image(ax,image,minflowcutoff,first_datasource_name,second_dat
     ax.imshow(image,cmap=cmap,norm=norm,interpolation='none',rasterized=True)
     if use_title:
         plt.title('Cells with cumulative flow greater than or equal to {0}'.format(minflowcutoff))
-    if remove_ticks:
-        pts.remove_ticks(ax)
+    if set_ticks_to_zero:
+        pts.set_ticks_to_zero(ax)
     else:
             axis_tick_label_scale_factor=\
             flowmap_grid.get_scale_factor_for_geographic_coords() if flowmap_grid is not None else 0.5

@@ -12,6 +12,13 @@ cdef extern from "drivers/fill_sinks.cpp":
                                             int* true_sinks_in, int add_slope, double epsilon,
                                             int* next_cell_lat_index_in,int* next_cell_lon_index_in, 
                                             double* rdirs_in, int* catchment_nums_in,
+                                            bint prefer_non_diagonal_initial_dirs,
+                                            int* no_data_in)
+    void latlon_fill_sinks_cython_interface(double* orography_in, int nlat, int nlon, int method, bint use_ls_mask,
+                                            int* landsea_in, bint set_ls_as_no_data_flag, int use_true_sinks,
+                                            int* true_sinks_in, int add_slope, double epsilon,
+                                            int* next_cell_lat_index_in,int* next_cell_lon_index_in,
+                                            double* rdirs_in, int* catchment_nums_in,
                                             bint prefer_non_diagonal_initial_dirs)
     void latlon_fill_sinks_cython_interface(double* orography_in, int nlat, int nlon, int method, bint use_ls_mask,
                                             int* landsea_in, bint set_ls_as_no_data_flag)
@@ -29,7 +36,8 @@ def fill_sinks_cpp_func(np.ndarray[double,ndim=2,mode='c'] orography_array,
                         np.ndarray[int,ndim=2,mode='c'] next_cell_lon_index_in = None,
                         np.ndarray[double,ndim=2,mode='c'] rdirs_in = None,
                         np.ndarray[int,ndim=2,mode='c'] catchment_nums_in = None,
-                        bint prefer_non_diagonal_initial_dirs = False):
+                        bint prefer_non_diagonal_initial_dirs = False,
+                        np.ndarray[int,ndim=2,mode='c'] no_data_in = None):
     """Call the C++ cython interface function from cython with appropriate arguments.
    
     The version of the C++ function call depends on the arguments to this function; also find
@@ -49,10 +57,18 @@ def fill_sinks_cpp_func(np.ndarray[double,ndim=2,mode='c'] orography_array,
         latlon_fill_sinks_cython_interface(&orography_array[0,0],nlat,nlon,method,use_ls_mask,
                                            &landsea_in[0,0],set_ls_as_no_data_flag,use_true_sinks, 
                                            &true_sinks_in[0,0],add_slope,epsilon)
+    elif no_data_in is None:
+        latlon_fill_sinks_cython_interface(&orography_array[0,0],nlat,nlon,method,use_ls_mask,
+                                           &landsea_in[0,0],set_ls_as_no_data_flag,use_true_sinks,
+                                           &true_sinks_in[0,0], add_slope, epsilon,
+                                           &next_cell_lat_index_in[0,0], &next_cell_lon_index_in[0,0],
+                                           &rdirs_in[0,0], &catchment_nums_in[0,0],
+                                           prefer_non_diagonal_initial_dirs)
     else:
         latlon_fill_sinks_cython_interface(&orography_array[0,0],nlat,nlon,method,use_ls_mask,
                                            &landsea_in[0,0],set_ls_as_no_data_flag,use_true_sinks,
                                            &true_sinks_in[0,0], add_slope, epsilon,
                                            &next_cell_lat_index_in[0,0], &next_cell_lon_index_in[0,0], 
                                            &rdirs_in[0,0], &catchment_nums_in[0,0],
-                                           prefer_non_diagonal_initial_dirs)
+                                           prefer_non_diagonal_initial_dirs,
+                                           &no_data_in[0,0])

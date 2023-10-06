@@ -64,7 +64,7 @@ class LatAxisFormatter:
         return calculate_lat_label(y,self.yoffset,self.scale_factor,
                                    precision=self.precision)
 
-def remove_ticks(ax=None):
+def set_ticks_to_zero(ax=None):
     """Remove all the ticks a set of axes
 
     The ax argument is optional; if not specified then get the current axes.
