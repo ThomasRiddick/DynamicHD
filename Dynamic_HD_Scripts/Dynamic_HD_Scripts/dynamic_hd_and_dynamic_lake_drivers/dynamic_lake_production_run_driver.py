@@ -360,12 +360,13 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                 self.output_lakeparas_filepath,self.output_lakestart_filepath)
 
     def no_intermediaries_dynamic_lake_driver(self):
-        """Generates necessary files for runing a dynamic lake model
+        """Generates necessary files for running a dynamic lake model
 
         Arguments: None
         Returns: nothing
         """
 
+        raise RuntimeError("Writing Jumps not implemented!")
         config = self._read_and_validate_config()
         print_timing_info = config.getboolean("general_options","print_timing_information")
         if print_timing_info:
@@ -1138,7 +1139,7 @@ def parse_arguments():
                         help='Current date for date based orography corrections',
                         type=str,
                         default=None)
-    parser.add_argument('-a' '--additional-orography-corrections-filepath',
+    parser.add_argument('-a','--additional-orography-corrections-filepath',
                         help='Field with custom relative orography corrections to apply',
                         type=str,
                         default=None)

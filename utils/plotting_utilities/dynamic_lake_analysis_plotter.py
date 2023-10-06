@@ -96,6 +96,12 @@ class DynamicLakeAnalysisPlotter:
                                                    self.lake_stats_one["Agassiz"]["lake_points"],
                                                    lake_center_two_sequence=
                                                    self.lake_stats_two["Agassiz"]["lake_points"],
+                                                   lake_potential_spillway_heights_one_sequence=
+                                                   self.lake_stats_one["Agassiz"]\
+                                                   ["lake_spillway_height_profiles"],
+                                                   lake_potential_spillway_heights_two_sequence=
+                                                   self.lake_stats_two["Agassiz"]\
+                                                   ["lake_spillway_height_profiles"],
                                                    **vars(self.time_sequences))
             self.interactive_timeseries_plots.replot(lake_heights_one_sequence=
                                                      self.lake_stats_one["Agassiz"]["lake_heights"],
@@ -255,7 +261,13 @@ class DynamicLakeAnalysisPlotter:
                                      orography_one_sequence=
                                      self.time_sequences.orography_one_sequence,
                                      orography_two_sequence=
-                                     self.time_sequences.orography_two_sequence)
+                                     self.time_sequences.orography_two_sequence,
+                                     lake_potential_spillway_heights_one_sequence=
+                                     self.lake_stats_one["Agassiz"]\
+                                     ["lake_spillway_height_profiles"],
+                                     lake_potential_spillway_heights_two_sequence=
+                                     self.lake_stats_two["Agassiz"]\
+                                     ["lake_spillway_height_profiles"],)
         figures = {**figures,**build_dict(self.interactive_spillway_plots.figs,[1,2],"CS")}
         self.interactive_timeseries_plots = \
             InteractiveTimeSeriesPlots(self.colors,

@@ -459,7 +459,7 @@ class ExitProfiler:
                        EndPoints((274,457),(630,187),True)]
     reference_lake_center = (260,500)
     section_bounds = ((0,0),(450,750))
-    height_bound = 1000.0
+    height_bound = 8000.0
 
     @classmethod
     def prepare_orography(cls,lake_center,orography,lsmask):
@@ -526,7 +526,7 @@ class ExitProfiler:
                                 np.zeros(rdirs.shape,dtype=np.int32)[ymin:ymax,xmin:xmax]),
                                 prefer_non_diagonal_initial_dirs = False,
                                 no_data_in = np.ascontiguousarray(
-                                lsmask_without_coastline.astype(np.int32)[ymin:ymax,xmin:xmax]))
+                                area_to_exclude.astype(np.int32)[ymin:ymax,xmin:xmax]))
             sinkless_rdirs = np.zeros(rdirs.shape,dtype=np.float64)
             sinkless_rdirs[ymin:ymax,xmin:xmax] = sinkless_rdirs_section
             spillway_height_profile = \

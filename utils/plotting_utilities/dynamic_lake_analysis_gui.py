@@ -293,12 +293,16 @@ class DynamicLakeAnalysisGUI:
 
         def prepare_cross_sections(self):
                 cross_sections_tab_layout_configure = [[sg.Button('Back',key='-CSBACK-')],
-                                                       [sg.Radio('Show source 1 data','CSRADIO',default=True,
+                                                       [sg.Radio('Show source 1 data','CSRADIO1',default=True,
                                                                  key="-CSPLOTOPTRADIO1-"),
-                                                        sg.Radio('Show source 2 data','CSRADIO',
+                                                        sg.Radio('Show source 2 data','CSRADIO1',
                                                                  key="-CSPLOTOPTRADIO2-"),
-                                                        sg.Radio('Show data from both sources','CSRADIO',
-                                                                 key="-CSPLOTOPTRADIOBOTH-")]]
+                                                        sg.Radio('Show data from both sources','CSRADIO1',
+                                                                 key="-CSPLOTOPTRADIOBOTH-")],
+                                                        [sg.Radio('Show active spillway only','CSRADIO2',
+                                                                  default=True,key="-CSACTIVEONLY-"),
+                                                         sg.Radio('Show all potential spillways','CSRADIO2',
+                                                                  key="-CSALLPOTENTIAL-")]]
 
                 cross_sections_tab_layout_main_1 = [[sg.Button('Configure',key='-CSCONFIGURE1-'),
                                                      sg.Button('Save'),*self.stepping_buttons_factory(f"CS1")],
@@ -387,6 +391,10 @@ class DynamicLakeAnalysisGUI:
 
         def process_config_main_switches_for_cross_sections(self,event_handler):
                 if self.event == "-CSBACK-":
+                        if self.values["-CSACTIVEONLY-"]:
+                                event_handler.set_plot_active_only(True)
+                        if self.values["-CSALLPOTENTIAL-"]:
+                                event_handler.set_plot_active_only(False)
                         if self.values["-CSPLOTOPTRADIO1-"]:
                                 self.change_visible_column("CSLM",1,[1,2])
                                 self.visible_column["CS"] = 1
@@ -398,7 +406,7 @@ class DynamicLakeAnalysisGUI:
                         if self.values["-CSPLOTOPTRADIOBOTH-"]:
                                 self.change_visible_column("CSLM",2,[1,2])
                                 self.visible_column["CS"] = 2
-                                event_handler.replot()
+                                event_handler.step()
                         self.window['-CSLC-'].update(visible=False)
                 if self.event == "-CSCONFIGURE1-" or self.event == "-CSCONFIGURE2-":
                         self.window['-CSLM1-'].update(visible=False)
