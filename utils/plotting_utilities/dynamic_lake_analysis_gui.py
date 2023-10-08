@@ -45,6 +45,7 @@ class DynamicLakeAnalysisGUI:
                                                             "41","42","43","44"])}
         default_corrections_file = ("/Users/thomasriddick/Documents/"
                                     "data/temp/erosion_corrections.txt")
+        plots_in_column = { 1:[0], 2:[1,2], 4:[3,4,5,6], 6:[7,8,9,10,11,12]}
 
         datatypes = {"agassizoutlet-time":"-TSDSOUTLETDATE-"}
         reversed_datatypes = {value:key for key,value in datatypes.items()}
@@ -56,6 +57,7 @@ class DynamicLakeAnalysisGUI:
                 self.avail_plots = avail_plots
                 self.avail_ts_plots = avail_ts_plots
                 self.visible_column = {"GM":0, "LM":0, "CS":0, "TS":0}
+                self.visible_column_changed = {"GM":False, "LM":False}
                 self.configuration = initial_configuration
                 self.initial_configuration = copy.deepcopy(initial_configuration)
                 self.dbg_plts = dbg_plts
@@ -329,7 +331,7 @@ class DynamicLakeAnalysisGUI:
                                 self.window[f'-{prefix}CORREDIT{label}-'].update(visible=
                                                                         self.values["-SHOWCORREDITOR-"])
 
-        def process_config_main_switches_for_maps(self,key_prefix):
+        def process_config_main_switches_for_maps(self,key_prefix,event_handler):
                 if self.event.startswith("-GM") or self.event.startswith("-LM"):
                         if self.event == f"-{key_prefix}BACK-":
                                 if self.values[f'-{key_prefix}PLOTNUMRADIO1-']:
@@ -345,6 +347,10 @@ class DynamicLakeAnalysisGUI:
                                         self.change_visible_column(f'{key_prefix}LM',6)
                                         self.visible_column[key_prefix] = 6
                                 self.window[f'-{key_prefix}LC-'].update(visible=False)
+                                if self.visible_column_changed[key_prefix]:
+                                        event_handler.update_active_plots(self.plots_in_column[
+                                                                          self.visible_column[key_prefix]])
+                                        self.visible_column_changed[key_prefix] = False
                         if (self.event == f'-{key_prefix}CONFIGURE1-' or self.event == f'-{key_prefix}CONFIGURE2-' or
                             self.event == f'-{key_prefix}CONFIGURE4-' or self.event == f'-{key_prefix}CONFIGURE6-'):
                                 self.change_visible_column(f'{key_prefix}LM',0)
@@ -352,12 +358,16 @@ class DynamicLakeAnalysisGUI:
                                 self.visible_column[key_prefix] = 0
                         if self.event == f'-{key_prefix}PLOTNUMRADIO1-':
                                 self.change_visible_column(f'{key_prefix}LC',1)
+                                self.visible_column_changed[key_prefix] = True
                         if self.event == f'-{key_prefix}PLOTNUMRADIO2-':
                                 self.change_visible_column(f'{key_prefix}LC',2)
+                                self.visible_column_changed[key_prefix] = True
                         if self.event == f'-{key_prefix}PLOTNUMRADIO4-':
                                 self.change_visible_column(f'{key_prefix}LC',4)
+                                self.visible_column_changed[key_prefix] = True
                         if self.event == f'-{key_prefix}PLOTNUMRADIO6-':
                                 self.change_visible_column(f'{key_prefix}LC',6)
+                                self.visible_column_changed[key_prefix] = True
 
         def process_config_main_switches_for_time_series(self):
                 if self.event.startswith("-TS"):
@@ -737,26 +747,31 @@ class DynamicLakeAnalysisGUI:
                         if self.event == 'Show Plots':
                                 self.dbg_plts.show_debugging_plots()
                         active_tab = self.values['-TABS-'].strip('-')
-                        self.process_config_main_switches_for_time_series()
-                        self.process_config_main_switches_for_maps(active_tab)
-                        self.process_config_main_switches_for_cross_sections(self.spillway_plots)
-                        self.check_for_set_combo_events("GM",self.interactive_plots)
-                        self.check_for_set_combo_events("LM",self.interactive_lake_plots)
-                        self.check_for_set_combo_events("TS",self.interactive_timeseries_plots)
-                        self.check_for_stepping_events("GM",self.interactive_plots)
-                        self.check_for_stepping_events("LM",self.interactive_lake_plots)
-                        self.check_for_stepping_events("CS",self.spillway_plots)
-                        self.check_for_slider_events("GM",self.interactive_plots)
-                        self.check_for_slider_events("LM",self.interactive_lake_plots)
-                        self.check_for_select_coords_events("GM",self.interactive_plots)
-                        self.check_for_select_coords_events("LM",self.interactive_lake_plots)
-                        self.check_for_write_correction_events("GM",self.interactive_plots)
-                        self.check_for_write_correction_events("LM",self.interactive_lake_plots)
+                        if active_tab == "TS":
+                                self.process_config_main_switches_for_time_series()
+                                self.check_for_set_combo_events("TS",self.interactive_timeseries_plots)
+                                self.check_for_dataset_combo_events("TS",self.interactive_timeseries_plots)
+                        elif active_tab == "GM":
+                                self.process_config_main_switches_for_maps("GM",self.interactive_plots)
+                                self.check_for_set_combo_events("GM",self.interactive_plots)
+                                self.check_for_stepping_events("GM",self.interactive_plots)
+                                self.check_for_slider_events("GM",self.interactive_plots)
+                                self.check_for_select_coords_events("GM",self.interactive_plots)
+                                self.check_for_write_correction_events("GM",self.interactive_plots)
+                                self.check_for_match_zoom_events("GM",self.interactive_plots)
+                        elif active_tab == "LM":
+                                self.process_config_main_switches_for_maps("LM",self.interactive_lake_plots)
+                                self.check_for_set_combo_events("LM",self.interactive_lake_plots)
+                                self.check_for_stepping_events("LM",self.interactive_lake_plots)
+                                self.check_for_slider_events("LM",self.interactive_lake_plots)
+                                self.check_for_select_coords_events("LM",self.interactive_lake_plots)
+                                self.check_for_write_correction_events("LM",self.interactive_lake_plots)
+                                self.check_for_match_zoom_events("LM",self.interactive_lake_plots)
+                        elif active_tab == "CS":
+                                self.process_config_main_switches_for_cross_sections(self.spillway_plots)
+                                self.check_for_stepping_events("CS",self.spillway_plots)
                         self.check_for_correction_source_events([self.interactive_plots,
                                                                  self.interactive_lake_plots])
-                        self.check_for_match_zoom_events("GM",self.interactive_plots)
-                        self.check_for_match_zoom_events("LM",self.interactive_lake_plots)
-                        self.check_for_dataset_combo_events("TS",self.interactive_timeseries_plots)
                         if self.event == "-UPDATEPLOTS-":
                                 self.update_plots()
                         if self.event == "-RETURNTODEFAULT-":
