@@ -27,6 +27,7 @@ from plotting_utilities.dataset_manager import DatasetManager
 from Dynamic_HD_Scripts.utilities import utilities
 from Dynamic_HD_Scripts.base.iodriver import advanced_field_loader
 from Dynamic_HD_Scripts.base.field import Field
+from Dynamic_HD_Scripts.base.field import RiverDirections
 from os.path import join, isfile
 from enum import Enum
 import warnings
@@ -120,30 +121,57 @@ class DataConfiguration:
 class TimeSequence:
 
     def __init__(self,filepaths,fieldname,filename=None,
-                 field_type='Generic'):
-        self.sequence_data = [None]*len(filepaths)
+                 change_to_dtype=None,sequence_data = None):
+        if sequence_data is None:
+            self.sequence_data = [None]*len(filepaths)
+        else:
+            self.sequence_data = sequence_data
         self.filepaths = filepaths
         self.fieldname = fieldname
-        self.field_type = field_type
+        self.filename = filename
+        self.change_to_dtype = change_to_dtype
 
     def __len__(self):
         return len(self.sequence_data)
 
-    def __get_item__(self,i):
+    def __getitem__(self,i):
         if self.sequence_data[i] is None:
             self.sequence_data[i] = self.load_element(i)
         return self.sequence_data[i]
 
-    def load_element(self,i)
-        return advanced_field_loader(filename=
-                                     join(self.filepaths[i],self.filename)
-                                     if (self.filename is not None) else
-                                     self.filepath[i],
-                                     field_type=self.field_type,
-                                     time_slice=None,
-                                     fieldname=self.fieldname,
-                                     adjust_orientation=True)
+    def load_element(self,i):
+        field = advanced_field_loader(filename=
+                                      join(self.filepaths[i],self.filename)
+                                      if (self.filename is not None) else
+                                      self.filepaths[i],
+                                      time_slice=None,
+                                      fieldname=self.fieldname,
+                                      adjust_orientation=True)
+        if self.change_to_dtype is not None:
+            field.change_dtype(self.change_to_dtype)
+        return field.get_data()
 
+    def get_subsequence(self,start_index,stop_index):
+        return TimeSequence(self.filepaths[start_index:stop_index],
+                            self.fieldname,self.filename,self.change_to_dtype,
+                            self.sequence_data[start_index:stop_index])
+
+    def get_subsequences(self,block_size=20):
+        subsequences = []
+        for i in range(0,len(self.sequence_data),step=block_size):
+            subsequences.append(self.get_subsequence(i,min(len(self.sequence_data),
+                                                           i+block_size)))
+        return subsequences
+
+class DerivedTimeSequence(TimeSequence):
+
+    def __init__(self,time_sequence,func):
+        self.sequence_data = [None]*len(time_sequence)
+        self.time_sequence = time_sequence
+        self.func = func
+
+    def load_element(self,i):
+        return self.func(self.time_sequence[i])
 
 class TimeSequences:
     def __init__(self,dates,
@@ -161,6 +189,7 @@ class TimeSequences:
         self.date_sequence = dates
         self.sequence_one_results_base_dirs = []
         self.sequence_two_results_base_dirs = []
+        self.glacier_mask_filepaths = []
         for date in self.date_sequence:
             #Note latest version may differ between dates hence calculate this
             #on a date by date basis
@@ -181,32 +210,21 @@ class TimeSequences:
             sequence_one_results_base_dir = (sequence_one_base_dir +
                                              "lakes/results/diag_version_{}_date_{}".\
                                                format(sequence_one_lakes_version,date))
-            sequence_one_results_base_dirs.append(sequence_one_results_base_dir)
+            self.sequence_one_results_base_dirs.append(sequence_one_results_base_dir)
             sequence_two_results_base_dir = (sequence_two_base_dir +
                                                   "lakes/results/diag_version_{}_date_{}".\
                                                   format(sequence_two_lakes_version,date))
-            sequence_two_results_base_dirs.append(sequence_two_results_base_dirs)
-
-            lsmask_data = rdirs_one.get_lsmask()
-            glacier_mask = advanced_field_loader(filename=glacier_mask_file_template.replace("DATE",str(date)),
-                                                 time_slice=None,
-                                                 fieldname="glac",
-                                                 adjust_orientation=True)
-        self.lsmask_sequence = TimeSequence(filepaths=,
-                                            fieldname=,
-                                            filename=,
-                                            field_type=)
-        self.glacier_mask_sequence = TimeSequence(filepaths=,
-                                                  fieldname=,
-                                                  filename=,
-                                                  field_type=)
-        self.catchment_nums_one_sequence = TimeSequence(filepaths=sequence_one_results_base_dirs,
+            self.sequence_two_results_base_dirs.append(sequence_two_results_base_dir)
+            self.glacier_mask_filepaths.append(glacier_mask_file_template.replace("DATE",str(date)))
+        self.glacier_mask_sequence = TimeSequence(filepaths=self.glacier_mask_filepaths,
+                                                  fieldname="glac")
+        self.catchment_nums_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                         fieldname="catchments",
                                                         filename=
                                                         "30min_connected_catchments.nc"
                                                         if use_connected_catchments else
                                                         "30min_catchments.nc")
-        self.catchment_nums_two_sequence =  TimeSequence(filepaths=sequence_two_results_base_dirs,
+        self.catchment_nums_two_sequence =  TimeSequence(filepaths=self.sequence_two_results_base_dirs,
                                                          fieldname="catchments",
                                                          filename=
                                                          "30min_connected_catchments.nc"
@@ -214,198 +232,141 @@ class TimeSequences:
                                                          "30min_catchments.nc")
         self.rdirs_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                fieldname="rdirs",
-                                               filename="30min_rdirs.nc",
-                                               field_type="RiverDirections")
+                                               filename="30min_rdirs.nc")
+        self.lsmask_sequence = DerivedTimeSequence(self.rdirs_one_sequence,
+                                                   func=lambda base_array:
+                                                   RiverDirections(base_array,"HD").get_lsmask())
         self.rdirs_two_sequence = TimeSequence(filepaths=self.sequence_two_results_base_dirs,
                                                fieldname="rdirs",
-                                               filename="30min_rdirs.nc",
-                                               field_type="RiverDirections")
-        self.river_flow_one_sequence= TimeSequence(filepaths=sequence_one_results_base_dirs,
+                                               filename="30min_rdirs.nc")
+        self.river_flow_one_sequence= TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                    fieldname="cumulative_flow",
                                                    filename=
                                                    "30min_flowtocell_connected.nc"
                                                    if use_connected_catchments else
                                                    "30min_flowtocell.nc")
-        self.river_flow_two_sequence= TimeSequence(filepaths=sequence_two_results_base_dirs,
+        self.river_flow_two_sequence= TimeSequence(filepaths=self.sequence_two_results_base_dirs,
                                                    fieldname="cumulative_flow",
                                                    filename=
                                                    "30min_flowtocell_connected.nc"
                                                    if use_connected_catchments else
                                                    "30min_flowtocell.nc")
-        self.river_mouths_one_sequence = TimeSequence(filepaths=sequence_one_results_base_dirs,
+        self.river_mouths_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                       fieldname="cumulative_flow_to_ocean",
                                                       filename="30min_flowtorivermouths_connected.nc")
-        self.river_mouths_two_sequence = TimeSequence(filepaths=sequence_two_results_base_dirs,
+        self.river_mouths_two_sequence = TimeSequence(filepaths=self.sequence_two_results_base_dirs,
                                                       fieldname="cumulative_flow_to_ocean",
                                                       filename="30min_flowtorivermouths_connected.nc")
-        self.fine_river_flow_one_sequence= TimeSequence(filepaths=sequence_one_results_base_dirs,
-                                                        fieldname="cumulative_flow",
-                                                        filename="10min_flowtocell.nc")
-        self.fine_river_flow_two_sequence= TimeSequence(filepaths=sequence_two_results_base_dirs,
-                                                        fieldname="cumulative_flow",
-                                                        filename="10min_flowtocell.nc")
+        if not "fine_river_flow_one" in missing_fields:
+            self.fine_river_flow_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
+                                                             fieldname="cumulative_flow",
+                                                             filename="10min_flowtocell.nc")
+        else:
+            self.fine_river_flow_one_sequence= None
+        if not "fine_river_flow_two" in missing_fields:
+            self.fine_river_flow_two_sequence= TimeSequence(filepaths=self.sequence_two_results_base_dirs,
+                                                            fieldname="cumulative_flow",
+                                                            filename="10min_flowtocell.nc")
+        else:
+            self.fine_river_flow_two_sequence = None
         if not "lake_volumes_one" in missing_fields:
-            self.lake_volumes_one_sequence = TimeSequence(filepaths=sequence_one_results_base_dirs,
+            self.lake_volumes_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                           fieldname="lake_volume",
                                                           filename="10min_lake_volumes.nc")
         else:
             self.lake_volumes_one_sequence = None
         if not "lake_volumes_two" in missing_fields:
-            self.lake_volumes_two_sequence = TimeSequence(filepaths=sequence_two_results_base_dirs,
+            self.lake_volumes_two_sequence = TimeSequence(filepaths=self.sequence_two_results_base_dirs,
                                                           fieldname="lake_volume",
                                                           filename="10min_lake_volumes.nc")
         else:
             self.lake_volumes_two_sequence = None
         if not "lake_basin_numbers_one" in missing_fields:
-            self.lake_basin_numbers_one_sequence = TimeSequence(filepaths=,
-                                                                fieldname=,
-                                                                filename=,
-                                                                field_type=)
+            self.lake_basin_numbers_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
+                                                                fieldname="basin_catchment_numbers",
+                                                                filename="10min_basin_catchment_numbers.nc")
             self.connected_lake_basin_numbers_one_sequence = \
-                TimeSequence(filepaths=,
-                             fieldname=,
-                             filename=,
-                             field_type=)
-                                lake_basin_numbers_one = advanced_field_loader(filename=join(sequence_one_results_base_dir,
-                                                                           "10min_basin_catchment_numbers.nc"),
-                                                                           time_slice=None,
-                                                                           fieldname="basin_catchment_numbers",
-                                                                           adjust_orientation=True)
-                self.lake_basin_numbers_one_sequence.append(lake_basin_numbers_one.get_data())
-                self.connected_lake_basin_numbers_one_sequence.append(LakeTracker.\
-                    number_lakes(lake_basin_numbers_one.get_data() > 0))
+                DerivedTimeSequence(self.lake_basin_numbers_one_sequence,func=
+                                    lambda base_array: LakeTracker.number_lakes(base_array > 0))
         else:
             self.lake_basin_numbers_one_sequence = None
             self.connected_lake_basin_numbers_one_sequence = None
         if not "lake_basin_numbers_two" in missing_fields:
-            self.lake_basin_numbers_two_sequence = TimeSequence(filepaths=,
-                                                                fieldname=,
-                                                                filename=,
-                                                                field_type=)
+            self.lake_basin_numbers_two_sequence = TimeSequence(filepaths=self.sequence_two_results_base_dirs,
+                                                                fieldname="basin_catchment_numbers",
+                                                                filename="10min_basin_catchment_numbers.nc")
             self.connected_lake_basin_numbers_two_sequence = \
-                TimeSequence(filepaths=,
-                             fieldname=,
-                             filename=,
-                             field_type=)
-                                lake_basin_numbers_two = advanced_field_loader(filename=join(sequence_two_results_base_dir,
-                                                                         "10min_basin_catchment_numbers.nc"),
-                                                                         time_slice=None,
-                                                                         fieldname="basin_catchment_numbers",
-                                                                         adjust_orientation=True)
-                self.lake_basin_numbers_two_sequence.append(lake_basin_numbers_two.get_data())
-                self.connected_lake_basin_numbers_two_sequence.append(LakeTracker.\
-                    number_lakes(lake_basin_numbers_two.get_data() > 0))
+                DerivedTimeSequence(self.lake_basin_numbers_two_sequence,func=
+                                    lambda base_array: LakeTracker.number_lakes(base_array > 0))
         else:
             self.lake_basin_numbers_two_sequence = None
             self.connected_lake_basin_numbers_two_sequence = None
         if not "orography_one" in missing_fields:
-            self.orography_one_sequence = TimeSequence(filepaths=sequence_one_results_base_dirs,
+            self.orography_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                        fieldname="corrected_orog",
                                                        filename="10min_corrected_orog.nc")
         else:
             self.orography_one_sequence = None
         if not "orography_two" in missing_fields:
-            self.orography_two_sequence = TimeSequence(filepaths=sequence_two_results_base_dirs,
+            self.orography_two_sequence = TimeSequence(filepaths=self.sequence_two_results_base_dirs,
                                                        fieldname="corrected_orog",
                                                        filename="10min_corrected_orog.nc")
         else:
             self.orography_two_sequence = None
         if not "filled_orography_one" in missing_fields:
-            self.filled_orography_one_sequence = TimeSequence(filepaths=sequence_one_results_base_dirs,
+            self.filled_orography_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                               fieldname="filled_orog",
                                                               filename="10min_filled_orog.nc")
         else:
             self.filled_orography_one_sequence = None
         if not "filled_orography_two" in missing_fields:
-            self.filled_orography_two_sequence = TimeSequence(filepaths=sequence_two_results_base_dirs,
+            self.filled_orography_two_sequence = TimeSequence(filepaths=self.sequence_two_results_base_dirs,
                                                               fieldname="filled_orog",
                                                               filename="10min_filled_orog.nc")
         else:
             self.filled_orography_two_sequence = None
         if not "sinkless_rdirs_one" in missing_fields:
-            self.sinkless_rdirs_one_sequence = TimeSequence(filepaths=sequence_one_results_base_dirs,
+            self.sinkless_rdirs_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                             fieldname="rdirs",
                                                             filename="10min_sinkless_rdirs.nc")
         else:
             self.sinkless_rdirs_one_sequence = None,
         if not "sinkless_rdirs_two" in missing_fields:
-            self.sinkless_rdirs_two_sequence = TimeSequence(filepaths=sequence_two_results_base_dirs,
+            self.sinkless_rdirs_two_sequence = TimeSequence(filepaths=self.sequence_two_results_base_dirs,
                                                             fieldname="rdirs",
                                                             filename="10min_sinkless_rdirs.nc")
         else:
             self.sinkless_rdirs_two_sequence = None
         if not "rdirs_jump_next_cell_indices_one" in missing_fields:
-            self.rdirs_jump_next_cell_lat_one_sequence = TimeSequence(filepaths=,
-                                                                      fieldname=,
-                                                                      filename=,
-                                                                      field_type=)
-            self.rdirs_jump_next_cell_lon_one_sequence = TimeSequence(filepaths=,
-                                                                      fieldname=,
-                                                                      filename=,
-                                                                      field_type=)
-            self.coarse_lake_outflows_one_sequence = TimeSequence(filepaths=,
-                                                                      fieldname=,
-                                                                      filename=,
-                                                                      field_type=)
-                rdirs_jump_next_cell_lat_one = \
-                    advanced_field_loader(filename=join(sequence_one_results_base_dir,
-                                                        "30min_rdirs_jump_next_cell_indices.nc"),
-                                                        time_slice=None,
-                                                        fieldname="rdirs_jump_lat",
-                                                        adjust_orientation=True)
-                rdirs_jump_next_cell_lat_one.change_dtype(np.int64)
-                rdirs_jump_next_cell_lon_one = \
-                    advanced_field_loader(filename=join(sequence_one_results_base_dir,
-                                                        "30min_rdirs_jump_next_cell_indices.nc"),
-                                                        time_slice=None,
-                                                        fieldname="rdirs_jump_lon",
-                                                        adjust_orientation=True)
-                rdirs_jump_next_cell_lon_one.change_dtype(np.int64)
-                coarse_lake_outflows_one = \
-                    advanced_field_loader(filename=join(sequence_one_results_base_dir,
-                                                        "30min_rdirs_jump_next_cell_indices.nc"),
-                                                        time_slice=None,
-                                                        fieldname="outflow_points",
-                                                        adjust_orientation=True)
-                coarse_lake_outflows_one.change_dtype(bool)
+            self.rdirs_jump_next_cell_lat_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
+                                                                      fieldname="rdirs_jump_lat",
+                                                                      filename="30min_rdirs_jump_next_cell_indices.nc",
+                                                                      change_to_dtype=np.int64)
+            self.rdirs_jump_next_cell_lon_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
+                                                                      fieldname="rdirs_jump_lon",
+                                                                      filename="30min_rdirs_jump_next_cell_indices.nc",
+                                                                      change_to_dtype=np.int64)
+            self.coarse_lake_outflows_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
+                                                                  fieldname="outflow_points",
+                                                                  filename="30min_rdirs_jump_next_cell_indices.nc",
+                                                                  change_to_dtype=bool)
         else:
             self.rdirs_jump_next_cell_lat_one_sequence = None
             self.rdirs_jump_next_cell_lon_one_sequence = None
             self.coarse_lake_outflows_one_sequence = None
         if not "rdirs_jump_next_cell_indices_two" in missing_fields:
-            self.rdirs_jump_next_cell_lat_two_sequence = TimeSequence(filepaths=,
-                                                                      fieldname=,
-                                                                      filename=,
-                                                                      field_type=)
-            self.rdirs_jump_next_cell_lon_two_sequence = TimeSequence(filepaths=,
-                                                                      fieldname=,
-                                                                      filename=,
-                                                                      field_type=)
-            self.coarse_lake_outflows_two_sequence = TimeSequence(filepaths=,
-                                                                  fieldname=,
-                                                                  filename=,
-                                                                  field_type=)
-                            rdirs_jump_next_cell_lat_two = \
-                    advanced_field_loader(filename=join(sequence_two_results_base_dir,
-                                                        "30min_rdirs_jump_next_cell_indices.nc"),
-                                                        time_slice=None,
-                                                        fieldname="rdirs_jump_lat",
-                                                        adjust_orientation=True)
-                rdirs_jump_next_cell_lat_two.change_dtype(np.int64)
-                rdirs_jump_next_cell_lon_two = \
-                    advanced_field_loader(filename=join(sequence_two_results_base_dir,
-                                                        "30min_rdirs_jump_next_cell_indices.nc"),
-                                                        time_slice=None,
-                                                        fieldname="rdirs_jump_lon",
-                                                        adjust_orientation=True)
-                rdirs_jump_next_cell_lon_two.change_dtype(np.int64)
-                coarse_lake_outflows_two = \
-                    advanced_field_loader(filename=join(sequence_two_results_base_dir,
-                                                        "30min_rdirs_jump_next_cell_indices.nc"),
-                                                        time_slice=None,
-                                                        fieldname="outflow_points",
-                                                        adjust_orientation=True)
-                coarse_lake_outflows_two.change_dtype(bool)
+            self.rdirs_jump_next_cell_lat_two_sequence = TimeSequence(filepaths=self.sequence_two_results_base_dirs,
+                                                                      fieldname="rdirs_jump_lat",
+                                                                      filename="30min_rdirs_jump_next_cell_indices.nc",
+                                                                      change_to_dtype=np.int64)
+            self.rdirs_jump_next_cell_lon_two_sequence = TimeSequence(filepaths=self.sequence_two_results_base_dirs,
+                                                                      fieldname="rdirs_jump_lon",
+                                                                      filename="30min_rdirs_jump_next_cell_indices.nc",
+                                                                      change_to_dtype=np.int64)
+            self.coarse_lake_outflows_two_sequence = TimeSequence(filepaths=self.sequence_two_results_base_dirs,
+                                                                  fieldname="outflow_points",
+                                                                  filename= "30min_rdirs_jump_next_cell_indices.nc",
+                                                                  change_to_dtype=bool)
         else:
             self.rdirs_jump_next_cell_lat_two_sequence = None
             self.rdirs_jump_next_cell_lon_two_sequence = None
@@ -1290,7 +1251,7 @@ class InteractiveTimeSlicePlots:
     def orography_comp_plot(self,index):
         self.timeslice_plots[index].scale = PlotScales.FINE
         self.orography_plot_base(index,self.slice_data["orography_one_slice_zoomed"] -
-                                       self.slice_data["self.orography_two_slice_zoomed"])
+                                       self.slice_data["orography_two_slice_zoomed"])
 
     def orography_plus_lake_spillway_one(self,index):
         self.timeslice_plots[index].scale = PlotScales.FINE

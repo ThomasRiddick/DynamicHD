@@ -488,7 +488,7 @@ class ExitProfiler:
         spillway_height_profiles = []
         spillway_masks = []
         if lake_center is None:
-            return [],[]
+            return [],None
         lsmask = np.logical_or(rdirs == -1,rdirs == 0)
         orography = self.prepare_orography(lake_center,corrected_heights,lsmask)
         for basin_number in range(np.amax(ocean_basin_numbers)+1):
