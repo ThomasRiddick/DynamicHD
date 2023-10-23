@@ -4,6 +4,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg,NavigationToolba
 import logging
 import copy
 import re
+import time
 
 logging.basicConfig(level=logging.INFO)
 
@@ -49,6 +50,7 @@ class DynamicLakeAnalysisGUI:
 
         datatypes = {"agassizoutlet-time":"-TSDSOUTLETDATE-"}
         reversed_datatypes = {value:key for key,value in datatypes.items()}
+        poll_interval = 3
 
         def __init__(self,avail_plots,avail_ts_plots,initial_configuration,
                      dbg_plts=None):
@@ -717,7 +719,8 @@ class DynamicLakeAnalysisGUI:
                                 interactive_plots,
                                 interactive_lake_plots,spillway_plots,
                                 data_configuration,
-                                setup_configuration_func):
+                                setup_configuration_func,
+                                poll_io_worker_procs_func):
                 self.interactive_timeseries_plots = interactive_timeseries_plots
                 self.interactive_plots = interactive_plots
                 self.interactive_lake_plots = interactive_lake_plots
@@ -739,6 +742,7 @@ class DynamicLakeAnalysisGUI:
                 self.interactive_lake_plots.\
                         set_specify_coords_and_height_callback(SetCoordsAndHeight("LM",
                                                                                   self.window))
+                last_poll_time = time.time()
                 while True:
                         self.event, self.values = self.window.read()
                         logging.info(self.event)
@@ -788,4 +792,8 @@ class DynamicLakeAnalysisGUI:
                                 if current_visible_column > 0:
                                         key = f'-{active_tab}CANVAS{current_visible_column}-'
                                         self.fig_canvas[key].draw()
+                        current_time = time.time()
+                        if  current_time - last_poll_time > self.poll_interval:
+                                poll_io_worker_procs_func()
+                                last_poll_time = current_time
                 self.window.close()

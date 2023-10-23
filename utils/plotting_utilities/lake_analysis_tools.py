@@ -309,7 +309,6 @@ class OutflowBasinIdentifier:
             ocean_basin_numbers = -1*np.ones(self.field_shape,dtype=np.int32)
             for i,coastline_identifier in enumerate(self.coastline_identifiers):
                 _,coastal_ocean_cells = coastline_identifier.identify_coastline(lsmask)
-                plt.show()
                 ocean_basin_numbers[coastal_ocean_cells] = i
             self.ocean_basin_numbers_sequence.append(ocean_basin_numbers)
 

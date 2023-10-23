@@ -10,6 +10,9 @@ import math
 import glob
 import re
 import itertools
+import time
+import sys
+from concurrent.futures import ProcessPoolExecutor
 import numpy as np
 import matplotlib.backends
 import matplotlib as mpl
@@ -118,24 +121,67 @@ class DataConfiguration:
     def get_datasets_by_type(self,datatype):
         return self.dataset_manager.get_datasets_by_type(datatype)
 
+
+#Helper for TimeSequence
+def load_data_in_background(blocks_to_load):
+    begin = time.perf_counter()
+    block_data = []
+    for block in blocks_to_load:
+        current_block_data = {key:block[key]
+                              for key in block.keys() -
+                              {'files_to_load','fieldname',
+                               'change_to_dtype'}}
+        current_block_data['loaded_data'] = []
+        for file in block['files_to_load']:
+            print(f"loading {file}")
+            field = advanced_field_loader(filename=file,
+                                          time_slice=None,
+                                          fieldname=block["fieldname"],
+                                          adjust_orientation=True)
+            if block["change_to_dtype"] is not None:
+                field.change_dtype(block["change_to_dtype"])
+            if "func" in block:
+                current_block_data["loaded_data"].append(func(field.get_data()))
+            else:
+                current_block_data["loaded_data"].append(field.get_data())
+        block_data.append(current_block_data)
+    end = time.perf_counter()
+    sys.stderr.write("worker time {}".format(end - begin))
+    return block_data
+
 class TimeSequence:
 
     def __init__(self,filepaths,fieldname,filename=None,
-                 change_to_dtype=None,sequence_data = None):
+                 change_to_dtype=None,sequence_data = None,
+                 block_size = 3,load_data_in_background=True):
         if sequence_data is None:
             self.sequence_data = [None]*len(filepaths)
         else:
             self.sequence_data = sequence_data
+        self.ndata = len(self.sequence_data)
         self.filepaths = filepaths
         self.fieldname = fieldname
         self.filename = filename
         self.change_to_dtype = change_to_dtype
+        self.load_data_in_background = load_data_in_background
+        self.block_size = block_size
+        if self.block_size != 0:
+            self.working_block = -1
+            self.working_index = -1
+            self.blocks_in_memory = []
+            self.nblocks = (len(self.sequence_data)//self.block_size) + 1
+            if self.load_data_in_background:
+                self.executor = None
+
 
     def __len__(self):
-        return len(self.sequence_data)
+        return self.ndata
 
     def __getitem__(self,i):
-        if self.sequence_data[i] is None:
+        if self.block_size != 0 and self.working_index != i:
+            self.manage_memory(i)
+            self.working_index = i
+        elif self.sequence_data[i] is None:
             self.sequence_data[i] = self.load_element(i)
         return self.sequence_data[i]
 
@@ -151,17 +197,123 @@ class TimeSequence:
             field.change_dtype(self.change_to_dtype)
         return field.get_data()
 
+    def delete_element(self,i):
+        self.sequence_data[i] = None
+
     def get_subsequence(self,start_index,stop_index):
         return TimeSequence(self.filepaths[start_index:stop_index],
                             self.fieldname,self.filename,self.change_to_dtype,
-                            self.sequence_data[start_index:stop_index])
+                            self.sequence_data[start_index:stop_index],0)
 
-    def get_subsequences(self,block_size=20):
+    def get_subsequences(self,subsequence_size=20):
         subsequences = []
-        for i in range(0,len(self.sequence_data),step=block_size):
-            subsequences.append(self.get_subsequence(i,min(len(self.sequence_data),
-                                                           i+block_size)))
+        for i in range(0,self.ndata,subsequence_size):
+            subsequences.append(self.get_subsequence(i,min(self.ndata,
+                                                           i+subsequence_size)))
         return subsequences
+
+    def purge_memory(self):
+        self.sequence_data = [None]*self.ndata
+        self.blocks_in_memory = []
+
+    def manage_memory(self,i):
+        print(f'working block {self.working_block}')
+        print(f'block size {self.block_size}')
+        print(f'i {i}')
+        print(f'nblocks {self.nblocks}')
+        if (self.working_block == -1 or
+            (self.working_block*self.block_size) > i or
+            ((self.working_block+1)*self.block_size) <= i):
+            target_blocks = range(max(0,(i//self.block_size)-1),
+                                  min(self.nblocks,(i//self.block_size)+3))
+            print(f"target blocks {target_blocks}")
+            if (self.load_data_in_background and
+                (self.sequence_data[i] is not None)):
+                if self.executor and self.future is not None:
+                    #This finishes processing the data from the last call
+                    #by receiving it from the worker and putting it into place
+                    begin = time.perf_counter()
+                    block_data = self.future.result()
+                    end = time.perf_counter()
+                    print("recv {}".format(end-begin))
+                    begin = time.perf_counter()
+                    for block in block_data:
+                        self.sequence_data[block["start"]:block["end"]] = \
+                            block["loaded_data"]
+                        self.blocks_in_memory.append(block["block_num"])
+                    end = time.perf_counter()
+                    print("insert {}".format(end-begin))
+                    self.future = None
+                else:
+                    self.executor = ProcessPoolExecutor(max_workers=1)
+                self.blocks_to_load = []
+                self.load_blocks(target_blocks,True)
+                print("blocks to load: ")
+                print(self.blocks_to_load)
+                begin = time.perf_counter()
+                self.future = self.executor.submit(load_data_in_background,
+                                                   self.blocks_to_load)
+                end = time.perf_counter()
+                print("time {}".format(end-begin))
+            else:
+                self.load_blocks(target_blocks)
+            self.purge_blocks(target_blocks)
+        self.working_block = i//self.block_size
+
+    def poll_for_completed_io(self):
+        if self.executor and self.future.done():
+            print("poll found data")
+            begin = time.perf_counter()
+            block_data = self.future.result()
+            end = time.perf_counter()
+            print("recv {}".format(end-begin))
+            begin = time.perf_counter()
+            for block in block_data:
+                self.sequence_data[block["start"]:block["end"]] = \
+                    block["loaded_data"]
+                self.blocks_in_memory.append(block["block_num"])
+            end = time.perf_counter()
+            print("insert {}".format(end-begin))
+
+    def load_block(self,block,in_background=False):
+        if block not in self.blocks_in_memory:
+            start = max(0,block*self.block_size)
+            end = min(self.ndata,(block+1)*self.block_size)
+            if in_background:
+                block_data = {"block_num":block,
+                              "start":start,
+                              "end":end,
+                              "files_to_load":[],
+                              "fieldname":self.fieldname,
+                              "change_to_dtype":self.change_to_dtype}
+            else:
+                self.blocks_in_memory.append(block)
+            for i in range(start,end):
+                if self.sequence_data[i] is None:
+                    if in_background:
+                        block_data["files_to_load"].\
+                            append(join(self.filepaths[i],self.filename)
+                                   if (self.filename is not None) else
+                                   self.filepaths[i])
+                    else:
+                        self.sequence_data[i] = self.load_element(i)
+            if in_background:
+                self.blocks_to_load.append(block_data)
+
+    def load_blocks(self,blocks,in_background=False):
+        for block in blocks:
+                self.load_block(block,in_background)
+
+    def purge_block(self,block):
+        for i in range(max(0,block*self.block_size),
+                       min(self.ndata,(block+1)*self.block_size)):
+            self.sequence_data[i] = None
+        self.blocks_in_memory.remove(block)
+
+    def purge_blocks(self,exclude_blocks):
+        for block in self.blocks_in_memory:
+            if block not in exclude_blocks:
+                self.purge_block(block)
 
 class DerivedTimeSequence(TimeSequence):
 
@@ -169,9 +321,16 @@ class DerivedTimeSequence(TimeSequence):
         self.sequence_data = [None]*len(time_sequence)
         self.time_sequence = time_sequence
         self.func = func
+        self.ndata = len(self.sequence_data)
+        self.block_size = 0
 
     def load_element(self,i):
         return self.func(self.time_sequence[i])
+
+    def get_subsequence(self,start_index,stop_index):
+        return DerivedTimeSequence(self.time_sequence.\
+                                   get_subsequence(start_index,stop_index),
+                                   self.func)
 
 class TimeSequences:
     def __init__(self,dates,
@@ -423,6 +582,11 @@ class TimeSequences:
         else:
             self.true_sinks = None
 
+    def poll_io_worker_procs(self):
+        for var in vars(self):
+            if type(var) is TimeSequence:
+                var.poll_for_completed_io()
+
 class InteractiveSpillwayPlots:
 
     def __init__(self,colors,
@@ -519,7 +683,6 @@ class InteractiveSpillwayPlots:
 
     def plot_potential_spillway_profiles(self,profile_set,index):
         self.spillway_plot_axes[index].clear()
-        print(profile_set)
         for profile in profile_set:
             self.spillway_plot_axes[index].plot(profile[:-2])
         self.spillway_plot_axes[index].set_title("Potential Spillway Profiles")
@@ -1847,10 +2010,10 @@ def generate_color_codes_lake_and_river_sequence(cumulative_flow_sequence,
     return col_codes_lake_and_river_sequence
 
 def generate_color_codes_lake_and_river(cumulative_flow,
-                                         lake_volumes,
-                                         glacier_mask,
-                                         landsea_mask,
-                                         minflowcutoff):
+                                        lake_volumes,
+                                        glacier_mask,
+                                        landsea_mask,
+                                        minflowcutoff):
     rivers_and_lakes = np.zeros(cumulative_flow.shape)
     rivers_and_lakes[cumulative_flow < minflowcutoff] = 1
     rivers_and_lakes[cumulative_flow >= minflowcutoff] = 2
