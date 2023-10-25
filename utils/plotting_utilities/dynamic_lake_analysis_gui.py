@@ -6,8 +6,6 @@ import copy
 import re
 import time
 
-logging.basicConfig(level=logging.INFO)
-
 class SetCoordsAndHeight:
 
         def __init__(self,key_prefix,window):
@@ -50,7 +48,7 @@ class DynamicLakeAnalysisGUI:
 
         datatypes = {"agassizoutlet-time":"-TSDSOUTLETDATE-"}
         reversed_datatypes = {value:key for key,value in datatypes.items()}
-        poll_interval = 3
+        poll_interval = 3.0
 
         def __init__(self,avail_plots,avail_ts_plots,initial_configuration,
                      dbg_plts=None):
@@ -793,7 +791,7 @@ class DynamicLakeAnalysisGUI:
                                         key = f'-{active_tab}CANVAS{current_visible_column}-'
                                         self.fig_canvas[key].draw()
                         current_time = time.time()
-                        if  current_time - last_poll_time > self.poll_interval:
+                        if current_time - last_poll_time > self.poll_interval:
                                 poll_io_worker_procs_func()
                                 last_poll_time = current_time
                 self.window.close()

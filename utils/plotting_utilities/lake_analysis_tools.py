@@ -534,7 +534,7 @@ class ExitProfiler:
             spillway_height_profiles.append(spillway_height_profile)
             spillway_mask = \
                 SpillwayProfiler.extract_spillway_mask(lake_center,sinkless_rdirs)
-            spillway_masks.append(spillway_mask)
+            spillway_masks.append(np.nonzero(spillway_mask.nonzero))
         return spillway_height_profiles,spillway_masks
 
     def profile_exit_sequence(self,lake_center_sequence,

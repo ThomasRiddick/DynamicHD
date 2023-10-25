@@ -10,7 +10,6 @@ import math
 import glob
 import re
 import itertools
-import time
 import sys
 from concurrent.futures import ProcessPoolExecutor
 import numpy as np
@@ -123,8 +122,7 @@ class DataConfiguration:
 
 
 #Helper for TimeSequence
-def load_data_in_background(blocks_to_load):
-    begin = time.perf_counter()
+def background_loader(blocks_to_load):
     block_data = []
     for block in blocks_to_load:
         current_block_data = {key:block[key]
@@ -133,7 +131,7 @@ def load_data_in_background(blocks_to_load):
                                'change_to_dtype'}}
         current_block_data['loaded_data'] = []
         for file in block['files_to_load']:
-            print(f"loading {file}")
+            print("IO Worker: ",end="")
             field = advanced_field_loader(filename=file,
                                           time_slice=None,
                                           fieldname=block["fieldname"],
@@ -145,15 +143,15 @@ def load_data_in_background(blocks_to_load):
             else:
                 current_block_data["loaded_data"].append(field.get_data())
         block_data.append(current_block_data)
-    end = time.perf_counter()
-    sys.stderr.write("worker time {}".format(end - begin))
     return block_data
 
 class TimeSequence:
 
     def __init__(self,filepaths,fieldname,filename=None,
                  change_to_dtype=None,sequence_data = None,
-                 block_size = 3,load_data_in_background=True):
+                 block_size = 3,load_data_in_background=True,
+                 executor=ProcessPoolExecutor(max_workers=1),
+                 subsequence_start=-1,subsequence_end=-1):
         if sequence_data is None:
             self.sequence_data = [None]*len(filepaths)
         else:
@@ -164,15 +162,17 @@ class TimeSequence:
         self.filename = filename
         self.change_to_dtype = change_to_dtype
         self.load_data_in_background = load_data_in_background
+        self.executor = executor
         self.block_size = block_size
+        self.subsequence_start = subsequence_start
+        self.subsequence_end   = subsequence_end
         if self.block_size != 0:
             self.working_block = -1
             self.working_index = -1
-            self.blocks_in_memory = []
             self.nblocks = (len(self.sequence_data)//self.block_size) + 1
+            self.blocks_in_memory = []
             if self.load_data_in_background:
-                self.executor = None
-
+                self.future = None
 
     def __len__(self):
         return self.ndata
@@ -184,6 +184,14 @@ class TimeSequence:
         elif self.sequence_data[i] is None:
             self.sequence_data[i] = self.load_element(i)
         return self.sequence_data[i]
+
+    def update_blocks_in_memory(self):
+        complete_blocks = [all(i is not None for i
+                               in self.sequence_data[j*self.block_size:
+                                                      min(self.ndata,
+                                                          (j+1)*self.block_size)])
+                          for j in range(self.nblocks)]
+        self.blocks_in_memory = [i for i,block in enumerate(complete_blocks) if block]
 
     def load_element(self,i):
         field = advanced_field_loader(filename=
@@ -203,7 +211,9 @@ class TimeSequence:
     def get_subsequence(self,start_index,stop_index):
         return TimeSequence(self.filepaths[start_index:stop_index],
                             self.fieldname,self.filename,self.change_to_dtype,
-                            self.sequence_data[start_index:stop_index],0)
+                            self.sequence_data[start_index:stop_index],0,
+                            subsequence_start=start_index,
+                            subsequence_end=stop_index)
 
     def get_subsequences(self,subsequence_size=20):
         subsequences = []
@@ -217,63 +227,40 @@ class TimeSequence:
         self.blocks_in_memory = []
 
     def manage_memory(self,i):
-        print(f'working block {self.working_block}')
-        print(f'block size {self.block_size}')
-        print(f'i {i}')
-        print(f'nblocks {self.nblocks}')
         if (self.working_block == -1 or
             (self.working_block*self.block_size) > i or
             ((self.working_block+1)*self.block_size) <= i):
-            target_blocks = range(max(0,(i//self.block_size)-1),
+            target_blocks = range(max(0,(i//self.block_size)-2),
                                   min(self.nblocks,(i//self.block_size)+3))
-            print(f"target blocks {target_blocks}")
             if (self.load_data_in_background and
                 (self.sequence_data[i] is not None)):
-                if self.executor and self.future is not None:
+                if self.future is not None:
                     #This finishes processing the data from the last call
                     #by receiving it from the worker and putting it into place
-                    begin = time.perf_counter()
                     block_data = self.future.result()
-                    end = time.perf_counter()
-                    print("recv {}".format(end-begin))
-                    begin = time.perf_counter()
                     for block in block_data:
                         self.sequence_data[block["start"]:block["end"]] = \
                             block["loaded_data"]
                         self.blocks_in_memory.append(block["block_num"])
-                    end = time.perf_counter()
-                    print("insert {}".format(end-begin))
                     self.future = None
-                else:
-                    self.executor = ProcessPoolExecutor(max_workers=1)
                 self.blocks_to_load = []
                 self.load_blocks(target_blocks,True)
-                print("blocks to load: ")
-                print(self.blocks_to_load)
-                begin = time.perf_counter()
-                self.future = self.executor.submit(load_data_in_background,
+                self.future = self.executor.submit(background_loader,
                                                    self.blocks_to_load)
-                end = time.perf_counter()
-                print("time {}".format(end-begin))
             else:
                 self.load_blocks(target_blocks)
             self.purge_blocks(target_blocks)
         self.working_block = i//self.block_size
 
     def poll_for_completed_io(self):
-        if self.executor and self.future.done():
-            print("poll found data")
-            begin = time.perf_counter()
+        if (self.load_data_in_background and
+            (self.future is not None) and self.future.done()):
             block_data = self.future.result()
-            end = time.perf_counter()
-            print("recv {}".format(end-begin))
-            begin = time.perf_counter()
             for block in block_data:
                 self.sequence_data[block["start"]:block["end"]] = \
                     block["loaded_data"]
                 self.blocks_in_memory.append(block["block_num"])
-            end = time.perf_counter()
-            print("insert {}".format(end-begin))
+            self.future = None
 
     def load_block(self,block,in_background=False):
         if block not in self.blocks_in_memory:
@@ -308,12 +295,18 @@ class TimeSequence:
         for i in range(max(0,block*self.block_size),
                        min(self.ndata,(block+1)*self.block_size)):
             self.sequence_data[i] = None
-        self.blocks_in_memory.remove(block)
 
     def purge_blocks(self,exclude_blocks):
         for block in self.blocks_in_memory:
             if block not in exclude_blocks:
                 self.purge_block(block)
+        self.blocks_in_memory = list(set(self.blocks_in_memory).\
+                                     intersection(set(exclude_blocks)))
+
+    def insert_subsequence_data(self,subsequence):
+        self.sequence_data[subsequence.subsequence_start:
+                           subsequence.subsequence_end] = \
+            subsequence.sequence_data
 
 class DerivedTimeSequence(TimeSequence):
 
@@ -375,75 +368,90 @@ class TimeSequences:
                                                   format(sequence_two_lakes_version,date))
             self.sequence_two_results_base_dirs.append(sequence_two_results_base_dir)
             self.glacier_mask_filepaths.append(glacier_mask_file_template.replace("DATE",str(date)))
+        executor = ProcessPoolExecutor(max_workers=1)
         self.glacier_mask_sequence = TimeSequence(filepaths=self.glacier_mask_filepaths,
-                                                  fieldname="glac")
+                                                  fieldname="glac",
+                                                  executor=executor)
         self.catchment_nums_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                         fieldname="catchments",
                                                         filename=
                                                         "30min_connected_catchments.nc"
                                                         if use_connected_catchments else
-                                                        "30min_catchments.nc")
+                                                        "30min_catchments.nc",
+                                                        executor=executor)
         self.catchment_nums_two_sequence =  TimeSequence(filepaths=self.sequence_two_results_base_dirs,
                                                          fieldname="catchments",
                                                          filename=
                                                          "30min_connected_catchments.nc"
                                                          if use_connected_catchments else
-                                                         "30min_catchments.nc")
+                                                         "30min_catchments.nc",
+                                                         executor=executor)
         self.rdirs_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                fieldname="rdirs",
-                                               filename="30min_rdirs.nc")
+                                               filename="30min_rdirs.nc",
+                                               executor=executor)
         self.lsmask_sequence = DerivedTimeSequence(self.rdirs_one_sequence,
                                                    func=lambda base_array:
                                                    RiverDirections(base_array,"HD").get_lsmask())
         self.rdirs_two_sequence = TimeSequence(filepaths=self.sequence_two_results_base_dirs,
                                                fieldname="rdirs",
-                                               filename="30min_rdirs.nc")
+                                               filename="30min_rdirs.nc",
+                                               executor=executor)
         self.river_flow_one_sequence= TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                    fieldname="cumulative_flow",
                                                    filename=
                                                    "30min_flowtocell_connected.nc"
                                                    if use_connected_catchments else
-                                                   "30min_flowtocell.nc")
+                                                   "30min_flowtocell.nc",
+                                                   executor=executor)
         self.river_flow_two_sequence= TimeSequence(filepaths=self.sequence_two_results_base_dirs,
                                                    fieldname="cumulative_flow",
                                                    filename=
                                                    "30min_flowtocell_connected.nc"
                                                    if use_connected_catchments else
-                                                   "30min_flowtocell.nc")
+                                                   "30min_flowtocell.nc",
+                                                   executor=executor)
         self.river_mouths_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                       fieldname="cumulative_flow_to_ocean",
-                                                      filename="30min_flowtorivermouths_connected.nc")
+                                                      filename="30min_flowtorivermouths_connected.nc",
+                                                      executor=executor)
         self.river_mouths_two_sequence = TimeSequence(filepaths=self.sequence_two_results_base_dirs,
                                                       fieldname="cumulative_flow_to_ocean",
-                                                      filename="30min_flowtorivermouths_connected.nc")
+                                                      filename="30min_flowtorivermouths_connected.nc",
+                                                      executor=executor)
         if not "fine_river_flow_one" in missing_fields:
             self.fine_river_flow_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                              fieldname="cumulative_flow",
-                                                             filename="10min_flowtocell.nc")
+                                                             filename="10min_flowtocell.nc",
+                                                             executor=executor)
         else:
             self.fine_river_flow_one_sequence= None
         if not "fine_river_flow_two" in missing_fields:
             self.fine_river_flow_two_sequence= TimeSequence(filepaths=self.sequence_two_results_base_dirs,
                                                             fieldname="cumulative_flow",
-                                                            filename="10min_flowtocell.nc")
+                                                            filename="10min_flowtocell.nc",
+                                                            executor=executor)
         else:
             self.fine_river_flow_two_sequence = None
         if not "lake_volumes_one" in missing_fields:
             self.lake_volumes_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                           fieldname="lake_volume",
-                                                          filename="10min_lake_volumes.nc")
+                                                          filename="10min_lake_volumes.nc",
+                                                          executor=executor)
         else:
             self.lake_volumes_one_sequence = None
         if not "lake_volumes_two" in missing_fields:
             self.lake_volumes_two_sequence = TimeSequence(filepaths=self.sequence_two_results_base_dirs,
                                                           fieldname="lake_volume",
-                                                          filename="10min_lake_volumes.nc")
+                                                          filename="10min_lake_volumes.nc",
+                                                          executor=executor)
         else:
             self.lake_volumes_two_sequence = None
         if not "lake_basin_numbers_one" in missing_fields:
             self.lake_basin_numbers_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                                 fieldname="basin_catchment_numbers",
-                                                                filename="10min_basin_catchment_numbers.nc")
+                                                                filename="10min_basin_catchment_numbers.nc",
+                                                                executor=executor)
             self.connected_lake_basin_numbers_one_sequence = \
                 DerivedTimeSequence(self.lake_basin_numbers_one_sequence,func=
                                     lambda base_array: LakeTracker.number_lakes(base_array > 0))
@@ -453,7 +461,8 @@ class TimeSequences:
         if not "lake_basin_numbers_two" in missing_fields:
             self.lake_basin_numbers_two_sequence = TimeSequence(filepaths=self.sequence_two_results_base_dirs,
                                                                 fieldname="basin_catchment_numbers",
-                                                                filename="10min_basin_catchment_numbers.nc")
+                                                                filename="10min_basin_catchment_numbers.nc",
+                                                                executor=executor)
             self.connected_lake_basin_numbers_two_sequence = \
                 DerivedTimeSequence(self.lake_basin_numbers_two_sequence,func=
                                     lambda base_array: LakeTracker.number_lakes(base_array > 0))
@@ -463,52 +472,61 @@ class TimeSequences:
         if not "orography_one" in missing_fields:
             self.orography_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                        fieldname="corrected_orog",
-                                                       filename="10min_corrected_orog.nc")
+                                                       filename="10min_corrected_orog.nc",
+                                                       executor=executor)
         else:
             self.orography_one_sequence = None
         if not "orography_two" in missing_fields:
             self.orography_two_sequence = TimeSequence(filepaths=self.sequence_two_results_base_dirs,
                                                        fieldname="corrected_orog",
-                                                       filename="10min_corrected_orog.nc")
+                                                       filename="10min_corrected_orog.nc",
+                                                       executor=executor)
         else:
             self.orography_two_sequence = None
         if not "filled_orography_one" in missing_fields:
             self.filled_orography_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                               fieldname="filled_orog",
-                                                              filename="10min_filled_orog.nc")
+                                                              filename="10min_filled_orog.nc",
+                                                              executor=executor)
         else:
             self.filled_orography_one_sequence = None
         if not "filled_orography_two" in missing_fields:
             self.filled_orography_two_sequence = TimeSequence(filepaths=self.sequence_two_results_base_dirs,
                                                               fieldname="filled_orog",
-                                                              filename="10min_filled_orog.nc")
+                                                              filename="10min_filled_orog.nc",
+                                                              executor=executor)
         else:
             self.filled_orography_two_sequence = None
         if not "sinkless_rdirs_one" in missing_fields:
             self.sinkless_rdirs_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                             fieldname="rdirs",
-                                                            filename="10min_sinkless_rdirs.nc")
+                                                            filename="10min_sinkless_rdirs.nc",
+                                                            executor=executor)
         else:
             self.sinkless_rdirs_one_sequence = None,
         if not "sinkless_rdirs_two" in missing_fields:
             self.sinkless_rdirs_two_sequence = TimeSequence(filepaths=self.sequence_two_results_base_dirs,
                                                             fieldname="rdirs",
-                                                            filename="10min_sinkless_rdirs.nc")
+                                                            filename="10min_sinkless_rdirs.nc",
+                                                            executor=executor)
         else:
             self.sinkless_rdirs_two_sequence = None
         if not "rdirs_jump_next_cell_indices_one" in missing_fields:
             self.rdirs_jump_next_cell_lat_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                                       fieldname="rdirs_jump_lat",
                                                                       filename="30min_rdirs_jump_next_cell_indices.nc",
-                                                                      change_to_dtype=np.int64)
+                                                                      change_to_dtype=np.int64,
+                                                                      executor=executor)
             self.rdirs_jump_next_cell_lon_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                                       fieldname="rdirs_jump_lon",
                                                                       filename="30min_rdirs_jump_next_cell_indices.nc",
-                                                                      change_to_dtype=np.int64)
+                                                                      change_to_dtype=np.int64,
+                                                                      executor=executor)
             self.coarse_lake_outflows_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                                   fieldname="outflow_points",
                                                                   filename="30min_rdirs_jump_next_cell_indices.nc",
-                                                                  change_to_dtype=bool)
+                                                                  change_to_dtype=bool,
+                                                                  executor=executor)
         else:
             self.rdirs_jump_next_cell_lat_one_sequence = None
             self.rdirs_jump_next_cell_lon_one_sequence = None
@@ -517,15 +535,18 @@ class TimeSequences:
             self.rdirs_jump_next_cell_lat_two_sequence = TimeSequence(filepaths=self.sequence_two_results_base_dirs,
                                                                       fieldname="rdirs_jump_lat",
                                                                       filename="30min_rdirs_jump_next_cell_indices.nc",
-                                                                      change_to_dtype=np.int64)
+                                                                      change_to_dtype=np.int64,
+                                                                      executor=executor)
             self.rdirs_jump_next_cell_lon_two_sequence = TimeSequence(filepaths=self.sequence_two_results_base_dirs,
                                                                       fieldname="rdirs_jump_lon",
                                                                       filename="30min_rdirs_jump_next_cell_indices.nc",
-                                                                      change_to_dtype=np.int64)
+                                                                      change_to_dtype=np.int64,
+                                                                      executor=executor)
             self.coarse_lake_outflows_two_sequence = TimeSequence(filepaths=self.sequence_two_results_base_dirs,
                                                                   fieldname="outflow_points",
                                                                   filename= "30min_rdirs_jump_next_cell_indices.nc",
-                                                                  change_to_dtype=bool)
+                                                                  change_to_dtype=bool,
+                                                                  executor=executor)
         else:
             self.rdirs_jump_next_cell_lat_two_sequence = None
             self.rdirs_jump_next_cell_lon_two_sequence = None
@@ -584,8 +605,9 @@ class TimeSequences:
 
     def poll_io_worker_procs(self):
         for var in vars(self):
-            if type(var) is TimeSequence:
-                var.poll_for_completed_io()
+            obj = getattr(self,var)
+            if type(obj) is TimeSequence:
+                obj.poll_for_completed_io()
 
 class InteractiveSpillwayPlots:
 
@@ -1541,7 +1563,7 @@ class InteractiveTimeSlicePlots:
                                                mask=spillway_masks[self.time_index])
         elif (add_potential_spillways and
               (potential_spillway_masks[self.time_index] is not None)):
-            spillways_mask = np.zeros(potential_spillway_masks[self.time_index][0].shape,np.int32)
+            spillways_mask = np.zeros(orography.shape,np.int32)
             for i,spillway in enumerate(potential_spillway_masks[self.time_index]):
                 spillways_mask[spillway] = i+1
             masked_spillways_mask = \

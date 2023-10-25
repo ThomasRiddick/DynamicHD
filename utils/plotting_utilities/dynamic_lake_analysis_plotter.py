@@ -5,10 +5,12 @@ Created on Jun 2, 2023
 '''
 import sys
 import configparser
+import logging
 from plotting_utilities.dynamic_lake_analysis_plotting_routines import InteractiveTimeSlicePlots
 from plotting_utilities.dynamic_lake_analysis_plotting_routines import InteractiveSpillwayPlots
 from plotting_utilities.dynamic_lake_analysis_plotting_routines import InteractiveTimeSeriesPlots
 from plotting_utilities.dynamic_lake_analysis_plotting_routines import TimeSeriesPlot
+from plotting_utilities.dynamic_lake_analysis_plotting_routines import TimeSequence
 from plotting_utilities.dynamic_lake_analysis_plotting_routines import TimeSequences
 from plotting_utilities.dynamic_lake_analysis_plotting_routines import DataConfiguration
 from plotting_utilities.color_palette import ColorPalette
@@ -19,6 +21,8 @@ from plotting_utilities.lake_analysis_tools import LakeAnalysisDebuggingPlots
 from plotting_utilities.lake_analysis_tools import ExitProfiler
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+
+logging.basicConfig(level=logging.INFO)
 
 class DynamicLakeAnalysisPlotter:
 
@@ -122,48 +126,45 @@ class DynamicLakeAnalysisPlotter:
                                                      **vars(self.time_sequences))
 
     def generate_lake_stats(self):
+        logging.info("Starting lake stats generation")
         self.lake_stats_one = {}
         self.lake_stats_two = {}
-        subsequence_collections = [
-                {"date":self.time_sequences.date_sequence,
-                 "lsmask":
-                 self.time_sequences.lsmask_sequence.get_subsequences(1000)[0],
-                 "connected_lake_basin_numbers_one":
-                 self.time_sequences.connected_lake_basin_numbers_one_sequence.\
-                                                         get_subsequences(1000)[0],
-                 "filled_orography_one":
-                 self.time_sequences.filled_orography_one_sequence.\
-                                            get_subsequences(1000)[0],
-                 "lake_volumes_one":
-                 self.time_sequences.lake_volumes_one_sequence.\
-                                            get_subsequences(1000)[0],
-                 "catchment_nums_one":
-                 self.time_sequences.catchment_nums_one_sequence.\
-                                            get_subsequences(1000)[0],
-                 "sinkless_rdirs_one":
-                 self.time_sequences.sinkless_rdirs_one_sequence.\
-                                            get_subsequences(1000)[0],
-                 "orography_one":
-                 self.time_sequences.orography_one_sequence.\
-                                            get_subsequences(1000)[0],
-                 "connected_lake_basin_numbers_two":
-                 self.time_sequences.connected_lake_basin_numbers_two_sequence.\
-                                                         get_subsequences(1000)[0],
-                 "filled_orography_two":
-                 self.time_sequences.filled_orography_two_sequence.\
-                                            get_subsequences(1000)[0],
-                 "lake_volumes_two":
-                 self.time_sequences.lake_volumes_two_sequence.\
-                                            get_subsequences(1000)[0],
-                 "catchment_nums_two":
-                 self.time_sequences.catchment_nums_two_sequence.\
-                                            get_subsequences(1000)[0],
-                 "sinkless_rdirs_two":
-                 self.time_sequences.sinkless_rdirs_two_sequence.\
-                                            get_subsequences(1000)[0],
-                 "orography_two":
-                 self.time_sequences.orography_two_sequence.\
-                                            get_subsequences(1000)[0]}]
+        sequences = {"lsmask":
+                     self.time_sequences.lsmask_sequence,
+                     "connected_lake_basin_numbers_one":
+                     self.time_sequences.connected_lake_basin_numbers_one_sequence,
+                     "filled_orography_one":
+                     self.time_sequences.filled_orography_one_sequence,
+                     "lake_volumes_one":
+                     self.time_sequences.lake_volumes_one_sequence,
+                     "catchment_nums_one":
+                     self.time_sequences.catchment_nums_one_sequence,
+                     "sinkless_rdirs_one":
+                     self.time_sequences.sinkless_rdirs_one_sequence,
+                     "orography_one":
+                     self.time_sequences.orography_one_sequence,
+                     "connected_lake_basin_numbers_two":
+                     self.time_sequences.connected_lake_basin_numbers_two_sequence,
+                     "filled_orography_two":
+                     self.time_sequences.filled_orography_two_sequence,
+                     "lake_volumes_two":
+                     self.time_sequences.lake_volumes_two_sequence,
+                     "catchment_nums_two":
+                     self.time_sequences.catchment_nums_two_sequence,
+                     "sinkless_rdirs_two":
+                     self.time_sequences.sinkless_rdirs_two_sequence,
+                     "orography_two":
+                     self.time_sequences.orography_two_sequence}
+        subsequence_length = 30
+        blocks_to_retain = [0,1,2]
+        subsequence_collections = [{"date":
+            self.time_sequences.date_sequence[i:min(i+subsequence_length,
+                                                    len(self.time_sequences.date_sequence))]}
+                                              for i in range(0,len(self.time_sequences.date_sequence),
+                                                             subsequence_length)]
+        for key,sequence in sequences.items():
+            for i,subsequence in enumerate(sequence.get_subsequences(subsequence_length)):
+                subsequence_collections[i][key] = subsequence
         for subsequence_collection in subsequence_collections:
             for lake_name,lake in self.lake_defs.items():
                 self.ocean_basin_identifier.\
@@ -256,6 +257,11 @@ class DynamicLakeAnalysisPlotter:
                                                   "lake_sill_heights":lake_sill_heights,
                                                   "lake_spillway_height_profiles":lake_spillway_height_profiles,
                                                   "lake_spillways_masks":lake_spillway_masks}
+                for key,sequence in filter(lambda item:type(item[1]) is TimeSequence,sequences.items()):
+                    sequence.insert_subsequence_data(subsequence_collection[key])
+                    sequence.update_blocks_in_memory()
+                    sequence.purge_blocks(blocks_to_retain)
+        logging.info("Lake stats generation complete")
 
     def run(self):
         timeseries = []
