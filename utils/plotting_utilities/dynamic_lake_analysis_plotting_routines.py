@@ -1793,11 +1793,11 @@ class InteractiveTimeSlicePlots:
                                          sinkless_rdirs=
                                          self.slice_data["sinkless_rdirs_two_slice_zoomed"])
 
-    def selected_lake_potential_spillways_base(self,index,lake_potential_spillways):
+    def selected_lake_potential_spillways_base(self,index,shape,lake_potential_spillways):
         if lake_potential_spillways is not None:
             self.timeslice_plots[index].ax.clear()
             if lake_potential_spillways[self.time_index] is not None:
-                spillways_mask = np.zeros(lake_potential_spillways[self.time_index][0].shape,np.int32)
+                spillways_mask = np.zeros(shape,np.int32)
                 for i,spillway in enumerate(lake_potential_spillways[self.time_index]):
                     spillways_mask[spillway] = i+1
                 self.timeslice_plots[index].plot = \
@@ -1809,10 +1809,12 @@ class InteractiveTimeSlicePlots:
             self.timeslice_plots[index].ax.set_visible(False)
 
     def selected_lake_potential_spillways_one(self,index):
-        self.selected_lake_potential_spillways_base(index,self.lake_potential_spillway_masks_one)
+        self.selected_lake_potential_spillways_base(index,self.slice_data["sinkless_rdirs_one_slice_zoomed"].shape,
+                                                    self.lake_potential_spillway_masks_one)
 
     def selected_lake_potential_spillways_two(self,index):
-        self.selected_lake_potential_spillways_base(index,self.lake_potential_spillway_masks_two)
+        self.selected_lake_potential_spillways_base(index,self.slice_data["sinkless_rdirs_two_slice_zoomed"].shape,
+                                                    self.lake_potential_spillway_masks_two)
 
     def debug_lake_points_one(self,index):
         if (self.lake_points_one is not None and
