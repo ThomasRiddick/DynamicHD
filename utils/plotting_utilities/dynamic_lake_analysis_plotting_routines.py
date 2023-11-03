@@ -330,7 +330,9 @@ class TimeSequences:
                  sequence_one_base_dir,
                  sequence_two_base_dir,
                  glacier_mask_file_template,
+                 input_orography_file_template,
                  super_fine_orography_filepath,
+                 present_day_base_input_orography_filepath,
                  use_connected_catchments=True,
                  missing_fields=[],
                  use_latest_version_for_sequence_one=True,
@@ -342,6 +344,7 @@ class TimeSequences:
         self.sequence_one_results_base_dirs = []
         self.sequence_two_results_base_dirs = []
         self.glacier_mask_filepaths = []
+        self.input_orography_filepaths = []
         for date in self.date_sequence:
             #Note latest version may differ between dates hence calculate this
             #on a date by date basis
@@ -368,10 +371,15 @@ class TimeSequences:
                                                   format(sequence_two_lakes_version,date))
             self.sequence_two_results_base_dirs.append(sequence_two_results_base_dir)
             self.glacier_mask_filepaths.append(glacier_mask_file_template.replace("DATE",str(date)))
+            self.input_orography_filepaths.append(input_orography_file_template.replace("DATE",
+                                                                                        str(date)))
         executor = ProcessPoolExecutor(max_workers=1)
         self.glacier_mask_sequence = TimeSequence(filepaths=self.glacier_mask_filepaths,
                                                   fieldname="glac",
                                                   executor=executor)
+        self.input_orography_sequence = TimeSequence(filepaths=self.input_orography_filepaths,
+                                                     fieldname="Topo",
+                                                     executor=executor)
         self.catchment_nums_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                         fieldname="catchments",
                                                         filename=
@@ -602,6 +610,14 @@ class TimeSequences:
                                                                   adjust_orientation=True).get_data()
         else:
             self.true_sinks = None
+        if not "present_day_base_input_orography" in missing_fields:
+            self.present_day_base_input_orography = \
+                advanced_field_loader(
+                    filename=
+                    present_day_base_input_orography_filepath,
+                    time_slice=None,
+                    fieldname="Topo",
+                    adjust_orientation=True).get_data()
 
     def poll_io_worker_procs(self):
         for var in vars(self):
@@ -996,6 +1012,8 @@ class InteractiveTimeSlicePlots:
                            "orogplusspillway2":self.orography_plus_lake_spillway_two,
                            "orogpluspspillway1":self.orography_potential_lake_spillways_one,
                            "orogpluspspillway2":self.orography_potential_lake_spillways_two,
+                           "inputorog":self.input_orography_plot,
+                           "inputorogchange":self.input_orography_change_plot,
                            "truesinks":self.true_sinks_plot,
                            "lakev1":self.lake_volume_plot_one,
                            "lakev2":self.lake_volume_plot_two,
@@ -1026,7 +1044,8 @@ class InteractiveTimeSlicePlots:
                                  "orogplusspillway1",
                                  "orogplusspillway2",
                                  "orogpluspspillway1",
-                                 "orogpluspspillway2"]
+                                 "orogpluspspillway2",
+                                 "inputorog","inputorogchange"]
         self.cflow_plot_types = ["fcflow1","fcflow1","fcflow1comp",
                                  "cflow1","cflow2","comp"]
         self.plot_configuration = [initial_plot_configuration[0] for _ in range(13)]
@@ -1049,8 +1068,8 @@ class InteractiveTimeSlicePlots:
         self.norm_comp_hl = mpl.colors.BoundaryNorm(self.bounds_comp_hl,self.cmap_comp_hl.N)
         N_catch = 50
         self.cmap_catch = 'jet'
-        self.orog_min = -9999.0
-        self.orog_max = 9999.0
+        self.orog_min = 0.0
+        self.orog_max = 8000.0
         self.bounds_catch = np.linspace(0,N_catch,N_catch+1)
         self.norm_catch = mpl.colors.BoundaryNorm(boundaries=self.bounds_catch,
                                                   ncolors=256)
@@ -1160,6 +1179,7 @@ class InteractiveTimeSlicePlots:
                         filled_orography_one_sequence,
                         filled_orography_two_sequence,
                         super_fine_orography,
+                        present_day_base_input_orography,
                         first_corrected_orography,
                         second_corrected_orography,
                         third_corrected_orography,
@@ -1174,6 +1194,8 @@ class InteractiveTimeSlicePlots:
                                                       **kwargs)
         self.gen = generate_catchment_and_cflow_sequence_tuple(combined_sequences,
                                                                super_fine_orography=super_fine_orography,
+                                                               present_day_base_input_orography=
+                                                               present_day_base_input_orography,
                                                                first_corrected_orography=first_corrected_orography,
                                                                second_corrected_orography=second_corrected_orography,
                                                                third_corrected_orography=third_corrected_orography,
@@ -1416,6 +1438,17 @@ class InteractiveTimeSlicePlots:
                                          self.slice_data["fine_river_flow_two_slice_zoomed"]
                                          >= self.minflowcutoff*self.fine_cutoff_scaling)] = 0
         self.plot_from_color_codes(color_codes_cflow,index)
+
+    def input_orography_plot(self,index):
+        self.timeslice_plots[index].scale = PlotScales.FINE
+        self.orography_plot_base(index,self.slice_data["input_orography_slice_zoomed"])
+
+    def input_orography_change_plot(self,index):
+        self.timeslice_plots[index].scale = PlotScales.FINE
+        self.orography_plot_base(
+            index,
+            self.slice_data["input_orography_slice_zoomed"] -
+            self.slice_data["present_day_base_input_orography_slice_zoomed"])
 
     def orography_plot_one(self,index):
         self.timeslice_plots[index].scale = PlotScales.FINE
@@ -2135,9 +2168,9 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequences,
     skip_to_index = False
     i = 0
     sequence_names = ["rdirs_one","rdirs_two",
-                      "lsmask","glacier_mask","catchment_nums_one",
-                      "catchment_nums_two","river_flow_one",
-                      "river_flow_two","river_mouths_one",
+                      "lsmask","glacier_mask","input_orography",
+                      "catchment_nums_one","catchment_nums_two",
+                      "river_flow_one","river_flow_two","river_mouths_one",
                       "river_mouths_two","lake_volumes_one",
                       "lake_volumes_two","lake_basin_numbers_one",
                       "lake_basin_numbers_two","connected_lake_basin_numbers_one",
@@ -2192,7 +2225,8 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequences,
                 extract_zoomed_section(slice_data[slice_name],
                                        zoom_settings.zoomed_section_bounds) \
                 if zoom_settings.zoomed else slice_data[slice_name]
-        slices_to_zoom_fine_scale = ["lake_volumes_one_slice","lake_volumes_two_slice",
+        slices_to_zoom_fine_scale = ["input_orography_slice",
+                                     "lake_volumes_one_slice","lake_volumes_two_slice",
                                      "lake_basin_numbers_one_slice",
                                      "lake_basin_numbers_two_slice",
                                      "connected_lake_basin_numbers_one_slice",
@@ -2215,6 +2249,7 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequences,
                                            "second_corrected_orography",
                                            "third_corrected_orography",
                                            "fourth_corrected_orography",
+                                           "present_day_base_input_orography",
                                            "true_sinks"]
         for slice_name in fixed_fields_to_zoom_fine_scale:
             zoomed_slice_data[f"{slice_name}_slice_zoomed"] = \

@@ -544,15 +544,24 @@ def latest_lake_version_vs_previous_analysis_lakes_comparison():
     glac_template = ("/Users/thomasriddick/Documents/"
                      "data/simulation_data/lake_transient_data/run_1/"
                      "10min_glac_DATEk.nc")
+    orog_template = ("/Users/thomasriddick/Documents/data/"
+                     "lake_analysis_runs/GLAC1D_Top01_surf/GLAC1D_Top01_surf_DATE.nc")
+    present_day_base_input_orography_filepath = join("/Users/thomasriddick/Documents/data/"
+                     "lake_analysis_runs/GLAC1D_Top01_surf/GLAC1D_Top01_surf_0000.nc")
+    super_fine_orography_filepath = join("/Users/thomasriddick/"
+                                         "Documents/data/HDdata/orographys",
+                                         "srtm30plus_v6.nc")
     initial_configuration = {}
     initial_configuration["plots"] = ["orogplusspillway1"]
     initial_configuration["dates"] = dates
     initial_configuration["sequence_one_base_dir"] = current_analysis_base_dir
     initial_configuration["sequence_two_base_dir"] = previous_analysis_base_dir
     initial_configuration["glacier_mask_file_template"] = glac_template
-    initial_configuration["super_fine_orography_filepath"] = join("/Users/thomasriddick/"
-                                                                  "Documents/data/HDdata/orographys",
-                                                                  "srtm30plus_v6.nc")
+    initial_configuration["input_orography_file_template"] = orog_template
+    initial_configuration["present_day_base_input_orography_filepath"] = \
+        present_day_base_input_orography_filepath
+    initial_configuration["super_fine_orography_filepath"] = \
+        super_fine_orography_filepath
     initial_configuration["use_connected_catchments"] = True
     initial_configuration["missing_fields"] = ["fine_river_flow_one","fine_river_flow_two"]
     initial_configuration["use_latest_version_for_sequence_one"] = True

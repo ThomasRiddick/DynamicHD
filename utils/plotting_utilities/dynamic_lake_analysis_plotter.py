@@ -67,6 +67,10 @@ class DynamicLakeAnalysisPlotter:
             config_section["sequence_two_base_dir"]
         self.configuration["glacier_mask_file_template"] = \
             config_section["glacier_mask_file_template"]
+        self.configuration["input_orography_file_template"] = \
+            config_section["input_orography_file_template"]
+        self.configuration["present_day_base_input_orography_filepath"] = \
+            config_section["present_day_base_input_orography_filepath"]
         self.configuration["super_fine_orography_filepath"] = \
             config_section["super_fine_orography_filepath"]
         self.configuration["use_connected_catchments"] = \
