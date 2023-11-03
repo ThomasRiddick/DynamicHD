@@ -5,10 +5,12 @@ Created on Jun 2, 2023
 '''
 import sys
 import configparser
+import logging
 from plotting_utilities.dynamic_lake_analysis_plotting_routines import InteractiveTimeSlicePlots
 from plotting_utilities.dynamic_lake_analysis_plotting_routines import InteractiveSpillwayPlots
 from plotting_utilities.dynamic_lake_analysis_plotting_routines import InteractiveTimeSeriesPlots
 from plotting_utilities.dynamic_lake_analysis_plotting_routines import TimeSeriesPlot
+from plotting_utilities.dynamic_lake_analysis_plotting_routines import TimeSequence
 from plotting_utilities.dynamic_lake_analysis_plotting_routines import TimeSequences
 from plotting_utilities.dynamic_lake_analysis_plotting_routines import DataConfiguration
 from plotting_utilities.color_palette import ColorPalette
@@ -19,6 +21,8 @@ from plotting_utilities.lake_analysis_tools import LakeAnalysisDebuggingPlots
 from plotting_utilities.lake_analysis_tools import ExitProfiler
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+
+logging.basicConfig(level=logging.INFO)
 
 class DynamicLakeAnalysisPlotter:
 
@@ -63,6 +67,10 @@ class DynamicLakeAnalysisPlotter:
             config_section["sequence_two_base_dir"]
         self.configuration["glacier_mask_file_template"] = \
             config_section["glacier_mask_file_template"]
+        self.configuration["input_orography_file_template"] = \
+            config_section["input_orography_file_template"]
+        self.configuration["present_day_base_input_orography_filepath"] = \
+            config_section["present_day_base_input_orography_filepath"]
         self.configuration["super_fine_orography_filepath"] = \
             config_section["super_fine_orography_filepath"]
         self.configuration["use_connected_catchments"] = \
@@ -84,13 +92,13 @@ class DynamicLakeAnalysisPlotter:
             self.generate_lake_stats()
             self.interactive_plots.replot(self.lake_stats_one["Agassiz"]["lake_points"],
                                           self.lake_stats_two["Agassiz"]["lake_points"],
-                                          self.lake_stats_one["Agassiz"]["lake_spillways_masks"],
-                                          self.lake_stats_two["Agassiz"]["lake_spillways_masks"],
+                                          self.lake_stats_one["Agassiz"]["lake_spillway_masks"],
+                                          self.lake_stats_two["Agassiz"]["lake_spillway_masks"],
                                           **vars(self.time_sequences))
             self.interactive_lake_plots.replot(self.lake_stats_one["Agassiz"]["lake_points"],
                                                self.lake_stats_two["Agassiz"]["lake_points"],
-                                               self.lake_stats_one["Agassiz"]["lake_spillways_masks"],
-                                               self.lake_stats_two["Agassiz"]["lake_spillways_masks"],
+                                               self.lake_stats_one["Agassiz"]["lake_spillway_masks"],
+                                               self.lake_stats_two["Agassiz"]["lake_spillway_masks"],
                                                **vars(self.time_sequences))
             self.interactive_spillway_plots.replot(lake_center_one_sequence=
                                                    self.lake_stats_one["Agassiz"]["lake_points"],
@@ -122,90 +130,110 @@ class DynamicLakeAnalysisPlotter:
                                                      **vars(self.time_sequences))
 
     def generate_lake_stats(self):
+        logging.info("Starting lake stats generation")
         self.lake_stats_one = {}
         self.lake_stats_two = {}
-        for lake_name,lake in self.lake_defs.items():
-            self.ocean_basin_identifier.\
-                set_lsmask_sequence(self.time_sequences.lsmask_sequence)
-            lake_points = self.lake_point_extractor.\
-                extract_lake_point_sequence(initial_lake_center=lake["initial_lake_center"],
-                                            lake_emergence_date=lake["lake_emergence_date"],
-                                            dates=self.time_sequences.date_sequence,
-                                            input_area_bounds=lake["input_area_bounds"],
-                                            connected_lake_basin_numbers_sequence=
-                                            self.time_sequences.connected_lake_basin_numbers_one_sequence)
-            lake_heights,lake_volumes = self.lake_height_and_volume_extractor.\
-                extract_lake_height_and_volume_sequence(lake_point_sequence=lake_points,
-                                                        filled_orography_sequence=
-                                                        self.time_sequences.filled_orography_one_sequence,
-                                                        lake_volumes_sequence=
-                                                        self.time_sequences.lake_volumes_one_sequence)
-            lake_outflow_basins = self.ocean_basin_identifier.\
-                extract_ocean_basin_for_lake_outflow_sequence(dates=self.time_sequences.date_sequence,
-                                                              input_area_bounds=lake["input_area_bounds"],
-                                                              lake_point_sequence=lake_points,
-                                                              connected_catchments_sequence=
-                                                              self.time_sequences.catchment_nums_one_sequence,
-                                                              scale_factor=3)
-            spillway_height_profiles,spillway_masks = \
-                self.exit_profiler.profile_exit_sequence(lake_center_sequence=lake_points,
-                                                         ocean_basin_numbers_sequence=self.ocean_basin_identifier.\
-                                                            get_ocean_basin_numbers_sequence(),
-                                                        rdirs_sequence=self.time_sequences.sinkless_rdirs_one_sequence,
-                                                        corrected_heights_sequence=
-                                                        self.time_sequences.orography_one_sequence)
-            lake_sill_heights = [ [max(profile) for profile in profile_set]
-                                  for profile_set in spillway_height_profiles ]
-            self.lake_stats_one[lake_name] = {"lake_points":lake_points,
-                                              "lake_heights":lake_heights,
-                                              "lake_volumes":lake_volumes,
-                                              "lake_outflow_basins":lake_outflow_basins,
-                                              "lake_sill_heights":lake_sill_heights,
-                                              "lake_spillway_height_profiles":spillway_height_profiles,
-                                              "lake_spillways_masks":spillway_masks}
-            lake_points = self.lake_point_extractor.\
-                extract_lake_point_sequence(initial_lake_center=lake["initial_lake_center"],
-                                            lake_emergence_date=lake["lake_emergence_date"],
-                                            dates=self.time_sequences.date_sequence,
-                                            input_area_bounds=lake["input_area_bounds"],
-                                            connected_lake_basin_numbers_sequence=
-                                            self.time_sequences.connected_lake_basin_numbers_two_sequence)
-            lake_heights,lake_volumes = self.lake_height_and_volume_extractor.\
-                extract_lake_height_and_volume_sequence(lake_point_sequence=lake_points,
-                                                        filled_orography_sequence=
-                                                        self.time_sequences.filled_orography_two_sequence,
-                                                        lake_volumes_sequence=
-                                                        self.time_sequences.lake_volumes_two_sequence)
-            lake_outflow_basins = self.ocean_basin_identifier.\
-                extract_ocean_basin_for_lake_outflow_sequence(dates=self.time_sequences.date_sequence,
-                                                              input_area_bounds=lake["input_area_bounds"],
-                                                              lake_point_sequence=lake_points,
-                                                              connected_catchments_sequence=
-                                                              self.time_sequences.catchment_nums_two_sequence,
-                                                              scale_factor=3)
-            lake_spillway_height_profiles,lake_spillway_masks = \
-                self.exit_profiler.profile_exit_sequence(lake_center_sequence=lake_points,
-                                                         ocean_basin_numbers_sequence=self.ocean_basin_identifier.\
-                                                            get_ocean_basin_numbers_sequence(),
-                                                         rdirs_sequence=self.time_sequences.sinkless_rdirs_two_sequence,
-                                                         corrected_heights_sequence=
-                                                         self.time_sequences.orography_two_sequence)
-            lake_sill_heights = [ [max(profile) for profile in profile_set]
-                                  for profile_set in spillway_height_profiles ]
-            self.lake_stats_two[lake_name] = {"lake_points":lake_points,
-                                              "lake_heights":lake_heights,
-                                              "lake_volumes":lake_volumes,
-                                              "lake_outflow_basins":lake_outflow_basins,
-                                              "lake_sill_heights":lake_sill_heights,
-                                              "lake_spillway_height_profiles":lake_spillway_height_profiles,
-                                              "lake_spillways_masks":lake_spillway_masks}
+        sequences = {"lsmask":
+                     self.time_sequences.lsmask_sequence,
+                     "connected_lake_basin_numbers_one":
+                     self.time_sequences.connected_lake_basin_numbers_one_sequence,
+                     "filled_orography_one":
+                     self.time_sequences.filled_orography_one_sequence,
+                     "lake_volumes_one":
+                     self.time_sequences.lake_volumes_one_sequence,
+                     "catchment_nums_one":
+                     self.time_sequences.catchment_nums_one_sequence,
+                     "sinkless_rdirs_one":
+                     self.time_sequences.sinkless_rdirs_one_sequence,
+                     "orography_one":
+                     self.time_sequences.orography_one_sequence,
+                     "connected_lake_basin_numbers_two":
+                     self.time_sequences.connected_lake_basin_numbers_two_sequence,
+                     "filled_orography_two":
+                     self.time_sequences.filled_orography_two_sequence,
+                     "lake_volumes_two":
+                     self.time_sequences.lake_volumes_two_sequence,
+                     "catchment_nums_two":
+                     self.time_sequences.catchment_nums_two_sequence,
+                     "sinkless_rdirs_two":
+                     self.time_sequences.sinkless_rdirs_two_sequence,
+                     "orography_two":
+                     self.time_sequences.orography_two_sequence}
+        subsequence_length = 5
+        blocks_to_retain = [0,1,2]
+        subsequence_collections = [{"date":
+            self.time_sequences.date_sequence[i:min(i+subsequence_length,
+                                                    len(self.time_sequences.date_sequence))]}
+                                              for i in range(0,len(self.time_sequences.date_sequence),
+                                                             subsequence_length)]
+        for key,sequence in sequences.items():
+            for i,subsequence in enumerate(sequence.get_subsequences(subsequence_length)):
+                subsequence_collections[i][key] = subsequence
+        stat_names = ["lake_points","lake_heights","lake_volumes",
+                      "lake_outflow_basins","lake_sill_heights",
+                      "lake_spillway_height_profiles",
+                      "lake_spillway_masks"]
+        for lake_name in self.lake_defs.keys():
+            self.lake_stats_one[lake_name] = {name:[] for name in stat_names}
+            self.lake_stats_two[lake_name] = {name:[] for name in stat_names}
+        for i,subsequence_collection in enumerate(subsequence_collections):
+            for lake_name,lake in self.lake_defs.items():
+                self.ocean_basin_identifier.\
+                    set_lsmask_sequence(subsequence_collection["lsmask"])
+                for exp in ["one","two"]:
+                    lake_points = vars(self)[f"lake_point_extractor_{exp}"].\
+                        extract_lake_point_sequence(initial_lake_center=lake["initial_lake_center"],
+                                                    lake_emergence_date=lake["lake_emergence_date"],
+                                                    dates=subsequence_collection["date"],
+                                                    input_area_bounds=lake["input_area_bounds"],
+                                                    connected_lake_basin_numbers_sequence=
+                                                    subsequence_collection[
+                                                    f"connected_lake_basin_numbers_{exp}"],
+                                                    continue_from_previous_subsequence=(i == 0))
+                    lake_heights,lake_volumes = self.lake_height_and_volume_extractor.\
+                        extract_lake_height_and_volume_sequence(lake_point_sequence=lake_points,
+                                                                filled_orography_sequence=
+                                                                subsequence_collection[
+                                                                f"filled_orography_{exp}"],
+                                                                lake_volumes_sequence=
+                                                                subsequence_collection[
+                                                                f"lake_volumes_{exp}"])
+                    lake_outflow_basins = self.ocean_basin_identifier.\
+                        extract_ocean_basin_for_lake_outflow_sequence(dates=
+                                                                      subsequence_collection["date"],
+                                                                      input_area_bounds=lake["input_area_bounds"],
+                                                                      lake_point_sequence=lake_points,
+                                                                      connected_catchments_sequence=
+                                                                      subsequence_collection[
+                                                                      f"catchment_nums_{exp}"],
+                                                                      scale_factor=3)
+                    lake_spillway_height_profiles,lake_spillway_masks = \
+                        self.exit_profiler.profile_exit_sequence(lake_center_sequence=lake_points,
+                                                                 ocean_basin_numbers_sequence=self.ocean_basin_identifier.\
+                                                                    get_ocean_basin_numbers_sequence(),
+                                                                rdirs_sequence=
+                                                                subsequence_collection[
+                                                                f"sinkless_rdirs_{exp}"],
+                                                                corrected_heights_sequence=
+                                                                subsequence_collection[
+                                                                f"orography_{exp}"])
+                    lake_sill_heights = [ [max(profile) for profile in profile_set]
+                                          for profile_set in lake_spillway_height_profiles ]
+                    for stat_name in stat_names:
+                        vars(self)[f"lake_stats_{exp}"][lake_name][stat_name].extend(locals()[stat_name])
+                for key,sequence in filter(lambda item:type(item[1]) is TimeSequence,sequences.items()):
+                    sequence.insert_subsequence_data(subsequence_collection[key])
+                    sequence.update_blocks_in_memory()
+                    sequence.purge_blocks(blocks_to_retain)
+        logging.info("Lake stats generation complete")
 
     def run(self):
         timeseries = []
         self.corrections = []
         self.lake_height_and_volume_extractor = LakeHeightAndVolumeExtractor()
         self.ocean_basin_identifier = OutflowBasinIdentifier("30minLatLong",self.dbg_plts)
-        self.lake_point_extractor = LakePointExtractor()
+        self.lake_point_extractor_one = LakePointExtractor()
+        self.lake_point_extractor_two = LakePointExtractor()
         self.exit_profiler = ExitProfiler()
         self.generate_lake_stats()
         self.interactive_plots = InteractiveTimeSlicePlots(self.colors,
@@ -221,9 +249,9 @@ class DynamicLakeAnalysisPlotter:
                                                       lake_points_two=
                                                       self.lake_stats_two["Agassiz"]["lake_points"],
                                                       lake_potential_spillway_masks_one=
-                                                      self.lake_stats_one["Agassiz"]["lake_spillways_masks"],
+                                                      self.lake_stats_one["Agassiz"]["lake_spillway_masks"],
                                                       lake_potential_spillway_masks_two=
-                                                      self.lake_stats_two["Agassiz"]["lake_spillways_masks"],
+                                                      self.lake_stats_two["Agassiz"]["lake_spillway_masks"],
                                                       corrections=self.corrections)
         self.interactive_lake_plots = InteractiveTimeSlicePlots(self.colors,
                                                                 self.configuration['plots'],
@@ -237,9 +265,9 @@ class DynamicLakeAnalysisPlotter:
                                                                 lake_points_one=self.lake_stats_one["Agassiz"]["lake_points"],
                                                                 lake_points_two=self.lake_stats_two["Agassiz"]["lake_points"],
                                                                 lake_potential_spillway_masks_one=
-                                                                self.lake_stats_one["Agassiz"]["lake_spillways_masks"],
+                                                                self.lake_stats_one["Agassiz"]["lake_spillway_masks"],
                                                                 lake_potential_spillway_masks_two=
-                                                                self.lake_stats_two["Agassiz"]["lake_spillways_masks"],
+                                                                self.lake_stats_two["Agassiz"]["lake_spillway_masks"],
                                                                 corrections=self.corrections)
 
         build_dict = lambda figs,nums,prefix : { f'-{prefix}CANVAS{i}-':figure for i,figure in zip(nums,figs) }
@@ -298,8 +326,11 @@ class DynamicLakeAnalysisPlotter:
                                 self.interactive_plots,self.interactive_lake_plots,
                                 self.interactive_spillway_plots,
                                 self.data_configuration,
-                                self.setup_configuration)
+                                self.setup_configuration,
+                                self.poll_io_worker_procs)
 
+    def poll_io_worker_procs(self):
+        self.time_sequences.poll_io_worker_procs()
 
 if __name__ == '__main__':
     lake_analysis_plotter = DynamicLakeAnalysisPlotter(ColorPalette('default'),

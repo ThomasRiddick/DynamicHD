@@ -111,17 +111,27 @@ class LakePointExtractor:
                                     lake_emergence_date,
                                     dates,
                                     input_area_bounds,
-                                    connected_lake_basin_numbers_sequence):
-        self.lake_tracker = None
+                                    connected_lake_basin_numbers_sequence,
+                                    continue_from_previous_subsequence=False):
+        if not continue_from_previous_subsequence:
+            self.lake_tracker = None
         self.initial_lake_center = initial_lake_center
-        lake_emergence_date_index = dates.index(lake_emergence_date)
-        lake_point_sequence = [ None for _ in
-                               range(lake_emergence_date_index)]
-        for date,connected_lake_basin_numbers in \
-              zip(dates,
-                  connected_lake_basin_numbers_sequence):
-              if date <= lake_emergence_date:
-                lake_point_sequence.append(self.extract_lake(connected_lake_basin_numbers))
+        if  ((min(dates) < lake_emergence_date) and
+             ((lake_emergence_date < max(dates)) or
+               continue_from_previous_subsequence)):
+            if not continue_from_previous_subsequence:
+                lake_emergence_date_index = dates.index(lake_emergence_date)
+                lake_point_sequence = [ None for _ in
+                                        range(lake_emergence_date_index)]
+            else:
+                lake_point_sequence = []
+            for date,connected_lake_basin_numbers in \
+                zip(dates,connected_lake_basin_numbers_sequence):
+                if date <= lake_emergence_date:
+                    lake_point_sequence.append(self.extract_lake(connected_lake_basin_numbers))
+        else:
+            lake_point_sequence = [ None for _ in
+                                    range(len(connected_lake_basin_numbers_sequence))]
         return lake_point_sequence
 
     def extract_lake(self,connected_lake_basin_numbers):
@@ -309,7 +319,6 @@ class OutflowBasinIdentifier:
             ocean_basin_numbers = -1*np.ones(self.field_shape,dtype=np.int32)
             for i,coastline_identifier in enumerate(self.coastline_identifiers):
                 _,coastal_ocean_cells = coastline_identifier.identify_coastline(lsmask)
-                plt.show()
                 ocean_basin_numbers[coastal_ocean_cells] = i
             self.ocean_basin_numbers_sequence.append(ocean_basin_numbers)
 
@@ -488,7 +497,7 @@ class ExitProfiler:
         spillway_height_profiles = []
         spillway_masks = []
         if lake_center is None:
-            return [],[]
+            return [],None
         lsmask = np.logical_or(rdirs == -1,rdirs == 0)
         orography = self.prepare_orography(lake_center,corrected_heights,lsmask)
         for basin_number in range(np.amax(ocean_basin_numbers)+1):
@@ -535,7 +544,7 @@ class ExitProfiler:
             spillway_height_profiles.append(spillway_height_profile)
             spillway_mask = \
                 SpillwayProfiler.extract_spillway_mask(lake_center,sinkless_rdirs)
-            spillway_masks.append(spillway_mask)
+            spillway_masks.append(np.nonzero(spillway_mask))
         return spillway_height_profiles,spillway_masks
 
     def profile_exit_sequence(self,lake_center_sequence,

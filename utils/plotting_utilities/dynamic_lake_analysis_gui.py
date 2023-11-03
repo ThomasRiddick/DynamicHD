@@ -1,11 +1,16 @@
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 import PySimpleGUI as sg
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg,NavigationToolbar2Tk
 import logging
 import copy
 import re
+import time
+import warnings
+import os
 
-logging.basicConfig(level=logging.INFO)
+NavigationToolbar2Tk.toolitems = [ item for item in NavigationToolbar2Tk.toolitems
+                                   if not item[0] == 'Save']
 
 class SetCoordsAndHeight:
 
@@ -45,9 +50,14 @@ class DynamicLakeAnalysisGUI:
                                                             "41","42","43","44"])}
         default_corrections_file = ("/Users/thomasriddick/Documents/"
                                     "data/temp/erosion_corrections.txt")
+        plots_in_column = { 1:[0], 2:[1,2], 4:[3,4,5,6], 6:[7,8,9,10,11,12]}
+        save_button_keys = [f"-{prefix}SAVE-" for  prefix in
+                            ["GM","LM","CS","TS"]]
 
         datatypes = {"agassizoutlet-time":"-TSDSOUTLETDATE-"}
         reversed_datatypes = {value:key for key,value in datatypes.items()}
+        poll_interval = 3.0
+        height_slider_upper_bound = 8000
 
         def __init__(self,avail_plots,avail_ts_plots,initial_configuration,
                      dbg_plts=None):
@@ -56,6 +66,7 @@ class DynamicLakeAnalysisGUI:
                 self.avail_plots = avail_plots
                 self.avail_ts_plots = avail_ts_plots
                 self.visible_column = {"GM":0, "LM":0, "CS":0, "TS":0}
+                self.visible_column_changed = {"GM":False, "LM":False}
                 self.configuration = initial_configuration
                 self.initial_configuration = copy.deepcopy(initial_configuration)
                 self.dbg_plts = dbg_plts
@@ -63,26 +74,40 @@ class DynamicLakeAnalysisGUI:
 
         @staticmethod
         def config_and_save_button_factory(key_prefix,key_num):
-                return sg.Button('Configure',key=f'-{key_prefix}CONFIGURE{key_num}-'),sg.Button('Save')
+                return (sg.Button('Configure',key=f'-{key_prefix}CONFIGURE{key_num}-'),
+                        sg.Button('Save',key=f'-{key_prefix}SAVE-'))
 
-        @staticmethod
-        def sliders_factory(prefix):
-                return (sg.Text('Cumulative Flow'),sg.Slider((0,1000),
-                                                             orientation='h',
-                                                             key=f'-{prefix}ACCSLIDER-',
-                                                             default_value=100,
-                                                             enable_events=True),
-                        sg.Text('Minimum height'),sg.Slider((0,8000),
-                                                            orientation='h',
-                                                            key=f'-{prefix}ZMINSLIDER-',
-                                                            default_value=0,
-                                                            enable_events=True),
-                        sg.Text('Maximum height'),sg.Slider((0,8000),
-                                                            orientation='h',
-                                                            key=f'-{prefix}ZMAXSLIDER-',
-                                                            default_value=5000,
-                                                            enable_events=True),
-                        sg.Text("Tip: Click to sides of \nslider to set precise values"))
+        @classmethod
+        def sliders_factory(cls,prefix):
+                return (sg.vbottom([sg.Text('Cumulative Flow')]) +
+                        [sg.Slider((0,1000),
+                                   orientation='h',
+                                   key=f'-{prefix}ACCSLIDER-',
+                                   default_value=100,
+                                   enable_events=True)] +
+                        sg.vbottom([sg.Text('Minimum height')]) +
+                        [sg.Slider((0,cls.height_slider_upper_bound),
+                                   orientation='h',
+                                   key=f'-{prefix}ZMINSLIDER-',
+                                   default_value=0,
+                                   enable_events=True)] +
+                         sg.vbottom([sg.Button('<<',key=f'-{prefix}ZMINFREWINDSLIDERSTEP-',enable_events=True),
+                                     sg.Button('<', key=f'-{prefix}ZMINREWINDSLIDERSTEP-',enable_events=True),
+                                     sg.InputText(key=f'-{prefix}ZMINSLIDERSET-',size=4,enable_events=True),
+                                     sg.Button('>', key=f'-{prefix}ZMINFORWARDSLIDERSTEP-',enable_events=True),
+                                     sg.Button('>>',key=f'-{prefix}ZMINFFORWARDSLIDERSTEP-',enable_events=True),
+                                     sg.Text('Maximum height')]) +
+                         [sg.Slider((0,cls.height_slider_upper_bound),
+                                    orientation='h',
+                                    key=f'-{prefix}ZMAXSLIDER-',
+                                    default_value=5000,
+                                    enable_events=True)] +
+                         sg.vbottom([sg.Button('<<',key=f'-{prefix}ZMAXFREWINDSLIDERSTEP-',enable_events=True),
+                                     sg.Button('<', key=f'-{prefix}ZMAXREWINDSLIDERSTEP-',enable_events=True),
+                                     sg.InputText(key=f'-{prefix}ZMAXSLIDERSET-',size=4,enable_events=True),
+                                     sg.Button('>', key=f'-{prefix}ZMAXFORWARDSLIDERSTEP-',enable_events=True),
+                                     sg.Button('>>',key=f'-{prefix}ZMAXFFORWARDSLIDERSTEP-',enable_events=True),
+                                     sg.Text("Tip: Click to sides of \nslider to set precise values")]))
 
         def stepping_buttons_factory(self,key_prefix):
                 return (sg.Text(self.configuration["dates"][0],key=f'-{key_prefix}STARTDATE-'),
@@ -329,7 +354,7 @@ class DynamicLakeAnalysisGUI:
                                 self.window[f'-{prefix}CORREDIT{label}-'].update(visible=
                                                                         self.values["-SHOWCORREDITOR-"])
 
-        def process_config_main_switches_for_maps(self,key_prefix):
+        def process_config_main_switches_for_maps(self,key_prefix,event_handler):
                 if self.event.startswith("-GM") or self.event.startswith("-LM"):
                         if self.event == f"-{key_prefix}BACK-":
                                 if self.values[f'-{key_prefix}PLOTNUMRADIO1-']:
@@ -345,6 +370,10 @@ class DynamicLakeAnalysisGUI:
                                         self.change_visible_column(f'{key_prefix}LM',6)
                                         self.visible_column[key_prefix] = 6
                                 self.window[f'-{key_prefix}LC-'].update(visible=False)
+                                if self.visible_column_changed[key_prefix]:
+                                        event_handler.update_active_plots(self.plots_in_column[
+                                                                          self.visible_column[key_prefix]])
+                                        self.visible_column_changed[key_prefix] = False
                         if (self.event == f'-{key_prefix}CONFIGURE1-' or self.event == f'-{key_prefix}CONFIGURE2-' or
                             self.event == f'-{key_prefix}CONFIGURE4-' or self.event == f'-{key_prefix}CONFIGURE6-'):
                                 self.change_visible_column(f'{key_prefix}LM',0)
@@ -352,12 +381,16 @@ class DynamicLakeAnalysisGUI:
                                 self.visible_column[key_prefix] = 0
                         if self.event == f'-{key_prefix}PLOTNUMRADIO1-':
                                 self.change_visible_column(f'{key_prefix}LC',1)
+                                self.visible_column_changed[key_prefix] = True
                         if self.event == f'-{key_prefix}PLOTNUMRADIO2-':
                                 self.change_visible_column(f'{key_prefix}LC',2)
+                                self.visible_column_changed[key_prefix] = True
                         if self.event == f'-{key_prefix}PLOTNUMRADIO4-':
                                 self.change_visible_column(f'{key_prefix}LC',4)
+                                self.visible_column_changed[key_prefix] = True
                         if self.event == f'-{key_prefix}PLOTNUMRADIO6-':
                                 self.change_visible_column(f'{key_prefix}LC',6)
+                                self.visible_column_changed[key_prefix] = True
 
         def process_config_main_switches_for_time_series(self):
                 if self.event.startswith("-TS"):
@@ -426,15 +459,61 @@ class DynamicLakeAnalysisGUI:
 
 
         def check_for_slider_events(self,prefix,event_handler):
-                if self.event.endswith('SLIDER-') and self.event.startswith(f'-{prefix}'):
-                        if self.event in [f'-{prefix}{i}ACCSLIDER-' for i in ["1","2","4","6"]]:
-                                event_handler.update_minflowcutoff(self.values[self.event])
-                        for i in ["1","2","4","6"]:
-                                if self.event in [f'-{prefix}{i}ZMINSLIDER-',
-                                                  f'-{prefix}{i}ZMAXSLIDER-']:
-                                        event_handler.change_height_range(
-                                                self.values[f'-{prefix}{i}ZMINSLIDER-'],
-                                                self.values[f'-{prefix}{i}ZMAXSLIDER-'])
+                if self.event.startswith(f'-{prefix}'):
+                        if self.event.endswith('SLIDER-'):
+                                if self.event in [f'-{prefix}{i}ACCSLIDER-' for i in ["1","2","4","6"]]:
+                                        event_handler.update_minflowcutoff(self.values[self.event])
+                                for i in ["1","2","4","6"]:
+                                        if self.event in [f'-{prefix}{i}ZMINSLIDER-',
+                                                          f'-{prefix}{i}ZMAXSLIDER-']:
+                                                 self.update_slider(
+                                                        prefix,i,
+                                                        self.values[f'-{prefix}{i}ZMINSLIDER-'],
+                                                        self.values[f'-{prefix}{i}ZMAXSLIDER-'],
+                                                        event_handler)
+                        elif self.event.endswith('SLIDERSTEP-'):
+                                for i in ["1","2","4","6"]:
+                                        current_min = self.values[f'-{prefix}{i}ZMINSLIDER-']
+                                        current_max = self.values[f'-{prefix}{i}ZMAXSLIDER-']
+                                        if self.event == f'-{prefix}{i}ZMINFORWARDSLIDERSTEP-':
+                                                self.update_slider(prefix,i,current_min+1,current_max,event_handler)
+                                        elif self.event == f'-{prefix}{i}ZMINFFORWARDSLIDERSTEP-':
+                                                self.update_slider(prefix,i,current_min+100,current_max,event_handler)
+                                        elif self.event == f'-{prefix}{i}ZMINREWINDSLIDERSTEP-':
+                                                self.update_slider(prefix,i,current_min-1,current_max,event_handler)
+                                        elif self.event == f'-{prefix}{i}ZMINFREWINDSLIDERSTEP-':
+                                                self.update_slider(prefix,i,current_min-100,current_max,event_handler)
+                                        elif self.event == f'-{prefix}{i}ZMAXFORWARDSLIDERSTEP-':
+                                                self.update_slider(prefix,i,current_min,current_max+1,event_handler)
+                                        elif self.event == f'-{prefix}{i}ZMAXFFORWARDSLIDERSTEP-':
+                                                self.update_slider(prefix,i,current_min,current_max+100,event_handler)
+                                        elif self.event == f'-{prefix}{i}ZMAXREWINDSLIDERSTEP-':
+                                                self.update_slider(prefix,i,current_min,current_max-1,event_handler)
+                                        elif self.event == f'-{prefix}{i}ZMAXFREWINDSLIDERSTEP-':
+                                                self.update_slider(prefix,i,current_min,current_max-100,event_handler)
+                        elif self.event.endswith('SLIDERSET-'):
+                                for i in ["1","2","4","6"]:
+                                        if self.event == f'-{prefix}{i}ZMINSLIDERSET-':
+                                                if self.values[f'-{prefix}{i}ZMINSLIDERSET-'].isnumeric():
+                                                        self.update_slider(prefix,i,
+                                                                           int(self.values[f'-{prefix}{i}ZMINSLIDERSET-']),
+                                                                           self.values[f'-{prefix}{i}ZMAXSLIDER-'],
+                                                                           event_handler)
+                                        elif self.event == f'-{prefix}{i}ZMAXSLIDERSET-':
+                                                if self.values[f'-{prefix}{i}ZMAXSLIDERSET-'].isnumeric():
+                                                        self.update_slider(prefix,i,
+                                                                           self.values[f'-{prefix}{i}ZMINSLIDER-'],
+                                                                           int(self.values[f'-{prefix}{i}ZMAXSLIDERSET-']),
+                                                                           event_handler)
+
+        def update_slider(self,prefix,i,min_in,max_in,event_handler):
+                bounded_min = max(min_in,0)
+                bounded_max = min(max_in,self.height_slider_upper_bound)
+                self.window[f'-{prefix}{i}ZMINSLIDER-'].update(bounded_min)
+                self.window[f'-{prefix}{i}ZMAXSLIDER-'].update(bounded_max)
+                self.window[f'-{prefix}{i}ZMINSLIDERSET-'].update(int(bounded_min))
+                self.window[f'-{prefix}{i}ZMAXSLIDERSET-'].update(int(bounded_max))
+                event_handler.change_height_range(bounded_min,bounded_max)
 
         def check_for_stepping_events(self,key_prefix,event_handler):
                 forward_stepping_events = [f'-{key_prefix}'+ event_label + 'FORWARD' + '-' for
@@ -701,13 +780,13 @@ class DynamicLakeAnalysisGUI:
                 self.fig_canvas[canvas_key] = fig_canvas
                 self.tbar_canvas[canvas_key] = tbar
 
-
         def run_main_event_loop(self,figures,
                                 interactive_timeseries_plots,
                                 interactive_plots,
                                 interactive_lake_plots,spillway_plots,
                                 data_configuration,
-                                setup_configuration_func):
+                                setup_configuration_func,
+                                poll_io_worker_procs_func):
                 self.interactive_timeseries_plots = interactive_timeseries_plots
                 self.interactive_plots = interactive_plots
                 self.interactive_lake_plots = interactive_lake_plots
@@ -729,6 +808,7 @@ class DynamicLakeAnalysisGUI:
                 self.interactive_lake_plots.\
                         set_specify_coords_and_height_callback(SetCoordsAndHeight("LM",
                                                                                   self.window))
+                last_poll_time = time.time()
                 while True:
                         self.event, self.values = self.window.read()
                         logging.info(self.event)
@@ -737,26 +817,31 @@ class DynamicLakeAnalysisGUI:
                         if self.event == 'Show Plots':
                                 self.dbg_plts.show_debugging_plots()
                         active_tab = self.values['-TABS-'].strip('-')
-                        self.process_config_main_switches_for_time_series()
-                        self.process_config_main_switches_for_maps(active_tab)
-                        self.process_config_main_switches_for_cross_sections(self.spillway_plots)
-                        self.check_for_set_combo_events("GM",self.interactive_plots)
-                        self.check_for_set_combo_events("LM",self.interactive_lake_plots)
-                        self.check_for_set_combo_events("TS",self.interactive_timeseries_plots)
-                        self.check_for_stepping_events("GM",self.interactive_plots)
-                        self.check_for_stepping_events("LM",self.interactive_lake_plots)
-                        self.check_for_stepping_events("CS",self.spillway_plots)
-                        self.check_for_slider_events("GM",self.interactive_plots)
-                        self.check_for_slider_events("LM",self.interactive_lake_plots)
-                        self.check_for_select_coords_events("GM",self.interactive_plots)
-                        self.check_for_select_coords_events("LM",self.interactive_lake_plots)
-                        self.check_for_write_correction_events("GM",self.interactive_plots)
-                        self.check_for_write_correction_events("LM",self.interactive_lake_plots)
+                        if active_tab == "TS":
+                                self.process_config_main_switches_for_time_series()
+                                self.check_for_set_combo_events("TS",self.interactive_timeseries_plots)
+                                self.check_for_dataset_combo_events("TS",self.interactive_timeseries_plots)
+                        elif active_tab == "GM":
+                                self.process_config_main_switches_for_maps("GM",self.interactive_plots)
+                                self.check_for_set_combo_events("GM",self.interactive_plots)
+                                self.check_for_stepping_events("GM",self.interactive_plots)
+                                self.check_for_slider_events("GM",self.interactive_plots)
+                                self.check_for_select_coords_events("GM",self.interactive_plots)
+                                self.check_for_write_correction_events("GM",self.interactive_plots)
+                                self.check_for_match_zoom_events("GM",self.interactive_plots)
+                        elif active_tab == "LM":
+                                self.process_config_main_switches_for_maps("LM",self.interactive_lake_plots)
+                                self.check_for_set_combo_events("LM",self.interactive_lake_plots)
+                                self.check_for_stepping_events("LM",self.interactive_lake_plots)
+                                self.check_for_slider_events("LM",self.interactive_lake_plots)
+                                self.check_for_select_coords_events("LM",self.interactive_lake_plots)
+                                self.check_for_write_correction_events("LM",self.interactive_lake_plots)
+                                self.check_for_match_zoom_events("LM",self.interactive_lake_plots)
+                        elif active_tab == "CS":
+                                self.process_config_main_switches_for_cross_sections(self.spillway_plots)
+                                self.check_for_stepping_events("CS",self.spillway_plots)
                         self.check_for_correction_source_events([self.interactive_plots,
                                                                  self.interactive_lake_plots])
-                        self.check_for_match_zoom_events("GM",self.interactive_plots)
-                        self.check_for_match_zoom_events("LM",self.interactive_lake_plots)
-                        self.check_for_dataset_combo_events("TS",self.interactive_timeseries_plots)
                         if self.event == "-UPDATEPLOTS-":
                                 self.update_plots()
                         if self.event == "-RETURNTODEFAULT-":
@@ -773,4 +858,18 @@ class DynamicLakeAnalysisGUI:
                                 if current_visible_column > 0:
                                         key = f'-{active_tab}CANVAS{current_visible_column}-'
                                         self.fig_canvas[key].draw()
+                        if self.event in self.save_button_keys:
+                                current_visible_column = self.visible_column[active_tab]
+                                if current_visible_column > 0:
+                                        key = f'-{active_tab}CANVAS{current_visible_column}-'
+                                        filename = sg.popup_get_file("Save As:",save_as=True)
+                                        if not os.path.exists(filename):
+                                                figures[key].savefig(filename,facecolor='white')
+                                        else:
+                                                warnings.warn("File already exists!"
+                                                              " Overwriting no permitted")
+                        current_time = time.time()
+                        if current_time - last_poll_time > self.poll_interval:
+                                poll_io_worker_procs_func()
+                                last_poll_time = current_time
                 self.window.close()
