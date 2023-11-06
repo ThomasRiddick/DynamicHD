@@ -1,6 +1,6 @@
 project('dynamic HD scripts',['c','cpp','fortran','cython'],
         version: '3.12',
-        default_options:['cpp_std=gnu++11','warning_level=everything',
+        default_options:['cpp_std=gnu++11','warning_level=0',
                          'optimization=0','default_library=static',
                          'cython_language=cpp'])
 add_project_arguments('-DUSE_NETCDFCPP','-DPROCESSED_CELL_COUNTER','-DDARWIN',language:'cpp')
@@ -43,19 +43,6 @@ if get_option('build_unit_tests')
                  install: false)
   test('Cpp unit tests',e)
 endif
-if get_option('build_tools')
-  cpp_command_line_drivers = ['bifurcate_rivers_basic_icon_simple_interface',
-                              'compute_catchments_icon_simple_interface',
-                              'determine_river_directions_icon_simple_interface']
-  foreach driver : cpp_command_line_drivers
-    executable(driver,
-               [cpp_src_path / 'command_line_drivers' / driver + '.cpp'],
-               include_directories: cpp_inc,
-               dependencies: [netcdf_cxx_lib,netcdf_c_lib],
-               link_with: lib_cpp,
-               install: false)
-  endforeach
-endif
 if get_option('build_cython')
   py = import('python').find_installation('/Users/thomasriddick/anaconda3/bin/python')
   numpy_inc = run_command(py,['-c',
@@ -69,7 +56,11 @@ if get_option('build_cython')
                       'fill_sinks_wrapper_low_mem',
                       'follow_streams_wrapper',
                       'lake_operators_wrapper',
-                      'upscale_orography_wrapper']
+                      'upscale_orography_wrapper',
+		                  'bifurcate_rivers_basic_icon_si_wrapper',
+		                  'compute_catchments_icon_si_wrapper',
+                      'determine_river_directions_icon_si_wrapper',
+                      'sink_filling_icon_si_wrapper']
   foreach cython_library : cython_libraries
     py.extension_module(cython_library,
                         cython_src_path /
