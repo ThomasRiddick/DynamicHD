@@ -1,7 +1,6 @@
 // #include <iostream>
 // #include <fstream>
 // #include <unistd.h>
-#include <netcdf>
 #include "base/grid.hpp"
 #include "algorithms/river_direction_determination_algorithm.hpp"
 

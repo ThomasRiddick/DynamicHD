@@ -8,13 +8,7 @@
 #include "base/enums.hpp"
 #include "algorithms/basin_evaluation_algorithm.hpp"
 #include "drivers/evaluate_basins.hpp"
-#if USE_NETCDFCPP
-#include <netcdf>
-#endif
 using namespace std;
-#if USE_NETCDFCPP
-using namespace netCDF;
-#endif
 
 void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                                            double* raw_orography_in,
@@ -36,7 +30,10 @@ void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                                            int* flood_merge_and_redirect_indices_index_in,
                                            int nlat_fine, int nlon_fine,
                                            int nlat_coarse,int nlon_coarse,
-                                           string merges_filepath,
+                                           int* flood_merges_and_redirects_in,
+                                           int* connect_merges_and_redirects_in,
+                                           int* flood_merges_and_redirects_dims_in,
+                                           int* connect_merges_and_redirects_dims_in,
                                            int* basin_catchment_numbers_in,
                                            int* sinkless_rdirs_in){
   auto minima_in = new bool[nlat_fine*nlon_fine];
@@ -63,7 +60,10 @@ void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                          flood_merge_and_redirect_indices_index_in,
                          nlat_fine, nlon_fine,
                          nlat_coarse,nlon_coarse,
-                         merges_filepath,
+                         flood_merges_and_redirects_in,
+                         connect_merges_and_redirects_in,
+                         flood_merges_and_redirects_dims_in,
+                         connect_merges_and_redirects_dims_in,
                          basin_catchment_numbers_in,
                          sinkless_rdirs_in);
 }
@@ -88,7 +88,10 @@ void latlon_evaluate_basins(bool* minima_in,
                             int* flood_merge_and_redirect_indices_index_in,
                             int nlat_fine, int nlon_fine,
                             int nlat_coarse,int nlon_coarse,
-                            string merges_filepath,
+                            int* flood_merges_and_redirects_in,
+                            int* connect_merges_and_redirects_in,
+                            int* flood_merges_and_redirects_dims_in,
+                            int* connect_merges_and_redirects_dims_in,
                             int* basin_catchment_numbers_in,
                             int* sinkless_rdirs_in){
   cout << "Entering Basin Evaluation C++ Code" << endl;
@@ -227,40 +230,18 @@ void latlon_evaluate_basins(bool* minima_in,
     merges_and_redirects_out->get_flood_merge_and_redirect_indices_index()->get_array();
   int* connect_merge_and_redirect_indices_index_in_ext =
     merges_and_redirects_out->get_connect_merge_and_redirect_indices_index()->get_array();
-  #if USE_NETCDFCPP
-  cout << "Writing merges to file: " << merges_filepath << endl;
   pair<tuple<int,int,int>*,int*>* array_and_dimensions =
     merges_and_redirects_out->get_merges_and_redirects_as_array(true);
-  NcFile merges_and_redirects_file(merges_filepath.c_str(), NcFile::newFile);
-  NcDim flood_first_index =
-    merges_and_redirects_file.addDim("flood_first_index",get<0>(*array_and_dimensions->first));
-  NcDim flood_second_index =
-    merges_and_redirects_file.addDim("flood_second_index",get<1>(*array_and_dimensions->first));
-  NcDim flood_third_index =
-    merges_and_redirects_file.addDim("flood_third_index",get<2>(*array_and_dimensions->first));
-  vector<NcDim> flood_dims;
-  flood_dims.push_back(flood_first_index);
-  flood_dims.push_back(flood_second_index);
-  flood_dims.push_back(flood_third_index);
-  NcVar flood_merges_and_redirects_out_var =
-    merges_and_redirects_file.addVar("flood_merges_and_redirects",ncInt,flood_dims);
-  flood_merges_and_redirects_out_var.putVar(array_and_dimensions->second);
+  flood_merges_and_redirects_dims_in[0] = get<0>(*array_and_dimensions->first);
+  flood_merges_and_redirects_dims_in[1] = get<1>(*array_and_dimensions->first);
+  flood_merges_and_redirects_dims_in[2] = get<2>(*array_and_dimensions->first);
+  flood_merges_and_redirects_in = array_and_dimensions->second;
   array_and_dimensions =
     merges_and_redirects_out->get_merges_and_redirects_as_array(false);
-  NcDim connect_first_index =
-    merges_and_redirects_file.addDim("connect_first_index",get<0>(*array_and_dimensions->first));
-  NcDim connect_second_index =
-    merges_and_redirects_file.addDim("connect_second_index",get<1>(*array_and_dimensions->first));
-  NcDim connect_third_index =
-    merges_and_redirects_file.addDim("connect_third_index",get<2>(*array_and_dimensions->first));
-  vector<NcDim> connect_dims;
-  connect_dims.push_back(connect_first_index);
-  connect_dims.push_back(connect_second_index);
-  connect_dims.push_back(connect_third_index);
-  NcVar connect_merges_and_redirects_out_var =
-    merges_and_redirects_file.addVar("connect_merges_and_redirects",ncInt,connect_dims);
-  connect_merges_and_redirects_out_var.putVar(array_and_dimensions->second);
-  #endif
+  connect_merges_and_redirects_dims_in[0] = get<0>(*array_and_dimensions->first);
+  connect_merges_and_redirects_dims_in[1] = get<1>(*array_and_dimensions->first);
+  connect_merges_and_redirects_dims_in[2] = get<2>(*array_and_dimensions->first);
+  connect_merges_and_redirects_in = array_and_dimensions->second;
   if(basin_catchment_numbers_in){
     basin_catchment_numbers_in_ext = alg.retrieve_lake_numbers();
   }

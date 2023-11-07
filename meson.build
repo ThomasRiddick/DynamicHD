@@ -3,7 +3,7 @@ project('dynamic HD scripts',['c','cpp','fortran','cython'],
         default_options:['cpp_std=gnu++11','warning_level=0',
                          'optimization=0','default_library=static',
                          'cython_language=cpp'])
-add_project_arguments('-DUSE_NETCDFCPP','-DPROCESSED_CELL_COUNTER','-DDARWIN',language:'cpp')
+add_project_arguments('-DPROCESSED_CELL_COUNTER','-DDARWIN',language:'cpp')
 add_project_arguments('-cpp','-c','-fmessage-length=0','-fPIC',language:'fortran')
 cpp_src = []
 cpp_test_src = []
@@ -27,18 +27,13 @@ cpp_inc = include_directories(['Dynamic_HD_Cpp_Code/include',
                                'Dynamic_HD_Cpp_Code'])
 fortran_inc = include_directories(['Dynamic_HD_Fortran_Code/include'])
 cpp = meson.get_compiler('cpp')
-netcdf_c_lib = dependency('netcdf', language: 'c')
-netcdf_cxx_lib = cpp.find_library('netcdf-cxx4.1.1.0',
-                                  dirs : ['/usr/local/Cellar/netcdf-cxx/4.3.1_1/lib'])
 netcdf_fortran_lib = dependency('netcdf', language: 'fortran')
 lib_cpp = library('dyhd_cpp',cpp_src,
-                  include_directories: cpp_inc,
-                  dependencies: [netcdf_cxx_lib,netcdf_c_lib])
+                  include_directories: cpp_inc)
 if get_option('build_unit_tests')
   e = executable('cpp_unit_tests',
                  cpp_test_src,
                  include_directories: cpp_inc,
-                 dependencies: [netcdf_cxx_lib,netcdf_c_lib],
                  link_with: lib_cpp,
                  install: false)
   test('Cpp unit tests',e)
