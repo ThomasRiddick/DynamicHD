@@ -276,14 +276,13 @@ class TimeSequence:
             else:
                 self.blocks_in_memory.append(block)
             for i in range(start,end):
-                if self.sequence_data[i] is None:
-                    if in_background:
-                        block_data["files_to_load"].\
-                            append(join(self.filepaths[i],self.filename)
-                                   if (self.filename is not None) else
-                                   self.filepaths[i])
-                    else:
-                        self.sequence_data[i] = self.load_element(i)
+                if in_background:
+                    block_data["files_to_load"].\
+                        append(join(self.filepaths[i],self.filename)
+                               if (self.filename is not None) else
+                               self.filepaths[i])
+                elif self.sequence_data[i] is None:
+                    self.sequence_data[i] = self.load_element(i)
             if in_background:
                 self.blocks_to_load.append(block_data)
 
@@ -304,9 +303,11 @@ class TimeSequence:
                                      intersection(set(exclude_blocks)))
 
     def insert_subsequence_data(self,subsequence):
-        self.sequence_data[subsequence.subsequence_start:
-                           subsequence.subsequence_end] = \
-            subsequence.sequence_data
+        for i,subsequence_data in enumerate(subsequence.sequence_data,
+                                            start=subsequence.subsequence_start):
+            if subsequence_data is not None:
+                self.sequence_data[i] = \
+                    subsequence_data
 
 class DerivedTimeSequence(TimeSequence):
 
@@ -2078,7 +2079,8 @@ def generate_color_codes_lake_and_river(cumulative_flow,
                                                               "LatLong10min").get_data()
     landsea_mask_fine = utilities.downscale_ls_mask(Field(landsea_mask,grid="HD"),
                                                     "LatLong10min").get_data()
-    rivers_and_lakes_fine[lake_volumes > 0] = 3
+    if lake_volumes is not None:
+        rivers_and_lakes_fine[lake_volumes > 0] = 3
     rivers_and_lakes_fine[glacier_mask == 1] = 4
     rivers_and_lakes_fine[landsea_mask_fine == 1] = 0
     return rivers_and_lakes_fine

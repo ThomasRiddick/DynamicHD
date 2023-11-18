@@ -189,7 +189,7 @@ class DynamicLakeAnalysisPlotter:
                                                     connected_lake_basin_numbers_sequence=
                                                     subsequence_collection[
                                                     f"connected_lake_basin_numbers_{exp}"],
-                                                    continue_from_previous_subsequence=(i == 0))
+                                                    continue_from_previous_subsequence=(i != 0))
                     lake_heights,lake_volumes = self.lake_height_and_volume_extractor.\
                         extract_lake_height_and_volume_sequence(lake_point_sequence=lake_points,
                                                                 filled_orography_sequence=
@@ -221,10 +221,10 @@ class DynamicLakeAnalysisPlotter:
                                           for profile_set in lake_spillway_height_profiles ]
                     for stat_name in stat_names:
                         vars(self)[f"lake_stats_{exp}"][lake_name][stat_name].extend(locals()[stat_name])
-                for key,sequence in filter(lambda item:type(item[1]) is TimeSequence,sequences.items()):
-                    sequence.insert_subsequence_data(subsequence_collection[key])
-                    sequence.update_blocks_in_memory()
-                    sequence.purge_blocks(blocks_to_retain)
+            for key,sequence in filter(lambda item:type(item[1]) is TimeSequence,sequences.items()):
+                sequence.insert_subsequence_data(subsequence_collection[key])
+                sequence.update_blocks_in_memory()
+                sequence.purge_blocks(blocks_to_retain)
         logging.info("Lake stats generation complete")
 
     def run(self):
