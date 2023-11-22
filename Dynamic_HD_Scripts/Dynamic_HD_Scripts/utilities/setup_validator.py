@@ -8,7 +8,7 @@ import configparser
 import sys
 import inspect
 import warnings
-from Dynamic_HD_Scripts.command_line_drivers import config_layouts
+from Dynamic_HD_Scripts.utilities import config_layouts
 
 class SetupValidator:
     """

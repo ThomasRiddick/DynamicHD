@@ -6,7 +6,6 @@ Created on Feb 2, 2018
 
 import argparse
 import os.path as path
-from Dynamic_HD_Scripts.command_line_drivers import setup_validator
 from Dynamic_HD_Scripts.tools import cotat_plus_driver
 from Dynamic_HD_Scripts.tools import loop_breaker_driver
 from Dynamic_HD_Scripts.tools import upscale_orography_driver
@@ -17,6 +16,7 @@ from Dynamic_HD_Scripts.tools import create_orography_driver
 from Dynamic_HD_Scripts.tools import determine_river_directions
 from Dynamic_HD_Scripts.tools import flow_to_grid_cell
 from Dynamic_HD_Scripts.utilities import utilities
+from Dynamic_HD_Scripts.utilities import setup_validator
 from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers import dynamic_hd_driver
 
 def get_option_if_defined(config,section,option):
