@@ -38,6 +38,11 @@ elif [[ ${resolution} == 'r2b10' ]]; then
   arf_k_adjustment_thres=0.025
   new_alf_k=1.1
   alf_k_adjustment_thres=4.0
+elif [[ ${resolution} == 'r2b11' ]]; then
+  new_arf_k=0.0032
+  arf_k_adjustment_thres=0.0058
+  new_alf_k=0.57
+  alf_k_adjustment_thres=1.06
 else
   echo "Unrecognised resolution"
   exit 1
