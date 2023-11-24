@@ -4,7 +4,6 @@
 #include <regex>
 #include "base/grid.hpp"
 #include "drivers/bifurcate_rivers_basic.hpp"
-#include "drivers/birfucate_river_basic_icon_interface.hpp"
 
 using namespace std;
 

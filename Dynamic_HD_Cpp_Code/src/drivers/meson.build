@@ -12,7 +12,7 @@ cpp_src += files('bifurcate_rivers_basic.cpp',
                  'redistribute_water.cpp',
                  'reduce_connected_areas_to_points.cpp',
                  'upscale_orography.cpp',
-                 'bifurcate_rivers_basic_icon_simple_interface.cpp',
-                 'compute_catchments_icon_simple_interface.cpp',
-                 'determine_river_directions_icon_simple_interface.cpp',
-                 'sink_filling_icon_simple_interface.cpp')
+                 'bifurcate_rivers_basic_icon.cpp',
+                 'compute_catchments_icon.cpp',
+                 'determine_river_directions.cpp',
+                 'sink_filling_icon.cpp')
