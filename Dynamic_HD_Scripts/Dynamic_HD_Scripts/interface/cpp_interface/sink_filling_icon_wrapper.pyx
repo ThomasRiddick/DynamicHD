@@ -3,7 +3,7 @@ from Cython.Shadow import bint
 cimport numpy as np
 import numpy as np
 
-cdef extern from 'drivers/sink_filling_icon_simple_interface.cpp':
+cdef extern from 'drivers/sink_filling_icon.cpp':
     void sink_filling_icon_si_cython_interface(int ncells,
                                                int* neighboring_cell_indices_in,
                                                double* orography_inout,

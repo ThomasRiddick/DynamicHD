@@ -3,7 +3,7 @@ from Cython.Shadow import bint
 cimport numpy as np
 import numpy as np
 
-cdef extern from 'drivers/determine_river_directions_icon_simple_interface.cpp':
+cdef extern from 'drivers/determine_river_directions_icon.cpp':
     void determine_river_directions_icon_si_cython_interface(int ncells,
                                                              double* orography_in,
                                                              int* landsea_in_int,

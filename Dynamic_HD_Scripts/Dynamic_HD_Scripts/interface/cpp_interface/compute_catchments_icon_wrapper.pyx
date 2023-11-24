@@ -5,7 +5,7 @@ import numpy as np
 from libcpp.string cimport string
 
 
-cdef extern from 'drivers/compute_catchments_icon_simple_interface.cpp':
+cdef extern from 'drivers/compute_catchments_icon.cpp':
     void compute_catchments_icon_si_cython_interface(int ncells,
                                                      int* next_cell_index_in,
                                                      int* catchment_numbers_out,

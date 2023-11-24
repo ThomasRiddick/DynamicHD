@@ -52,10 +52,10 @@ if get_option('build_cython')
                       'follow_streams_wrapper',
                       'lake_operators_wrapper',
                       'upscale_orography_wrapper',
-		                  'bifurcate_rivers_basic_icon_si_wrapper',
-		                  'compute_catchments_icon_si_wrapper',
-                      'determine_river_directions_icon_si_wrapper',
-                      'sink_filling_icon_si_wrapper']
+                      'bifurcate_rivers_basic_icon_wrapper',
+                      'compute_catchments_icon_wrapper',
+                      'determine_river_directions_icon_wrapper',
+                      'sink_filling_icon_wrapper']
   foreach cython_library : cython_libraries
     py.extension_module(cython_library,
                         cython_src_path /
