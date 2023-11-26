@@ -527,7 +527,7 @@ class Dynamic_Lake_Analysis_Run_Framework:
             corrections_txt.write("# lat, lon, height")
         with open(join(self.corrections_directory,
                        "working_true_sinks_set.txt"),"w") as true_sinks_txt:
-            true_sinks_txt.write("# lat, lon, height")
+            true_sinks_txt.write("# lat, lon")
 
     def clear_lake_results(self,version):
         print("Clearing lake results...")

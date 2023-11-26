@@ -14,9 +14,7 @@ from Dynamic_HD_Scripts.base.field import Field
 
 warnings.warn("What does the input area bounds variable do???? Ditto dates")
 
-#Not wrapping - no known paleo-lakes that
-#would require this
-def get_neighbors(coords):
+def get_neighbors(coords,bounds):
     nbr_coords = []
     if len(coords) == 2:
         (i,j) = coords
@@ -24,7 +22,17 @@ def get_neighbors(coords):
             for l in range(-1,2):
                 if k == 0 and l == 0:
                     continue
-                nbr_coords.append((k+i,j+l))
+                m = k+i
+                n = j+l
+                if m >= bounds[0]:
+                    m = bounds[0] - 1
+                if m < 0:
+                    m = 0
+                if n >= bounds[1]:
+                    n = n - bounds[1]
+                elif n < 0:
+                    n = n + bounds[1]
+                nbr_coords.append((m,n))
     return nbr_coords
 
 def in_bounds(coords,array):
@@ -80,7 +88,8 @@ class LakeTracker:
                 while len(q) > 0:
                     working_coords = q.pop()
                     lake_numbers[working_coords] = lake_number
-                    for nbr_coords in get_neighbors(working_coords):
+                    for nbr_coords in get_neighbors(working_coords,
+                                                    completed_cells.shape):
                         if (lake_mask[nbr_coords] and
                             not (completed_cells[nbr_coords])):
                             completed_cells[nbr_coords] = True
@@ -120,7 +129,12 @@ class LakePointExtractor:
              ((lake_emergence_date < max(dates)) or
                continue_from_previous_subsequence)):
             if not continue_from_previous_subsequence:
-                lake_emergence_date_index = dates.index(lake_emergence_date)
+                if lake_emergence_date in dates:
+                    lake_emergence_date_index = dates.index(lake_emergence_date)
+                else:
+                    lake_emergence_date_index = \
+                        dates.index(max(filter(lambda d : d <= lake_emergence_date,
+                                               dates)))
                 lake_point_sequence = [ None for _ in
                                         range(lake_emergence_date_index)]
             else:
@@ -261,7 +275,8 @@ class CoastlineIdentifier:
         starting_point_coords = None
         #Islands???
         for cell_coords in midpoint_transect_ocean_cell_coords:
-            for nbr_coords in get_neighbors(cell_coords):
+            for nbr_coords in get_neighbors(cell_coords,
+                                            landsea_mask.shape):
                 if not landsea_mask[nbr_coords]:
                     starting_point_coords = nbr_coords;
                     break
@@ -276,21 +291,24 @@ class CoastlineIdentifier:
         completed_cells[starting_point_coords] = True
         while len(q) > 0:
             working_coords = q.pop()
-            for nbr_coords in get_neighbors(working_coords):
+            for nbr_coords in get_neighbors(working_coords,
+                                            landsea_mask.shape):
                 if not (completed_cells[nbr_coords] or
                         landsea_mask[nbr_coords] or
                         self.limiting_transect_mask[nbr_coords]):
                     completed_cells[nbr_coords] = True
                     next_to_ocean = False
                     for secondary_nbr_coords in \
-                        get_neighbors(nbr_coords):
+                        get_neighbors(nbr_coords,
+                                      landsea_mask.shape):
                         if landsea_mask[secondary_nbr_coords]:
                             next_to_ocean = True
                     if next_to_ocean:
                         coastal_land_cells[nbr_coords] = True
                         q.appendleft(nbr_coords)
                         for secondary_nbr_coords in \
-                            get_neighbors(nbr_coords):
+                            get_neighbors(nbr_coords,
+                                          landsea_mask.shape):
                             if landsea_mask[secondary_nbr_coords]:
                                 coastal_ocean_cells[secondary_nbr_coords] = True
         return coastal_land_cells,coastal_ocean_cells

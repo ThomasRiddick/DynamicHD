@@ -11,7 +11,7 @@ class DynamicLakeAnalysisDriverGUI:
     def __init__(self):
         mpl.use('TkAgg')
         sg.theme("light blue")
-        self.layout = self.setup_layout()
+        self.layout = None
         self.config = {}
         self.reopen_load = False
 
@@ -70,22 +70,35 @@ class DynamicLakeAnalysisDriverGUI:
         return layout
 
     def run_main_event_loop(self):
-        self.window = sg.Window("Dynamic Lake Analysis Driver Setup",self.layout,finalize=True,
-                                resizable=True)
         while True:
-            self.event, self.values = self.window.read()
-            if self.event == "-RUN-":
-                self.run()
-            if self.event == "-SAVE-":
-                self.save()
-            if self.event == "-LOAD-":
-                while True:
-                    self.load()
-                    if not self.reopen_load:
-                        break
-            if self.event in (sg.WIN_CLOSED,'Exit'):
+            make_run=False
+            self.layout = self.setup_layout()
+            self.window = sg.Window("Dynamic Lake Analysis Driver Setup",self.layout,finalize=True,
+                                    resizable=True)
+            while True:
+                self.event, self.values = self.window.read()
+                if self.event == "-RUN-":
+                    make_run=True
+                    break
+                if self.event == "-SAVE-":
+                    self.save()
+                if self.event == "-LOAD-":
+                    while True:
+                        self.load()
+                        if not self.reopen_load:
+                            break
+                if self.event in (sg.WIN_CLOSED,'Exit'):
+                    break
+            self.window.close()
+            if make_run:
+                try:
+                    self.run()
+                    sg.popup("Run Finished")
+                except Exception as e:
+                    print(e)
+                    sg.popup("Run failed: ",str(e))
+            else:
                 break
-        self.window.close()
 
     def prepare_config(self):
         self.config = {key.strip("-").lower().replace("-","_"):(value if value != "" else None)

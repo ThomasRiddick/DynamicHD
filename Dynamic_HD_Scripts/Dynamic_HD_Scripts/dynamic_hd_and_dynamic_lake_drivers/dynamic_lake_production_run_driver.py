@@ -138,6 +138,9 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         shutil.move(path.join(self.working_directory_path,
                              "30min_flowtorivermouths_connected.nc"),
                     path.join(dest,"30min_flowtorivermouths_connected.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                             "30min_rdirs_jump_next_cell_indices.nc"),
+                    path.join(dest,"30min_rdirs_jump_next_cell_indices.nc"))
 
     def clean_work_dir(self):
         os.remove(path.join(self.working_directory_path,"30minute_river_dirs_temp.nc"))
@@ -366,7 +369,6 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         Returns: nothing
         """
 
-        raise RuntimeError("Writing Jumps not implemented!")
         config = self._read_and_validate_config()
         print_timing_info = config.getboolean("general_options","print_timing_information")
         if print_timing_info:
@@ -975,6 +977,10 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         cumulative_river_mouth_flow_out_filename=path.join(self.working_directory_path,
                                                            "30min_flowtorivermouths_connected.nc")
         cumulative_river_mouth_flow_out_fieldname="cumulative_flow_to_ocean"
+        rdirs_jump_next_cell_indices_filepath=path.join(self.working_directory_path,
+                                                        "30min_rdirs_jump_next_cell_indices.nc")
+        rdirs_jump_next_cell_indices_fieldname="rdirs_jump_"
+        coarse_lake_outflows_fieldname="outflow_points"
         cclc.connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
                                                    self.output_lakeparas_filepath,
                                                    basin_catchment_numbers_filename,
@@ -987,7 +993,10 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                    cumulative_flow_filename,
                                                    cumulative_flow_out_filename,
                                                    cumulative_flow_fieldname,
-                                                   cumulative_flow_out_fieldname)
+                                                   cumulative_flow_out_fieldname,
+                                                   rdirs_jump_next_cell_indices_filepath,
+                                                   rdirs_jump_next_cell_indices_fieldname,
+                                                   coarse_lake_outflows_fieldname)
         river_mouth_marking_driver.\
         advanced_flow_to_rivermouth_calculation_driver(input_river_directions_filename=
                                                        river_directions_filepath,
