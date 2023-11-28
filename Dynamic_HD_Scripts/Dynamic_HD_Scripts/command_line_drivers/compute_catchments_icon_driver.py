@@ -12,10 +12,10 @@ class ComputeCatchmentsIconDriver:
         print("Settings:")
         for key,value in self.args.items():
             print("{}: {}".format(key,value))
-        check_input_files(self.args["next_cell_index_filepath"],
-                          self.args["grid_params_filepath"])
-        check_output_files(self.args["output_catchment_number_filepath"],
-                           self.args["loop_log_file_path"])
+        check_input_files([self.args["next_cell_index_filepath"],
+                           self.args["grid_params_filepath"]])
+        check_output_files([self.args["output_catchment_number_filepath"],
+                            self.args["loop_log_file_path"]])
         if self.args["subcatchment-list-filepath"] is not None:
             generate_selected_subcatchments_only = True
             print("Note: Loops not searched for when creating catchments"
@@ -78,8 +78,8 @@ def parse_arguments():
                         metavar="Use Secondary Neighbors Flag",
                         type=bool,
                         default=True,
-                        help="Use secondary neighbors i.e. those only touch a cell at"
-                             "one of its corners")
+                        help="Use the 8 or 9 additional neighbors which "
+                             "share vertices with this cell but not edges")
     parser.add_argument(loop_log_file_path,
                         metavar="Loop Log File Path",
                         type=str,

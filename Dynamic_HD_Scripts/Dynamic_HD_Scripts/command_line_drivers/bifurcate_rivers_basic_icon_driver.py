@@ -12,13 +12,13 @@ class BifurcateRiversBasicIconDriver:
         print("Settings:")
         for key,value in self.args.items():
             print("{}: {}".format(key,value))
-        check_input_files(self.args["next_cell_index_filepath"],
-                          self.args["cumulative_flow_filepath"],
-                          self.args["landsea_mask_filepath"],
-                          self.args["grid_params_filepath"],
-                          self.args["mouth_positions_filepath"])
-        check_output_files(self.args["output_number_of_outflows_filepath"],
-                           self.args["output_next_cell_index_filepath"])
+        check_input_files([self.args["next_cell_index_filepath"],
+                           self.args["cumulative_flow_filepath"],
+                           self.args["landsea_mask_filepath"],
+                           self.args["grid_params_filepath"],
+                           self.args["mouth_positions_filepath"]])
+        check_output_files([self.args["output_number_of_outflows_filepath"],
+                            self.args["output_next_cell_index_filepath"]])
         next_cell_index_in_ds = open_dataset(self.args["next_cell_index_filepath"])
         next_cell_index_in = \
             next_cell_index_in_ds[self.args["next_cell_index_fieldname"]].values

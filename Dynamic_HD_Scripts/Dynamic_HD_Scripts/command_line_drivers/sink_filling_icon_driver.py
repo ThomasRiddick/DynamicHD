@@ -1,112 +1,126 @@
-// string UNITS = "units";
-// string GRID_TYPE = "grid_type";
-// string LONG_NAME = "long_name";
-// string COORDINATES = "coordinates";
-// string STANDARD_NAME = "standard_name";
-// string BOUNDS = "bounds";
+import xarray as xr
+from Dynamic_HD_Scripts.utilities.check_driver_inputs \
+    import check_input_files, check_output_files
 
-// string METRES = "m";
-// string RADIAN = "radian";
-// string UNSTRUCTURED = "unstructured";
-// string LATITUDE = "latitude";
-// string CENTER_LATITUDE = "center latitude";
-// string LONGITUDE = "longitude";
-// string CENTER_LONGITUDE = "center longitude";
+class SinkFillingIconDriver:
 
-// void print_usage(){
-//     cout <<
-//     "Usage: " << endl;
-//     cout <<
-//     "./Fill_Sinks_Icon_SI_Exec [input orography file path] [landsea file path]" << endl;
-//     cout <<
-//     " [true sinks file path] [output orography file path] [grid parameters file path]" << endl;
-//     cout <<
-//     " [input orography field name] [input landsea mask fieldname]" << endl;
-//     cout <<
-//     " [input true sinks field name] [set land sea as no data flag] [add slope flag]" << endl;
-//     cout <<
-//     "[epsilon] [use secondary neighbors flag] [fractional landsea mask flag]" << endl;
-// }
+    def __init__(self,args):
+        self.args = args
 
-// void print_help(){
-//     print_usage();
-//     cout << "Fill the sinks in an orography using an accelerated" << endl;
-//     cout << "priority flood technique on a ICON icosohedral grid" << endl;
-//     cout << "Arguments:" << endl;
-//     cout << "input orography file path - full path to input orography file" << endl;
-//     cout << "landsea file path - full path to land-sea input file" << endl;
-//     cout << "true sinks file path - full path to true sink input file" << endl;
-//     cout << "output orography file path - full path to target output orography file" << endl;
-//     cout << "grid parameters file path - full path to file containing ICON grid parameters"
-//          << endl << " for resolution being used" << endl;
-//     cout << "input orography field name - name of input orography field within"
-//          << " specified file" << endl;
-//     cout << "input landsea mask field name - name of landsea mask field within"
-//          << " specified file" << endl;
-//     cout << "input true sinks field name - name of true sinks field within"
-//          << " specified file" << endl;
-//     cout << "set land sea as no data flag - flag to turn on and off setting"
-//          << " all landsea points to no data" << endl;
-//     cout << "add slope flag - flag to turn on and off adding a slight slope"
-//          << " when filling sinks" << endl;
-//     cout << "epsilon - additional height added to each progressive cell when"
-//          << " adding a slight slope" << endl;
-//     cout << "use secondary neighbors flag - Use the 9 additional neighbors which"
-//          << "share vertices"
-//          << endl << "but not edges with a cell (default: true)" << endl;
-//     cout << "fractional landsea mask - land sea mask expresses fraction of land"
-//          << "as a floating point number" << endl
-//          << "which requires conversion to a binary mask" << endl;
-// }
+    def run(self):
+        print("*** ICON Sink Filling Tool ***")
+        print("Settings:")
+        for key,value in self.args.items():
+            print("{}: {}".format(key,value))
+        check_input_files([self.args["input_orography_filepath"],
+                           self.args["landsea_filepath"],
+                           self.args["true_sinks_filepath"],
+                           self.args["grid_params_filepath"]])
+        check_output_files([self.args["output_orography_filepath"]])
+        orography_in_ds = open_dataset(self.args["input_orography_filepath"])
+        orography_inout = \
+            next_cell_index_in_ds[self.args["input_orography_fieldname"]].values
+        landsea_in_ds = open_dataset(self.args["landsea_filepath"])
+        landsea_in = \
+            landsea_in_ds[self.args["landsea_fieldname"]].values
+        if landsea_in.dtype == np.int64 or landsea.dtype == np.int32
+            landsea_in_int = landsea_in
+            landsea_in_double = None
+        else if landsea_in.dtype == np.float64 or landsea.dtype == np.float32:
+            landsea_in_int = None
+            landsea_in_double = landsea_in
+        else raise RuntimeError("Landsea mask type not recognised")
+        true_sinks_in_ds = open_dataset(self.args["true_sinks_filepath"])
+        true_sinks_in_int = \
+            true_sinks_in_ds[self.args["true_sinks_fieldname"]].values
+        grid_params_ds = open_dataset(self.args["grid_params_filepath"])
+        neighboring_cell_indices_in = grid_params_ds["neighbor_cell_index"]
+        sink_filling_icon_cpp(neighboring_cell_indices_in,
+                              orography_inout,
+                              landsea_in_int,
+                              landsea_in_double,
+                              true_sinks_in_int,
+                              self.arg["fractional_landsea_mask_flag"],
+                              self.arg["set_ls_as_no_data_flag"],
+                              self.arg["add_slope_flag"],
+                              self.arg["epsilon"])
+        output_orography_ds = \
+            orography_in_ds.Copy(deep=True,
+                                 data={"cell_elevation":
+                                       orography_inout})
+        output_orography_ds.\
+            to_netcdf(self.args["output_orography_filepath"])
 
-// int main(int argc, char *argv[]){
-//   cout << "ICON sink filling tool" << endl;
-//   int opts;
-//   while ((opts = getopt(argc,argv,"h")) != -1){
-//     if (opts == 'h'){
-//       print_help();
-//       exit(EXIT_FAILURE);
-//     }
-//   }
-//   if(argc<12) {
-//     cout << "Not enough arguments" << endl;
-//     print_usage();
-//     cout << "Run with option -h for help" << endl;
-//     exit(EXIT_FAILURE);
-//   }
-//   if(argc>14) {
-//     cout << "Too many arguments" << endl;
-//     print_usage();
-//     cout << "Run with option -h for help" << endl;
-//     exit(EXIT_FAILURE);
-//   }
-  // string orography_in_filepath(argv[1]);
-  // string landsea_in_filepath(argv[2]);
-  // string true_sinks_in_filepath(argv[3]);
-  // string orography_out_filepath(argv[4]);
-  // string grid_params_filepath(argv[5]);
-  // string orography_in_fieldname(argv[6]);
-  // string landsea_in_fieldname(argv[7]);
-  // string true_sinks_in_fieldname(argv[8]);
-  // string set_ls_as_no_data_flag_string(argv[9]);
-  // string add_slope_string(argv[10]);
-  // string epsilon_string(argv[11]);
-  // bool fractional_landsea_mask_in = false;
-  // bool use_secondary_neighbors_in;
-  // if (argc == 13 || argc == 14) {
-  //   string use_secondary_neighbors_string(argv[12]);
-  //   use_secondary_neighbors_in = bool(stoi(use_secondary_neighbors_string));
-  //   if (argc == 14) {
-  //   string fractional_landsea_mask_string(argv[13]);
-  //   fractional_landsea_mask_in = bool(stoi(fractional_landsea_mask_string));
-  //   }
-  // } else use_secondary_neighbors_in = true;
-  // ifstream ofile(orography_out_filepath.c_str());
-  // if (ofile) {
-  //   cout << "Outfile already exists - please delete or specify a different name" << endl;
-  //   exit(1);
-  // }
-  // bool set_ls_as_no_data_flag = bool(stoi(set_ls_as_no_data_flag_string));
-  // bool add_slope_in = bool(stoi(add_slope_string));
-  // double epsilon_in = stod(epsilon_string);
-  //
+class Arguments:
+    pass
+
+def parse_arguments():
+
+    args = Arguments()
+    parser = argparse.ArgumentParser(prog='ICON Sink Filling Tool',
+                                     description="Fill the sinks in an orography "
+                                                 "using an accelerated priority "
+                                                 "flood technique on a ICON "
+                                                 "icosohedral grid",
+                                     epilog='')
+    parser.add_argument(input_orography_filepath,metavar='Input Orography Filepath',
+                        type=str,
+                        help="Full path to the input orography file")
+    parser.add_argument(landsea_filepath,metavar='Landsea Mask Filepath',
+                        type=str,
+                        help="Full path to input landsea mask file")
+    parser.add_argument(true_sinks_filepath,metavar='True Sinks Filepath',
+                        type=str,
+                        help="Full path to input true sinks file")
+    parser.add_argument(output_orography_filepath,metavar='Output Orography Filepath',
+                        type=str,
+                        help="Full path to target output orography file")
+    parser.add_argument(grid_params_filepath,metavar='Grid Parameters Filepath',
+                        type=str,
+                        help="Full path to the grid description file for the ICON "
+                             "grid being used")
+    parser.add_argument(input_orography_fieldname,metavar='Input Orography Fieldname',
+                        type=str,
+                        help="Name of input orography field within the specified file")
+    parser.add_argument(landsea_fieldname,metavar='Landsea Fieldname',
+                        type=str,
+                        help="Name of the landsea mask field within the specified file")
+    parser.add_argument(true_sinks_fieldname,metavar='True Sinks Fieldname',
+                        type=str,
+                        help="Name of the true sinks field within the specified file")
+    parser.add_argument(set_land_sea_as_no_data_flag,metavar='Set Landsea as No Data Flag',
+                        type=bool,
+                        help="Flag to turn on and off setting "
+                             "all landsea points to no data")
+    parser.add_argument(add_slope_flag,metavar='Add Slope Flag',
+                        type=bool,
+                        help="Land sea mask expresses fraction of land "
+                             "as a floating point number which requires "
+                             "conversion to a binary mask(default false)")
+    parser.add_argument(epsilon,metavar='Epsilon',
+                        type=float,
+                        help="Additional height added to each progressive cell when"
+                             "adding a slight slope")
+    parser.add_argument(use_secondary_neighbors_flag,
+                        metavar="Use Secondary Neighbors Flag",
+                        type=bool,
+                        default=True,
+                        help="Use the 8 or 9 additional neighbors which "
+                             "share vertices with this cell but not edges")
+    parser.add_argument(fractional_landsea_mask_flag,metavar='Fractional Landsea Mask Flag',
+                        type=bool,
+                        default=False,
+                        help="Land sea mask expresses fraction of land "
+                             "as a floating point number which requires "
+                             "conversion to a binary mask(default false)")
+    parser.parse_args(namespace=args)
+    return args
+
+def setup_and_run_sink_filling_icon_driver(args):
+    driver = SinkFillingIconDriver(**vars(args))
+    driver.run()
+
+if __name__ == '__main__':
+    #Parse arguments and then run
+    args = parse_arguments()
+    setup_and_run_sink_filling_icon_driver(args)
