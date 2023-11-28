@@ -39,7 +39,8 @@ if get_option('build_unit_tests')
   test('Cpp unit tests',e)
 endif
 if get_option('build_cython')
-  py = import('python').find_installation('/Users/thomasriddick/anaconda3/bin/python')
+  py = import('python').find_installation(
+          meson.get_external_property('python_installation_path'))
   numpy_inc = run_command(py,['-c',
     'import numpy as np; print(np.get_include())'],check : true).stdout().strip()
   cython_libraries = ['compute_catchments_wrapper',
@@ -66,7 +67,7 @@ if get_option('build_cython')
 endif
 lib_fortran = library('dyhd_fortran',fortran_src,
                       include_directories: fortran_inc,
-                      dependencies: netcdf_fortran_lib,)
+                      dependencies: netcdf_fortran_lib)
 if get_option('build_unit_tests')
   fe = executable('fortran_unit_tests',
                   fortran_test_src,
