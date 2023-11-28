@@ -1,8 +1,10 @@
-.PHONY: clean default
+.PHONY: clean default test compile
 
 include config/set_config
 
-default: | build
+default: compile
+
+compile: | build
 		meson compile -C build
 
 build:
@@ -10,3 +12,6 @@ build:
 
 clean:
 		rm -rf build
+
+test:
+		meson test -C build
