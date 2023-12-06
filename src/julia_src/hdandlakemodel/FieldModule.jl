@@ -23,9 +23,11 @@ import Base.count
 import Base.Broadcast
 using InteractiveUtils
 
-abstract type Field{T} end
+ArrayOrSharedArray = Union{Array,SharedArray}
 
-function get(field::Field{T},coords::Coords) where {T}
+abstract type Field{T,A<:ArrayOrSharedArray} end
+
+function get(field::Field{T,A},coords::Coords) where {T,A<:ArrayOrSharedArray}
   throw(UserError())
 end
 
@@ -71,13 +73,13 @@ end
 
 # This could be done by overloading broadcast but this is overcomplicated
 # Assumes result is fractional and hence returns a field of floating point numbers
-function elementwise_divide(lfield::Field{T},rfield::Field{T}) where {T}
+function elementwise_divide(lfield::Field{T,A},rfield::Field{T,A}) where {T,A<:ArrayOrSharedArray}
   return Field{Float64}(lfield.grid,lfield.data./rfield.data)::Field{Float64}
 end
 
 # This could be done by overloading broadcast but this is overcomplicated
-function elementwise_multiple(lfield::Field{T},rfield::Field{T}) where {T}
-  return Field{T}(lfield.grid,lfield.data.*rfield.data)::Field{T}
+function elementwise_multiple(lfield::Field{T,A},rfield::Field{T,A}) where {T,A<:ArrayOrSharedArray}
+  return Field{T,A}(lfield.grid,lfield.data.*rfield.data)::Field{T,A}
 end
 
 # This could be done by overloading broadcast but this is overcomplicated
@@ -99,11 +101,12 @@ function add_offset(field::Field,offset::T,skip_offset_on_values::Vector{T}) whe
     throw(UserError())
 end
 
-function round!(type::DataType,field::Field{T}) where {T}
+function round!(type::DataType,field::Field{T,A}) where {T,A<:ArrayOrSharedArray}
   throw(UserError())
 end
 
-function add_offset(field::T2,offset::T,skip_offset_on_values::Vector{T}) where {T,T2<:Field{T}}
+function add_offset(field::T2,offset::T,skip_offset_on_values::Vector{T}) where
+    {T,T2<:Field{T,A<:ArrayOrSharedArray}}
   for_all(get_grid(field)) do coords::Coords
     if ! (field(coords) in skip_offset_on_values)
       set!(field,coords,field(coords)+offset)
@@ -111,7 +114,8 @@ function add_offset(field::T2,offset::T,skip_offset_on_values::Vector{T}) where 
   end
 end
 
-function divide(field::T2,divisor::T) where {T,T2<:Field{T}}
+function divide(field::T2,divisor::T)where
+    {T,T2<:Field{T,A<:ArrayOrSharedArray}}
   for_all(get_grid(field)) do coords::Coords
     set!(field,coords,field(coords)/divisor)
   end
@@ -120,11 +124,11 @@ end
 get_grid(obj::T) where {T <: Field} =
   obj.grid::Grid
 
-get_data(obj::T) where {T <: Field} =
-  obj.data::Array
+get_data(obj::T) where {T <: Field{T2,A<:ArrayOrSharedArray}} =
+  obj.data::Array{T2,A}
 
-function repeat(field::Field{T}, count::Integer) where {T}
-  array::Array{Field{T},1} = Array{Field{T},1}(undef,count)
+function repeat(field::Field{T,A}, count::Integer) where {T,A<:ArrayOrSharedArray}
+  array::Array{Field{T,A},1} = Array{Field{T,A},1}(undef,count)
   for i in 1:count
     array[i] = deepcopy(field)
   end
@@ -132,15 +136,16 @@ function repeat(field::Field{T}, count::Integer) where {T}
 end
 
 
-struct LatLonField{T} <: Field{T}
+struct LatLonField{T,A} <: Field{T,A}
   data::Array{T,2}
   grid::LatLonGrid
-  function LatLonField{T}(grid::LatLonGrid,value::T) where {T}
-    data::Array{T,2} = value == zero(T) ? zeros(T,grid.nlat,grid.nlon) :
-                                          ones(T,grid.nlat,grid.nlon)*value
+  function LatLonField{T,A}(grid::LatLonGrid,value::T) where {T,A<:ArrayOrSharedArray}
+    data::A{T,2} = value == zero(T) ? convert(A,zeros(T,grid.nlat,grid.nlon)) :
+                                      convert(A,ones(T,grid.nlat,grid.nlon))*value
     return new(data,grid)
   end
-  function LatLonField{T}(grid::LatLonGrid,values::AbstractArray{T,2}) where {T}
+  function LatLonField{T,A}(grid::LatLonGrid,values::AbstractArray{T,2}) where
+      {T,A<:ArrayOrSharedArray}
     if size(values,1) != grid.nlat ||
        size(values,2) != grid.nlon
        error("Values provided don't match selected grid")
@@ -149,15 +154,16 @@ struct LatLonField{T} <: Field{T}
   end
 end
 
-struct UnstructuredField{T} <: Field{T}
-  data::Array{T,1}
+struct UnstructuredField{T,A} <: Field{T,A}
+  data::A{T,1}
   grid::UnstructuredGrid
-  function UnstructuredField{T}(grid::UnstructuredGrid,value::T) where {T}
-    data::Array{T,1} = value == zero(T) ? zeros(T,grid.ncells) :
-                                          ones(T,grid.ncells)*value
+  function UnstructuredField{T,A}(grid::UnstructuredGrid,value::T) where {T,A<:ArrayOrSharedArray}
+    data::A{T,1} = value == zero(T) ? convert(A,zeros(T,grid.ncells)) :
+                                      convert(A,ones(T,grid.ncells))*value
     return new(data,grid)
   end
-  function UnstructuredField{T}(grid::UnstructuredGrid,values::AbstractArray{T,1}) where {T}
+  function UnstructuredField{T,A}(grid::UnstructuredGrid,values::AbstractArray{T,1}) where
+      {T,A<:ArrayOrSharedArray}
     if size(values,1) != grid.ncells
        error("Values provided don't match selected grid")
     end
@@ -165,56 +171,64 @@ struct UnstructuredField{T} <: Field{T}
   end
 end
 
-LatLonField{T}(grid::LatLonGrid) where {T} = LatLonField{T}(grid,zeros(T,grid.nlat,grid.nlon))
+LatLonField{T,A}(grid::LatLonGrid) where {T,A<:ArrayOrSharedArray} =
+  LatLonField{T,A}(grid,convert(A,zeros(T,grid.nlat,grid.nlon)))
 
-UnstructuredField{T}(grid::UnstructuredGrid) where {T} = UnstructuredField{T}(grid,zeros(T,grid.ncells))
+UnstructuredField{T,A}(grid::UnstructuredGrid) where {T,A<:ArrayOrSharedArray} =
+  UnstructuredField{T,A}(grid,convert(A,zeros(T,grid.ncells)))
 
-Field{T}(grid::LatLonGrid,value::T) where {T} = LatLonField{T}(grid::LatLonGrid,value::T)
-Field{T}(grid::LatLonGrid) where {T} = LatLonField{T}(grid::LatLonGrid)
+Field{T,A}(grid::LatLonGrid,value::T) where {T,A<:ArrayOrSharedArray} =
+  LatLonField{T,A}(grid::LatLonGrid,value::T)
+Field{T,A}(grid::LatLonGrid) where {T,A<:ArrayOrSharedArray} =
+  LatLonField{T,A}(grid::LatLonGrid)
 
-Field{T}(grid::UnstructuredGrid,value::T) where {T} = UnstructuredField{T}(grid::UnstructuredGrid,
-                                                                           value::T)
-Field{T}(grid::UnstructuredGrid) where {T} = UnstructuredField{T}(grid::UnstructuredGrid)
+Field{T,A}(grid::UnstructuredGrid,value::T) where {T,A<:ArrayOrSharedArray} =
+  UnstructuredField{T,A}(grid::UnstructuredGrid,value::T)
+Field{T,A}(grid::UnstructuredGrid) where {T,A<:ArrayOrSharedArray} =
+  UnstructuredField{T,A}(grid::UnstructuredGrid)
 
-Field{T}(grid::LatLonGrid,values::AbstractArray{T,2}) where {T} =
-  LatLonField{T}(grid::LatLonGrid,values::AbstractArray{T,2})
-Field{T}(grid::UnstructuredGrid,values::AbstractArray{T,1}) where {T} =
-  UnstructuredField{T}(grid::UnstructuredGrid,
-                       values::AbstractArray{T,1})
+Field{T,A}(grid::LatLonGrid,values::AbstractArray{T,2}) where {T,A<:ArrayOrSharedArray} =
+  LatLonField{T,A}(grid::LatLonGrid,values::AbstractArray{T,2})
 
-function (latlon_field::LatLonField{T})(coords::LatLonCoords) where {T}
-    return latlon_field.data[coords.lat,coords.lon]::T
+Field{T,A}(grid::UnstructuredGrid,values::AbstractArray{T,1}) where
+  {T,A<:ArrayOrSharedArray} = UnstructuredField{T,A}(grid::UnstructuredGrid,
+                                                     values::AbstractArray{T,1})
+
+function (latlon_field::LatLonField{T,A})(coords::LatLonCoords) where {T,A<:ArrayOrSharedArray}
+  return latlon_field.data[coords.lat,coords.lon]::T
 end
 
-function get(latlon_field::LatLonField{T},coords::LatLonCoords) where {T}
-    return latlon_field(coords)::T
+function get(latlon_field::LatLonField{T,A},coords::LatLonCoords) where {T,A<:ArrayOrSharedArray}
+  return latlon_field(coords)::T
 end
 
-function set!(latlon_field::LatLonField{T},coords::LatLonCoords,value::T) where {T}
-    latlon_field.data[coords.lat,coords.lon] = value
+function set!(latlon_field::LatLonField{T,A},coords::LatLonCoords,value::T) where
+    {T,A<:ArrayOrSharedArray}
+  latlon_field.data[coords.lat,coords.lon] = value
 end
 
-function +(lfield::LatLonField{T},rfield::LatLonField{T}) where {T}
-  return LatLonField{T}(lfield.grid,lfield.data + rfield.data)
+function +(lfield::LatLonField{T,A},rfield::LatLonField{T,A}) where {T,A<:ArrayOrSharedArray}
+  return LatLonField{T,A}(lfield.grid,lfield.data + rfield.data)
 end
 
-function -(lfield::LatLonField{T},rfield::LatLonField{T}) where {T}
-  return LatLonField{T}(lfield.grid,lfield.data - rfield.data)
+function -(lfield::LatLonField{T,A},rfield::LatLonField{T,A}) where {T,A<:ArrayOrSharedArray}
+  return LatLonField{T,A}(lfield.grid,lfield.data - rfield.data)
 end
 
-function *(lfield::Field,value::T) where {T<:Number}
-  return LatLonField{T}(lfield.grid,lfield.data * value)
+function *(lfield::Field,value::T) where {T<:Number,A<:ArrayOrSharedArray}
+  return LatLonField{T,A}(lfield.grid,lfield.data * value)
 end
 
-function /(lfield::Field,value::T) where {T<:Number}
-  return LatLonField{T}(lfield.grid,lfield.data / value)
+function /(lfield::Field,value::T) where {T<:Number,A<:ArrayOrSharedArray}
+  return LatLonField{T,A}(lfield.grid,lfield.data / value)
 end
 
-function ==(lfield::LatLonField{T},rfield::LatLonField{T}) where {T}
+function ==(lfield::LatLonField{T,A},rfield::LatLonField{T,A}) where {T,A<:ArrayOrSharedArray}
   return (lfield.data == rfield.data)::Bool
 end
 
-LatLonFieldOrUnstructuredField = Union{LatLonField{T},UnstructuredField{T}} where {T}
+LatLonFieldOrUnstructuredField = Union{LatLonField{T,A},UnstructuredField{T,A}} where
+  {T,A<:ArrayOrSharedArray}
 
 function sum(field::T) where {T<:LatLonFieldOrUnstructuredField}
   return sum(field.data)
@@ -224,18 +238,18 @@ function count(field::T) where {T<:LatLonFieldOrUnstructuredField}
   return count(field.data)
 end
 
-function isapprox(lfield::LatLonField{T},rfield::LatLonField{T};
+function isapprox(lfield::LatLonField{T,A},rfield::LatLonField{T,A};
                   rtol::Real=atol>0 ? 0 : sqrt(eps),
-                  atol::Real=0.0,nans::Bool=false) where {T}
+                  atol::Real=0.0,nans::Bool=false) where {T,A<:ArrayOrSharedArray}
   return isapprox(lfield.data,rfield.data,
                  rtol=rtol,atol=atol,nans=nans)::Bool
 end
 
-function invert(field::LatLonField{T}) where {T}
-  return LatLonField{T}(field.grid,.!field.data)
+function invert(field::LatLonField{T,A}) where {T,A<:ArrayOrSharedArray}
+  return LatLonField{T,A}(field.grid,.!field.data)
 end
 
-function round(type::DataType,field::LatLonField{T}) where {T}
+function round(type::DataType,field::LatLonField{T,A}) where {T,A<:ArrayOrSharedArray}
   return LatLonField{type}(field.grid,round.(type,field.data))
 end
 
@@ -243,7 +257,7 @@ function maximum(field::LatLonField)
   return maximum(field.data)
 end
 
-function show(io::IO,field::LatLonField{T}) where {T <: Number}
+function show(io::IO,field::LatLonField{T,A}) where {T <: Number,A<:ArrayOrSharedArray}
   for_all_with_line_breaks(field.grid) do coords::Coords
     if T <: AbstractFloat
       @printf(io,"%6.2f",field(coords))
@@ -256,54 +270,60 @@ function show(io::IO,field::LatLonField{T}) where {T <: Number}
   end
 end
 
-function fill!(field::LatLonField{T},value::T) where {T}
+function fill!(field::LatLonField{T,A},value::T) where {T,A<:ArrayOrSharedArray}
   return fill!(field.data,value)
 end
 
-function (unstructured_field::UnstructuredField{T})(coords::Generic1DCoords) where {T}
-    return unstructured_field.data[coords.index]::T
+function (unstructured_field::UnstructuredField{T,A})(coords::Generic1DCoords) where
+    {T,A<:ArrayOrSharedArray}
+  return unstructured_field.data[coords.index]::T
 end
 
-function get(unstructured_field::UnstructuredField{T},coords::Generic1DCoords) where {T}
-    return unstructured_field(coords)::T
+function get(unstructured_field::UnstructuredField{T,A},coords::Generic1DCoords) where
+    {T,A<:ArrayOrSharedArray}
+  return unstructured_field(coords)::T
 end
 
-function set!(unstructured_field::UnstructuredField{T},coords::Generic1DCoords,value::T) where {T}
-    unstructured_field.data[coords.index] = value
+function set!(unstructured_field::UnstructuredField{T,A},coords::Generic1DCoords,value::T) where
+    {T,A<:ArrayOrSharedArray}
+  unstructured_field.data[coords.index] = value
 end
 
-function +(lfield::UnstructuredField{T},rfield::UnstructuredField{T}) where {T}
+function +(lfield::UnstructuredField{T,A},rfield::UnstructuredField{T,A}) where
+    {T,A<:ArrayOrSharedArray}
   return UnstructuredField{T}(lfield.grid,lfield.data + rfield.data)
 end
 
-function -(lfield::UnstructuredField{T},rfield::UnstructuredField{T}) where {T}
+function -(lfield::UnstructuredField{T,A},rfield::UnstructuredField{T,A}) where
+    {T,A<:ArrayOrSharedArray}
   return UnstructuredField{T}(lfield.grid,lfield.data - rfield.data)
 end
 
-function *(lfield::UnstructuredField,value::T) where {T<:Number}
-  return UnstructuredField{T}(lfield.grid,lfield.data * value)
+function *(lfield::UnstructuredField,value::T) where {T<:Number,A<:ArrayOrSharedArray}
+  return UnstructuredField{T,A}(lfield.grid,lfield.data * value)
 end
 
-function /(lfield::UnstructuredField,value::T) where {T<:Number}
-  return UnstructuredField{T}(lfield.grid,lfield.data / value)
+function /(lfield::UnstructuredField,value::T) where {T<:Number,A<:ArrayOrSharedArray}
+  return UnstructuredField{T,A}(lfield.grid,lfield.data / value)
 end
 
-function ==(lfield::UnstructuredField{T},rfield::UnstructuredField{T}) where {T}
+function ==(lfield::UnstructuredField{T,A},rfield::UnstructuredField{T,A}) where
+    {T,A<:ArrayOrSharedArray}
   return (lfield.data == rfield.data)::Bool
 end
 
-function isapprox(lfield::UnstructuredField{T},rfield::UnstructuredField{T};
+function isapprox(lfield::UnstructuredField{T,A},rfield::UnstructuredField{T,A};
                   rtol::Real=atol>0 ? 0 : sqrt(eps),
-                  atol::Real=0.0,nans::Bool=false) where {T}
+                  atol::Real=0.0,nans::Bool=false) where {T,A<:ArrayOrSharedArray}
   return isapprox(lfield.data,rfield.data,
                  rtol=rtol,atol=atol,nans=nans)::Bool
 end
 
-function invert(field::UnstructuredField{T}) where {T}
+function invert(field::UnstructuredField{T,A}) where {T,A<:ArrayOrSharedArray}
   return UnstructuredField{T}(field.grid,.!field.data)
 end
 
-function round(type::DataType,field::UnstructuredField{T}) where {T}
+function round(type::DataType,field::UnstructuredField{T,A}) where {T,A<:ArrayOrSharedArray}
   return UnstructuredField{type}(field.grid,round.(type,field.data))
 end
 
@@ -311,11 +331,12 @@ function maximum(field::UnstructuredField)
   return maximum(field.data)
 end
 
-function fill!(field::UnstructuredField{T},value::T) where {T}
+function fill!(field::UnstructuredField{T,A},value::T) where {T,A<:ArrayOrSharedArray}
   return fill!(field.data,value)
 end
 
-function show(io::IO,field::UnstructuredField{T}) where {T <: Number}
+function show(io::IO,field::UnstructuredField{T,A}) where
+    {T <: Number,A<:ArrayOrSharedArray}
   for_all_with_line_breaks(field.grid) do coords::Coords
     if T <: AbstractFloat
       @printf(io,"%6.8f",field(coords))
@@ -328,26 +349,30 @@ function show(io::IO,field::UnstructuredField{T}) where {T <: Number}
   end
 end
 
-abstract type DirectionIndicators end
+abstract type DirectionIndicators{A} end where {A<:ArrayOrSharedArray}
 
-function get(field::DirectionIndicators,coords::Coords)
+function get(field::DirectionIndicators{A},coords::Coords) where
+    {A<:ArrayOrSharedArray}
   throw(UserError())
 end
 
-function set!(field::DirectionIndicators,coords::Coords)
+function set!(field::DirectionIndicators{A},coords::Coords) where
+    {A<:ArrayOrSharedArray}
   throw(UserError())
 end
 
-struct LatLonDirectionIndicators <: DirectionIndicators
-  next_cell_coords::Array{LatLonField{Int64},1}
-  function LatLonDirectionIndicators(dir_based_rdirs::LatLonField{Int64})
+struct LatLonDirectionIndicators{A} <: DirectionIndicators{A} where
+    {A<:ArrayOrSharedArray}
+  next_cell_coords::A{LatLonField{Int64},1}
+  function LatLonDirectionIndicators(dir_based_rdirs::LatLonField{Int64,A}) where
+      {A<:ArrayOrSharedArray}
     grid = dir_based_rdirs.grid
     nlat = dir_based_rdirs.grid.nlat
     nlon = dir_based_rdirs.grid.nlon
-    lat_indices::LatLonField{Int64} =
-      LatLonField{Int64}(grid,zeros(Int64,nlat,nlon))
-    lon_indices::LatLonField{Int64} =
-      LatLonField{Int64}(grid,zeros(Int64,nlat,nlon))
+    lat_indices::LatLonField{Int64,A} =
+      LatLonField{Int64,A}(grid,convert(A,zeros(Int64,nlat,nlon)))
+    lon_indices::LatLonField{Int64,A} =
+      LatLonField{Int64,A}(grid,convert(A,zeros(Int64,nlat,nlon)))
     for_all(grid) do coords::LatLonCoords
       dir_based_rdir::Int64 = dir_based_rdirs(coords)
       if dir_based_rdir == dir_based_indicator_ocean
@@ -379,12 +404,13 @@ struct LatLonDirectionIndicators <: DirectionIndicators
         error("Invalid direction based direction indicator")
       end
     end
-    new(LatLonField{Int64}[lat_indices,lon_indices])
+    new(LatLonField{Int64,A}[lat_indices,lon_indices])
   end
 end
 
-struct UnstructuredFieldDirectionIndicators <: DirectionIndicators
-  next_cell_coords::UnstructuredField{Int64}
+struct UnstructuredFieldDirectionIndicators{A} <: DirectionIndicators{A} where
+    {A<:ArrayOrSharedArray}
+  next_cell_coords::UnstructuredField{Int64,A}
 end
 
 function (latlon_direction_indicators::LatLonDirectionIndicators)(coords::LatLonCoords)
@@ -404,12 +430,13 @@ function set!(latlon_direction_indicators::DirectionIndicators,
   set!(latlon_direction_indicators.next_cell_coords[2],coords,next_cell_coords.lon)
 end
 
-function fill!(field::LatLonField{T},value::T) where {T}
+function fill!(field::LatLonField{T,A},value::T) where {T,A<:ArrayOrSharedArray}
   return fill!(field.data,value)
 end
 
-struct UnstructuredDirectionIndicators <: DirectionIndicators
-  next_cell_coords::UnstructuredField{Int64}
+struct UnstructuredDirectionIndicators{A} <: DirectionIndicators{A} where
+    {A<:ArrayOrSharedArray}
+  next_cell_coords::UnstructuredField{Int64,A}
 end
 
 function (unstructured_direction_indicators::UnstructuredDirectionIndicators)(coords::Generic1DCoords)
