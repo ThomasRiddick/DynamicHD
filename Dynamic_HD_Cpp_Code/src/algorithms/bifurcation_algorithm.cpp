@@ -38,9 +38,9 @@ bifurcation_algorithm_icon_single_index::
 }
 
 void bifurcation_algorithm::setup_fields(int* cumulative_flow_in,
-                                               int* number_of_outflows_in,
-                                               bool* landsea_mask_in,
-                                               grid_params* grid_params_in) {
+                                         int* number_of_outflows_in,
+                                         bool* landsea_mask_in,
+                                         grid_params* grid_params_in) {
   _grid_params = grid_params_in;
   _grid = grid_factory(_grid_params);
   cumulative_flow = new field<int>(cumulative_flow_in,_grid_params);
@@ -56,8 +56,8 @@ void bifurcation_algorithm::setup_fields(int* cumulative_flow_in,
 }
 
 void bifurcation_algorithm::setup_flags(double cumulative_flow_threshold_fraction_in,
-                                              int minimum_cells_from_split_to_main_mouth_in,
-                                              int maximum_cells_from_split_to_main_mouth_in) {
+                                        int minimum_cells_from_split_to_main_mouth_in,
+                                        int maximum_cells_from_split_to_main_mouth_in) {
   cumulative_flow_threshold_fraction = cumulative_flow_threshold_fraction_in;
   minimum_cells_from_split_to_main_mouth = minimum_cells_from_split_to_main_mouth_in;
   maximum_cells_from_split_to_main_mouth = maximum_cells_from_split_to_main_mouth_in;

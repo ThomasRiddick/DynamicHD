@@ -112,8 +112,8 @@ def evaluate_basins(np.ndarray[int,ndim=2,mode='c'] minima_in_int,
     nlat_fine, nlon_fine = raw_orography_in.shape[0],raw_orography_in.shape[1]
     cdef int nlat_coarse,nlon_coarse
     nlat_coarse, nlon_coarse = coarse_catchment_nums_in.shape[0],coarse_catchment_nums_in.shape[1]
-    cdef int* flood_merges_and_redirects
-    cdef int* connect_merges_and_redirects
+    cdef int* flood_merges_and_redirects = NULL
+    cdef int* connect_merges_and_redirects = NULL
     if basin_catchment_numbers_in is None:
       latlon_evaluate_basins_cython_wrapper(&minima_in_int[0,0],
                                             &raw_orography_in[0,0],

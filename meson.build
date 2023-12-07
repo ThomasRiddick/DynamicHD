@@ -39,23 +39,12 @@ if get_option('build_unit_tests')
   test('Cpp unit tests',e)
 endif
 if get_option('build_cython')
-  py = import('python').find_installation('/Users/thomasriddick/anaconda3/bin/python')
+  py = import('python').find_installation(
+          meson.get_external_property('python_installation_path'))
   numpy_inc = run_command(py,['-c',
     'import numpy as np; print(np.get_include())'],check : true).stdout().strip()
-  cython_libraries = ['compute_catchments_wrapper',
-                      'create_connected_lsmask_wrapper',
-                      'create_orography_wrapper',
-                      'determine_river_directions_wrapper',
-                      'evaluate_basins_wrapper',
-                      'fill_sinks_wrapper',
-                      'fill_sinks_wrapper_low_mem',
-                      'follow_streams_wrapper',
-                      'lake_operators_wrapper',
-                      'upscale_orography_wrapper',
-                      'bifurcate_rivers_basic_icon_wrapper',
-                      'compute_catchments_icon_wrapper',
-                      'determine_river_directions_icon_wrapper',
-                      'sink_filling_icon_wrapper']
+  cython_libraries = []
+  subdir(cython_src_path)
   foreach cython_library : cython_libraries
     py.extension_module(cython_library,
                         cython_src_path /
@@ -66,7 +55,7 @@ if get_option('build_cython')
 endif
 lib_fortran = library('dyhd_fortran',fortran_src,
                       include_directories: fortran_inc,
-                      dependencies: netcdf_fortran_lib,)
+                      dependencies: netcdf_fortran_lib)
 if get_option('build_unit_tests')
   fe = executable('fortran_unit_tests',
                   fortran_test_src,

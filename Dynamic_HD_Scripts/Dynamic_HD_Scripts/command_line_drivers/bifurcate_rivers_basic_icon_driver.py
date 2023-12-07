@@ -1,4 +1,6 @@
 import xarray as xr
+from Dynamic_HD_Scripts.utilities.check_driver_inputs \
+    import check_input_files, check_output_files
 
 class BifurcateRiversBasicIconDriver:
 
@@ -6,6 +8,17 @@ class BifurcateRiversBasicIconDriver:
         self.args = args
 
     def run(self):
+        print("*** ICON River Bifurcation Tool ***")
+        print("Settings:")
+        for key,value in self.args.items():
+            print("{}: {}".format(key,value))
+        check_input_files([self.args["next_cell_index_filepath"],
+                           self.args["cumulative_flow_filepath"],
+                           self.args["landsea_mask_filepath"],
+                           self.args["grid_params_filepath"],
+                           self.args["mouth_positions_filepath"]])
+        check_output_files([self.args["output_number_of_outflows_filepath"],
+                            self.args["output_next_cell_index_filepath"]])
         next_cell_index_in_ds = open_dataset(self.args["next_cell_index_filepath"])
         next_cell_index_in = \
             next_cell_index_in_ds[self.args["next_cell_index_fieldname"]].values
@@ -15,14 +28,12 @@ class BifurcateRiversBasicIconDriver:
         landsea_mask_in_int_ds = open_dataset(self.args["landsea_mask_filepath"])
         landsea_mask_in_int = \
             landsea_mask_in_int_ds[self.args["landsea_mask_fieldname"]].values
-        print("ICON River Bifurcation Tool")
-        grid_params_filepath
-        print("Using minimum_cells_from_split_to_main_mouth= {}".
-              format(self.args["minimum_cells_from_split_to_main_mouth"]))
-        print("Using maximum_cells_from_split_to_main_mouth= {}".
-              format(self.args["maximum_cells_from_split_to_main_mouth"]))
-        print("Using cumulative_flow_threshold_fraction= {}".
-              format(self.args["cumulative_flow_threshold_fraction"]))
+        grid_params_ds = open_dataset(self.args["grid_params_filepath"])
+        neighboring_cell_indices_in = grid_params_ds["neighbor_cell_index"]
+        number_of_outflows_out = np.zeros(next_cell_index_in.shape,
+                                          dtype=np.int64)
+        bifurcations_next_cell_index_out = np.zeros((next_cell_index_in.shape[0]*11,),
+                                                    dtype=np.int64)
         bifurcate_rivers_basic_icon_cpp(neighboring_cell_indices_in,
                                         next_cell_index_in,
                                         cumulative_flow_in,
@@ -36,11 +47,11 @@ class BifurcateRiversBasicIconDriver:
         number_of_outflows_out_ds = next_cell_index_in_ds.Copy(deep=True,
                                                                data={"num_outflows":
                                                                      number_of_outflows_out})
-        number_of_outflows_out_ds.to_netcdf(output_number_of_outflows_filepath)
+        number_of_outflows_out_ds.to_netcdf(self.args["output_number_of_outflows_filepath"])
         next_cell_index_out_ds = next_cell_index_in_ds.Copy(deep=True,
                                                             data={"next_cell_index":
                                                                   next_cell_index_in})
-        next_cell_index_out_ds.to_netcdf(output_next_cell_index_filepath)
+        next_cell_index_out_ds.to_netcdf(self.args["output_next_cell_index_filepath"])
         bifurcations_next_cell_index_out_ds = \
             next_cell_index_in_ds.Copy(deep=True,
                                        data={"bifurcated_next_cell_index":
