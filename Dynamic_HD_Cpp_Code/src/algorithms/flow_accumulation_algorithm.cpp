@@ -1,399 +1,285 @@
-// subroutine init_flow_accumulation_algorithm(this)
-//     call this%dependencies%set_all(0)
-//     call this%cumulative_flow%set_all(0)
-// }
+#include "algorithms/flow_accumulation_algorithm.hpp"
 
-// subroutine latlon_init_flow_accumulation_algorithm( &
-//                                                    next_cell_index_lat, &
-//                                                    next_cell_index_lon, &
-//                                                    cumulative_flow)
-//   class(*), dimension(:,:), pointer, intent(in) :: next_cell_index_lat
-//   class(*), dimension(:,:), pointer, intent(in) :: next_cell_index_lon
-//   class(*), dimension(:,:), pointer, intent(inout) :: cumulative_flow
-//   class(*), dimension(:,:), pointer :: dependencies_data
-//   type(latlon_section_coords), allocatable :: field_section_coords
-//     allocate(field_section_coords)
-//     field_section_coords = latlon_section_coords(1,1,size(next_cell_index_lat,1), &
-//                                                      size(next_cell_index_lat,2))
-//     this%next_cell_index_lat => latlon_subfield(next_cell_index_lat,field_section_coords,true)
-//     this%next_cell_index_lon => latlon_subfield(next_cell_index_lon,field_section_coords,true)
-//     this%cumulative_flow => latlon_subfield(cumulative_flow,field_section_coords,true)
-//     allocate(integer::dependencies_data(size(next_cell_index_lat,1),&
-//                                         size(next_cell_index_lon,2)))
-//     this%dependencies => latlon_subfield(dependencies_data, &
-//                                          field_section_coords,true)
-//     allocate(this%external_data_value,source=latlon_coords(-1,-1))
-//     allocate(this%flow_terminates_value,source=latlon_coords(-2,-2))
-//     allocate(this%no_data_value,source=latlon_coords(-3,-3))
-//     allocate(this%no_flow_value,source=latlon_coords(-4,-4))
-//     call this%init_flow_accumulation_algorithm()
-// }
+void flow_accumulation_algorithm::setup_fields(int* cumulative_flow_in,
+                                               grid_params* grid_params_in) {
+  _grid_params = grid_params_in;
+  _grid = grid_factory(_grid_params);
+  int* dependencies_data = new int[_grid->get_total_size()];
+  dependencies = new field<int>(dependencies_data,
+                                grid_params_in);
+  cumulative_flow = new field<int>(cumulative_flow_in,grid_params_in);
+  dependencies->set_all(0);
+  cumulative_flow->set_all(0);
+}
 
-// subroutine icon_single_index_init_flow_accumulation_algorithm(field_section_coords, &
-//                                                               next_cell_index, &
-//                                                               cumulative_flow, &
-//                                                               bifurcated_next_cell_index)
-//   class(*), dimension(:), pointer, intent(in) :: next_cell_index
-//   class(*), dimension(:), pointer, intent(out) :: cumulative_flow
-//   class(*), dimension(:,:), pointer, intent(in), optional :: bifurcated_next_cell_index
-//   class(*), dimension(:), pointer :: bifurcated_next_cell_index_slice
-//   class(*), dimension(:), pointer :: bifurcation_complete_slice
-//    type(generic_1d_section_coords), intent(in) :: field_section_coords
-//   class(*), dimension(:), pointer :: dependencies_data
-//   integer :: i
-//     this%max_neighbors = 12
-//     this%no_bifurcation_value = -9
-//     this%next_cell_index => icon_single_index_subfield(next_cell_index,field_section_coords)
-//     this%cumulative_flow => icon_single_index_subfield(cumulative_flow,field_section_coords)
-//     allocate(integer::dependencies_data(size(next_cell_index)))
-//     this%dependencies => icon_single_index_subfield(dependencies_data, &
-//                                                     field_section_coords)
-//     allocate(this%external_data_value,source=generic_1d_coords(-2,true))
-//     allocate(this%flow_terminates_value,source=generic_1d_coords(-3,true))
-//     allocate(this%no_data_value,source=generic_1d_coords(-4,true))
-//     allocate(this%no_flow_value,source=generic_1d_coords(-5,true))
-//     if (present(bifurcated_next_cell_index)) {
-//       allocate(subfield_ptr::this%bifurcated_next_cell_index(this%max_neighbors-1))
-//       allocate(subfield_ptr::this%bifurcation_complete(this%max_neighbors-1))
-//       do i = 1,this%max_neighbors - 1 {
-//         bifurcated_next_cell_index_slice => bifurcated_next_cell_index(:,i)
-//         this%bifurcated_next_cell_index(i)%ptr => &
-//           icon_single_index_subfield(bifurcated_next_cell_index_slice,field_section_coords)
-//         allocate(logical::bifurcation_complete_slice(size(next_cell_index)))
-//         select type(bifurcation_complete_slice)
-//           type is (logical)
-//             bifurcation_complete_slice(:) = false
-//         end select
-//         this%bifurcation_complete(i)%ptr => &
-//           icon_single_index_subfield(bifurcation_complete_slice,field_section_coords)
-//       }
-//     }
-//     call this%init_flow_accumulation_algorithm()
-// }
+void latlon_flow_accumulation_algorithm::setup_fields(int* next_cell_index_lat_in,
+                                                      int* next_cell_index_lon_in,
+                                                      int* cumulative_flow_in,
+                                                      grid_params* grid_params_in) {
+  flow_accumulation_algorithm::setup_fields(cumulative_flow_in,
+                                            grid_params_in);
+  next_cell_index_lat = new field<int>(next_cell_index_lat_in,grid_params_in);
+  next_cell_index_lon = new field<int>(next_cell_index_lon_in,grid_params_in);
+  external_data_value = new latlon_coords(-1,-1);
+  flow_terminates_value = new latlon_coords(-2,-2);
+  no_data_value = new latlon_coords(-3,-3);
+  no_flow_value = new latlon_coords(-4,-4);
+}
+
+void icon_single_index_flow_accumulation_algorithm::
+  setup_fields(int* next_cell_index_in,
+               int* cumulative_flow_in,
+               grid_params* grid_params_in,
+               int* bifurcated_next_cell_index_in){
+  flow_accumulation_algorithm::setup_fields(cumulative_flow_in,
+                                            grid_params_in);
+  max_neighbors = 12;
+  no_bifurcation_value = -9;
+  next_cell_index = new field<int>(next_cell_index_in,grid_params_in);
+  external_data_value = new generic_1d_coords(-2);
+  flow_terminates_value = new generic_1d_coords(-3);
+  no_data_value = new generic_1d_coords(-4);
+  no_flow_value = new generic_1d_coords(-5);
+  if (bifurcated_next_cell_index_in) {
+    for (int i = 0; i < max_neighbors - 1; i++) {
+      int* bifurcated_next_cell_index_slice = new int[_grid->get_total_size()];
+      copy(bifurcated_next_cell_index_in+_grid->get_total_size()*(max_neighbors-1),
+           bifurcated_next_cell_index_in+_grid->get_total_size()*(max_neighbors-1)+i,
+           bifurcated_next_cell_index_slice);
+      bifurcated_next_cell_index.push_back(
+        new field<int>(bifurcated_next_cell_index_slice,grid_params_in));
+      bool* bifurcation_complete_slice = new bool[_grid->get_total_size()];
+      bifurcation_complete.push_back(
+        new field<bool>(bifurcation_complete_slice,grid_params_in));
+      bifurcation_complete[i]->set_all(false);
+    }
+  }
+}
 
 void flow_accumulation_algorithm::generate_cumulative_flow(bool set_links){
-    dependencies->for_all(set_dependencies);
-    dependencies->for_all(add_cells_to_queue);
+    _grid->for_all([&](coords* coords_in){
+      set_dependencies(coords_in);
+      add_cells_to_queue(coords_in);
+    });
     process_queue();
-    if (search_for_loops) dependencies->for_all(check_for_loops_wrapper)
-    if (set_links) dependencies->for_all_edge_cells(follow_paths_wrapper)
+    if (search_for_loops){
+      _grid->for_all([&](coords* coords_in){
+         check_for_loops(coords_in);
+      });
+    }
+    if (set_links) {
+      _grid->for_all_edge_cells([&](coords* coords_in){
+        follow_paths(coords_in);
+      });
+    }
 }
 
 void flow_accumulation_algorithm::set_dependencies(coords* coords_in){
-  class(coords), pointer, intent(inout) :: coords_in
-  class(coords),pointer :: target_coords
-  class(coords),pointer :: target_of_target_coords
-  class(*), pointer  :: dependency_ptr
-    if ( .not. (coords_in%are_equal_to(this%get_no_data_value()) .or. &
-                coords_in%are_equal_to(this%get_no_flow_value()) .or. &
-                coords_in%are_equal_to(this%get_flow_terminates_value()) )) {
-      target_coords => this%get_next_cell_coords(coords_in)
-      if ( target_coords%are_equal_to(this%get_no_data_value()) ) {
-        call this%cumulative_flow%set_value(coords_in,this%get_no_data_value())
-      } else if ( target_coords%are_equal_to(this%get_no_flow_value())) {
-        call this%cumulative_flow%set_value(coords_in,this%get_no_flow_value())
-      } else if ( .not. target_coords%are_equal_to(this%get_flow_terminates_value())) {
-        target_of_target_coords => this%get_next_cell_coords(target_coords)
-        if ( .not. (target_of_target_coords%are_equal_to(this%get_no_flow_value()) .or. &
-                    target_of_target_coords%are_equal_to(this%get_no_data_value()) )) {
-          dependency_ptr => this%dependencies%get_value(target_coords)
-          select type (dependency_ptr)
-            type is (integer)
-              call this%dependencies%set_value(target_coords, &
-                                               dependency_ptr+1)
-          end select
-          deallocate(dependency_ptr)
-        }
-        deallocate(target_of_target_coords)
+  if ( ! ((*coords_in)==(*get_no_data_value()) ||
+              (*coords_in)==(*get_no_flow_value()) ||
+              (*coords_in)==(*get_flow_terminates_value()) )) {
+    coords* target_coords = get_next_cell_coords(coords_in);
+    if ((*target_coords)==(*get_no_data_value()) ) {
+      (*cumulative_flow)(coords_in) = acc_no_data_value;
+    } else if ((*target_coords)==(*get_no_flow_value())) {
+      (*cumulative_flow)(coords_in) = acc_no_flow_value;
+    } else if ((*target_coords)!=(*get_flow_terminates_value())) {
+      coords* target_of_target_coords = get_next_cell_coords(target_coords);
+      if ( ! ((*target_of_target_coords)==(*get_no_flow_value()) ||
+              (*target_of_target_coords)==(*get_no_data_value())) ) {
+        int dependency = (*dependencies)(target_coords);
+        (*dependencies)(target_coords) = dependency + 1;
       }
-      deallocate(target_coords)
+      delete target_of_target_coords;
     }
-    deallocate(coords_in)
+    delete target_coords;
+  }
+  delete coords_in;
 }
 
 void flow_accumulation_algorithm::add_cells_to_queue(coords* coords_in){
-  class(coords), pointer, intent(inout) :: coords_in
-  class(coords), pointer :: target_coords
-  class(*), pointer  :: dependency_ptr
-  target_coords => this%get_next_cell_coords(coords_in)
-  dependency_ptr => this%dependencies%get_value(coords_in)
-  select type (dependency_ptr)
-    type is (integer)
-    if (  dependency_ptr == 0 .and. &
-         ( .not. target_coords%are_equal_to(this%get_no_data_value()) ) ) {
-      call this%q%add_value_to_back(coords_in)
-      if ( .not. target_coords%are_equal_to(this%get_flow_terminates_value())) {
-        call this%cumulative_flow%set_value(coords_in,1)
+  coords* target_coords = get_next_cell_coords(coords_in);
+  int dependency = (*dependencies)(coords_in);
+    if (  dependency == 0 &&
+         ((*target_coords) != (*get_no_data_value()) ) ) {
+      q.push(coords_in);
+      if ( (*target_coords) != (*get_flow_terminates_value())) {
+        (*cumulative_flow)(coords_in) = 1;
       }
     }
-  end select
-  deallocate(coords_in)
-  deallocate(dependency_ptr)
-  deallocate(target_coords)
+  delete coords_in;
+  delete target_coords;
 }
 
 void flow_accumulation_algorithm::process_queue(){
-  class(coords), pointer :: current_coords
-  class(*),      pointer :: current_coords_ptr
-  class(coords), pointer :: target_coords
-  class(coords), pointer :: target_of_target_coords
-  class(*), pointer :: cumulative_flow_current_coords_ptr
-  class(*), pointer :: cumulative_flow_target_coords_ptr
-  class(*), pointer :: dependency_ptr
-  integer :: dependency
-  do while ( .not. this%q%iterate_forward() ) {
-    current_coords_ptr => this%q%get_value_at_iterator_position()
-    select type(current_coords_ptr)
-      class is (coords)
-        current_coords => current_coords_ptr
-    end select
-    target_coords => this%get_next_cell_coords(current_coords)
-    if ( target_coords%are_equal_to(this%get_no_data_value()) .or. &
-         target_coords%are_equal_to(this%get_no_flow_value()) .or. &
-         target_coords%are_equal_to(this%get_flow_terminates_value())) {
-      call this%q%remove_element_at_iterator_position()
-      deallocate(target_coords)
-      cycle
+  while ( ! q.empty() ) {
+    coords* current_coords = q.front();
+    coords* target_coords = get_next_cell_coords(current_coords);
+    if ( (*target_coords)==(*get_no_data_value()) ||
+         (*target_coords)==(*get_no_flow_value()) ||
+         (*target_coords)==(*get_flow_terminates_value())) {
+      q.pop();
+      delete target_coords;
+      continue;
     }
-    target_of_target_coords => this%get_next_cell_coords(target_coords)
-    if ( target_of_target_coords%are_equal_to(this%get_no_data_value())) {
-      call this%q%remove_element_at_iterator_position()
-      deallocate(target_of_target_coords)
-      cycle
+    coords* target_of_target_coords = get_next_cell_coords(target_coords);
+    if ( (*target_of_target_coords) == (*get_no_data_value())) {
+      q.pop();
+      delete target_of_target_coords;
+      continue;
     }
-    deallocate(target_of_target_coords)
-    dependency_ptr => this%dependencies%get_value(target_coords)
-    select type (dependency_ptr)
-      type is (integer)
-      dependency = dependency_ptr - 1
-    end select
-    deallocate(dependency_ptr)
-    call this%dependencies%set_value(target_coords, &
-                                     dependency)
-    cumulative_flow_target_coords_ptr => this%cumulative_flow%get_value(target_coords)
-    cumulative_flow_current_coords_ptr => this%cumulative_flow%get_value(current_coords)
-    call this%q%remove_element_at_iterator_position()
-    select type (cumulative_flow_target_coords_ptr)
-      type is (integer)
-        select type(cumulative_flow_current_coords_ptr)
-          type is (integer)
-            if (dependency == 0 .and. .not. &
-                target_coords%are_equal_to(this%get_flow_terminates_value())) {
-              call this%cumulative_flow%set_value(target_coords, &
-                                                  cumulative_flow_target_coords_ptr + &
-                                                  cumulative_flow_current_coords_ptr + 1)
-              call this%q%add_value_to_back(target_coords)
-            } else {
-              call this%cumulative_flow%set_value(target_coords, &
-                                                  cumulative_flow_target_coords_ptr + &
-                                                  cumulative_flow_current_coords_ptr)
-            }
-        end select
-      end select
-      deallocate(target_coords)
-      deallocate(cumulative_flow_target_coords_ptr)
-      deallocate(cumulative_flow_current_coords_ptr)
+    delete target_of_target_coords;
+    int dependency = (*dependencies)(target_coords) - 1;
+    (*dependencies)(target_coords) = dependency;
+    int cumulative_flow_target_coords = (*cumulative_flow)(target_coords);
+    int cumulative_flow_current_coords = (*cumulative_flow)(current_coords);
+    q.pop();
+    if (dependency == 0 &&
+        (*target_coords) != (*get_flow_terminates_value())) {
+      (*cumulative_flow)(target_coords) = cumulative_flow_target_coords +
+                                          cumulative_flow_current_coords + 1;
+      q.push(target_coords);
+    } else {
+      (*cumulative_flow)(target_coords) = cumulative_flow_target_coords +
+                                          cumulative_flow_current_coords;
+    }
+    delete target_coords;
   }
 }
 
-void flow_accumulation_algorithm::check_for_loops_wrapper(cell_coords){
-  class(coords), pointer, intent(inout) :: cell_coords
-  class(*), pointer :: dependency_ptr
-    select type(this)
-    class is (flow_accumulation_algorithm)
-      dependency_ptr => this%dependencies%get_value(cell_coords)
-      select type(dependency_ptr)
-      type is (integer)
-        if (dependency_ptr /= 0) {
-          call this%label_loop(cell_coords)
-        }
-      end select
-    end select
-    deallocate(dependency_ptr)
-    deallocate(cell_coords)
+void flow_accumulation_algorithm::check_for_loops(coords* coords_in){
+  int dependency = (*dependencies)(coords_in);
+  if (dependency != 0) {
+    label_loop(coords_in);
+  }
+  delete coords_in;
 }
 
-void flow_accumulation_algorithm::follow_paths_wrapper(initial_coords){
-  class(coords), pointer, intent(inout) :: initial_coords
-    select type(this)
-    class is (flow_accumulation_algorithm)
-      call this%follow_paths(initial_coords)
-    end select
-}
-
-void flow_accumulation_algorithm::follow_paths(initial_coords){
-  class(coords), pointer, intent(inout) :: initial_coords
-  class(coords), pointer :: current_coords
-  class(coords), pointer :: target_coords
-  integer :: coords_index
-  allocate(current_coords,source=initial_coords)
-  coords_index = this%generate_coords_index(initial_coords)
-  do {
-    if ( target_coords%are_equal_to(this%get_no_data_value()) .or. &
-         target_coords%are_equal_to(this%get_no_flow_value()) ) {
-      call this%assign_coords_to_link_array(coords_index,this%get_flow_terminates_value())
-      exit
+void flow_accumulation_algorithm::follow_paths(coords* initial_coords){
+  coords* current_coords = initial_coords->clone();
+  coords* target_coords = nullptr;
+  int coords_index = generate_coords_index(initial_coords);
+  while (true) {
+    if ( (*target_coords) == (*get_no_data_value()) ||
+         (*target_coords) == (*get_no_flow_value()) ) {
+      assign_coords_to_link_array(coords_index,get_flow_terminates_value());
+      break;
     }
-    target_coords => this%get_next_cell_coords(current_coords)
-    if ( this%dependencies%coords_outside_subfield(target_coords) ) {
-      if ( current_coords%are_equal_to(initial_coords) ) {
-         call this%assign_coords_to_link_array(coords_index,this%get_external_flow_value())
+    target_coords = get_next_cell_coords(current_coords);
+    if ( _grid->outside_limits(target_coords) ) {
+      if ( (*current_coords) == (*initial_coords) ) {
+         assign_coords_to_link_array(coords_index,get_external_flow_value());
       } else {
-         call this%assign_coords_to_link_array(coords_index,current_coords)
+         assign_coords_to_link_array(coords_index,current_coords);
       }
-      exit
+      break;
     }
-    current_coords => target_coords
+    current_coords = target_coords;
   }
-  deallocate(initial_coords)
+  delete initial_coords;
 }
 
-void flow_accumulation_algorithm::label_loop(start_coords){
-  class(coords), pointer :: start_coords
-  class(coords), pointer :: current_coords
-  class(coords), pointer :: new_current_coords
-    allocate(current_coords,source=start_coords)
-    do {
-      call this%dependencies%set_value(current_coords,0)
-      call this%cumulative_flow%set_value(current_coords,0)
-      new_current_coords => this%get_next_cell_coords(current_coords)
-      deallocate(current_coords)
-      if (new_current_coords%are_equal_to(start_coords)) {
-        deallocate(new_current_coords)
-        exit
+void flow_accumulation_algorithm::label_loop(coords* start_coords){
+    coords* current_coords = start_coords->clone();
+    while (true) {
+      (*dependencies)(current_coords) = 0;
+      (*cumulative_flow)(current_coords) = 0;
+      coords* new_current_coords = get_next_cell_coords(current_coords);
+      delete current_coords;
+      if ((*new_current_coords) == (*start_coords)) {
+        delete new_current_coords;
+        break;
       }
-      current_coords => new_current_coords
+      current_coords = new_current_coords;
     }
 }
 
 coords* flow_accumulation_algorithm::get_external_flow_value() {
-    external_data_value => this%external_data_value
+    return external_data_value;
 }
 
 coords* flow_accumulation_algorithm::get_flow_terminates_value() {
-    flow_terminates_value => this%flow_terminates_value
+    return flow_terminates_value;
 }
 
 coords* flow_accumulation_algorithm::get_no_data_value() {
-    no_data_value => this%no_data_value
+    return no_data_value;
 }
 
 coords* flow_accumulation_algorithm::get_no_flow_value() {
-    no_flow_value => this%no_flow_value
+    return no_flow_value;
 }
 
 coords* latlon_flow_accumulation_algorithm::
   get_next_cell_coords(coords* coords_in) {
-  class(*), pointer :: next_cell_coords_lat_ptr
-  class(*), pointer :: next_cell_coords_lon_ptr
-    next_cell_coords_lat_ptr => this%next_cell_index_lat%get_value(coords_in)
-    next_cell_coords_lon_ptr => this%next_cell_index_lon%get_value(coords_in)
-    select type (next_cell_coords_lat_ptr)
-    type is (integer)
-      select type (next_cell_coords_lon_ptr)
-      type is (integer)
-        allocate(next_cell_coords, &
-                 source=latlon_coords(next_cell_coords_lat_ptr, &
-                                      next_cell_coords_lon_ptr))
-      end select
-    end select
-    deallocate(next_cell_coords_lat_ptr)
-    deallocate(next_cell_coords_lon_ptr)
+  int next_cell_coords_lat = (*next_cell_index_lat)(coords_in);
+  int next_cell_coords_lon = (*next_cell_index_lon)(coords_in);
+  return new latlon_coords(next_cell_coords_lat,
+                           next_cell_coords_lon);
 }
 
 int latlon_flow_accumulation_algorithm::
   generate_coords_index(coords* coords_in) {
-  integer :: index
-  integer :: relative_lat, relative_lon
-  select type (coords_in)
-  class is (latlon_coords)
-    relative_lat = 1 + coords_in%lat - this%tile_min_lat
-    relative_lon = 1 + coords_in%lon - this%tile_min_lon
-  end select
+  int index;
+  latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+  int relative_lat = 1 + latlon_coords_in->get_lat() - tile_min_lat;
+  int relative_lon = 1 + latlon_coords_in->get_lon() - tile_min_lon;
   if ( relative_lat == 1 ) {
-    index = relative_lon
-  } else if ( relative_lat < this%tile_width_lat .and. &
+    index = relative_lon;
+  } else if ( relative_lat < tile_width_lat &&
             relative_lat > 1 ) {
     if ( relative_lon == 1 ) {
-      index = 2*this%tile_width_lon + 2*this%tile_width_lat - relative_lat - 2
-    } else if ( relative_lon == this%tile_width_lon ) {
-      index = this%tile_width_lon + relative_lat - 1
+      index = 2*tile_width_lon + 2*tile_width_lat - relative_lat - 2;
+    } else if ( relative_lon == tile_width_lon ) {
+      index = tile_width_lon + relative_lat - 1;
     } else {
-      stop 'trying to generate the index of an non edge cell'
+      throw runtime_error("trying to generate the index of an non edge cell");
     }
-  } else if ( relative_lat == this%tile_width_lat ) {
-    index = this%tile_width_lat + 2*this%tile_width_lon - relative_lon - 1
+  } else if ( relative_lat == tile_width_lat ) {
+    index = tile_width_lat + 2*tile_width_lon - relative_lon - 1;
   } else {
-      stop 'trying to generate the index of an non edge cell'
+      throw runtime_error("trying to generate the index of an non edge cell");
   }
+  return index;
 }
 
 
 void latlon_flow_accumulation_algorithm::
   assign_coords_to_link_array(int coords_index,coords* coords_in){
-  select type(latlon_links => this%links)
-    type is (latlon_coords)
-    select type(coords_in)
-      type is (latlon_coords)
-        latlon_links(coords_index) = coords_in
-    end select
-  end select
+  links[coords_index] = coords_in;
 }
 
 coords* icon_single_index_flow_accumulation_algorithm::
   get_next_cell_coords(coords* coords_in) {
-  class(coords), pointer :: next_cell_coords
-  class(*), pointer :: next_cell_coords_index_ptr
-    next_cell_coords_index_ptr => this%next_cell_index%get_value(coords_in)
-        allocate(next_cell_coords, &
-                 source=generic_1d_coords(next_cell_coords_index_ptr,true))
+  int next_cell_coords_index = (*next_cell_index)(coords_in);
+  coords* next_cell_coords = new generic_1d_coords(next_cell_coords_index);
 }
 
 int icon_single_index_flow_accumulation_algorithm::
   generate_coords_index(coords* coords_in) {
-    index = 1
-    stop "Function generate_coords_index not yet implemented for incon grid"
+    throw runtime_error("Function generate_coords_index not yet implemented for icon grid");
 }
 
 void icon_single_index_flow_accumulation_algorithm::
-  assign_coords_to_link_array(coords* coords_index,coords* coords_in){
-  select type(generic_1d_links => this%links)
-    type is (generic_1d_coords)
-    select type(coords_in)
-      type is (generic_1d_coords)
-        generic_1d_links(coords_index) = coords_in
-    end select
-  end select
+  assign_coords_to_link_array(int coords_index,coords* coords_in){
+  links[coords_index] = coords_in;
 }
 
 void flow_accumulation_algorithm::update_bifurcated_flows(){
-    call this%bifurcation_complete(1)%ptr%for_all(check_for_bifurcations_in_cell_wrapper,this)
-}
-
-void flow_accumulation_algorithm::
-  check_for_bifurcations_in_cell_wrapper(coords* coords_in){
-    select type(this)
-    class is (flow_accumulation_algorithm)
-      call this%check_for_bifurcations_in_cell(coords_in)
-    end select
+  _grid->for_all([&](coords* coords_in){
+    check_for_bifurcations_in_cell(coords_in);
+  });
 }
 
 void flow_accumulation_algorithm::
   check_for_bifurcations_in_cell(coords* coords_in){
-  class(*), pointer :: cumulative_flow_value_ptr
-  class(coords), pointer :: target_coords
-  integer :: i
-    if (this%is_bifurcated(coords_in)) {
-      do i=1,this%max_neighbors - 1 {
-        if(this%is_bifurcated(coords_in,i)) {
-          target_coords => this%get_next_cell_bifurcated_coords(coords_in,i)
-          cumulative_flow_value_ptr => this%cumulative_flow%get_value(coords_in)
-          select type (cumulative_flow_value_ptr)
-            type is (integer)
-              call this%update_bifurcated_flow(target_coords, &
-                                               cumulative_flow_value_ptr)
-          end select
-          call this%bifurcation_complete(i)%ptr%set_value(coords_in,true)
+    if (is_bifurcated(coords_in)) {
+      for (int i=1; i < max_neighbors - 1; i++) {
+        if (is_bifurcated(coords_in,i)) {
+          coords* target_coords = get_next_cell_bifurcated_coords(coords_in,i);
+          update_bifurcated_flow(target_coords,
+                                 (*cumulative_flow)(coords_in));
+          (*bifurcation_complete[i])(coords_in) = true;
         }
       }
     }
@@ -402,128 +288,87 @@ void flow_accumulation_algorithm::
 void flow_accumulation_algorithm::
   update_bifurcated_flow(coords* initial_coords,
                          int additional_accumulated_flow){
-class(coords), pointer :: current_coords
-class(coords), pointer :: target_coords
-class(*), pointer :: cumulative_flow_value_ptr
-class(*), pointer :: bifurcated_complete_ptr
-integer :: i
-  allocate(current_coords,source=initial_coords)
-  do {
-    cumulative_flow_value_ptr => this%cumulative_flow%get_value(current_coords)
-    select type (cumulative_flow_value_ptr)
-      type is (integer)
-        call this%cumulative_flow%set_value(current_coords, &
-                                            cumulative_flow_value_ptr + &
-                                            additional_accumulated_flow)
-    end select
-    if (this%is_bifurcated(current_coords)) {
-      do i=1,this%max_neighbors - 1 {
-        bifurcated_complete_ptr => this%bifurcation_complete(i)%ptr%get_value(current_coords)
-        select type (bifurcated_complete_ptr)
-          type is (logical)
-            if(this%is_bifurcated(current_coords,i) .and. bifurcated_complete_ptr) {
-              target_coords => this%get_next_cell_bifurcated_coords(current_coords,i)
-              call this%update_bifurcated_flow(target_coords, &
-                                               additional_accumulated_flow)
-          }
-        end select
+  coords* target_coords = nullptr;
+  coords* current_coords = initial_coords->clone();
+  while (true) {
+    int cumulative_flow_value = (*cumulative_flow)(current_coords);
+    (*cumulative_flow)(current_coords) = cumulative_flow_value +
+                                         additional_accumulated_flow;
+    if (is_bifurcated(current_coords)) {
+      for (int i=1;i < max_neighbors - 1; i++) {
+          if (is_bifurcated(current_coords,i) &&
+              (*bifurcation_complete[i])(current_coords)) {
+            target_coords = get_next_cell_bifurcated_coords(current_coords,i);
+            update_bifurcated_flow(target_coords,
+                                   additional_accumulated_flow);
+        }
       }
     }
-    if (current_coords%are_equal_to(this%get_flow_terminates_value())) exit
-    target_coords => this%get_next_cell_coords(current_coords)
-    deallocate(current_coords)
-    current_coords => target_coords
+    if ((*current_coords)==(*get_flow_terminates_value())) break;
+    target_coords = get_next_cell_coords(current_coords);
+    delete current_coords;
+    current_coords = target_coords;
   }
 }
 
 bool latlon_flow_accumulation_algorithm::is_bifurcated(coords* coords_in,
-                                                       int layer_in = - 1){
-  class(*),pointer :: bifurcated_next_cell_index_lat_value
-  logical :: bifurcated
-  integer :: i
-    if (present(layer_in)) {
-      bifurcated_next_cell_index_lat_value => &
-        this%bifurcated_next_cell_index_lat(layer_in)%ptr%get_value(coords_in)
-      select type(bifurcated_next_cell_index_lat_value)
-        type is (integer)
-          bifurcated = (bifurcated_next_cell_index_lat_value &
-                       /= this%no_bifurcation_value)
-      end select
+                                                       int layer_in){
+  bool bifurcated = false;
+    if (layer_in == -1) {
+      int bifurcated_next_cell_index_lat_value =
+        (*bifurcated_next_cell_index_lat[layer_in])(coords_in);
+          return (bifurcated_next_cell_index_lat_value
+                  != no_bifurcation_value);
     } else {
-      bifurcated = false
-      do i = 1,this%max_neighbors - 1 {
-        bifurcated_next_cell_index_lat_value => &
-          this%bifurcated_next_cell_index_lat(i)%ptr%get_value(coords_in)
-        select type(bifurcated_next_cell_index_lat_value)
-          type is (integer)
-            bifurcated = bifurcated .or. &
-                         (bifurcated_next_cell_index_lat_value &
-                         /= this%no_bifurcation_value)
-        end select
-        if (bifurcated) exit
+      bifurcated = false;
+      for (int i = 0; i < max_neighbors - 1; i++) {
+        int bifurcated_next_cell_index_lat_value =
+          (*bifurcated_next_cell_index_lat[i])(coords_in);
+            bifurcated = bifurcated ||
+                         (bifurcated_next_cell_index_lat_value
+                         != no_bifurcation_value);
+        if (bifurcated) return true;
       }
     }
+    return false;
 }
 
 bool icon_single_index_flow_accumulation_algorithm::
-  is_bifurcated(coords* coords_in,int layer_in = -1){
-  class(*), pointer :: bifurcated_next_cell_index_value_ptr
-  integer :: i
-    if (present(layer_in)) {
-      bifurcated_next_cell_index_value_ptr => &
-        this%bifurcated_next_cell_index(layer_in)%ptr%get_value(coords_in)
-      select type (bifurcated_next_cell_index_value_ptr)
-        type is (integer)
-          bifurcated = (bifurcated_next_cell_index_value_ptr &
-                        /= this%no_bifurcation_value)
-      end select
-    } else {
-      bifurcated = false
-      do i = 1,this%max_neighbors - 1 {
-        bifurcated_next_cell_index_value_ptr => &
-          this%bifurcated_next_cell_index(i)%ptr%get_value(coords_in)
-        select type (bifurcated_next_cell_index_value_ptr)
-          type is (integer)
-          bifurcated = bifurcated .or. &
-                       (bifurcated_next_cell_index_value_ptr &
-                       /= this%no_bifurcation_value)
-        end select
-        if (bifurcated) exit
-      }
+  is_bifurcated(coords* coords_in,int layer_in) {
+  bool bifurcated = false;
+  if (layer_in == -1) {
+    int bifurcated_next_cell_index_value =
+      (*bifurcated_next_cell_index[layer_in])(coords_in);
+      return (bifurcated_next_cell_index_value
+              != no_bifurcation_value);
+  } else {
+    for (int i = 0;i < max_neighbors - 1;i++) {
+      int bifurcated_next_cell_index_value =
+        (*bifurcated_next_cell_index[i])(coords_in);
+        bifurcated = bifurcated ||
+                     (bifurcated_next_cell_index_value
+                     != no_bifurcation_value);
+      if (bifurcated) return true;
     }
+  }
+  return false;
 }
 
 coords* latlon_flow_accumulation_algorithm::
   get_next_cell_bifurcated_coords(coords* coords_in,
                                   int layer_in) {
-  class(*), pointer :: bifurcated_next_cell_coords_lat_ptr
-  class(*), pointer :: bifurcated_next_cell_coords_lon_ptr
-    bifurcated_next_cell_coords_lat_ptr => &
-      this%bifurcated_next_cell_index_lat(layer_in)%ptr%get_value(coords_in)
-    bifurcated_next_cell_coords_lon_ptr => &
-      this%bifurcated_next_cell_index_lon(layer_in)%ptr%get_value(coords_in)
-    select type (bifurcated_next_cell_coords_lat_ptr)
-    type is (integer)
-      select type (bifurcated_next_cell_coords_lon_ptr)
-      type is (integer)
-        allocate(next_cell_coords, &
-                 source=latlon_coords(bifurcated_next_cell_coords_lat_ptr, &
-                                      bifurcated_next_cell_coords_lon_ptr))
-      end select
-    end select
+  int bifurcated_next_cell_coords_lat =
+      (*bifurcated_next_cell_index_lat[layer_in])(coords_in);
+  int bifurcated_next_cell_coords_lon =
+      (*bifurcated_next_cell_index_lon[layer_in])(coords_in);
+  return new latlon_coords(bifurcated_next_cell_coords_lat,
+                           bifurcated_next_cell_coords_lon);
 }
 
 coords* icon_single_index_flow_accumulation_algorithm::
   get_next_cell_bifurcated_coords(coords* coords_in,
                                   int layer_in) {
-  class(*), pointer :: bifurcated_next_cell_coords_index_ptr
-  integer, intent(in) :: layer_in
-    bifurcated_next_cell_coords_index_ptr => &
-      this%bifurcated_next_cell_index(layer_in)%ptr%get_value(coords_in)
-    select type (bifurcated_next_cell_coords_index_ptr)
-      type is (integer)
-        allocate(next_cell_coords, &
-                 source=generic_1d_coords(bifurcated_next_cell_coords_index_ptr,true))
-    end select
-    deallocate(bifurcated_next_cell_coords_index_ptr)
+  int bifurcated_next_cell_coords_index =
+      (*bifurcated_next_cell_index[layer_in])(coords_in);
+  return new generic_1d_coords(bifurcated_next_cell_coords_index);
 }

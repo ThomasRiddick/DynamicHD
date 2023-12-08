@@ -137,6 +137,17 @@ void latlon_grid::for_all_with_line_breaks(function<void(coords*,bool)> func){
 	}
 };
 
+void latlon_grid::for_all_edge_cells(function<void(coords*)> func){
+	for (auto i = 0; i < nlat; i++){
+		func(new latlon_coords(i,0));
+		func(new latlon_coords(i,nlon-1));
+	}
+	for (auto j = 1; j < nlon-1; j++){
+		func(new latlon_coords(0,j));
+		func(new latlon_coords(nlat-1,j));
+	}
+};
+
 latlon_coords* latlon_grid::latlon_wrapped_coords(latlon_coords* coords_in){
 	if (coords_in->get_lon() < 0) {
 		return new latlon_coords(coords_in->get_lat(),nlon + coords_in->get_lon());
@@ -362,6 +373,17 @@ void irregular_latlon_grid::for_all_with_line_breaks(function<void(coords*,bool)
 		}
 	}
 };
+
+void irregular_latlon_grid::for_all_edge_cells(function<void(coords*)> func){
+	for (auto i = 0; i < nlat; i++){
+		for (auto j = 0; j < nlon; j++){
+			latlon_coords* cell_coords = new latlon_coords(i,j);
+			if (grid_mask[latlon_get_index(cell_coords)] &&
+			    is_edge(cell_coords)) func(cell_coords);
+			else delete cell_coords;
+		}
+	}
+}
 
 bool irregular_latlon_grid::is_corner_cell(coords* coords_in){
 	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
@@ -634,6 +656,12 @@ void icon_single_index_grid::for_all(function<void(coords*)> func) {
 void icon_single_index_grid::for_all_with_line_breaks(function<void(coords*,bool)> func){
 	for (auto i = 0; i < ncells; i++) {
 		func(new generic_1d_coords(i + array_offset),false);
+	}
+}
+
+void icon_single_index_grid::for_all_edge_cells(function<void(coords*)> func){
+	for(vector<coords*>::iterator i = edge_cells.begin(); i != edge_cells.end(); i++){
+		func(*i);
 	}
 }
 
