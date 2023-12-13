@@ -52,7 +52,7 @@ using IOModule: load_lake_parameters
                                                                                  1.0 1.0 0.0 1.0
                                                                                  1.0 1.0 1.0 1.0 ])
   drainages::Array{Field{Float64},1} = repeat(drainage,200,false)
-  runoffs::Array{Field{Float64},1} = deepcopy(drainages)
+  runoffs::Array{Field{Float64},1} = drainages
   evaporation::Field{Float64} = LatLonField{Float64}(river_parameters.grid,0.0)
   evaporations::Array{Field{Float64},1} = repeat(evaporation,200,false)
   expected_water_to_ocean::Field{Float64} =
@@ -286,7 +286,7 @@ end
                                                                                  1.0 1.0 1.0
                                                                                  1.0 1.0 0.0 ])
   drainages::Array{Field{Float64},1} = repeat(drainage,1000,false)
-  runoffs::Array{Field{Float64},1} = deepcopy(drainages)
+  runoffs::Array{Field{Float64},1} = drainages
   evaporation::Field{Float64} = LatLonField{Float64}(surface_model_grid,0.0)
   evaporations::Array{Field{Float64},1} = repeat(evaporation,1000,false)
   expected_river_inflow::Field{Float64} = LatLonField{Float64}(grid,
@@ -354,6 +354,7 @@ end
                     0    0    0    0    0    0    0    0    0
                     0    0    0    0    0    0    0    0    0
                     0    0    0    0    0    0    0    0    0 ])
+  import Profile
   @time river_fields::RiverPrognosticFields,lake_prognostics::LakePrognostics,lake_fields::LakeFields =
     drive_hd_and_lake_model(river_parameters,lake_parameters,
                             drainages,runoffs,evaporations,
@@ -918,7 +919,7 @@ end
                                                                                  1.0 1.0 1.0 1.0
                                                                                  1.0 0.0 1.0 0.0 ])
   drainages::Array{Field{Float64},1} = repeat(drainage,10000,false)
-  runoffs::Array{Field{Float64},1} = deepcopy(drainages)
+  runoffs::Array{Field{Float64},1} = drainages
   evaporation::Field{Float64} = LatLonField{Float64}(surface_model_grid,0.0)
   evaporations::Array{Field{Float64},1} = repeat(evaporation,10000,false)
   expected_river_inflow::Field{Float64} = LatLonField{Float64}(grid,
@@ -1625,7 +1626,7 @@ end
                                                                                  1.0 1.0 1.0 1.0
                                                                                  1.0 0.0 1.0 0.0 ])
   drainages::Array{Field{Float64},1} = repeat(drainage,10000,false)
-  runoffs::Array{Field{Float64},1} = deepcopy(drainages)
+  runoffs::Array{Field{Float64},1} = drainages
   evaporation::Field{Float64} = LatLonField{Float64}(surface_model_grid,0.0)
   evaporations::Array{Field{Float64},1} = repeat(evaporation,180,false)
   evaporation = LatLonField{Float64}(surface_model_grid,100.0)
@@ -1897,7 +1898,7 @@ end
                 1 43 1
                15 7  1  ])
   expected_intermediate_lake_volumes::Array{Float64} = Float64[46.0, 1.0, 38.0, 6.0, 340.0, 10.0]
-  evaporations_copy::Array{Field{Float64},1} = deepcopy(evaporations)
+  evaporations_copy::Array{Field{Float64},1} = evaporations
   @time river_fields::RiverPrognosticFields,lake_prognostics::LakePrognostics,lake_fields::LakeFields =
     drive_hd_and_lake_model(river_parameters,lake_parameters,
                             drainages,runoffs,evaporations_copy,
@@ -7968,7 +7969,7 @@ end
                                    grid_specific_lake_parameters)
   drainage::Field{Float64} = LatLonField{Float64}(river_parameters.grid,0.0)
   drainages::Array{Field{Float64},1} = repeat(drainage,10000,false)
-  runoffs::Array{Field{Float64},1} = deepcopy(drainages)
+  runoffs::Array{Field{Float64},1} = drainages
   evaporation::Field{Float64} = LatLonField{Float64}(surface_model_grid,0.0)
   evaporations::Array{Field{Float64},1} = repeat(evaporation,180,false)
   initial_water_to_lake_centers = LatLonField{Float64}(lake_grid,
@@ -9223,7 +9224,7 @@ end
                                    grid_specific_lake_parameters)
   drainage::Field{Float64} = LatLonField{Float64}(river_parameters.grid,0.0)
   drainages::Array{Field{Float64},1} = repeat(drainage,10000,false)
-  runoffs::Array{Field{Float64},1} = deepcopy(drainages)
+  runoffs::Array{Field{Float64},1} = drainages
   evaporation::Field{Float64} = LatLonField{Float64}(surface_model_grid,0.0)
   evaporations::Array{Field{Float64},1} = repeat(evaporation,180,false)
   initial_water_to_lake_centers = LatLonField{Float64}(lake_grid,
@@ -9944,7 +9945,7 @@ end
                                    grid_specific_lake_parameters)
   drainage::Field{Float64} = LatLonField{Float64}(river_parameters.grid,0.0)
   drainages::Array{Field{Float64},1} = repeat(drainage,10000,false)
-  runoffs::Array{Field{Float64},1} = deepcopy(drainages)
+  runoffs::Array{Field{Float64},1} = drainages
   evaporation::Field{Float64} = LatLonField{Float64}(surface_model_grid,0.0)
   evaporations::Array{Field{Float64},1} = repeat(evaporation,180,false)
   initial_water_to_lake_centers = LatLonField{Float64}(lake_grid,
@@ -10646,7 +10647,7 @@ end
                                    grid_specific_lake_parameters)
   drainage::Field{Float64} = LatLonField{Float64}(river_parameters.grid,0.0)
   drainages::Array{Field{Float64},1} = repeat(drainage,10000,false)
-  runoffs::Array{Field{Float64},1} = deepcopy(drainages)
+  runoffs::Array{Field{Float64},1} = drainages
   evaporation::Field{Float64} = LatLonField{Float64}(surface_model_grid,0.0)
   evaporations::Array{Field{Float64},1} = repeat(evaporation,180,false)
   initial_water_to_lake_centers = LatLonField{Float64}(lake_grid,
@@ -11736,7 +11737,7 @@ end
                                    grid_specific_lake_parameters)
   drainage::Field{Float64} = LatLonField{Float64}(river_parameters.grid,0.0)
   drainages::Array{Field{Float64},1} = repeat(drainage,10000,false)
-  runoffs::Array{Field{Float64},1} = deepcopy(drainages)
+  runoffs::Array{Field{Float64},1} = drainages
   evaporation::Field{Float64} = LatLonField{Float64}(surface_model_grid,0.0)
   evaporations::Array{Field{Float64},1} = repeat(evaporation,180,false)
   initial_water_to_lake_centers = LatLonField{Float64}(lake_grid,
@@ -12458,7 +12459,7 @@ end
                                    grid_specific_lake_parameters)
   drainage::Field{Float64} = LatLonField{Float64}(river_parameters.grid,0.0)
   drainages::Array{Field{Float64},1} = repeat(drainage,10000,false)
-  runoffs::Array{Field{Float64},1} = deepcopy(drainages)
+  runoffs::Array{Field{Float64},1} = drainages
   evaporation::Field{Float64} = LatLonField{Float64}(surface_model_grid,0.0)
   evaporations::Array{Field{Float64},1} = repeat(evaporation,180,false)
   initial_water_to_lake_centers = LatLonField{Float64}(lake_grid,
@@ -13159,7 +13160,7 @@ end
                                    grid_specific_lake_parameters)
   drainage::Field{Float64} = LatLonField{Float64}(river_parameters.grid,0.0)
   drainages::Array{Field{Float64},1} = repeat(drainage,10000,false)
-  runoffs::Array{Field{Float64},1} = deepcopy(drainages)
+  runoffs::Array{Field{Float64},1} = drainages
   evaporation::Field{Float64} = LatLonField{Float64}(surface_model_grid,0.0)
   evaporations::Array{Field{Float64},1} = repeat(evaporation,180,false)
   initial_water_to_lake_centers = LatLonField{Float64}(lake_grid,
@@ -14100,7 +14101,7 @@ end
                                    grid_specific_lake_parameters)
   drainage::Field{Float64} = LatLonField{Float64}(river_parameters.grid,0.0)
   drainages::Array{Field{Float64},1} = repeat(drainage,10000,false)
-  runoffs::Array{Field{Float64},1} = deepcopy(drainages)
+  runoffs::Array{Field{Float64},1} = drainages
   evaporation::Field{Float64} = LatLonField{Float64}(surface_model_grid,1.0)
   evaporations::Array{Field{Float64},1} = repeat(evaporation,180,false)
   initial_water_to_lake_centers = LatLonField{Float64}(lake_grid,
@@ -16260,7 +16261,7 @@ end
                                    grid_specific_lake_parameters)
   drainage::Field{Float64} = LatLonField{Float64}(river_parameters.grid,0.0)
   drainages::Array{Field{Float64},1} = repeat(drainage,10000,false)
-  runoffs::Array{Field{Float64},1} = deepcopy(drainages)
+  runoffs::Array{Field{Float64},1} = drainages
   evaporation::Field{Float64} = LatLonField{Float64}(surface_model_grid,1.0)
   evaporations::Array{Field{Float64},1} = repeat(evaporation,180,false)
   initial_water_to_lake_centers = LatLonField{Float64}(lake_grid,
@@ -18536,7 +18537,7 @@ end
                                    grid_specific_lake_parameters)
   drainage::Field{Float64} = LatLonField{Float64}(river_parameters.grid,100.0)
   drainages::Array{Field{Float64},1} = repeat(drainage,10000,false)
-  runoffs::Array{Field{Float64},1} = deepcopy(drainages)
+  runoffs::Array{Field{Float64},1} = drainages
   evaporation::Field{Float64} = LatLonField{Float64}(surface_model_grid,0.0)
   evaporations::Array{Field{Float64},1} = repeat(evaporation,200,false)
   evaporation = LatLonField{Float64}(surface_model_grid,1000.0*86400.0)
