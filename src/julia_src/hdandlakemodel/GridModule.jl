@@ -4,6 +4,7 @@ using UserExceptionModule: UserError
 using CoordsModule: Coords,DirectionIndicator,LatLonCoords,get_next_cell_coords
 using CoordsModule: LatLonSectionCoords,Generic1DCoords
 using InteractiveUtils
+using Distributed: @distributed
 
 abstract type Grid end
 
@@ -81,9 +82,6 @@ UnstructuredGrid(ncells::Int64,clat::Array{Float64,1},clon::Array{Float64,1},
 UnstructuredGrid(ncells::Int64) = UnstructuredGrid(ncells,Array{Float64,1}(undef,ncells),Array{Float64,1}(undef,ncells),
                                                    Array{Float64,2}(undef,3,ncells),Array{Float64,2}(undef,3,ncells))
 
-UnstructuredGrid(ncells::Int64) = UnstructuredGrid(ncells,Array{Float64,1}(undef,ncells),Array{Float64,1}(undef,ncells),
-                                                   Array{Float64,2}(undef,3,ncells),Array{Float64,2}(undef,3,ncells))
-
 UnstructuredGrid(ncells::Int64,
                  mapping_to_coarse_grid::Array{Int64,1}) =
   UnstructuredGrid(ncells,Array{Float64,1}(undef,ncells),Array{Float64,1}(undef,ncells),
@@ -93,18 +91,34 @@ UnstructuredGrid(ncells::Int64,
 LatLonGridOrUnstructuredGrid = Union{LatLonGrid,UnstructuredGrid}
 
 function for_all(function_on_point::Function,
-                 grid::LatLonGrid)
-  for j = 1:grid.nlon
-    for i = 1:grid.nlat
+                 grid::LatLonGrid,
+                 parallelise::Bool=false)
+  if parallelise
+    @sync @distributed for j = 1:grid.nlon
+      for i = 1:grid.nlat
         function_on_point(LatLonCoords(i,j))
       end
+    end
+  else
+    for j = 1:grid.nlon
+      for i = 1:grid.nlat
+        function_on_point(LatLonCoords(i,j))
+      end
+    end
   end
 end
 
 function for_all(function_on_point::Function,
-                 grid::UnstructuredGrid)
-  for i = 1:grid.ncells
-    function_on_point(Generic1DCoords(i))
+                 grid::UnstructuredGrid,
+                 parallelise::Bool=false)
+  if parallelise
+    @sync @distributed for i = 1:grid.ncells
+      function_on_point(Generic1DCoords(i))
+    end
+  else
+    for i = 1:grid.ncells
+      function_on_point(Generic1DCoords(i))
+    end
   end
 end
 

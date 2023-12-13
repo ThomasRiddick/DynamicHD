@@ -262,7 +262,7 @@ function cascade(reservoirs::Array{Array{Field{Float64},1},1},
                  cascade_flag::Field{Bool},grid::Grid,
                  cascade_num::Int64,
                  step_length::Float64)
-  for_all(grid) do coords::Coords
+  for_all(grid,true) do coords::Coords
     if get(cascade_flag,coords)
       for i = 1:cascade_num
         reservoirs_i::Array{Field{Float64},1} = reservoirs[i]
@@ -301,31 +301,6 @@ function cascade_kernel(coords::Coords,
   set!(outflow,coords,flow)
   return
 end
-
-# macro fuse_cascades(exprs...)
-#   cascade_num = 0
-#   for expr in exprs
-#     if expr[1] == :call && expr[1] == :cascade
-#       cascade_num += 1
-#       # figure out what to put in arrays
-#     end
-#   end
-#   return quote
-#             reservoirs_macro = Array{Field{Float64},1}[]
-#             inflow_macro = Field{Float64}[]
-#             outflow_macro = Field{Float64}[]
-#             retention_coefficients_macro = Field{Float64}[]
-#             reservoir_nums_macro = Field{Int64}[]
-#             cascade_num_macro = $cascade_num
-#             cascade(reservoirs_macro,
-#                     inflow_macro,
-#                     outflow_macro,
-#                     retention_coefficients_macro,
-#                     reservoir_nums_macro,
-#                     cascade_flag,grid
-#                     cascade_num_macro)
-#          end
-# end
 
 function route(flow_directions::DirectionIndicators,
                flow_in::Field{Float64},
@@ -427,12 +402,6 @@ function handle_event(prognostic_fields::PrognosticFields,
   return prognostic_fields
 end
 
-function write_river_initial_values(hd_start_filepath::AbstractString,
-                                    river_parameters::RiverParameters,
-                                    river_prognostic_fields::RiverPrognosticFields)
-  throw(UserError())
-end
-
 struct WriteRiverFlow <: Event
   timestep::Int64
 end
@@ -444,12 +413,6 @@ function handle_event(prognostic_fields::PrognosticFields,
   write_river_flow_field(river_parameters,river_fields.river_inflow,
                          timestep=write_river_flow.timestep)
   return prognostic_fields
-end
-
-function write_river_flow_field(river_parameters::RiverParameters,
-                                river_flow_field::Field{Float64};
-                                timestep::Int64=-1)
-  throw(UserError())
 end
 
 struct AccumulateRiverFlow <: Event end

@@ -13,10 +13,6 @@ using LakeModule: create_merge_indices_collections_from_array
 using LakeModule: MergeAndRedirectIndicesCollection
 using MergeTypesModule
 
-import LakeModule: write_lake_numbers_field,write_lake_volumes_field
-import LakeModule: write_diagnostic_lake_volumes_field
-import HDModule: write_river_initial_values,write_river_flow_field
-
 function get_ncells(file_name::AbstractString)
   river_directions::Array{Float64,1} = NetCDF.ncread(file_name,"FDIR")
   return size(river_directions,1)

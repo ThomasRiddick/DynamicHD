@@ -1193,10 +1193,6 @@ function handle_event(lake::OverflowingLake,
      lake_parameters.connection_heights(lake_variables.current_cell_to_fill))
   volume_above_sill::Float64 = lake.overflowing_lake_variables.excess_water +
                                lake_variables.unprocessed_water
-  println("----------")
-  println(lake.overflowing_lake_variables.excess_water)
-  println(lake_variables.unprocessed_water)
-  println(volume_above_sill)
   working_cell_list::Vector{Coords} =
     lake_variables.filled_lake_cells
   push!(working_cell_list,lake_variables.current_cell_to_fill)
@@ -1221,7 +1217,6 @@ function handle_event(lake::OverflowingLake,
   end
   depth_above_sill::Float64 =
     volume_above_sill / total_lake_area
-  println(depth_above_sill)
   for coords::Coords in working_cell_list
     if lake_fields.flooded_lake_cells(coords) ||
        lake_parameters.flood_only(coords)
@@ -1772,11 +1767,6 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
   return prognostic_fields
 end
 
-function write_lake_numbers_field(lake_parameters::LakeParameters,lake_fields::LakeFields;
-                                  timestep::Int64=-1)
-  throw(UserError())
-end
-
 function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
                       write_lake_volumes::WriteLakeVolumes)
   lake_parameters::LakeParameters = get_lake_parameters(prognostic_fields)
@@ -1871,16 +1861,6 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
   set_effective_lake_height_on_surface_grid_to_lakes(lake_parameters,lake_fields,
                                                      effective_lake_height_on_surface_grid)
   return prognostic_fields
-end
-
-function write_lake_volumes_field(lake_parameters::LakeParameters,lake_volumes::Field{Float64})
-  throw(UserError())
-end
-
-function write_diagnostic_lake_volumes_field(lake_parameters::LakeParameters,
-                                             diagnostic_lake_volumes::Field{Float64};
-                                             timestep::Int64=-1)
-  throw(UserError())
 end
 
 function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
