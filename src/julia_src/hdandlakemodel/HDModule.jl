@@ -221,6 +221,8 @@ function handle_event(prognostic_fields::PrognosticFields,
   route(river_parameters.flow_directions,
         river_diagnostic_fields.river_outflow,
         river_fields.river_inflow,
+        river_parameters.outflow_ocean_truesink_mask,
+        river_parameters.lake_mask,
         river_parameters.grid)
   fill!(river_diagnostic_fields.river_outflow,0.0)
   fill!(river_diagnostic_fields.runoff_to_rivers,0.0)
@@ -233,11 +235,11 @@ function handle_event(prognostic_fields::PrognosticFields,
     Dict{Symbol,SharedArray}(
         :outflow_ocean_truesink_mask =>
         river_parameters.outflow_ocean_truesink_mask.data,
+        :lake_mask => river_parameters.lake_mask.data,
         :water_to_ocean => river_fields.water_to_ocean.data,
         :river_inflow => river_fields.river_inflow.data,
         :runoff => river_fields.runoff.data,
-        :drainage => river_fields.drainage.data,
-        :lake_mask => river_parameters.lake_mask.data)
+        :drainage => river_fields.drainage.data)
   if using_lakes
     water_to_lakes_local_data = water_to_lakes_local.data
     lake_water_from_ocean_data = lake_water_from_ocean.data
@@ -355,17 +357,19 @@ end
 function route(flow_directions::DirectionIndicators,
                flow_in::Field{Float64},
                flow_out::Field{Float64},
+               outflow_ocean_truesink_mask::Field{Bool},
+               lake_mask::Field{Bool},
                grid::Grid)
   for_all(grid) do coords::Coords
     flow_in_local::Float64 = flow_in(coords)
     if flow_in_local != 0.0
-      flow_direction::DirectionIndicator =
-        get(flow_directions,coords)
-      if is_truesink(flow_direction) || is_lake(flow_direction) ||
-         is_ocean(flow_direction) || is_outflow(flow_direction)
+      if get(outflow_ocean_truesink_mask,coords) ||
+         get(lake_mask,coords)
         flow_in_local += get(flow_out,coords)
         set!(flow_out,coords,flow_in_local)
       else
+        flow_direction::DirectionIndicator =
+          get(flow_directions,coords)
         new_coords::Coords =
           find_downstream_coords(grid,
                                 flow_direction,
@@ -472,7 +476,13 @@ function handle_event(prognostic_fields::PrognosticFields,
   river_fields::RiverPrognosticFields = get_river_fields(prognostic_fields)
   river_diagnostic_output_fields::RiverDiagnosticOutputFields =
     get_river_diagnostic_output_fields(prognostic_fields)
-  river_diagnostic_output_fields.cumulative_river_flow += river_fields.river_inflow
+  data::Dict{Symbol,SharedArray} =
+    Dict{Symbol,SharedArray}(
+      :cumulative_river_flow => river_diagnostic_output_fields.cumulative_river_flow,
+      :river_inflow => river_fields.river_inflow)
+  for_all_parallel(grid) do coords::CartesianIndex
+    data[:cumulative_river_flow][coords] += data[:river_inflow][coords]
+  end
   return prognostic_fields
 end
 
