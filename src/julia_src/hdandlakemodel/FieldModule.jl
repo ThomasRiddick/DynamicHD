@@ -301,6 +301,14 @@ function show(io::IO,field::UnstructuredField{T}) where
   end
 end
 
+function get_data_vector(field_vector::Array{Field{T}}) where {T}
+  data_vector::Array{SharedArray{T}} = Array{SharedArray{T}}(undef,0)
+  for field in field_vector
+    push!(data_vector,field.data)
+  end
+  return data_vector
+end
+
 abstract type DirectionIndicators end
 
 function get(field::DirectionIndicators,coords::Coords)

@@ -5,6 +5,7 @@ using CoordsModule: Coords,DirectionIndicator,LatLonCoords,get_next_cell_coords
 using CoordsModule: LatLonSectionCoords,Generic1DCoords
 using InteractiveUtils
 using Distributed: @distributed
+using SharedArrays
 
 abstract type Grid end
 
@@ -93,32 +94,33 @@ LatLonGridOrUnstructuredGrid = Union{LatLonGrid,UnstructuredGrid}
 function for_all(function_on_point::Function,
                  grid::LatLonGrid,
                  parallelise::Bool=false)
-  if parallelise
-    @sync @distributed for j = 1:grid.nlon
-      for i = 1:grid.nlat
-        function_on_point(LatLonCoords(i,j))
-      end
+  for j = 1:grid.nlon
+    for i = 1:grid.nlat
+      function_on_point(LatLonCoords(i,j))
     end
-  else
-    for j = 1:grid.nlon
-      for i = 1:grid.nlat
-        function_on_point(LatLonCoords(i,j))
-      end
+  end
+end
+
+function for_all_parallel(function_on_point::Function,
+                          grid::LatLonGrid)
+  @sync @distributed for j = 1:grid.nlon
+    for i = 1:grid.nlat
+      function_on_point(CartesianIndex(i,j))
     end
   end
 end
 
 function for_all(function_on_point::Function,
-                 grid::UnstructuredGrid,
-                 parallelise::Bool=false)
-  if parallelise
-    @sync @distributed for i = 1:grid.ncells
-      function_on_point(Generic1DCoords(i))
-    end
-  else
-    for i = 1:grid.ncells
-      function_on_point(Generic1DCoords(i))
-    end
+                 grid::UnstructuredGrid)
+  for i = 1:grid.ncells
+    function_on_point(Generic1DCoords(i))
+  end
+end
+
+function for_all_parallel(function_on_point::Function,
+                          grid::UnstructuredGrid)
+  @sync @distributed for i = 1:grid.ncells
+    function_on_point(CartesianIndex(i))
   end
 end
 

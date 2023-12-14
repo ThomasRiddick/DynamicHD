@@ -2,12 +2,15 @@ module HDModule
 
 using HierarchicalStateMachineModule: Event,State
 using FieldModule: Field,DirectionIndicators,maximum,set!,fill!,+,invert,repeat,get
+using FieldModule: get_data_vector
 using CoordsModule: Coords, DirectionIndicator,LatLonSectionCoords,
       is_ocean, is_outflow, is_truesink, is_lake
-using GridModule: Grid, for_all,find_downstream_coords,for_section_with_line_breaks
+using GridModule: Grid, for_all,for_all_parallel
+using GridModule: find_downstream_coords,for_section_with_line_breaks
 using UserExceptionModule: UserError
 import HierarchicalStateMachineModule: handle_event
 using InteractiveUtils
+using SharedArrays
 using Printf: @printf
 
 struct RunHD <: Event end
@@ -189,11 +192,16 @@ function handle_event(prognostic_fields::PrognosticFields,
           river_parameters.cascade_flag,river_parameters.grid,
           river_parameters.step_length)
   fill!(river_fields.river_inflow,0.0)
-  for_all(river_parameters.grid,true) do coords::Coords
-    set!(river_diagnostic_fields.river_outflow,coords,
-         get(river_diagnostic_fields.river_outflow,coords)+
-         get(river_diagnostic_fields.runoff_to_rivers,coords)+
-         get(river_diagnostic_fields.drainage_to_rivers,coords))
+  data::Dict{Symbol,SharedArray} =
+    Dict{Symbol,SharedArray}(
+      :river_outflow => river_diagnostic_fields.river_outflow.data,
+      :runoff_to_rivers => river_diagnostic_fields.runoff_to_rivers.data,
+      :drainage_to_rivers => river_diagnostic_fields.drainage_to_rivers.data)
+  for_all_parallel(river_parameters.grid) do coords::CartesianIndex
+    data[:river_outflow][coords] =
+    data[:river_outflow][coords]+
+    data[:runoff_to_rivers][coords]+
+    data[:drainage_to_rivers][coords]
   end
   route(river_parameters.flow_directions,
         river_diagnostic_fields.river_outflow,
@@ -202,7 +210,7 @@ function handle_event(prognostic_fields::PrognosticFields,
   fill!(river_diagnostic_fields.river_outflow,0.0)
   fill!(river_diagnostic_fields.runoff_to_rivers,0.0)
   fill!(river_diagnostic_fields.drainage_to_rivers,0.0)
-  for_all(river_parameters.grid,true) do coords::Coords
+  for_all(river_parameters.grid) do coords::Coords
     flow_direction::DirectionIndicator =
       get(river_parameters.flow_directions,coords)
     if is_ocean(flow_direction) || is_outflow(flow_direction) ||
@@ -242,65 +250,75 @@ function cascade(reservoirs::Array{Field{Float64},1},
                  reservoir_nums::Field{Int64},
                  cascade_flag::Field{Bool},grid::Grid,
                  step_length::Float64)
-  for_all(grid) do coords::Coords
-    if get(cascade_flag,coords)
+  data::Dict{Symbol,SharedArray} =
+    Dict{Symbol,SharedArray}(:inflow => inflow.data,
+                             :outflow => outflow.data,
+                             :retention_coefficients =>
+                             retention_coefficients.data,
+                             :reservoir_nums =>
+                             reservoir_nums.data,
+                             :cascade_flag =>
+                             cascade_flag.data)
+  reservoirs_data = get_data_vector(reservoirs)
+  for_all_parallel(grid) do coords::CartesianIndex
+    if data[:cascade_flag][coords]
       cascade_kernel(coords,
-                    reservoirs,
-                    inflow,
-                    outflow,
-                    retention_coefficients,
-                    reservoir_nums,
-                    step_length)
+                     reservoirs_data,
+                     data[:inflow],
+                     data[:outflow],
+                     data[:retention_coefficients],
+                     data[:reservoir_nums],
+                     step_length)
     end
     return
   end
 end
 
-function cascade(reservoirs::Array{Array{Field{Float64},1},1},
-                 inflow::Array{Field{Float64},1},
-                 outflow::Array{Field{Float64},1},
-                 retention_coefficients::Array{Field{Float64},1},
-                 reservoir_nums::Array{Field{Int64},1},
-                 cascade_flag::Field{Bool},grid::Grid,
-                 cascade_num::Int64,
-                 step_length::Float64)
-  for_all(grid,true) do coords::Coords
-    if get(cascade_flag,coords)
-      for i = 1:cascade_num
-        reservoirs_i::Array{Field{Float64},1} = reservoirs[i]
-        inflow_i::Field{Float64} = inflow[i]
-        outflow_i::Field{Float64} = outflow[i]
-        retention_coefficients_i::Field{Float64} = retention_coefficients[i]
-        reservoir_nums_i::Field{Int64} = reservoir_nums[i]
-        cascade_kernel(coords,
-                       reservoirs_i,
-                       inflow_i,
-                       outflow_i,
-                       retention_coefficients_i,
-                       reservoir_nums_i,
-                       step_length)
-      end
-    end
-    return
-  end
-end
+# function cascade(reservoirs::Array{Array{Field{Float64},1},1},
+#                  inflow::Array{Field{Float64},1},
+#                  outflow::Array{Field{Float64},1},
+#                  retention_coefficients::Array{Field{Float64},1},
+#                  reservoir_nums::Array{Field{Int64},1},
+#                  cascade_flag::Field{Bool},grid::Grid,
+#                  cascade_num::Int64,
+#                  step_length::Float64)
+#   for_all(grid) do coords::Coords
+#     if get(cascade_flag,coords)
+#       for i = 1:cascade_num
+#         reservoirs_i::Array{Field{Float64},1} = reservoirs[i]
+#         inflow_i::Field{Float64} = inflow[i]
+#         outflow_i::Field{Float64} = outflow[i]
+#         retention_coefficients_i::Field{Float64} = retention_coefficients[i]
+#         reservoir_nums_i::Field{Int64} = reservoir_nums[i]
+#         cascade_kernel(coords,
+#                        reservoirs_i,
+#                        inflow_i,
+#                        outflow_i,
+#                        retention_coefficients_i,
+#                        reservoir_nums_i,
+#                        step_length)
+#       end
+#     end
+#     return
+#   end
+# end
 
-function cascade_kernel(coords::Coords,
-                        reservoirs::Array{Field{Float64},1},
-                        inflow::Field{Float64},
-                        outflow::Field{Float64},
-                        retention_coefficients::Field{Float64},
-                        reservoir_nums::Field{Int64},
+function cascade_kernel(coords::CartesianIndex,
+                        reservoirs::Array{SharedArray{Float64},1},
+                        inflow::SharedArray{Float64},
+                        outflow::SharedArray{Float64},
+                        retention_coefficients::SharedArray{Float64},
+                        reservoir_nums::SharedArray{Int64},
                         step_length::Float64)
-  flow::Float64 = get(inflow,coords)*step_length
-  for i = 1:(get(reservoir_nums,coords))
-    reservoir::Field{Float64} = reservoirs[i]
-    new_reservoir_value::Float64 = get(reservoir,coords) + flow
-    flow = new_reservoir_value/(get(retention_coefficients,coords)+1.0)
-    set!(reservoir,coords,new_reservoir_value - flow)
+  flow::Float64 = inflow[coords]*step_length
+  for i = 1:reservoir_nums[coords]
+    reservoir::SharedArray{Float64} = reservoirs[i]
+    new_reservoir_value::Float64 = reservoir[coords] + flow
+    flow = new_reservoir_value/(retention_coefficients[coords]+1.0)
+    reservoir[coords] = new_reservoir_value - flow
   end
   flow /= step_length
-  set!(outflow,coords,flow)
+  outflow[coords] = flow
   return
 end
 

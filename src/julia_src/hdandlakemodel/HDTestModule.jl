@@ -2,9 +2,11 @@ module HDTestModule
 
 using Serialization
 using Profile
+using Distributed
 using Test: @test, @testset
 using HDDriverModule: drive_hd_model,drive_hd_and_lake_model
 using HDModule: RiverParameters,RiverPrognosticFields
+@everywhere using HDModule: cascade_kernel
 using GridModule: LatLonGrid, UnstructuredGrid
 using CoordsModule: LatLonCoords, Generic1DCoords
 using FieldModule: Field,LatLonField,LatLonDirectionIndicators,set!,repeat,add_offset,==,isequal
