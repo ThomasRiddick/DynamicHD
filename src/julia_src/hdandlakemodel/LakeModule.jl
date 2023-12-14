@@ -596,10 +596,9 @@ get_lake_parameters(river_and_lake_prognostics::RiverAndLakePrognosticFields) =
 get_lake_diagnostic_variables(river_and_lake_prognostics::RiverAndLakePrognosticFields) =
   river_and_lake_prognostics.lake_diagnostics_variables::LakeDiagnosticVariables
 
-function water_to_lakes(prognostic_fields::RiverAndLakePrognosticFields,coords::Coords,
-                        inflow::Float64,step_length::Float64)
+function water_to_lakes(prognostic_fields::RiverAndLakePrognosticFields)
   lake_fields = get_lake_fields(prognostic_fields)
-  set!(lake_fields.water_to_lakes,coords,inflow*step_length)
+  return lake_fields.water_to_lakes
 end
 
 function water_from_lakes(prognostic_fields::RiverAndLakePrognosticFields,

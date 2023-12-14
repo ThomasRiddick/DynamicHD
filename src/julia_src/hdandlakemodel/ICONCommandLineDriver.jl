@@ -7,6 +7,8 @@ using IOModule: load_river_parameters, load_river_initial_values,get_ncells
 using IOModule: load_lake_initial_values,load_lake_parameters
 using IOModule: get_additional_grid_information
 using GridModule: UnstructuredGrid
+@everywhere using HDModule: cascade_kernel
+@everywhere using CoordsModule: is_ocean, is_outflow, is_truesink, is_lake
 
 function pass_arguments()
   settings = ArgParseSettings()
@@ -126,11 +128,12 @@ function main()
   else
     if args["hd-init-file"] != nothing
       river_fields = load_river_initial_values(args["hd-init-file"],grid,river_parameters)
-      drive_hd_model(river_parameters,river_fields,
+      @profile drive_hd_model(river_parameters,river_fields,
                      drainages,runoffs,
                      lake_evaporations,timesteps;
                      print_timestep_results=false,
                      output_timestep=160)
+      Profile.print()
       # @time drive_hd_model(river_parameters,river_fields,
       #                      drainages_copy,runoffs_copy,timesteps;
       #                      print_timestep_results=false)
@@ -158,10 +161,14 @@ empty!(ARGS)
 # push!(ARGS,"-i/Users/thomasriddick/Documents/data/ICONHDdata/hdstartfiles/hdrestart_R02B09_015_G_241019_1337_v2.nc")
 # push!(ARGS,"-t1920")
 # push!(ARGS,"-s45")
-push!(ARGS,"-p/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/hdpara_icon.nc")
-push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/hdrestart_R02B04_013_G_231019_1242_v2.nc")
-push!(ARGS,"-l/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/lakeparams.nc")
-push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/lakestart.nc")
-push!(ARGS,"-t3600")
-push!(ARGS,"-s86400")
+push!(ARGS,"-p/Users/thomasriddick/Documents/data/temp/hdpara_r2b8_with_bifurcation_v2.nc")
+push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/hdstart_from_jsbachstandalone_GSWP3_forcing_ts40s_r2b8.nc")
+push!(ARGS,"-s45")
+push!(ARGS,"-t100")
+#push!(ARGS,"-p/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/hdpara_icon.nc")
+#push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/hdrestart_R02B04_013_G_231019_1242_v2.nc")
+#push!(ARGS,"-l/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/lakeparams.nc")
+#push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/lakestart.nc")
+#push!(ARGS,"-t3600")
+#push!(ARGS,"-s86400")
 main()

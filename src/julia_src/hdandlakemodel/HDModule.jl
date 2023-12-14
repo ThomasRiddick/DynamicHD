@@ -27,6 +27,8 @@ struct RiverParameters
   base_retention_coefficients::Field{Float64}
   landsea_mask::Field{Bool}
   cascade_flag::Field{Bool}
+  outflow_ocean_truesink_mask::Field{Bool}
+  lake_mask::Field{Bool}
   grid::Grid
   step_length::Float64
   function RiverParameters(flow_directions::DirectionIndicators,
@@ -47,10 +49,23 @@ struct RiverParameters
                                       (day_length/step_length)
     base_retention_coefficients = base_retention_coefficients *
                                   (day_length/step_length)
+    outflow_ocean_truesink_mask = Field{Bool}(grid,false)
+    lake_mask = Field{Bool}(grid,false)
+    for_all(grid) do coords::Coords
+      flow_direction::DirectionIndicator =
+        get(flow_directions,coords)
+      if is_ocean(flow_direction) || is_outflow(flow_direction) ||
+         is_truesink(flow_direction)
+         set!(outflow_ocean_truesink_mask,coords,true)
+      elseif is_lake(flow_direction)
+         set!(lake_mask,coords,true)
+      end
+    end
     return new(flow_directions,river_reservoir_nums,overland_reservoir_nums,
                base_reservoir_nums,river_retention_coefficients,
                overland_retention_coefficients,base_retention_coefficients,
-               landsea_mask,cascade_flag,grid,step_length)
+               landsea_mask,cascade_flag,outflow_ocean_truesink_mask,
+               lake_mask,grid,step_length)
   end
 end
 
@@ -210,32 +225,47 @@ function handle_event(prognostic_fields::PrognosticFields,
   fill!(river_diagnostic_fields.river_outflow,0.0)
   fill!(river_diagnostic_fields.runoff_to_rivers,0.0)
   fill!(river_diagnostic_fields.drainage_to_rivers,0.0)
-  for_all(river_parameters.grid) do coords::Coords
-    flow_direction::DirectionIndicator =
-      get(river_parameters.flow_directions,coords)
-    if is_ocean(flow_direction) || is_outflow(flow_direction) ||
-       is_truesink(flow_direction)
-        set!(river_fields.water_to_ocean,coords,
-              get(river_fields.river_inflow,coords) +
-              get(river_fields.runoff,coords) +
-              get(river_fields.drainage,coords))
-        set!(river_fields.river_inflow,coords,0.0)
-    elseif using_lakes && is_lake(flow_direction)
-        water_to_lakes(prognostic_fields,coords,
-                       get(river_fields.river_inflow,coords) +
-                       get(river_fields.runoff,coords) +
-                       get(river_fields.drainage,coords),
-                       river_parameters.step_length)
-        set!(river_fields.water_to_ocean,coords,
-             -1.0*get(lake_water_from_ocean,coords))
-        set!(river_fields.river_inflow,coords,0.0)
+  local water_to_lakes_local::Field{Float64}
+  if using_lakes
+    water_to_lakes_local = water_to_lakes(prognostic_fields)
+  end
+  data =
+    Dict{Symbol,SharedArray}(
+        :outflow_ocean_truesink_mask =>
+        river_parameters.outflow_ocean_truesink_mask.data,
+        :water_to_ocean => river_fields.water_to_ocean.data,
+        :river_inflow => river_fields.river_inflow.data,
+        :runoff => river_fields.runoff.data,
+        :drainage => river_fields.drainage.data,
+        :lake_mask => river_parameters.lake_mask.data)
+  if using_lakes
+    water_to_lakes_local_data = water_to_lakes_local.data
+    lake_water_from_ocean_data = lake_water_from_ocean.data
+  end
+  for_all_parallel(river_parameters.grid) do coords::CartesianIndex
+    if data[:outflow_ocean_truesink_mask][coords]
+        data[:water_to_ocean][coords] =
+              data[:river_inflow][coords] +
+              data[:runoff][coords] +
+              data[:drainage][coords]
+        data[:river_inflow][coords] = 0.0
+    elseif using_lakes && data[:lake_mask][coords]
+        water_to_lakes_local_data[coords] =
+             data[:river_inflow][coords] +
+             data[:runoff][coords] +
+             data[:drainage][coords]
+        data[:water_to_ocean][coords] =
+             -1.0*lake_water_from_ocean_data[coords]
+        data[:river_inflow][coords] = 0.0
     end
+  end
+  if using_lakes
+    water_to_lakes_local *= river_parameters.step_length
   end
   return prognostic_fields
 end
 
-function water_to_lakes(prognostic_fields::PrognosticFields,coords::Coords,inflow::Float64,
-                        step_length::Float64)
+function water_to_lakes(prognostic_fields::PrognosticFields)
   throw(UserError())
 end
 
@@ -418,7 +448,7 @@ function handle_event(prognostic_fields::PrognosticFields,
   river_fields::RiverPrognosticFields = get_river_fields(prognostic_fields)
   river_parameters::RiverParameters = get_river_parameters(prognostic_fields)
   hd_start_filepath::AbstractString = "/Users/thomasriddick/Documents/data/temp/river_model_out.nc"
-  write_river_initial_values(hd_start_filepath,river_parameters,river_fields)
+  #write_river_initial_values(hd_start_filepath,river_parameters,river_fields)
   return prognostic_fields
 end
 
@@ -430,8 +460,8 @@ function handle_event(prognostic_fields::PrognosticFields,
                       write_river_flow::WriteRiverFlow)
   river_fields::RiverPrognosticFields = get_river_fields(prognostic_fields)
   river_parameters::RiverParameters = get_river_parameters(prognostic_fields)
-  write_river_flow_field(river_parameters,river_fields.river_inflow,
-                         timestep=write_river_flow.timestep)
+  #write_river_flow_field(river_parameters,river_fields.river_inflow,
+  #                      timestep=write_river_flow.timestep)
   return prognostic_fields
 end
 

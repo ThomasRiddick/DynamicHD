@@ -7,6 +7,7 @@ using Test: @test, @testset
 using HDDriverModule: drive_hd_model,drive_hd_and_lake_model
 using HDModule: RiverParameters,RiverPrognosticFields
 @everywhere using HDModule: cascade_kernel
+@everywhere using CoordsModule: is_ocean, is_outflow, is_truesink, is_lake
 using GridModule: LatLonGrid, UnstructuredGrid
 using CoordsModule: LatLonCoords, Generic1DCoords
 using FieldModule: Field,LatLonField,LatLonDirectionIndicators,set!,repeat,add_offset,==,isequal
