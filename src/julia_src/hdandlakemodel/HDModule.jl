@@ -189,38 +189,40 @@ function handle_event(prognostic_fields::PrognosticFields,
           river_parameters.cascade_flag,river_parameters.grid,
           river_parameters.step_length)
   fill!(river_fields.river_inflow,0.0)
+  for_all(river_parameters.grid,true) do coords::Coords
+    set!(river_diagnostic_fields.river_outflow,coords,
+         get(river_diagnostic_fields.river_outflow,coords)+
+         get(river_diagnostic_fields.runoff_to_rivers,coords)+
+         get(river_diagnostic_fields.drainage_to_rivers,coords))
+  end
   route(river_parameters.flow_directions,
-        river_diagnostic_fields.river_outflow+
-        river_diagnostic_fields.runoff_to_rivers+
-        river_diagnostic_fields.drainage_to_rivers,
+        river_diagnostic_fields.river_outflow,
         river_fields.river_inflow,
         river_parameters.grid)
   fill!(river_diagnostic_fields.river_outflow,0.0)
   fill!(river_diagnostic_fields.runoff_to_rivers,0.0)
   fill!(river_diagnostic_fields.drainage_to_rivers,0.0)
-  for_all(river_parameters.grid) do coords::Coords
-            flow_direction::DirectionIndicator =
-              get(river_parameters.flow_directions,coords)
-            if is_ocean(flow_direction) || is_outflow(flow_direction) ||
-               is_truesink(flow_direction)
-                set!(river_fields.water_to_ocean,coords,
-                      get(river_fields.river_inflow,coords) +
-                      get(river_fields.runoff,coords) +
-                      get(river_fields.drainage,coords))
-                set!(river_fields.river_inflow,coords,0.0)
-            elseif using_lakes && is_lake(flow_direction)
-                water_to_lakes(prognostic_fields,coords,
-                               get(river_fields.river_inflow,coords) +
-                               get(river_fields.runoff,coords) +
-                               get(river_fields.drainage,coords),
-                               river_parameters.step_length)
-                set!(river_fields.water_to_ocean,coords,
-                     -1.0*get(lake_water_from_ocean,coords))
-                set!(river_fields.river_inflow,coords,0.0)
-            end
-          end
-  fill!(river_fields.runoff,0.0)
-  fill!(river_fields.drainage,0.0)
+  for_all(river_parameters.grid,true) do coords::Coords
+    flow_direction::DirectionIndicator =
+      get(river_parameters.flow_directions,coords)
+    if is_ocean(flow_direction) || is_outflow(flow_direction) ||
+       is_truesink(flow_direction)
+        set!(river_fields.water_to_ocean,coords,
+              get(river_fields.river_inflow,coords) +
+              get(river_fields.runoff,coords) +
+              get(river_fields.drainage,coords))
+        set!(river_fields.river_inflow,coords,0.0)
+    elseif using_lakes && is_lake(flow_direction)
+        water_to_lakes(prognostic_fields,coords,
+                       get(river_fields.river_inflow,coords) +
+                       get(river_fields.runoff,coords) +
+                       get(river_fields.drainage,coords),
+                       river_parameters.step_length)
+        set!(river_fields.water_to_ocean,coords,
+             -1.0*get(lake_water_from_ocean,coords))
+        set!(river_fields.river_inflow,coords,0.0)
+    end
+  end
   return prognostic_fields
 end
 

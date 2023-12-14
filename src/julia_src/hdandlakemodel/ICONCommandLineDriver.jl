@@ -127,7 +127,8 @@ function main()
     if args["hd-init-file"] != nothing
       river_fields = load_river_initial_values(args["hd-init-file"],grid,river_parameters)
       drive_hd_model(river_parameters,river_fields,
-                     drainages,runoffs,timesteps;
+                     drainages,runoffs,
+                     lake_evaporations,timesteps;
                      print_timestep_results=false,
                      output_timestep=160)
       # @time drive_hd_model(river_parameters,river_fields,
@@ -137,7 +138,8 @@ function main()
       # drainages_copy = deepcopy(drainages)
       # runoffs_copy = deepcopy(runoffs)
       drive_hd_model(river_parameters,drainages,
-                     runoffs,timesteps;print_timestep_results=false)
+                     runoffs,lake_evaporations,
+                     timesteps;print_timestep_results=false)
       # Profile.clear()
       # Profile.init(delay=0.0001)
       # @time drive_hd_model(river_parameters,drainages_copy,

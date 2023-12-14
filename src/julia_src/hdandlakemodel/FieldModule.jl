@@ -21,7 +21,8 @@ import Base.round
 import Base.convert
 import Base.sum
 import Base.count
-import Base.Broadcast
+import Base.length
+import Base.broadcastable
 using InteractiveUtils
 
 array_type = :SharedArray
@@ -36,7 +37,7 @@ function set!(field::Field,coords::Coords)
   throw(UserError())
 end
 
-for operator in (:fill!,:maximum,:sum,:count,:invert)
+for operator in (:fill!,:maximum,:sum,:count,:invert,:length,:broadcastable)
   @eval function $operator(field::Field) throw(UserError()) end
 end
 
@@ -59,9 +60,13 @@ function elementwise_multiple(lfield::Field{T},rfield::Field{T}) where {T}
   return Field{T}(lfield.grid,lfield.data.*rfield.data)::Field{T}
 end
 
-# This could be done by overloading broadcast but this is overcomplicated
-function equals(lfield::Field,value::T) where {T}
-  return Field{Bool}(lfield.grid,Bool.(lfield.data .== value))::Field{Bool}
+@eval begin
+  # This could be done by overloading broadcast but this is overcomplicated
+  function equals(lfield::Field,value::T) where {T}
+    return Field{Bool}(lfield.grid,
+                       convert($(array_type){Bool},
+                               map(x->x==value,lfield.data)))::Field{Bool}
+  end
 end
 
 function isapprox(lfield::Field,rfield::Field;
@@ -242,6 +247,14 @@ for field_type in (:LatLonField,:UnstructuredField)
 
     function count(field::$(field_type))
       return count(field.data)
+    end
+
+    function length(field::$(field_type))
+      return length(field.data)
+    end
+
+    function broadcastable(field::$(field_type))
+      return field.data::$(array_type)
     end
   end
 end

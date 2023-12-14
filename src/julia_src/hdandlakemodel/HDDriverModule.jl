@@ -60,17 +60,17 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
     if ! input_data_is_monthly_mean
       set_drainage = SetDrainage(drainages[i])
     elseif size(drainages) == (1,)
-      set_drainage = SetDrainage(deepcopy(drainages[1]))
+      set_drainage = SetDrainage(drainages[1])
     else
-      set_drainage = SetDrainage(deepcopy(drainages[convert(Int64,ceil(convert(Float64,i)/30.0))]))
+      set_drainage = SetDrainage(drainages[convert(Int64,ceil(convert(Float64,i)/30.0))])
     end
     handle_event(hsm,set_drainage)
     if ! input_data_is_monthly_mean
       set_runoff = SetRunoff(runoffs[i])
     elseif size(runoffs) == (1,)
-      set_runoff = SetRunoff(deepcopy(runoffs[1]))
+      set_runoff = SetRunoff(runoffs[1])
     else
-      set_runoff = SetRunoff(deepcopy(runoffs[convert(Int64,ceil(convert(Float64,i)/30.0))]))
+      set_runoff = SetRunoff(runoffs[convert(Int64,ceil(convert(Float64,i)/30.0))])
     end
     handle_event(hsm,set_runoff)
     if use_realistic_surface_coupling
@@ -99,10 +99,10 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
         lake_evaporation = SetLakeEvaporation(lake_evaporations[i])
       elseif size(lake_evaporations) == (1,)
         set_lake_evaporation =
-          SetLakeEvaporation(deepcopy(lake_evaporations[1]))
+          SetLakeEvaporation(lake_evaporations[1])
       else
         set_lake_evaporation =
-          SetLakeEvaporation(deepcopy(lake_evaporations[convert(Int64,ceil(convert(Float64,i)/30.0))]))
+          SetLakeEvaporation(lake_evaporations[convert(Int64,ceil(convert(Float64,i)/30.0))])
       end
     end
     handle_event(hsm,runHD)

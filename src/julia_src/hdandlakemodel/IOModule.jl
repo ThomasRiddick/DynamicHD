@@ -39,6 +39,8 @@ function load_field(file_handle::NcFile,grid::Grid,variable_name::AbstractString
     else
       values = permutedims(values_orig[:,:,timestep], [2,1])
     end
+  else
+    values = values_orig
   end
   return Field{field_type}(grid,values)
 end
