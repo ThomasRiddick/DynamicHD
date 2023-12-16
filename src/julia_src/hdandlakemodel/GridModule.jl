@@ -14,6 +14,16 @@ function for_all(function_on_point::Function,
   throw(UserError())
 end
 
+function for_all_parallel(function_on_point::Function,
+                 grid::Grid)
+  throw(UserError())
+end
+
+function for_all_parallel_sum(function_on_point::Function,
+                          grid::Grid)
+  throw(UserError())
+end
+
 function for_all_fine_cells_in_coarse_cell(function_on_point::Function,
                                            fine_grid::Grid,coarse_grid::Grid,
                                            coarse_cell_coords::Coords)
@@ -117,6 +127,15 @@ function for_all_parallel(function_on_point::Function,
   end
 end
 
+function for_all_parallel_sum(function_on_point::Function,
+                          grid::LatLonGrid)
+  @sync @distributed (+) for j = 1:grid.nlon
+    for i = 1:grid.nlat
+      function_on_point(CartesianIndex(i,j))
+    end
+  end
+end
+
 function for_all(function_on_point::Function,
                  grid::UnstructuredGrid)
   for i = 1:grid.ncells
@@ -127,6 +146,13 @@ end
 function for_all_parallel(function_on_point::Function,
                           grid::UnstructuredGrid)
   @sync @distributed for i = 1:grid.ncells
+    function_on_point(CartesianIndex(i))
+  end
+end
+
+function for_all_parallel_sum(function_on_point::Function,
+                          grid::UnstructuredGrid)
+  @sync @distributed (+) for i = 1:grid.ncells
     function_on_point(CartesianIndex(i))
   end
 end
@@ -268,7 +294,7 @@ function get_linear_indices(grid::LatLonGrid)
 end
 
 function get_linear_indices(grid::UnstructuredGrid)
-  empty_array::Array{Int64,2} = Array{Int64,2}(undef,
+  empty_array::Array{Int64,1} = Array{Int64,1}(undef,
                                                grid.ncells)
   return LinearIndices(empty_array)::LinearIndices
 end

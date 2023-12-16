@@ -21,6 +21,7 @@ abstract type PrognosticFields <: State end
 struct RiverParameters
   flow_directions::DirectionIndicators
   cells_up::Array{Field{Int64}}
+  nsplit::Field{Int64}
   river_reservoir_nums::Field{Int64}
   overland_reservoir_nums::Field{Int64}
   base_reservoir_nums::Field{Int64}
@@ -54,6 +55,7 @@ struct RiverParameters
     outflow_ocean_truesink_mask = Field{Bool}(grid,false)
     lake_mask = Field{Bool}(grid,false)
     linear_indices::LinearIndices = get_linear_indices(grid)
+    nsplit::Field{Int64} = Field{Int64}(grid,1)
     cells_up::Array{Field{Int64}} = repeat_init(grid,-1,
                                                 get_number_of_neighbors(grid))
     for_all(grid) do coords::Coords
@@ -79,7 +81,46 @@ struct RiverParameters
         end
       end
     end
-    return new(flow_directions,cells_up,
+    return new(flow_directions,cells_up,nsplit,
+               river_reservoir_nums,overland_reservoir_nums,
+               base_reservoir_nums,river_retention_coefficients,
+               overland_retention_coefficients,base_retention_coefficients,
+               landsea_mask,cascade_flag,outflow_ocean_truesink_mask,
+               lake_mask,grid,step_length)
+  end
+  function RiverParameters(flow_directions::DirectionIndicators,
+                           cells_up::Array{Field{Int64}},
+                           nsplit::Field{Int64},
+                           river_reservoir_nums::Field{Int64},
+                           overland_reservoir_nums::Field{Int64},
+                           base_reservoir_nums::Field{Int64},
+                           river_retention_coefficients::Field{Float64},
+                           overland_retention_coefficients::Field{Float64},
+                           base_retention_coefficients::Field{Float64},
+                           landsea_mask::Field{Bool},
+                           grid::Grid,
+                           day_length::Float64,
+                           step_length::Float64)
+    cascade_flag::Field{Bool} = invert(landsea_mask)
+    river_retention_coefficients = river_retention_coefficients *
+                                   (day_length/step_length)
+    overland_retention_coefficients = overland_retention_coefficients *
+                                      (day_length/step_length)
+    base_retention_coefficients = base_retention_coefficients *
+                                  (day_length/step_length)
+    outflow_ocean_truesink_mask = Field{Bool}(grid,false)
+    lake_mask = Field{Bool}(grid,false)
+    for_all(grid) do coords::Coords
+      flow_direction::DirectionIndicator =
+        get(flow_directions,coords)
+      if is_ocean(flow_direction) || is_outflow(flow_direction) ||
+         is_truesink(flow_direction)
+         set!(outflow_ocean_truesink_mask,coords,true)
+      elseif is_lake(flow_direction)
+         set!(lake_mask,coords,true)
+      end
+    end
+    return new(flow_directions,cells_up,nsplit,
                river_reservoir_nums,overland_reservoir_nums,
                base_reservoir_nums,river_retention_coefficients,
                overland_retention_coefficients,base_retention_coefficients,
@@ -238,6 +279,7 @@ function handle_event(prognostic_fields::PrognosticFields,
     data[:drainage_to_rivers][coords]
   end
   route(river_parameters.cells_up,
+        river_parameters.nsplit,
         river_diagnostic_fields.river_outflow,
         river_fields.river_inflow,
         river_parameters.outflow_ocean_truesink_mask,
@@ -376,6 +418,7 @@ function cascade_kernel(coords::CartesianIndex,
 end
 
 function route(cells_up::Array{Field{Int64}},
+               nsplit::Field{Int64},
                flow_in::Field{Float64},
                flow_out::Field{Float64},
                outflow_ocean_truesink_mask::Field{Bool},
@@ -383,6 +426,7 @@ function route(cells_up::Array{Field{Int64}},
                grid::Grid)
   data::Dict{Symbol,SharedArray} =
     Dict{Symbol,SharedArray}(
+    :nsplit => nsplit.data,
     :flow_in => flow_in.data,
     :flow_out => flow_out.data,
     :outflow_ocean_truesink_mask => outflow_ocean_truesink_mask.data,
@@ -402,7 +446,8 @@ function route(cells_up::Array{Field{Int64}},
     for i in 1:length(cells_up_data)
       linear_index::Int64 = cells_up_data[i][coords]
       if linear_index != -1
-        flow_in_from_nbrs += data[:flow_in][linear_index]
+        flow_in_from_nbrs += data[:flow_in][linear_index] /
+                             data[:nsplit][linear_index]
       else
         break
       end
@@ -557,17 +602,26 @@ function handle_event(prognostic_fields::PrognosticFields,
                       print_global_values::PrintGlobalValues)
   river_fields::RiverPrognosticFields = get_river_fields(prognostic_fields)
   river_parameters::RiverParameters = get_river_parameters(prognostic_fields)
-  global_sum_base_flow_res::Float64 = 0.0
-  global_sum_overland_flow_res::Float64 = 0.0
-  global_sum_river_flow_res::Float64 = 0.0
   println("Global sums:")
-  for_all(river_parameters.grid) do coords::Coords
-    global_sum_base_flow_res += river_fields.base_flow_reservoirs[1](coords)
-    global_sum_overland_flow_res += river_fields.overland_flow_reservoirs[1](coords)
+  base_flow_reservoirs_data::Array{SharedArray{Float64},1} =
+    get_data_vector(river_fields.base_flow_reservoirs)
+  overland_flow_reservoirs_data::Array{SharedArray{Float64},1} =
+    get_data_vector(river_fields.overland_flow_reservoirs)
+  river_flow_reservoirs_data::Array{SharedArray{Float64},1} =
+    get_data_vector(river_fields.river_flow_reservoirs)
+  global_reservoir_totals::Array{Float64,1} =
+      for_all_parallel(river_parameters.grid) do coords::CartesianIndex
+    local_reservoir_totals::Array{Float64,1} = Float64[0.0 0.0 0.0]
+    local_reservoir_totals[1] += base_flow_reservoirs_data[1][coords]
+    local_reservoir_totals[2] += overland_flow_reservoirs_data[1][coords]
     for i = 1:5
-      global_sum_river_flow_res += river_fields.river_flow_reservoirs[i](coords)
+      local_reservoir_totals[3] += river_flow_reservoirs_data[i][coords]
     end
+    return local_reservoir_totals
   end
+  global_sum_base_flow_res::Float64 = global_reservoir_totals[1]
+  global_sum_overland_flow_res::Float64 = global_reservoir_totals[2]
+  global_sum_river_flow_res::Float64 = global_reservoir_totals[3]
   println("Base Flow Res Content: $(global_sum_base_flow_res)")
   println("Overland Flow Res Content: $(global_sum_overland_flow_res)")
   println("River Flow Res Content: $(global_sum_river_flow_res)")
