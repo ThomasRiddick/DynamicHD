@@ -4,7 +4,7 @@ using Printf: @printf
 using UserExceptionModule: UserError
 using CoordsModule: Coords,LatLonCoords,DirectionIndicator,Generic1DCoords
 using GridModule: Grid,LatLonGrid, for_all, wrap_coords, coords_in_grid,for_all_with_line_breaks
-using GridModule: UnstructuredGrid
+using GridModule: UnstructuredGrid, for_all_parallel
 using InteractiveUtils: subtypes
 using SpecialDirectionCodesModule
 using SharedArrays
@@ -99,6 +99,10 @@ function divide(field::T2,divisor::T)where
   end
 end
 
+function repeat_init(grid::Grid,value::T,count::Integer) where {T}
+  throw(UserError())
+end
+
 get_grid(obj::T) where {T <: Field} =
   obj.grid::Grid
 
@@ -108,7 +112,7 @@ get_grid(obj::T) where {T <: Field} =
 end
 
 function repeat(field::Field{T}, count::Integer,
-                deep_copy::Bool=false) where {T}
+                deep_copy::Bool=true) where {T}
   array::Array{Field{T},1} = Array{Field{T},1}(undef,count)
   for i in 1:count
     if deep_copy
@@ -195,6 +199,14 @@ function set!(latlon_field::LatLonField{T},coords::LatLonCoords,value::T) where
   latlon_field.data[coords.lat,coords.lon] = value
 end
 
+function repeat_init(grid::LatLonGrid,value::T,count::Integer) where {T}
+  array::Array{Field{T},1} = Array{Field{T},1}(undef,count)
+  for i in 1:count
+    array[i] = LatLonField{T}(grid,value)
+  end
+  return array
+end
+
 for field_type in (:LatLonField,:UnstructuredField)
   @eval begin
     function +(lfield::$(field_type){T},rfield::$(field_type){T}) where {T}
@@ -238,7 +250,14 @@ for field_type in (:LatLonField,:UnstructuredField)
     end
 
     function fill!(field::$(field_type){T},value::T) where {T}
-      return fill!(field.data,value)
+      if isa(field.data,SharedArray)
+        field_data::SharedArray = field.data
+        for_all_parallel(field.grid) do coords::CartesianIndex
+          field_data[coords] = value
+        end
+      else
+        fill!(field.data,value)
+      end
     end
 
     function sum(field::$(field_type))
@@ -257,6 +276,14 @@ for field_type in (:LatLonField,:UnstructuredField)
       return field.data::$(array_type)
     end
   end
+end
+
+function repeat_init(grid::UnstructuredGrid,value::T,count::Integer) where {T}
+  array::Array{Field{T},1} = Array{Field{T},1}(undef,count)
+  for i in 1:count
+    array[i] = UnstructuredField{T}(grid,value)
+  end
+  return array
 end
 
 function show(io::IO,field::LatLonField{T}) where {T <: Number}

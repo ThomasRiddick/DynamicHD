@@ -84,8 +84,8 @@ function main()
     lake_evaporation_high ::Field{Float64} =
       UnstructuredField{Float64}(river_parameters.grid,
                                  100000*0.0000000227*step_length*2.6*10000000000)
-    lake_evaporations_none = repeat(lake_evaporation_none,Int(round(timesteps/60)+1))
-    lake_evaporations_high = repeat(lake_evaporation_high,Int(round(timesteps/60)+1))
+    lake_evaporations_none = repeat(lake_evaporation_none,Int(round(timesteps/60)+1),false)
+    lake_evaporations_high = repeat(lake_evaporation_high,Int(round(timesteps/60)+1),false)
     lake_evaporations = vcat(lake_evaporations_none,lake_evaporations_high)
   end
   if args["lake-para-file"] != nothing

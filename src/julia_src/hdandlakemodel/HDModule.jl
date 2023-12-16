@@ -1,12 +1,13 @@
 module HDModule
 
 using HierarchicalStateMachineModule: Event,State
-using FieldModule: Field,DirectionIndicators,maximum,set!,fill!,+,invert,repeat,get
-using FieldModule: get_data_vector
+using FieldModule: Field,DirectionIndicators,maximum,set!,fill!,+,invert,get
+using FieldModule: get_data_vector, repeat_init
 using CoordsModule: Coords, DirectionIndicator,LatLonSectionCoords,
-      is_ocean, is_outflow, is_truesink, is_lake
-using GridModule: Grid, for_all,for_all_parallel
+      is_ocean, is_outflow, is_truesink, is_lake, get_linear_index
+using GridModule: Grid, for_all,for_all_parallel, get_linear_indices
 using GridModule: find_downstream_coords,for_section_with_line_breaks
+using GridModule: get_number_of_neighbors
 using UserExceptionModule: UserError
 import HierarchicalStateMachineModule: handle_event
 using InteractiveUtils
@@ -19,6 +20,7 @@ abstract type PrognosticFields <: State end
 
 struct RiverParameters
   flow_directions::DirectionIndicators
+  cells_up::Array{Field{Int64}}
   river_reservoir_nums::Field{Int64}
   overland_reservoir_nums::Field{Int64}
   base_reservoir_nums::Field{Int64}
@@ -51,6 +53,9 @@ struct RiverParameters
                                   (day_length/step_length)
     outflow_ocean_truesink_mask = Field{Bool}(grid,false)
     lake_mask = Field{Bool}(grid,false)
+    linear_indices::LinearIndices = get_linear_indices(grid)
+    cells_up::Array{Field{Int64}} = repeat_init(grid,-1,
+                                                get_number_of_neighbors(grid))
     for_all(grid) do coords::Coords
       flow_direction::DirectionIndicator =
         get(flow_directions,coords)
@@ -59,9 +64,23 @@ struct RiverParameters
          set!(outflow_ocean_truesink_mask,coords,true)
       elseif is_lake(flow_direction)
          set!(lake_mask,coords,true)
+      else
+        new_coords::Coords =
+          find_downstream_coords(grid,
+                                 flow_direction,
+                                 coords)
+        #Explicitly use basic forward stepping index
+        for i in 1:length(cells_up)
+          if get(cells_up[i],new_coords) == -1
+            set!(cells_up[i],new_coords,get_linear_index(coords,
+                                                         linear_indices))
+            break
+          end
+        end
       end
     end
-    return new(flow_directions,river_reservoir_nums,overland_reservoir_nums,
+    return new(flow_directions,cells_up,
+               river_reservoir_nums,overland_reservoir_nums,
                base_reservoir_nums,river_retention_coefficients,
                overland_retention_coefficients,base_retention_coefficients,
                landsea_mask,cascade_flag,outflow_ocean_truesink_mask,
@@ -99,12 +118,12 @@ mutable struct RiverPrognosticFields
     runoff = Field{Float64}(river_parameters.grid,0.0)
     drainage = Field{Float64}(river_parameters.grid,0.0)
     river_inflow = Field{Float64}(river_parameters.grid,0.0)
-    base_flow_reservoirs =      repeat(Field{Float64}(river_parameters.grid,0.0),
-                                       maximum(river_parameters.base_reservoir_nums))
-    overland_flow_reservoirs =  repeat(Field{Float64}(river_parameters.grid,0.0),
-                                       maximum(river_parameters.overland_reservoir_nums))
-    river_flow_reservoirs =     repeat(Field{Float64}(river_parameters.grid,0.0),
-                                       maximum(river_parameters.river_reservoir_nums))
+    base_flow_reservoirs =      repeat_init(river_parameters.grid,0.0,
+                                            maximum(river_parameters.base_reservoir_nums))
+    overland_flow_reservoirs =  repeat_init(river_parameters.grid,0.0,
+                                            maximum(river_parameters.overland_reservoir_nums))
+    river_flow_reservoirs =     repeat_init(river_parameters.grid,0.0,
+                                            maximum(river_parameters.river_reservoir_nums))
     water_to_ocean = Field{Float64}(river_parameters.grid,0.0)
     return new(runoff,drainage,river_inflow,base_flow_reservoirs,
                overland_flow_reservoirs,river_flow_reservoirs,water_to_ocean)
@@ -218,7 +237,7 @@ function handle_event(prognostic_fields::PrognosticFields,
     data[:runoff_to_rivers][coords]+
     data[:drainage_to_rivers][coords]
   end
-  route(river_parameters.flow_directions,
+  route(river_parameters.cells_up,
         river_diagnostic_fields.river_outflow,
         river_fields.river_inflow,
         river_parameters.outflow_ocean_truesink_mask,
@@ -241,8 +260,10 @@ function handle_event(prognostic_fields::PrognosticFields,
         :runoff => river_fields.runoff.data,
         :drainage => river_fields.drainage.data)
   if using_lakes
-    water_to_lakes_local_data = water_to_lakes_local.data
-    lake_water_from_ocean_data = lake_water_from_ocean.data
+    water_to_lakes_local_data::SharedArray{Float64} =
+      water_to_lakes_local.data
+    lake_water_from_ocean_data::SharedArray{Float64} =
+      lake_water_from_ocean.data
   end
   for_all_parallel(river_parameters.grid) do coords::CartesianIndex
     if data[:outflow_ocean_truesink_mask][coords]
@@ -291,7 +312,7 @@ function cascade(reservoirs::Array{Field{Float64},1},
                              reservoir_nums.data,
                              :cascade_flag =>
                              cascade_flag.data)
-  reservoirs_data = get_data_vector(reservoirs)
+  reservoirs_data::Array{SharedArray{Float64},1} = get_data_vector(reservoirs)
   for_all_parallel(grid) do coords::CartesianIndex
     if data[:cascade_flag][coords]
       cascade_kernel(coords,
@@ -354,29 +375,40 @@ function cascade_kernel(coords::CartesianIndex,
   return
 end
 
-function route(flow_directions::DirectionIndicators,
+function route(cells_up::Array{Field{Int64}},
                flow_in::Field{Float64},
                flow_out::Field{Float64},
                outflow_ocean_truesink_mask::Field{Bool},
                lake_mask::Field{Bool},
                grid::Grid)
-  for_all(grid) do coords::Coords
-    flow_in_local::Float64 = flow_in(coords)
-    if flow_in_local != 0.0
-      if get(outflow_ocean_truesink_mask,coords) ||
-         get(lake_mask,coords)
-        flow_in_local += get(flow_out,coords)
-        set!(flow_out,coords,flow_in_local)
+  data::Dict{Symbol,SharedArray} =
+    Dict{Symbol,SharedArray}(
+    :flow_in => flow_in.data,
+    :flow_out => flow_out.data,
+    :outflow_ocean_truesink_mask => outflow_ocean_truesink_mask.data,
+    :lake_mask => lake_mask.data)
+  cells_up_data::Array{SharedArray{Int64},1} =
+    get_data_vector(cells_up)
+  for_all_parallel(grid) do coords::CartesianIndex
+    flow_in_local::Float64 = data[:flow_in][coords]
+    if flow_in_local != 0.0 &&
+          (data[:outflow_ocean_truesink_mask][coords] ||
+           data[:lake_mask][coords])
+        flow_in_local += data[:flow_out][coords]
+        data[:flow_out][coords] = flow_in_local
+    end
+    flow_in_from_nbrs::Float64 = 0.0
+    #Explicitly use basic forward stepping index
+    for i in 1:length(cells_up_data)
+      linear_index::Int64 = cells_up_data[i][coords]
+      if linear_index != -1
+        flow_in_from_nbrs += data[:flow_in][linear_index]
       else
-        flow_direction::DirectionIndicator =
-          get(flow_directions,coords)
-        new_coords::Coords =
-          find_downstream_coords(grid,
-                                flow_direction,
-                                coords)
-        flow_in_local += get(flow_out,new_coords)
-        set!(flow_out,new_coords,flow_in_local)
+        break
       end
+    end
+    if flow_in_from_nbrs != 0.0
+      data[:flow_out][coords]=data[:flow_out][coords]+flow_in_from_nbrs
     end
     return
   end

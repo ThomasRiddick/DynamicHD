@@ -43,23 +43,30 @@ function get_number_of_cells(grid::Grid)
   throw(UserError)
 end
 
+function get_linear_indices(grid::Grid)
+  throw(UserError)
+end
+
 get_number_of_dimensions(obj::T) where {T <: Grid} =
   obj.number_of_dimensions::Int64
 
 struct LatLonGrid <: Grid
   nlat::Int64
   nlon::Int64
+  nneighbors::Int64
   wrap_east_west::Bool
   number_of_dimensions::Int64
   function LatLonGrid(nlat::Int64,
                       nlon::Int64,
                       wrap_east_west::Bool)
-    return new(nlat,nlon,wrap_east_west,2)
+    return new(nlat,nlon,8,wrap_east_west,2)
   end
 end
 
+#Use ICON icosahedral grid value of 12 for nneighbors by default
 struct UnstructuredGrid <: Grid
   ncells::Int64
+  nneighbors::Int64
   number_of_dimensions::Int64
   clat::Array{Float64,1}
   clon::Array{Float64,1}
@@ -69,7 +76,7 @@ struct UnstructuredGrid <: Grid
   function UnstructuredGrid(ncells::Int64,clat::Array{Float64,1},clon::Array{Float64,1},
                             clat_bounds::Array{Float64,2},clon_bounds::Array{Float64,2},
                             mapping_to_coarse_grid::Array{Int64,1})
-    return new(ncells,1,clat,clon,clat_bounds,clon_bounds,mapping_to_coarse_grid)
+    return new(ncells,12,1,clat,clon,clat_bounds,clon_bounds,mapping_to_coarse_grid)
   end
 end
 
@@ -242,12 +249,28 @@ function wrap_coords(grid::LatLonGrid,coords::LatLonCoords)
   return LatLonCoords(coords.lat,wrapped_lon)
 end
 
+function get_number_of_neighbors(grid::LatLonGridOrUnstructuredGrid)
+  return grid.nneighbors
+end
+
 function get_number_of_cells(grid::LatLonGrid)
   return grid.nlat*grid.nlon
 end
 
 function get_number_of_cells(grid::UnstructuredGrid)
   return grid.ncells
+end
+
+function get_linear_indices(grid::LatLonGrid)
+  empty_array::Array{Int64,2} = Array{Int64,2}(undef,
+                                               grid.nlat,grid.nlon)
+  return LinearIndices(empty_array)::LinearIndices
+end
+
+function get_linear_indices(grid::UnstructuredGrid)
+  empty_array::Array{Int64,2} = Array{Int64,2}(undef,
+                                               grid.ncells)
+  return LinearIndices(empty_array)::LinearIndices
 end
 
 end

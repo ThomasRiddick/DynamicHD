@@ -62,7 +62,7 @@ function main()
     end
   else
     drainage::Field{Float64} = LatLonField{Float64}(river_parameters.grid,269747790.0*2.25/100.0)
-    drainages = repeat(drainage,12*51)
+    drainages = repeat(drainage,12*51,false)
   end
   if args["runoff-file"] != nothing
     if args["use-input-data-for-individual-timesteps"]
@@ -87,7 +87,7 @@ function main()
     end
   else
     lake_evaporation::Field{Float64} = LatLonField{Float64}(surface_model_grid,0.0)
-    lake_evaporations = repeat(lake_evaporation,12*51)
+    lake_evaporations = repeat(lake_evaporation,12*51,false)
   end
   input_data_is_monthly_mean::Bool = ! args["use-input-data-for-individual-timesteps"]
   if args["lake-para-file"] != nothing
