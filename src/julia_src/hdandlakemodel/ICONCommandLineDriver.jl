@@ -54,7 +54,8 @@ function main()
   lake_grid = UnstructuredGrid(ncells,clat,clon,clat_bounds,clon_bounds)
   surface_model_grid = UnstructuredGrid(ncells,clat,clon,clat_bounds,clon_bounds)
   river_parameters = load_river_parameters(args["hd-para-file"],grid;
-                                           day_length=86400.0,step_length=step_length)
+                                           day_length=86400.0,step_length=step_length,
+                                           use_bifurcated_rivers=true)
   local drainages::Array{Field{Float64},1}
   local runoffs::Array{Field{Float64},1}
   local lake_evaporations::Array{Field{Float64},1}

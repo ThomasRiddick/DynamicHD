@@ -176,7 +176,8 @@ function write_field(grid::Grid,variable_name::AbstractString,
 end
 
 function load_river_parameters(hd_para_filepath::AbstractString,grid::Grid;
-                               day_length=86400.0,step_length=86400.0)
+                               day_length=86400.0,step_length=86400.0,
+                               use_bifurcated_rivers::Bool=false)
   println("Loading: " * hd_para_filepath)
   file_handle::NcFile = NetCDF.open(hd_para_filepath)
   local landsea_mask::Field{Bool}
@@ -205,15 +206,33 @@ function load_river_parameters(hd_para_filepath::AbstractString,grid::Grid;
       load_field(file_handle,grid,"ALF_K",Float64)
     base_retention_coefficients::Field{Float64} =
       load_field(file_handle,grid,"AGF_K",Float64)
-    return  RiverParameters(flow_directions,
-                            river_reservoir_nums,
-                            overland_reservoir_nums,
-                            base_reservoir_nums,
-                            river_retention_coefficients,
-                            overland_retention_coefficients,
-                            base_retention_coefficients,
-                            landsea_mask,grid,day_length,
-                            step_length)
+    if use_bifurcated_rivers
+      cells_up =
+        load_array_of_fields(file_handle,grid,"CELLS_UP",Int64,12)
+      nsplit::Field{Float64} =
+        load_field(file_handle,grid,"NSPLIT",Int64)
+      return  RiverParameters(flow_directions,
+                              cells_up,
+                              nsplit,
+                              river_reservoir_nums,
+                              overland_reservoir_nums,
+                              base_reservoir_nums,
+                              river_retention_coefficients,
+                              overland_retention_coefficients,
+                              base_retention_coefficients,
+                              landsea_mask,grid,day_length,
+                              step_length)
+    else
+      return  RiverParameters(flow_directions,
+                              river_reservoir_nums,
+                              overland_reservoir_nums,
+                              base_reservoir_nums,
+                              river_retention_coefficients,
+                              overland_retention_coefficients,
+                              base_retention_coefficients,
+                              landsea_mask,grid,day_length,
+                              step_length)
+    end
   finally
     NetCDF.close(file_handle)
   end
