@@ -9,9 +9,9 @@ void generate_pixels_in_cell_mask(coords* cell_coords) {
   coarse_cell_coords = cell_coords;
   generate_cell_bounds();
   generate_areas_to_consider();
-  area_to_consider_mask%for_all(check_if_pixel_is_in_cell)
+  area_to_consider_mask->for_all(check_if_pixel_is_in_cell);
   if (secondary_area_to_consider_mask) {
-    secondary_area_to_consider_mask%for_all(check_if_pixel_is_in_cell);
+    secondary_area_to_consider_mask->for_all(check_if_pixel_is_in_cell);
   }
   if (display_progress) print_progress();
 }
@@ -25,35 +25,34 @@ void check_if_pixel_is_in_cell(coords* coords_in) {
 }
 
 function generate_cell_numbers() {
-    result(cell_numbers)
-  class(field_section), pointer  :: cell_numbers
-    cell_vertex_coords%for_all_section(process_cell);
-    cell_numbers =>cell_numbers
+  ???
+  field_section*  cell_numbers;
+  _grid->for_all_section(process_cell);
   return cell_numbers;
 }
 
-void set_cell_numbers(cell_numbers_in) {
-  class(field_section), pointer  :: cell_numbers_in
-    cell_numbers => cell_numbers_in
+void set_cell_numbers(???? cell_numbers_in) {
+    cell_numbers = cell_numbers_in
 }
 
 void process_cell(coords* coords_in) {
     generate_pixels_in_cell_mask(coords_in);
     assign_cell_numbers();
-    mask%deallocate_data();
+    mask->deallocate_data();
     delete mask;
     delete cell_bounds;
-    area_to_consider_mask%destructor();
+    area_to_consider_mask->destructor();
     delete area_to_consider_mask;
     if (secondary_area_to_consider_mask) {
-      secondary_area_to_consider_mask%destructor()
+      secondary_area_to_consider_mask->destructor()
       delete secondary_area_to_consider_mask;
     }
     delete coords_in;
 }
 
 void generate_limits() {
-  cell_numbers%for_all_section(process_pixel_for_limits);
+  ????
+  _grid->for_all_section(process_pixel_for_limits);
 }
 
 void offset_limits(int lat_offset) {
@@ -62,8 +61,8 @@ void offset_limits(int lat_offset) {
 }
 
 void latlon_process_pixel_for_limits(coords* coords_in) {
-  int i = coords_in%lat;
-  int j = coords_in%lon;
+  int i = coords_in->lat;
+  int j = coords_in->lon;
   int working_cell_number = (*cell_numbers)(coords_in);
   if (section_min_lats(working_cell_number) > i) {
     section_min_lats(working_cell_number) = i;
@@ -81,9 +80,9 @@ void latlon_process_pixel_for_limits(coords* coords_in) {
 }
 
 void latlon_pixel_generate_areas_to_consider() {
-  double fine_grid_zero_line = latlon_fine_grid_shape%zero_line;
-  int rotated_west_extreme_lon = cell_bounds%west_extreme_lon;
-  int rotated_east_extreme_lon = cell_bounds%east_extreme_lon;
+  double fine_grid_zero_line = latlon_fine_grid_shape->zero_line;
+  int rotated_west_extreme_lon = cell_bounds->west_extreme_lon;
+  int rotated_east_extreme_lon = cell_bounds->east_extreme_lon;
   if (rotated_west_extreme_lon < 0  + fine_grid_zero_line) {
     rotated_west_extreme_lon = rotated_west_extreme_lon + 360.0;
   }
@@ -121,54 +120,38 @@ void latlon_pixel_generate_areas_to_consider() {
 }
 
 function latlon_pixel_generate_area_to_consider(double area_min_lon,
-                                                double area_max_lon)
-    result(area_to_consider) {
+                                                double area_max_lon) {
   class(latlon_section_coords), pointer :: area_to_consider_section_coords
   class(*),pointer,dimension(:,:) :: mask
   class(subfield), pointer  :: area_to_consider
-  type(latlon_coords),pointer :: pixel_in_row_or_column
-  class(*), pointer :: pixel_center_lat_ptr,pixel_center_lon_ptr
-  double :: pixel_center_lat,pixel_center_lon
-  integer :: i
   int area_min_lat_index = 0;
   int area_max_lat_index = 0;
   int area_min_lon_index = 0;
   int area_max_lon_index = 0;
   double working_min_lon = 99999.0;
   double working_max_lon = -99999.0;
-  select type (latlon_fine_grid_shape => fine_grid_shape)
-    type is (latlon_section_coords)
-      int nlat = latlon_fine_grid_shape%section_width_lat
-      int nlon = latlon_fine_grid_shape%section_width_lon
-  end select
+  CAST latlon_fine_grid_shape => fine_grid_shape
+  int nlat = latlon_fine_grid_shape->section_width_lat
+  int nlon = latlon_fine_grid_shape->section_width_lon
   bool minimum_found = false;
-  allocate(pixel_in_row_or_column)
-  do i=1,nlat
-    pixel_in_row_or_column = latlon_coords(i,1)
-    pixel_center_lat_ptr => pixel_center_lats%get_value(pixel_in_row_or_column)
-    select type (pixel_center_lat_ptr)
-      type is (real(kind))
-        pixel_center_lat = pixel_center_lat_ptr
-    end select
-    delete pixel_center_lat_ptr;
-    if ( pixel_center_lat <= cell_bounds%north_extreme_lat
+  for (int i=1; i <= nlat; i++) {
+    coords* pixel_in_row_or_column = new latlon_coords(i,1);
+    double pixel_center_lat = pixel_center_lats->get_value(pixel_in_row_or_column)
+    delete pixel_in_row_or_column;
+    if ( pixel_center_lat <= cell_bounds->north_extreme_lat
         && ! minimum_found) {
       area_min_lat_index = i
       minimum_found = true
     }
     area_max_lat_index = i
     if (pixel_center_lat <
-        cell_bounds%south_extreme_lat) break;
-  end do
+        cell_bounds->south_extreme_lat) break;
+  }
   minimum_found = false;
-  do i=1,nlon
-    pixel_in_row_or_column = latlon_coords(1,i)
-    pixel_center_lon_ptr => pixel_center_lons%get_value(pixel_in_row_or_column)
-    select type (pixel_center_lon_ptr)
-      type is (real(kind))
-        pixel_center_lon = pixel_center_lon_ptr
-    end select
-    delete pixel_center_lon_ptr;
+  for (int i=1; i <= nlon; i++) {
+    coords* pixel_in_row_or_column = new latlon_coords(1,i);
+    double pixel_center_lon = pixel_center_lons->get_value(pixel_in_row_or_column);
+    delete pixel_in_row_or_column;
     if (pixel_center_lon >= area_min_lon &&
         pixel_center_lon < working_min_lon) {
       area_min_lon_index = i
@@ -179,8 +162,7 @@ function latlon_pixel_generate_area_to_consider(double area_min_lon,
       area_max_lon_index = i
       working_max_lon = pixel_center_lon
     }
-  end do
-  delete pixel_in_row_or_column;
+  }
   allocate(area_to_consider_section_coords,
            source=latlon_section_coords(area_min_lat_index,
                                         area_min_lon_index,
@@ -188,41 +170,23 @@ function latlon_pixel_generate_area_to_consider(double area_min_lon,
                                         area_max_lon_index - area_min_lon_index + 1))
   allocate(logical::mask(1:area_max_lat_index - area_min_lat_index + 1,
                          1:area_max_lon_index - area_min_lon_index + 1))
-  select type (mask)
-  type is (logical)
-    mask = false
-  end select
+  mask = false
   area_to_consider=> latlon_subfield(mask,area_to_consider_section_coords)
   delete area_to_consider_section_coords;
   return area_to_consider;
 }
 
 void latlon_pixel_create_new_mask() {
-    class(*),pointer,dimension(:,:) :: new_mask
-      select type(fine_grid_shape => fine_grid_shape)
-      type is (latlon_section_coords)
-        allocate(logical::new_mask(1:fine_grid_shape%section_width_lat,
-                                   1:fine_grid_shape%section_width_lon))
-        select type(new_mask)
-        type is (logical)
-          new_mask = false;
-        end select
-        mask => latlon_field_section(new_mask,fine_grid_shape)
-      end select
+    allocate(logical::new_mask(1:fine_grid_shape->section_width_lat,
+                              1:fine_grid_shape->section_width_lon))
+    new_mask = false;
+    mask = new latlon_field_section(new_mask,fine_grid_shape)
 }
 
 void icon_icosohedral_cell_print_progress() {
-    character*20 :: output
-      select type (cell_vertex_coords => cell_vertex_coords)
-      type is (icon_single_index_field_section)
-        select type (coarse_cell_coords => coarse_cell_coords)
-        type is (generic_1d_coords)
-          if(mod(coarse_cell_coords%index,cell_vertex_coords%get_num_points()/10) == 0) {
-            write(output,*) 100*coarse_cell_coords%index/cell_vertex_coords%get_num_points()
-            write(*,*) trim(output) // " % complete"
-          }
-        end select
-      end select
+  if(mod(coarse_cell_coords->index,cell_vertex_coords->get_num_points()/10) == 0) {
+    cout << 100*coarse_cell_coords->index/cell_vertex_coords->get_num_points() << endl;
+  }
 }
 
 void icon_icosohedral_cell_generate_cell_bounds() {
@@ -263,17 +227,17 @@ void icon_icosohedral_cell_generate_cell_bounds() {
 bool icon_icosohedral_cell_check_if_pixel_center_is_in_bounds(double pixel_center_lat,
                                                               double pixel_center_lon) {
     double vertex_one_lat =
-      icon_icosohedral_cell_get_vertex_coords(coarse_cell_coords,1,true)
+      icon_icosohedral_cell_get_vertex_coords(coarse_cell_coords,1,true);
     double vertex_one_lon =
-      icon_icosohedral_cell_get_vertex_coords(coarse_cell_coords,1,false)
+      icon_icosohedral_cell_get_vertex_coords(coarse_cell_coords,1,false);
     double vertex_two_lat =
-      icon_icosohedral_cell_get_vertex_coords(coarse_cell_coords,2,true)
+      icon_icosohedral_cell_get_vertex_coords(coarse_cell_coords,2,true);
     double vertex_two_lon =
-      icon_icosohedral_cell_get_vertex_coords(coarse_cell_coords,2,false)
+      icon_icosohedral_cell_get_vertex_coords(coarse_cell_coords,2,false);
     double vertex_three_lat =
-      icon_icosohedral_cell_get_vertex_coords(coarse_cell_coords,3,true)
+      icon_icosohedral_cell_get_vertex_coords(coarse_cell_coords,3,true);
     double vertex_three_lon =
-      icon_icosohedral_cell_get_vertex_coords(coarse_cell_coords,3,false)
+      icon_icosohedral_cell_get_vertex_coords(coarse_cell_coords,3,false);
     if (vertex_two_lon - vertex_one_lon > 180.0) {
       vertex_two_lon = vertex_two_lon - 360.0;
     } else if(vertex_two_lon - vertex_one_lon < -180.0) {
@@ -346,8 +310,8 @@ double icon_icosohedral_cell_get_vertex_coords(coords* coords_in,
                                                bool return_lat) {
   int vertex_num = vertex_num_in;
   double coordinate;
-  vertex_coords* vertex_positions = cell_vertex_coords%get_value(coords_in);
-  double lat_coordinate = vertex_positions%vertex_lats(vertex_num);
+  vertex_coords* vertex_positions = cell_vertex_coords->get_value(coords_in);
+  double lat_coordinate = vertex_positions->vertex_lats(vertex_num);
   if (return_lat) {
     coordinate = lat_coordinate;
   } else {
@@ -359,7 +323,7 @@ double icon_icosohedral_cell_get_vertex_coords(coords* coords_in,
         vertex_num = 1;
       }
     }
-    coordinate = vertex_positions%vertex_lons(vertex_num)
+    coordinate = vertex_positions->vertex_lons(vertex_num)
     if (longitudal_range_centered_on_zero) {
       if (coordinate < 0.0) {
         coordinate = coordinate + 360.0;
@@ -373,15 +337,15 @@ double icon_icosohedral_cell_get_vertex_coords(coords* coords_in,
 void icon_icosohedral_cell_latlon_pixel_assign_cell_numbers() {
     select type (mask=>mask)
     type is (latlon_field_section)
-      select type (data=>mask%data)
+      select type (data=>mask->data)
       type is (logical)
         select type(cell_numbers => cell_numbers)
         type is (latlon_field_section)
-          select type (cell_numbers_data => cell_numbers%data)
+          select type (cell_numbers_data => cell_numbers->data)
           type is (integer)
             select type (coarse_cell_coords=>coarse_cell_coords)
             type is (generic_1d_coords)
-                where(data) cell_numbers_data = coarse_cell_coords%index
+                where(data) cell_numbers_data = coarse_cell_coords->index
             end select
           end select
         end select
@@ -393,37 +357,29 @@ void init_icon_icosohedral_cell_latlon_pixel_ncg_mapper(pixel_center_lats,
                                                         pixel_center_lons,
                                                         cell_vertex_coords,
                                                         fine_grid_shape,
-                                                        longitudal_range_centered_on_zero_in) {
+                                                        longitudal_range_centered_on_zero_in = false) {
   class(latlon_field_section), pointer, intent(in)  :: pixel_center_lats
   class(latlon_field_section), pointer, intent(in)  :: pixel_center_lons
   class(icon_single_index_field_section), pointer, intent(inout)  :: cell_vertex_coords
   class(latlon_section_coords),pointer,intent(in) :: fine_grid_shape
   class(*),pointer,dimension(:,:) :: new_cell_numbers
-  logical, optional :: longitudal_range_centered_on_zero_in
-    if (present(longitudal_range_centered_on_zero_in)) {
-      longitudal_range_centered_on_zero = longitudal_range_centered_on_zero_in
-    } else {
-      longitudal_range_centered_on_zero = false
-    }
-    pixel_center_lats => pixel_center_lats
-    pixel_center_lons => pixel_center_lons
-    cell_vertex_coords => cell_vertex_coords
-    fine_grid_shape => fine_grid_shape
-    allocate(integer::new_cell_numbers(1:fine_grid_shape%section_width_lat,
-                                       1:fine_grid_shape%section_width_lon))
-    allocate(section_min_lats(cell_vertex_coords%get_num_points()))
-    allocate(section_min_lons(cell_vertex_coords%get_num_points()))
-    allocate(section_max_lats(cell_vertex_coords%get_num_points()))
-    allocate(section_max_lons(cell_vertex_coords%get_num_points()))
-    section_min_lats(:) = fine_grid_shape%section_width_lat + 1
-    section_min_lons(:) = fine_grid_shape%section_width_lon + 1
-    section_max_lats(:) = 0
-    section_max_lons(:) = 0
-    select type(new_cell_numbers)
-    type is (integer)
-      new_cell_numbers = 0
-    end select
-    cell_numbers => latlon_field_section(new_cell_numbers,fine_grid_shape)
+  bool longitudal_range_centered_on_zero = longitudal_range_centered_on_zero_in;
+  pixel_center_lats => pixel_center_lats
+  pixel_center_lons => pixel_center_lons
+  cell_vertex_coords => cell_vertex_coords
+  fine_grid_shape => fine_grid_shape
+  allocate(integer::new_cell_numbers(1:fine_grid_shape->section_width_lat,
+                                     1:fine_grid_shape->section_width_lon))
+  allocate(section_min_lats(cell_vertex_coords->get_num_points()))
+  allocate(section_min_lons(cell_vertex_coords->get_num_points()))
+  allocate(section_max_lats(cell_vertex_coords->get_num_points()))
+  allocate(section_max_lons(cell_vertex_coords->get_num_points()))
+  section_min_lats(:) = fine_grid_shape->section_width_lat + 1
+  section_min_lons(:) = fine_grid_shape->section_width_lon + 1
+  section_max_lats(:) = 0
+  section_max_lons(:) = 0
+  ALL new_cell_numbers = 0
+  cell_numbers => latlon_field_section(new_cell_numbers,fine_grid_shape)
 }
 
 void icon_icosohedral_cell_latlon_pixel_ncg_mapper_destructor() {
@@ -431,32 +387,6 @@ void icon_icosohedral_cell_latlon_pixel_ncg_mapper_destructor() {
     delete section_min_lons;
     delete section_max_lats;
     delete section_max_lons;
-    cell_numbers%deallocate_data()
+    cell_numbers->deallocate_data()
     delete cell_numbers;
-}
-
-function icon_icosohedral_cell_latlon_pixel_ncg_mapper_constructor(pixel_center_lats,
-                                                                   pixel_center_lons,
-                                                                   cell_vertex_coords,
-                                                                   fine_grid_shape,
-                                                                   longitudal_range_centered_on_zero_in)
-                                                                   result(constructor) {
-      type(icon_icosohedral_cell_latlon_pixel_ncg_mapper), allocatable :: constructor
-      class(latlon_field_section), pointer, intent(in)  :: pixel_center_lats
-      class(latlon_field_section), pointer, intent(in)  :: pixel_center_lons
-      class(icon_single_index_field_section), pointer, intent(inout)  :: cell_vertex_coords
-      class(latlon_section_coords),pointer, intent(in) :: fine_grid_shape
-      logical, optional :: longitudal_range_centered_on_zero_in
-      logical :: longitudal_range_centered_on_zero
-          if (present(longitudal_range_centered_on_zero_in)) {
-            longitudal_range_centered_on_zero = longitudal_range_centered_on_zero_in
-          } else {
-            longitudal_range_centered_on_zero = false
-          }
-          allocate(constructor)
-          constructor%init_icon_icosohedral_cell_latlon_pixel_ncg_mapper(pixel_center_lats,
-                                                                              pixel_center_lons,
-                                                                              cell_vertex_coords,
-                                                                              fine_grid_shape,
-                                                                              longitudal_range_centered_on_zero)
 }

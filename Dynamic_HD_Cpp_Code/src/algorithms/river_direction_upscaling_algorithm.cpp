@@ -6,11 +6,12 @@ void find_next_pixel_upstream(coords* coords_inout,
         for(vector<coords*>::iterator i = upstream_neighbors_coords_list.begin();
                                       i != upstream_neighbors_coords_list.end(); ++i){
             int upstream_neighbor_total_cumulative_flow =
-                (*total_cumulative_flow)(i)
+                (*total_cumulative_flow)(i);
             if ( upstream_neighbor_total_cumulative_flow > max_cmltv_flow_working_value) {
                 if (coords_inout) delete coords_inout;
-                coords_inout = i->clone()
-                max_cmltv_flow_working_value = upstream_neighbor_total_cumulative_flow
+                coords_inout = i->clone();
+                max_cmltv_flow_working_value =
+                    upstream_neighbor_total_cumulative_flow;
             }
         }
         coords_not_in_area = ! check_if_coords_are_in_area(coords_inout);
@@ -50,7 +51,7 @@ bool check_cell_for_localized_loops(coords* coords_inout){
 
 coords* find_outlet_pixel(bool& no_remaining_outlets,
                           bool use_LCDA_criterion,
-                          bool& outlet_is_LCDA){
+                          bool& outlet_is_LCDA = false){
     coords* LCDA_pixel_coords;
     if (use_LCDA_criterion) {
         generate_cell_cumulative_flow();
@@ -63,15 +64,9 @@ coords* find_outlet_pixel(bool& no_remaining_outlets,
         if (LUDA_pixel_coords) delete LUDA_pixel_coords;
         LUDA_pixel_coords = find_pixel_with_LUDA(no_remaining_outlets);
         if (no_remaining_outlets) {
-            if (present(outlet_is_LCDA)) outlet_is_LCDA = false;
+            outlet_is_LCDA = false;
             break;
-        } else {
-            if (present(outlet_is_LCDA)) {
-                if (check_MUFP(LUDA_pixel_coords,LCDA_pixel_coords,outlet_is_LCDA)) break;
-            } else {
-                if (check_MUFP(LUDA_pixel_coords,LCDA_pixel_coords)) break;
-            }
-        }
+        } else if (check_MUFP(LUDA_pixel_coords,LCDA_pixel_coords,outlet_is_LCDA)) break;
     }
     if (use_LCDA_criterion) delete LCDA_pixel_coords;
     return LUDA_pixel_coords;
@@ -129,7 +124,7 @@ direction_indicator* find_cell_flow_direction(coords* outlet_pixel_coords,
     bool mark_sink;
     bool mark_outflow;
     check_for_sinks_and_rmouth_outflows(outlet_pixel_coords,no_remaining_outlets,mark_sink,
-                                        mark_outflow)
+                                        mark_outflow);
     if (mark_sink) {
         return get_flow_direction_for_sink(true);
     } else if (mark_outflow) {
@@ -434,27 +429,22 @@ void init_icon_single_index_field(section_coords* field_section_coords,
     class(*), dimension(:), pointer :: river_directions
     type(generic_1d_section_coords) :: field_section_coords
     ncells = len(field_section_coords->cell_neighbors,1)
-    total_cumulative_flow = null()
+    total_cumulative_flow = null();
     river_directions = icon_single_index_field_section(river_directions,field_section_coords)
     initialize_cells_to_reprocess_field_section()
 }
 
-bool* latlon_check_field_for_localized_loops() {
-    bool* cells_to_reprocess;
-    type(latlon_coords) :: cell_coords
-        do j = section_min_lon, section_max_lon {
-            do i = section_min_lat, section_max_lat {
-                cell_coords = latlon_coords(i,j)
-                if (check_cell_for_localized_loops(cell_coords)) {
-                    (*cells_to_reprocess)(cell_coords) = true;
-                }
+bool* field??? latlon_check_field_for_localized_loops() {
+    bool* cells_to_reprocess; field????
+    for (int j = section_min_lon; j <= section_max_lon; j++) {
+        for (int i = section_min_lat; i <= section_max_lat; i++) {
+            coords* cell_coords = new latlon_coords(i,j);
+            if (check_cell_for_localized_loops(cell_coords)) {
+                (*cells_to_reprocess)(cell_coords) = true;
             }
         }
-        (cells_to_reprocess_field_section = cells_to_reprocess)
-        type is (latlon_field_section)
-            cells_to_reprocess_data = cells_to_reprocess_field_section->get_data()
-                cells_to_reprocess = cells_to_reprocess_data
-        return cells_to_reprocess;
+    }
+    return cells_to_reprocess;
 }
 
 bool* icon_single_index_check_field_for_localized_loops() {
@@ -465,7 +455,6 @@ bool* icon_single_index_check_field_for_localized_loops() {
             (*cells_to_reprocess)(cell_coords) = true;
         }
     }
-    allocate(cells_to_reprocess(ncells,1))
     (cells_to_reprocess_field_section = cells_to_reprocess)
     type is (icon_single_index_field_section)
         cells_to_reprocess_data = cells_to_reprocess_field_section->get_data()
@@ -502,23 +491,19 @@ void init_latlon_cell(section_coords* cell_section_coords,
     type(latlon_section_coords) :: cell_section_coords
     integer, dimension(:,:), target :: river_directions
     integer, dimension(:,:), target :: total_cumulative_flow
-    class(*), dimension(:,:), pointer :: river_directions_pointer
-    class(*), dimension(:,:), pointer :: total_cumulative_flow_pointer
     section_min_lat = cell_section_coords->section_min_lat
     section_min_lon = cell_section_coords->section_min_lon
     section_width_lat = cell_section_coords->section_width_lat
     section_width_lon = cell_section_coords->section_width_lon
     section_max_lat =  cell_section_coords->section_min_lat + cell_section_coords->section_width_lat - 1
     section_max_lon =  cell_section_coords->section_min_lon + cell_section_coords->section_width_lon - 1
-    river_directions_pointer = river_directions
-    total_cumulative_flow_pointer = total_cumulative_flow
-    river_directions = latlon_field_section(river_directions_pointer,cell_section_coords)
-    total_cumulative_flow = latlon_field_section(total_cumulative_flow_pointer,cell_section_coords)
+    river_directions = latlon_field_section(river_directions,cell_section_coords);
+    total_cumulative_flow = latlon_field_section(total_cumulative_flow,cell_section_coords);
     //Minus four to avoid double counting the corners
-    number_of_edge_pixels = 2*section_width_lat + 2*section_width_lon - 4
+    number_of_edge_pixels = 2*section_width_lat + 2*section_width_lon - 4;
     initialize_rejected_pixels_subfield()
-    contains_river_mouths = false
-    ocean_cell = false
+    contains_river_mouths = false;
+    ocean_cell = false;
 }
 
 void init_irregular_latlon_cell(section_coords* cell_section_coords,
@@ -527,8 +512,6 @@ void init_irregular_latlon_cell(section_coords* cell_section_coords,
     class(irregular_latlon_section_coords) :: cell_section_coords
     integer, dimension(:,:), target :: river_directions
     integer, dimension(:,:), target :: total_cumulative_flow
-    class(*), dimension(:,:), pointer :: river_directions_pointer
-    class(*), dimension(:,:), pointer :: total_cumulative_flow_pointer
     class(*), dimension(:,:), pointer :: cell_numbers_pointer
     section_min_lat = cell_section_coords->section_min_lat
     section_min_lon = cell_section_coords->section_min_lon
@@ -539,10 +522,8 @@ void init_irregular_latlon_cell(section_coords* cell_section_coords,
     cell_numbers_pointer = cell_section_coords->cell_numbers
     cell_numbers = latlon_field_section(cell_numbers_pointer,cell_section_coords)
     cell_number = cell_section_coords->cell_number
-    river_directions_pointer = river_directions
-    total_cumulative_flow_pointer = total_cumulative_flow
-    river_directions = latlon_field_section(river_directions_pointer,cell_section_coords)
-    total_cumulative_flow = latlon_field_section(total_cumulative_flow_pointer,cell_section_coords)
+    river_directions = latlon_field_section(river_directions,cell_section_coords)
+    total_cumulative_flow = latlon_field_section(total_cumulative_flow,cell_section_coords)
     number_of_edge_pixels = 0
     initialize_rejected_pixels_subfield()
     contains_river_mouths = false
@@ -563,99 +544,66 @@ void yamazaki_init_latlon_cell(coords* cell_section_coords,
     integer, dimension(:,:) :: river_directions
     integer, dimension(:,:) :: total_cumulative_flow
     integer, dimension(:,:), target :: yamazaki_outlet_pixels
-    class(*), dimension(:,:), pointer :: yamazaki_outlet_pixels_pointer
     init_latlon_cell(cell_section_coords,river_directions,
                                total_cumulative_flow)
-    yamazaki_outlet_pixels_pointer = yamazaki_outlet_pixels
-    yamazaki_outlet_pixels = latlon_field_section(yamazaki_outlet_pixels_pointer,
+    yamazaki_outlet_pixels = latlon_field_section(yamazaki_outlet_pixels,
                                                         cell_section_coords)
 }
 
 forward_list<coords*>* latlon_find_edge_pixels(){
-    int i
-    int list_index
-    list_index = 1
-    allocate(latlon_coords::edge_pixel_coords_list(number_of_edge_pixels))
-    do i = section_min_lat,section_max_lat {
-        edge_pixel_coords_list(list_index) = latlon_coords(i,section_min_lon)
-        edge_pixel_coords_list(list_index+1) = latlon_coords(i,section_max_lon)
-        list_index = list_index + 2
+    forward_list<coords*>* edge_pixel_coords_list = new forward_list<coords*>;
+    for (int i = section_min_lat; i <= section_max_lat; i++) {
+        edge_pixel_coords_list->push_front(new latlon_coords(i,section_min_lon));
+        edge_pixel_coords_list->push_front(new latlon_coords(i,section_max_lon));
     }
-    do  i = section_min_lon+1,section_max_lon-1 {
-        edge_pixel_coords_list(list_index) = latlon_coords(section_min_lat,i)
-        edge_pixel_coords_list(list_index+1) = latlon_coords(section_max_lat,i)
-        list_index = list_index + 2
+    for (int i = section_min_lon+1; i <= section_max_lon-1; i++) {
+        edge_pixel_coords_list->push_front(latlon_coords(section_min_lat,i));
+        edge_pixel_coords_list->push_front(latlon_coords(section_max_lat,i));
     }
     return edge_pixel_coords_list;
 }
 
 forward_list<coords*>* irregular_latlon_find_edge_pixels() {
-    vector<coords*>* edge_pixel_coords_list;
-    type(doubly_linked_list), pointer :: list_of_edge_pixels
-    class(*), pointer :: working_pixel_ptr
-    type(latlon_field_section), pointer :: cell_numbers
-    integer, pointer, dimension(:,:) :: cell_numbers_data
-    int i,j
-    int list_index
-    int imax,jmax
-    bool is_edge
-    cell_numbers = cell_numbers
-    list_index = 1
-    allocate(list_of_edge_pixels)
-    (cell_numbers_data_ptr = cell_numbers->data)
-    type is (integer)
-        cell_numbers_data = cell_numbers_data_ptr
-    number_of_edge_pixels = 0
-    imax = len(cell_numbers_data,1)
-    jmax = len(cell_numbers_data,2)
-    do j = section_min_lon, section_max_lon {
-        do i = section_min_lat, section_max_lat {
+    forward_list<coords*>* edge_pixel_coords_list = new forward_list<coords*>;
+    int imax = len(cell_numbers_data,1)
+    int jmax = len(cell_numbers_data,2)
+    for (int j = section_min_lon; i <= section_max_lon; i++) {
+        for (int i = section_min_lat; i <+ section_max_lat; i++) {
             if (cell_numbers_data(i,j) == cell_number) {
-                is_edge = false
+                bool is_edge = false;
                 if (i != 1 && j != 1) {
-                    is_edge = (cell_numbers_data(i-1,j-1) != cell_number)
+                    is_edge = (cell_numbers_data(i-1,j-1) != cell_number);
                 }
                 if (i != 1) {
-                    is_edge = (cell_numbers_data(i-1,j)   != cell_number) || is_edge
+                    is_edge = (cell_numbers_data(i-1,j)   != cell_number) || is_edge;
                 }
                 if (i != 1 && j != jmax) {
-                    is_edge = (cell_numbers_data(i-1,j+1) != cell_number) || is_edge
+                    is_edge = (cell_numbers_data(i-1,j+1) != cell_number) || is_edge;
                 }
                 if (j != 1 ) {
-                    is_edge = (cell_numbers_data(i,j-1)   != cell_number) || is_edge
+                    is_edge = (cell_numbers_data(i,j-1)   != cell_number) || is_edge;
                 }
                 if (j != jmax) {
-                    is_edge = (cell_numbers_data(i,j+1)   != cell_number) || is_edge
+                    is_edge = (cell_numbers_data(i,j+1)   != cell_number) || is_edge;
                 }
                 if (i != imax && j != 1) {
-                    is_edge = (cell_numbers_data(i+1,j-1) != cell_number) || is_edge
+                    is_edge = (cell_numbers_data(i+1,j-1) != cell_number) || is_edge;
                 }
                 if (i != imax) {
-                    is_edge = (cell_numbers_data(i+1,j)   != cell_number) || is_edge
+                    is_edge = (cell_numbers_data(i+1,j)   != cell_number) || is_edge;
                 }
                 if (i != imax && j != jmax) {
-                    is_edge = (cell_numbers_data(i+1,j+1) != cell_number) || is_edge
+                    is_edge = (cell_numbers_data(i+1,j+1) != cell_number) || is_edge;
                 }
                 if (is_edge) {
-                    list_of_edge_pixels->push(latlon_coords(i,j))
-                    number_of_edge_pixels = number_of_edge_pixels + 1
+                    edge_pixel_coords_list->push_front(new latlon_coords(i,j));
                 }
             }
         }
     }
-    allocate(latlon_coords::edge_pixel_coords_list(number_of_edge_pixels))
-    list_of_edge_pixels->reset_iterator()
-    do while (! list_of_edge_pixels->iterate_forward()) {
-        working_pixel_ptr = list_of_edge_pixels->get_value_at_iterator_position()
-                edge_pixel_coords_list(list_index) = working_pixel_ptr
-        list_index = list_index + 1
-        list_of_edge_pixels->remove_element_at_iterator_position()
-    }
-    delete list_of_edge_pixels;
+    return edge_pixel_coords_list;
 }
 
-// Note must explicit pass this function the object this as it has the nopass attribute
-// so that it can be shared by latlon_cell and latlon_neighborhood
 double latlon_calculate_length_through_pixel(coords* coords_in) {
     if (is_diagonal(coords_in)) {
         return 1.414;
@@ -664,8 +612,6 @@ double latlon_calculate_length_through_pixel(coords* coords_in) {
     }
 }
 
-// Note must explicit pass this function the object this as it has the nopass attribute
-// so that it can be shared by latlon_cell and latlon_neighborhood
 bool latlon_check_if_coords_are_in_area(coords* coords_in) {
     if (coords_in->get_lat() >= section_min_lat &&
         coords_in->get_lat() <= section_max_lat &&
@@ -677,8 +623,6 @@ bool latlon_check_if_coords_are_in_area(coords* coords_in) {
     }
 }
 
-// Note must explicit pass this function the object this as it has the nopass attribute
-// so that it can be shared by latlon_cell and latlon_neighborhood
 bool generic_check_if_coords_are_in_area(coords* coords_in) {
     class(coords), intent(in) :: coords_in
     class(field_section), pointer :: cell_numbers
@@ -686,16 +630,15 @@ bool generic_check_if_coords_are_in_area(coords* coords_in) {
     int working_cell_number;
     bool within_area
     int cell_number
-    select type(this)
-    class is (irregular_latlon_cell)
+    if ?? class is (irregular_latlon_cell)
         cell_numbers = cell_numbers
         cell_number = cell_number
     class is (irregular_latlon_neighborhood)
         list_of_cells_in_neighborhood = list_of_cells_in_neighborhood
         cell_numbers = cell_numbers
+    }
     within_area = false
-    select type(this)
-    class is (field)
+    if ?? class is (field)
         within_area = true
     class is (cell)
         working_cell_number_ptr = (*cell_numbers)(coords_in);
@@ -704,7 +647,7 @@ bool generic_check_if_coords_are_in_area(coords* coords_in) {
         if(working_cell_number == cell_number) {
             within_area = true
         }
-    class is (neighborhood)
+    else if class is (neighborhood){
         list_of_cells_in_neighborhood->reset_iterator()
         do while (! list_of_cells_in_neighborhood->iterate_forward()) {
             cell_number_ptr =
@@ -716,30 +659,22 @@ bool generic_check_if_coords_are_in_area(coords* coords_in) {
                     within_area = true
                 }
         }
+    }
     return within_area;
 }
 
-// Note must explicit pass this function the object this as it has the nopass attribute
-// so that it can be shared by latlon_cell and latlon_neighborhood
-vector<coords*>* latlon_find_upstream_neighbors(coords* coords_in) {
-    vector<coords*>* list_of_neighbors = new vector<coords*>();
-    int i,j
+forward_list<coords*>* latlon_find_upstream_neighbors(coords* coords_in) {
+    forward_list<coords*>* list_of_neighbors = new forward_list<coords*>;
     int counter = 0;
-    int n = 0;
-    do i = coords_in->get_lat() + 1, coords_in->get_lat() - 1,-1 {
-        do j = coords_in->get_lon() - 1, coords_in->get_lon() + 1 {
+    for (int i = coords_in->get_lat() + 1, i >= coords_in->get_lat() - 1; i--) {
+        for (int j = coords_in->get_lon() - 1; j <= coords_in->get_lon() + 1; i++) {
             counter = counter + 1;
             if (counter == 5) continue;
-            if (neighbor_flows_to_pixel(latlon_coords(lat=i,lon=j),
+            if (neighbor_flows_to_pixel(latlon_coords(i,j),
                 dir_based_direction_indicator(counter))) {
-                n = n + 1;
-                list_of_neighbors_temp(n) = latlon_coords(lat=i,lon=j)
+                list_of_neighbors.push_front(new latlon_coords(lat=i,lon=j))
             }
         }
-    }
-    allocate(latlon_coords::list_of_neighbors(n))
-    do counter = 1,n {
-        list_of_neighbors(counter) = list_of_neighbors_temp(counter)
     }
     return list_of_neighbors;
 }
@@ -775,34 +710,24 @@ void latlon_initialize_rejected_pixels_subfield() {
 }
 
 forward_list<coords*>* latlon_generate_list_of_pixels_in_cell() {
-    vector<coords*>* list_of_pixels_in_cell = new vector<coords*>()
-    int i,j
-        allocate(list_of_pixels_in_cell)
-        do j = section_min_lon, section_max_lon {
-            do i = section_min_lat, section_max_lat {
-                list_of_pixels_in_cell->push(latlon_coords(i,j))
-            }
+    vector<coords*>* list_of_pixels_in_cell = new vector<coords*>;
+    for (int j = section_min_lon; j <= section_max_lon; j++) {
+        for (int i = section_min_lat; i <= section_max_lat; i++) {
+            list_of_pixels_in_cell->push(latlon_coords(i,j));
         }
+    }
     return list_of_pixels_in_cell
 }
 
 forward_list<coords*>* irregular_latlon_generate_list_of_pixels_in_cell() {
-    vector<coords*>*: list_of_pixels_in_cell = new vector<coords*>()
-    class(latlon_field_section), pointer :: cell_numbers
-    integer, pointer, dimension(:,:) :: cell_numbers_data
-    int i,j
-        cell_numbers = cell_numbers
-        (cell_numbers_data_ptr = cell_numbers->data)
-        type is (integer)
-            cell_numbers_data = cell_numbers_data_ptr
-        allocate(list_of_pixels_in_cell)
-        do j = section_min_lon, section_max_lon {
-            do i = section_min_lat, section_max_lat {
-                if (cell_numbers_data(i,j) == cell_number) {
-                    list_of_pixels_in_cell->push(latlon_coords(i,j))
-                }
+    forward_list<coords*>*: list_of_pixels_in_cell = new forward_list<coords*>;
+    for (int j = section_min_lon; j <= section_max_lon; j++) {
+        for (int i = section_min_lat; i <= section_max_lat; i++) {
+            if (cell_numbers(i,j) == cell_number) {
+                list_of_pixels_in_cell->push_front(new latlon_coords(i,j));
             }
         }
+    }
 }
 
 int latlon_get_sink_combined_cumulative_flow(coords* main_sink_coords = nullptr) {
@@ -811,8 +736,8 @@ int latlon_get_sink_combined_cumulative_flow(coords* main_sink_coords = nullptr)
     int combined_cumulative_flow_to_sinks = 0;
     int greatest_flow_to_single_sink = 0;
     direction_indicator* flow_direction_for_sink = get_flow_direction_for_sink();
-    do j = section_min_lon, section_min_lon + section_width_lon - 1 {
-        do i = section_min_lat, section_min_lat + section_width_lat - 1 {
+    for (int j = section_min_lon; j <= section_min_lon + section_width_lon - 1; i++) {
+        for (int i = section_min_lat; i <= section_min_lat + section_width_lat - 1; i++) {
             int current_pixel_total_cumulative_flow =
                 (*total_cumulative_flow)(latlon_coords(i,j));
             int current_pixel_flow_direction =
@@ -823,9 +748,9 @@ int latlon_get_sink_combined_cumulative_flow(coords* main_sink_coords = nullptr)
                 if (greatest_flow_to_single_sink <
                     current_pixel_total_cumulative_flow) {
                     current_pixel_total_cumulative_flow =
-                        greatest_flow_to_single_sink
-                    highest_outflow_sink_lat = i
-                    highest_outflow_sink_lon = j
+                        greatest_flow_to_single_sink;
+                    highest_outflow_sink_lat = i;
+                    highest_outflow_sink_lon = j;
                 }
             }
         }
@@ -836,37 +761,35 @@ int latlon_get_sink_combined_cumulative_flow(coords* main_sink_coords = nullptr)
     return combined_cumulative_flow_to_sinks;
 }
 
-int latlon_get_rmouth_outflow_combined_cumulative_flow(OPT coords* main_outflow_coords) {
+int latlon_get_rmouth_outflow_combined_cumulative_flow(coords*
+                                                       main_outflow_coords =
+                                                       nullptr) {
     int highest_outflow_rmouth_lat = 0;
     int highest_outflow_rmouth_lon = 0;
     int combined_cumulative_rmouth_outflow = 0;
     int greatest_flow_to_single_outflow = 0;
     direction_indicator* flow_direction_for_outflow = get_flow_direction_for_outflow();
-    do j = section_min_lon, section_min_lon + section_width_lon - 1 {
-        do i = section_min_lat, section_min_lat + section_width_lat - 1 {
+    for (int j = section_min_lon; j <= section_min_lon + section_width_lon - 1; i++) {
+        for (int i = section_min_lat; i <= section_min_lat + section_width_lat - 1; i++) {
             int current_pixel_total_cumulative_flow =
                 (*total_cumulative_flow)(latlon_coords(i,j))
             int current_pixel_flow_direction = (*river_directions)(latlon_coords(i,j));
             if (flow_direction_for_outflow->is_equal_to(current_pixel_flow_direction)) {
                 combined_cumulative_rmouth_outflow = current_pixel_total_cumulative_flow +
                     combined_cumulative_rmouth_outflow;
-                if (present(main_outflow_coords)) {
-                    if (greatest_flow_to_single_outflow <
-                        current_pixel_total_cumulative_flow) {
-                        current_pixel_total_cumulative_flow =
-                            greatest_flow_to_single_outflow;
-                        highest_outflow_rmouth_lat = i;
-                        highest_outflow_rmouth_lon = j;
-                    }
+                if (greatest_flow_to_single_outflow <
+                    current_pixel_total_cumulative_flow) {
+                    current_pixel_total_cumulative_flow =
+                        greatest_flow_to_single_outflow;
+                    highest_outflow_rmouth_lat = i;
+                    highest_outflow_rmouth_lon = j;
                 }
             }
         }
     }
     delete flow_direction_for_outflow;
-    if (present(main_outflow_coords)) {
-        main_outflow_coords = new latlon_coords(highest_outflow_rmouth_lat,
-                                                highest_outflow_rmouth_lon);
-    }
+    main_outflow_coords = new latlon_coords(highest_outflow_rmouth_lat,
+                                            highest_outflow_rmouth_lon);
     return combined_cumulative_rmouth_outflow;
 }
 
@@ -877,8 +800,8 @@ int irregular_latlon_get_sink_combined_cumulative_flow(coords*
     int combined_cumulative_flow_to_sinks = 0;
     int greatest_flow_to_single_sink = 0;
     direction_indicator* flow_direction_for_sink = get_flow_direction_for_sink();
-    do j = section_min_lon, section_max_lon {
-        do i = section_min_lat, section_max_lat {
+    for (int j = section_min_lon; j <= section_max_lon; j++) {
+        for (int i = section_min_lat; i <= section_max_lat; i++) {
             if (cell_numbers(new coords(i,j)) == cell_number) {
                 int current_pixel_total_cumulative_flow =
                     (*total_cumulative_flow)(latlon_coords(i,j))
@@ -904,92 +827,65 @@ int irregular_latlon_get_sink_combined_cumulative_flow(coords*
     return combined_cumulative_flow_to_sinks;
 }
 
-int irregular_latlon_get_rmouth_outflow_combined_cumulative_flow(OPT coords* main_outflow_coords){
-    class(*), pointer :: current_pixel_total_cumulative_flow
-    class(*), pointer :: current_pixel_flow_direction
-    class(direction_indicator), pointer :: flow_direction_for_outflow
-    class(latlon_field_section), pointer :: cell_numbers
-    integer, pointer, dimension(:,:) :: cell_numbers_data
-    int greatest_flow_to_single_outflow
-    int combined_cumulative_rmouth_outflow
-    int i,j
-    cell_numbers = cell_numbers
-    (cell_numbers_data_ptr = cell_numbers->data)
-    type is (integer)
-        cell_numbers_data = cell_numbers_data_ptr
-    end select
+int irregular_latlon_get_rmouth_outflow_combined_cumulative_flow(coords*
+                                                                 main_outflow_coords =
+                                                                 nullptr){
     int highest_outflow_rmouth_lat = 0;
     int highest_outflow_rmouth_lon = 0;
     int combined_cumulative_rmouth_outflow = 0;
     int greatest_flow_to_single_outflow = 0;
-    flow_direction_for_outflow = get_flow_direction_for_outflow();
-    do j = section_min_lon, section_max_lon {
-        do i = section_min_lat, section_max_lat {
-            if (cell_numbers_data(i,j) == cell_number) {
-                current_pixel_total_cumulative_flow = (*total_cumulative_flow)(latlon_coords(i,j));
-                current_pixel_flow_direction = (*river_directions)(latlon_coords(i,j));
-                    if (flow_direction_for_outflow->is_equal_to(current_pixel_flow_direction)) {
-                        combined_cumulative_rmouth_outflow = current_pixel_total_cumulative_flow +
-                            combined_cumulative_rmouth_outflow;
-                        if (present(main_outflow_coords)) {
-                            if (greatest_flow_to_single_outflow <
-                                current_pixel_total_cumulative_flow) {
-                                current_pixel_total_cumulative_flow =
-                                    greatest_flow_to_single_outflow;
-                                highest_outflow_rmouth_lat = i;
-                                highest_outflow_rmouth_lon = j;
-                            }
-                        }
+    direction_indicator* flow_direction_for_outflow =
+        get_flow_direction_for_outflow();
+    for (int j = section_min_lon; j <= section_max_lon; j++) {
+        for (int i = section_min_lat; i <= section_max_lat; i++) {
+            if (cell_numbers(new latlon_coords(i,j)) == cell_number) {
+                int current_pixel_total_cumulative_flow =
+                    (*total_cumulative_flow)(latlon_coords(i,j));
+                int current_pixel_flow_direction =
+                    (*river_directions)(latlon_coords(i,j));
+                if (flow_direction_for_outflow->is_equal_to(current_pixel_flow_direction)) {
+                    combined_cumulative_rmouth_outflow = current_pixel_total_cumulative_flow +
+                        combined_cumulative_rmouth_outflow;
+                    if (greatest_flow_to_single_outflow <
+                        current_pixel_total_cumulative_flow) {
+                        current_pixel_total_cumulative_flow =
+                            greatest_flow_to_single_outflow;
+                        highest_outflow_rmouth_lat = i;
+                        highest_outflow_rmouth_lon = j;
                     }
-                delete current_pixel_total_cumulative_flow;
-                delete current_pixel_flow_direction;
+                }
             }
         }
     }
     delete flow_direction_for_outflow;
-    if(present(main_outflow_coords)) {
-        main_outflow_coords = new latlon_coords(highest_outflow_rmouth_lat,
-                                                highest_outflow_rmouth_lon);
-    }
+    main_outflow_coords = new latlon_coords(highest_outflow_rmouth_lat,
+                                            highest_outflow_rmouth_lon);
     return combined_cumulative_rmouth_outflow;
 }
 
 
 void latlon_print_area(){
-character(len=160) :: line
-class(*), pointer :: value
-int i,j
-    write(*,*) 'Area Information'
-    write(*,*) 'min lat=', section_min_lat
-    write(*,*) 'min lon=', section_min_lon
-    write(*,*) 'max lat=', section_max_lat
-    write(*,*) 'max lon=', section_max_lon
-    write(*,*) 'area rdirs'
-    (rdirs = river_directions)
-    type is (latlon_field_section)
-        do i = section_min_lat,section_max_lat {
-            line = ''
-            do j = section_min_lon,section_max_lon {
-                value = (*rdirs)(latlon_coords(i,j))
-                    write(line,'(A,I5)') trim(line), value
-                delete value;
-            }
-            write (*,'(A)') line
+    character(len=160) :: line
+    cout << "Area Information" << endl;
+    cout << "min lat=" << section_min_lat << endl;
+    cout << "min lon=" << section_min_lon << endl;
+    cout << "max lat=" << section_max_lat << endl;
+    cout << "max lon=" << section_max_lon << endl;
+    cout << "area rdirs"
+    for (int i = section_min_lat; i <= section_max_lat; i++) {
+        for( int j = section_min_lon, j <= section_max_lon; j++) {
+            cout << (*river_directions)(latlon_coords(i,j))
+                cout << value
         }
-    end select
-    write(*,*) 'area total cumulative flow'
-    (total_cumulative_flow = total_cumulative_flow)
-    type is (latlon_field_section)
-        do i = section_min_lat,section_max_lat {
-            line=''
-            do j = section_min_lon,section_max_lon {
-                value = (*total_cumulative_flow)(latlon_coords(i,j))
-                    write(line,'(A,I5)') trim(line), value
-                delete value;
-            }
-            write (*,'(A)') line
+        cout << endl;
+    }
+    cout <<  "area total cumulative flow" << endl;
+    for (int i = section_min_lat; i <= section_max_lat; i++) {
+        for (int j = section_min_lon; j <= section_max_lon; j++) {
+            cout << (*total_cumulative_flow)(latlon_coords(i,j))
         }
-    end select
+        cout << endl;
+    }
 }
 
 double icon_single_index_field_dummy_real_function(coords* coords_in) {
@@ -1002,51 +898,6 @@ void icon_single_index_field_dummy_subroutine() {
 
 vector<coords*>* icon_single_index_field_dummy_coords_pointer_function(coords* coords_in) {
     return new vector<coords*>;
-}
-
-function latlon_dir_based_rdirs_cell_constructor(cell_section_coords,river_directions,
-                                                total_cumulative_flow) {result(constructor)
-    type(latlon_dir_based_rdirs_cell), allocatable :: constructor
-    class(latlon_section_coords) :: cell_section_coords
-    integer, dimension(:,:) :: river_directions
-    integer, dimension(:,:) :: total_cumulative_flow
-    allocate(constructor)
-    constructor->init_dir_based_rdirs_latlon_cell(cell_section_coords,river_directions,
-                                                      total_cumulative_flow)
-}
-
-function irregular_latlon_dir_based_rdirs_cell_constructor(cell_section_coords,
-                                                           river_directions,
-                                                           total_cumulative_flow,
-                                                           cell_neighbors) {
-                                                            result(constructor)
-    type(irregular_latlon_dir_based_rdirs_cell), allocatable :: constructor
-    class(irregular_latlon_section_coords) :: cell_section_coords
-    integer, dimension(:,:) :: river_directions
-    integer, dimension(:,:) :: total_cumulative_flow
-    integer, dimension(:,:), pointer, intent(in) :: cell_neighbors
-    allocate(constructor)
-    constructor->init_irregular_latlon_dir_based_rdirs_cell(cell_section_coords,
-                                                                river_directions,
-                                                                total_cumulative_flow,
-                                                                cell_neighbors)
-}
-
-
-function yamazaki_latlon_dir_based_rdirs_cell_constructor(cell_section_coords,river_directions,
-                                                          total_cumulative_flow,yamazaki_outlet_pixels,
-                                                          yamazaki_section_coords) {
-    result(constructor)
-    type(latlon_dir_based_rdirs_cell), allocatable :: constructor
-    class(latlon_section_coords) :: cell_section_coords
-    type(latlon_section_coords) :: yamazaki_section_coords
-    integer, dimension(:,:) :: river_directions
-    integer, dimension(:,:) :: total_cumulative_flow
-    integer, dimension(:,:) :: yamazaki_outlet_pixels
-    allocate(constructor)
-    constructor->yamazaki_init_dir_based_rdirs_latlon_cell(cell_section_coords,river_directions,
-                                                               total_cumulative_flow,yamazaki_outlet_pixels,
-                                                               yamazaki_section_coords)
 }
 
 void init_dir_based_rdirs_latlon_cell(cell_section_coords,river_directions,
@@ -1090,35 +941,33 @@ void yamazaki_init_dir_based_rdirs_latlon_cell(cell_section_coords,river_directi
 
 void yamazaki_latlon_calculate_river_directions_as_indices(int* coarse_river_direction_indices,
                                                            section_coords*
-                                                           required_coarse_section_coords) {
-    class(coords), pointer :: destination_cell_coords
-    class(coords), pointer :: initial_outlet_pixel
-    class(coords), pointer :: initial_cell_coords
-    int outlet_pixel_type
-    int lat_offset, lon_offset
-    if (present(required_coarse_section_coords)) {
-                lat_offset = required_coarse_section_coords->section_min_lat - 1
-                lon_offset = required_coarse_section_coords->section_min_lon - 1
+                                                           required_coarse_section_coords = nullptr) {
+    int lat_offset;
+    int lon_offset;
+    if (required_coarse_section_coords) {
+        lat_offset = required_coarse_section_coords->section_min_lat - 1;
+        lon_offset = required_coarse_section_coords->section_min_lon - 1;
     } else {
         lat_offset = 0;
         lon_offset = 0;
     }
-    initial_outlet_pixel = yamazaki_retrieve_initial_outlet_pixel(outlet_pixel_type)
-    initial_cell_coords = cell_neighborhood->yamazaki_get_cell_coords(initial_outlet_pixel)
+    int outlet_pixel_type;
+    coords* initial_outlet_pixel = yamazaki_retrieve_initial_outlet_pixel(outlet_pixel_type)
+    coords* initial_cell_coords = cell_neighborhood->yamazaki_get_cell_coords(initial_outlet_pixel)
     if (outlet_pixel_type == yamazaki_sink_outlet || outlet_pixel_type == yamazaki_rmouth_outlet) {
             coarse_river_direction_indices(initial_cell_coords->get_lat(),initial_cell_coords->get_lon(),1) =
-                -abs(outlet_pixel_type)
+                -abs(outlet_pixel_type);
             coarse_river_direction_indices(initial_cell_coords->get_lat(),initial_cell_coords->get_lon(),2) =
-                -abs(outlet_pixel_type)
+                -abs(outlet_pixel_type);
         delete initial_cell_coords;
         delete initial_outlet_pixel;
         return
     }
-    destination_cell_coords = cell_neighborhood->yamazaki_find_downstream_cell(initial_outlet_pixel)
-            coarse_river_direction_indices(initial_cell_coords->get_lat(),initial_cell_coords->get_lon(),1) =
-                destination_cell_coords->get_lat() - lat_offset
-            coarse_river_direction_indices(initial_cell_coords->get_lat(),initial_cell_coords->get_lon(),2) =
-                destination_cell_coords->get_lon() - lon_offset
+    coords* destination_cell_coords = cell_neighborhood->yamazaki_find_downstream_cell(initial_outlet_pixel);
+    coarse_river_direction_indices(initial_cell_coords->get_lat(),initial_cell_coords->get_lon(),1) =
+        destination_cell_coords->get_lat() - lat_offset;
+    coarse_river_direction_indices(initial_cell_coords->get_lat(),initial_cell_coords->get_lon(),2) =
+        destination_cell_coords->get_lon() - lon_offset;
     delete initial_cell_coords;
     delete destination_cell_coords;
     delete initial_outlet_pixel;
@@ -1205,16 +1054,16 @@ void latlon_dir_based_rdirs_mark_ocean_and_river_mouth_points(this) {
         for (int i = section_min_lat; i <= section_max_lat; i++) {
             int rdir = (*river_directions)(latlon_coords(i,j))
                 if( rdir == flow_direction_for_outflow ) {
-                    contains_river_mouths = true
-                    ocean_cell = false
+                    contains_river_mouths = true;
+                    ocean_cell = false;
                 } else if( rdir != flow_direction_for_ocean_point ) {
-                    non_ocean_cell_found = true
+                    non_ocean_cell_found = true;
                 }
-            if (contains_river_mouths) return
+            if (contains_river_mouths) return;
         }
     }
-    contains_river_mouths = false
-    ocean_cell = ! non_ocean_cell_found
+    contains_river_mouths = false;
+    ocean_cell = ! non_ocean_cell_found;
 }
 
 void irregular_latlon_dir_based_rdirs_mark_o_and_rm_points() {
@@ -1285,7 +1134,7 @@ coords* yamazaki_find_downstream_cell(coords* initial_outlet_pixel) {
         coords* new_cell_coords = yamazaki_get_cell_coords(working_pixel)
         if ((*cell_coords) != (*new_cell_coords)) {
             delete cell_coords;
-            allocate(cell_coords,source=new_cell_coords)
+            cell_coords = new_cell_coords->clone();
             count_of_cells_passed_through = count_of_cells_passed_through + 1
         }
         delete new_cell_coords;
@@ -1298,7 +1147,7 @@ coords* yamazaki_find_downstream_cell(coords* initial_outlet_pixel) {
         if (downstream_cell_found) break;
         if (count_of_cells_passed_through > yamazaki_max_range) {
             delete working_pixel;
-            allocate(working_pixel,source=initial_outlet_pixel)
+            working_pixel = initial_outlet_pixel->clone();
             find_next_pixel_downstream(working_pixel,coords_not_in_neighborhood,outflow_pixel_reached)
             if (coords_not_in_neighborhood) yamazaki_wrap_coordinates(working_pixel)
             delete cell_coords;
@@ -1333,55 +1182,47 @@ void init_latlon_neighborhood(center_cell_section_coords,river_directions,
     type(latlon_section_coords) :: section_coords
     integer, target, dimension(:,:) :: river_directions
     integer, target, dimension(:,:) :: total_cumulative_flow
-    class (*), pointer, dimension(:,:) :: river_directions_pointer
-    class (*), pointer, dimension(:,:) :: total_cumulative_flow_pointer
-    center_cell_min_lat = center_cell_section_coords->section_min_lat
-    center_cell_min_lon = center_cell_section_coords->section_min_lon
+    center_cell_min_lat = center_cell_section_coords->section_min_lat;
+    center_cell_min_lon = center_cell_section_coords->section_min_lon;
     center_cell_max_lat =  center_cell_section_coords->section_min_lat +
-                                center_cell_section_coords->section_width_lat - 1
+                                center_cell_section_coords->section_width_lat - 1;
     center_cell_max_lon =  center_cell_section_coords->section_min_lon +
-                                center_cell_section_coords->section_width_lon - 1
+                                center_cell_section_coords->section_width_lon - 1;
     section_min_lat = center_cell_section_coords->section_min_lat -
-                           center_cell_section_coords->section_width_lat
+                           center_cell_section_coords->section_width_lat;
     section_min_lon = center_cell_section_coords->section_min_lon -
-                           center_cell_section_coords->section_width_lon
+                           center_cell_section_coords->section_width_lon;
     section_max_lat = center_cell_max_lat +
-                           center_cell_section_coords->section_width_lat
+                           center_cell_section_coords->section_width_lat;
     section_max_lon = center_cell_max_lon +
-                           center_cell_section_coords->section_width_lon
+                           center_cell_section_coords->section_width_lon;
     section_coords = latlon_section_coords(section_min_lat,section_min_lon,
                                            section_max_lat,section_max_lon)
-    river_directions_pointer = river_directions
-    river_directions = latlon_field_section(river_directions_pointer,
+    river_directions = latlon_field_section(river_directions,
                                                   section_coords)
-    total_cumulative_flow_pointer = total_cumulative_flow
-    total_cumulative_flow = latlon_field_section(total_cumulative_flow_pointer,
+    total_cumulative_flow = latlon_field_section(total_cumulative_flow,
                                                        section_coords)
-    center_cell_id = 5
+    center_cell_id = 5;
 }
 
 void init_irregular_latlon_neighborhood(center_cell_section_coords,
-                                              coarse_cell_neighbors,
-                                              river_directions,
-                                              total_cumulative_flow) {
+                                        coarse_cell_neighbors,
+                                        river_directions,
+                                        total_cumulative_flow) {
     class(irregular_latlon_section_coords) :: center_cell_section_coords
     type(irregular_latlon_section_coords) :: neighborhood_section_coords
     integer, dimension(:,:), target :: river_directions
     integer, dimension(:,:), target :: total_cumulative_flow
     integer, dimension(:,:), pointer :: coarse_cell_neighbors
     integer, dimension(:), pointer :: list_of_cell_numbers
-    class(*), dimension(:,:), pointer :: river_directions_pointer
-    class(*), dimension(:,:), pointer :: total_cumulative_flow_pointer
     class(*), dimension(:,:), pointer :: cell_numbers_pointer
     class(*), pointer :: cell_number_pointer
-    int i
-    int max_nneigh_coarse,nneigh_coarse
     int nbr_cell_number
-    max_nneigh_coarse = len(coarse_cell_neighbors,2)
+    int max_nneigh_coarse = len(coarse_cell_neighbors,2)
     center_cell_id = center_cell_section_coords->cell_number
     allocate(list_of_cells_in_neighborhood)
-    nneigh_coarse = 0;
-    do i=1,max_nneigh_coarse {
+    int nneigh_coarse = 0;
+    for (int i=1; i <= max_nneigh_coarse; i++ {
         nbr_cell_number = coarse_cell_neighbors(center_cell_id,i)
         if (nbr_cell_number > 0) {
             list_of_cells_in_neighborhood->
@@ -1392,7 +1233,7 @@ void init_irregular_latlon_neighborhood(center_cell_section_coords,
     allocate(list_of_cell_numbers(nneigh_coarse+1))
     list_of_cell_numbers(1) = center_cell_id
     list_of_cells_in_neighborhood->reset_iterator()
-    i = 1
+    int i = 1
     do while (! list_of_cells_in_neighborhood->iterate_forward()) {
         i = i + 1
         cell_number_pointer = list_of_cells_in_neighborhood->get_value_at_iterator_position()
@@ -1405,15 +1246,13 @@ void init_irregular_latlon_neighborhood(center_cell_section_coords,
                                         center_cell_section_coords->section_min_lons,
                                         center_cell_section_coords->section_max_lats,
                                         center_cell_section_coords->section_max_lons )
-    cell_numbers_pointer = center_cell_section_coords->cell_numbers
-    cell_numbers = latlon_field_section(cell_numbers_pointer,neighborhood_section_coords)
-    river_directions_pointer = river_directions
-    river_directions = latlon_field_section(river_directions_pointer,
-                                                  neighborhood_section_coords)
-    total_cumulative_flow_pointer = total_cumulative_flow
-    total_cumulative_flow = latlon_field_section(total_cumulative_flow_pointer,
-                                                       neighborhood_section_coords)
-    neighborhood_section_coords->irregular_latlon_section_coords_destructor()
+    cell_numbers_pointer = center_cell_section_coords->cell_numbers;
+    cell_numbers = latlon_field_section(cell_numbers_pointer,neighborhood_section_coords);
+    river_directions = latlon_field_section(river_directions,
+                                            neighborhood_section_coords);
+    total_cumulative_flow = latlon_field_section(total_cumulative_flow,
+                                                 neighborhood_section_coords);
+    neighborhood_section_coords->irregular_latlon_section_coords_destructor();
     delete list_of_cell_numbers;
 }
 
@@ -1433,20 +1272,18 @@ void yamazaki_init_latlon_neighborhood(latlon_section_coords* center_cell_sectio
                                        int* total_cumulative_flow,
                                        int* yamazaki_outlet_pixels_pointer,
                                        latlon_section_coords* yamazaki_section_coords) {
-    class(*), dimension(:,:), pointer :: yamazaki_outlet_pixels_pointer
     init_latlon_neighborhood(center_cell_section_coords,river_directions,
                              total_cumulative_flow);
-    yamazaki_outlet_pixels_pointer = yamazaki_outlet_pixels;
     section_min_lat = yamazaki_section_coords->section_min_lat;
     section_min_lon = yamazaki_section_coords->section_min_lon;
     section_max_lat = yamazaki_section_coords->section_min_lat +
                       yamazaki_section_coords->section_width_lat - 1;
     section_max_lon = yamazaki_section_coords->section_min_lon +
                       yamazaki_section_coords->section_width_lon - 1;
-    yamazaki_outlet_pixels = latlon_field_section(yamazaki_outlet_pixels_pointer,
-                                                  yamazaki_section_coords)
-    yamazaki_cell_width_lat = center_cell_max_lat + 1 - center_cell_min_lat
-    yamazaki_cell_width_lon = center_cell_max_lon + 1 - center_cell_min_lon
+    yamazaki_outlet_pixels = latlon_field_section(yamazaki_outlet_pixels,
+                                                  yamazaki_section_coords);
+    yamazaki_cell_width_lat = center_cell_max_lat + 1 - center_cell_min_lat;
+    yamazaki_cell_width_lon = center_cell_max_lon + 1 - center_cell_min_lon;
 }
 
 int latlon_in_which_cell(coords* pixel) {
@@ -1496,71 +1333,6 @@ void yamazaki_latlon_wrap_coordinates(coords* pixel_coords){
 }
 
 void yamazaki_irregular_latlon_wrap_coordinates_dummy(coords* pixel_coords){}
-
-function latlon_dir_based_rdirs_field_constructor(field_section_coords,river_directions) {
-    result(constructor)
-    type(latlon_dir_based_rdirs_field), allocatable :: constructor
-    type(latlon_section_coords) :: field_section_coords
-    integer, dimension(:,:), target :: river_directions
-    class(*), dimension(:,:), pointer :: river_directions_pointer
-        allocate(constructor)
-        river_directions_pointer = river_directions
-        constructor->init_latlon_field(field_section_coords,river_directions_pointer)
-}
-
-function latlon_dir_based_rdirs_neighborhood_constructor(center_cell_section_coords,river_directions,
-                                                           total_cumulative_flow) {result(constructor)
-    type(latlon_dir_based_rdirs_neighborhood), allocatable :: constructor
-    type(latlon_section_coords) :: center_cell_section_coords
-    integer, dimension(:,:) :: river_directions
-    integer, dimension(:,:) :: total_cumulative_flow
-        allocate(constructor)
-        constructor->init_latlon_neighborhood(center_cell_section_coords,river_directions,
-                                                  total_cumulative_flow)
-}
-
-function irregular_latlon_dir_based_rdirs_neighborhood_constructor(center_cell_section_coords,
-                                                                   coarse_cell_neighbors,
-                                                                   river_directions,
-                                                                   total_cumulative_flow) {
-                                                                    result(constructor)
-    type(irregular_latlon_dir_based_rdirs_neighborhood), allocatable :: constructor
-    type(irregular_latlon_section_coords) :: center_cell_section_coords
-    integer, dimension(:,:) :: river_directions
-    integer, dimension(:,:) :: total_cumulative_flow
-    integer, dimension(:,:), pointer :: coarse_celL_neighbors
-        allocate(constructor)
-        constructor->init_irregular_latlon_neighborhood(center_cell_section_coords,
-                                                            coarse_cell_neighbors,
-                                                            river_directions,
-                                                            total_cumulative_flow)
-}
-
-function icon_single_index_index_based_rdirs_field_constructor(field_section_coords,river_directions){
-        result(constructor)
-    type(icon_single_index_index_based_rdirs_field), allocatable :: constructor
-    type(generic_1d_section_coords) :: field_section_coords
-    integer, dimension(:), target :: river_directions
-        allocate(constructor)
-        river_directions_pointer = river_directions
-        constructor->init_icon_single_index_field(field_section_coords,river_directions_pointer)
-}
-
-function yamazaki_latlon_dir_based_rdirs_neighborhood_constructor(center_cell_section_coords,river_directions,
-                                                                  total_cumulative_flow,yamazaki_outlet_pixels,
-                                                                  yamazaki_section_coords) {
-    result(constructor)
-    type(latlon_dir_based_rdirs_neighborhood), allocatable :: constructor
-    type(latlon_section_coords) :: center_cell_section_coords
-    type(latlon_section_coords) :: yamazaki_section_coords
-    integer, dimension(:,:) :: river_directions
-    integer, dimension(:,:) :: total_cumulative_flow
-    integer, dimension(:,:) :: yamazaki_outlet_pixels
-        allocate(constructor)
-        constructor->yamazaki_init_latlon_neighborhood(center_cell_section_coords,river_directions,
-                                                           total_cumulative_flow,yamazaki_outlet_pixels,
-                                                           yamazaki_section_coords)
-}
 
 void latlon_dir_based_rdirs_find_next_pixel_downstream(coords* coords_inout,
                                                        bool& coords_not_in_area,

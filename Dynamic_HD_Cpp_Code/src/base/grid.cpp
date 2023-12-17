@@ -620,7 +620,14 @@ void icon_single_index_grid::for_diagonal_nbrs(coords* coords_in,function<void(c
 	if (use_secondary_neighbors) {
 		for (auto i = 0; i < 9; i++) {
 			int neighbor_index = get_cell_secondary_neighbors_index(generic_1d_coords_in,i);
-			if (neighbor_index != no_neighbor) func(new generic_1d_coords(neighbor_index));
+			if (nowrap){
+				coords* neighbor_coords = new generic_1d_coords(neighbor_index);
+				if (*subgrid_mask)(neighbor_coords){
+					if (neighbor_index != no_neighbor) func(neighbor_coords);
+				}
+			else {
+				if (neighbor_index != no_neighbor) func(new generic_1d_coords(neighbor_index));
+			}
 		}
 	}
 }
@@ -629,7 +636,14 @@ void icon_single_index_grid::for_non_diagonal_nbrs(coords* coords_in,function<vo
 	generic_1d_coords* generic_1d_coords_in = static_cast<generic_1d_coords*>(coords_in);
 	for (auto i = 0; i < 3; i++) {
 		int neighbor_index = get_cell_neighbors_index(generic_1d_coords_in,i);
-		func(new generic_1d_coords(neighbor_index));
+		if (nowrap){
+			coords* neighbor_coords = new generic_1d_coords(neighbor_index);
+			if (*subgrid_mask)(neighbor_coords){
+				if (neighbor_index != no_neighbor) func(neighbor_coords);
+			}
+		else {
+			func(new generic_1d_coords(neighbor_index));
+		}
 	}
 }
 
@@ -648,14 +662,32 @@ void icon_single_index_grid::
 }
 
 void icon_single_index_grid::for_all(function<void(coords*)> func) {
-	for (auto i = 0; i < ncells; i++) {
-		func(new generic_1d_coords(i + array_offset));
+	if (nowrap)
+		for (auto i = 0; i < ncells; i++) {
+			coords* cell_coords = new generic_1d_coords(i + array_offset)
+			if ((*subgrid_mask)(cell_coords)){
+				func(cell_coords);
+			}
+		}
+	} else {
+		for (auto i = 0; i < ncells; i++) {
+			func(new generic_1d_coords(i + array_offset));
+		}
 	}
 }
 
 void icon_single_index_grid::for_all_with_line_breaks(function<void(coords*,bool)> func){
-	for (auto i = 0; i < ncells; i++) {
-		func(new generic_1d_coords(i + array_offset),false);
+	if (nowrap)
+		for (auto i = 0; i < ncells; i++) {
+			coords* cell_coords = new generic_1d_coords(i + array_offset)
+			if ((*subgrid_mask)(cell_coords)){
+				func(cell_coords,false);
+			}
+		}
+	} else {
+		for (auto i = 0; i < ncells; i++) {
+			func(new generic_1d_coords(i + array_offset),false);
+		}
 	}
 }
 
