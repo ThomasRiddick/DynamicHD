@@ -613,7 +613,7 @@ icon_single_index_grid::icon_single_index_grid(grid_params* params){
 	} else {
 		throw runtime_error("icon_single_index_grid constructor received wrong kind of grid parameters");
 	}
-};
+}
 
 void icon_single_index_grid::for_diagonal_nbrs(coords* coords_in,function<void(coords*)> func) {
 	generic_1d_coords* generic_1d_coords_in = static_cast<generic_1d_coords*>(coords_in);
@@ -622,10 +622,10 @@ void icon_single_index_grid::for_diagonal_nbrs(coords* coords_in,function<void(c
 			int neighbor_index = get_cell_secondary_neighbors_index(generic_1d_coords_in,i);
 			if (nowrap){
 				coords* neighbor_coords = new generic_1d_coords(neighbor_index);
-				if (*subgrid_mask)(neighbor_coords){
+				if (subgrid_mask[neighbor_index - array_offset]) {
 					if (neighbor_index != no_neighbor) func(neighbor_coords);
 				}
-			else {
+			} else {
 				if (neighbor_index != no_neighbor) func(new generic_1d_coords(neighbor_index));
 			}
 		}
@@ -638,10 +638,10 @@ void icon_single_index_grid::for_non_diagonal_nbrs(coords* coords_in,function<vo
 		int neighbor_index = get_cell_neighbors_index(generic_1d_coords_in,i);
 		if (nowrap){
 			coords* neighbor_coords = new generic_1d_coords(neighbor_index);
-			if (*subgrid_mask)(neighbor_coords){
+			if (subgrid_mask[neighbor_index - array_offset]) {
 				if (neighbor_index != no_neighbor) func(neighbor_coords);
 			}
-		else {
+		} else {
 			func(new generic_1d_coords(neighbor_index));
 		}
 	}
@@ -662,10 +662,10 @@ void icon_single_index_grid::
 }
 
 void icon_single_index_grid::for_all(function<void(coords*)> func) {
-	if (nowrap)
+	if (nowrap) {
 		for (auto i = 0; i < ncells; i++) {
-			coords* cell_coords = new generic_1d_coords(i + array_offset)
-			if ((*subgrid_mask)(cell_coords)){
+			coords* cell_coords = new generic_1d_coords(i + array_offset);
+			if (subgrid_mask[i]){
 				func(cell_coords);
 			}
 		}
@@ -677,10 +677,10 @@ void icon_single_index_grid::for_all(function<void(coords*)> func) {
 }
 
 void icon_single_index_grid::for_all_with_line_breaks(function<void(coords*,bool)> func){
-	if (nowrap)
+	if (nowrap) {
 		for (auto i = 0; i < ncells; i++) {
-			coords* cell_coords = new generic_1d_coords(i + array_offset)
-			if ((*subgrid_mask)(cell_coords)){
+			coords* cell_coords = new generic_1d_coords(i + array_offset);
+			if (subgrid_mask[i]){
 				func(cell_coords,false);
 			}
 		}
@@ -779,6 +779,94 @@ coords* icon_single_index_grid::
 	calculate_downstream_coords_from_index_based_rdir(coords* initial_coords,int rdir){
 		return new generic_1d_coords(rdir);
 	}
+
+vector<int>* icon_single_index_grid::generate_subfield_edge_cells(int num_points_subarray,
+                                                                  int* cell_neighbors_in,
+                                                            	    int* cell_secondary_neighbors_in) {
+  vector<int>* edge_cells = new vector<int>();
+  for (int i = 0; i < num_points_subarray; i++) {
+    bool is_edge_cell = false;
+    for (int j = 0; j < 3; j++) {
+      if(cell_neighbors_in[3*i+j] == -1) {
+        edge_cells->push_back(i + array_offset);
+        is_edge_cell = true;
+        break;
+      }
+    }
+    if (is_edge_cell) break;
+    for (int j = 0; j < 9; j++) {
+      if(cell_secondary_neighbors_in[9*i+j] == -1) {
+        edge_cells->push_back(i + array_offset);
+        is_edge_cell = true;
+        break;
+      }
+    }
+    if (is_edge_cell) break;
+  }
+  return edge_cells;
+}
+
+int* icon_single_index_grid::generate_full_field_indices(int num_points_subarray,
+                                                         bool* mask,
+                                                         int* subfield_indices) {
+    int* full_field_indices = new int[num_points_subarray];
+    for (int i = 0; i < ncells; i++) {
+      if(mask[i]) {
+        full_field_indices[subfield_indices[i] - array_offset] =
+        	i + array_offset + 1;
+      }
+    }
+    return full_field_indices;
+}
+
+int* icon_single_index_grid::generate_subfield_indices(bool* mask) {
+  int* subfield_indices = new int[ncells];
+  int i_new = 1;
+  for (int i = 0; i < ncells; i++) {
+    if(mask[i]) {
+      subfield_indices[i] = i_new;
+      i_new = i + array_offset + i_new;
+    } else {
+      subfield_indices[i] = -1;
+    }
+  }
+  return subfield_indices;
+}
+
+int* icon_single_index_grid::generate_subfield_neighbors(int num_points_subarray,
+                                                         bool* mask,
+                                                         int* subfield_indices,
+                                                         int* full_field_indices) {
+  if (all_of(mask,mask+ncells,[](bool x){return x;})) {
+    return neighboring_cell_indices;
+  } else {
+    int* cell_neighbors = new int[3*num_points_subarray];
+    for (int i = 0; i < num_points_subarray; i++) {
+      for (int nbr_num = 0; nbr_num < 3; nbr_num++) {
+        cell_neighbors[i*3+nbr_num] =
+        	subfield_indices[cell_neighbors[full_field_indices[i - array_offset]*3+nbr_num]
+        	                 -array_offset] + array_offset;
+      }
+    }
+  	return cell_neighbors;
+  }
+}
+
+int* icon_single_index_grid::generate_subfield_secondary_neighbors(int num_points_subarray,
+                                                                   int* subfield_indices,
+                                                                   int* full_field_indices) {
+	if (! use_secondary_neighbors) return nullptr;
+  int* subfield_secondary_neighbors = new int[num_points_subarray*9];
+  for (int i = 0; i < num_points_subarray; i++) {
+    for (int j = 0; j < 9; j++) {
+      subfield_secondary_neighbors[9*i+j] =
+      	subfield_indices[secondary_neighboring_cell_indices[(full_field_indices[i]-
+      	                                                     array_offset)*9+j]-array_offset] +
+      																											array_offset;
+    }
+  }
+  return subfield_secondary_neighbors;
+}
 
 #if USE_NETCDFCPP
 void icon_single_index_grid_params::icon_single_index_grid_read_params_file(){

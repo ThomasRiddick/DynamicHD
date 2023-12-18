@@ -252,7 +252,7 @@ void latlon_flow_accumulation_algorithm::
 coords* icon_single_index_flow_accumulation_algorithm::
   get_next_cell_coords(coords* coords_in) {
   int next_cell_coords_index = (*next_cell_index)(coords_in);
-  coords* next_cell_coords = new generic_1d_coords(next_cell_coords_index);
+  return new generic_1d_coords(next_cell_coords_index);
 }
 
 int icon_single_index_flow_accumulation_algorithm::

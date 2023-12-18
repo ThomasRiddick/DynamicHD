@@ -377,6 +377,20 @@ public:
 	                                        grid_params* coarse_grid_params,
 	                                        function<void(coords*)> func)
 		{ throw runtime_error("function not yet implemented for icon grid"); }
+	vector<int>* generate_subfield_edge_cells(int num_points_subarray,
+                                     			  int* cell_neighbors_in,
+                                     			  int* cell_secondary_neighbors_in);
+	int* generate_full_field_indices(int num_points_subarray,
+                                   bool* mask,
+                                   int* subfield_indices);
+	int* generate_subfield_indices(bool* mask);
+	int* generate_subfield_neighbors(int num_points_subarray,
+                                   bool* mask,
+                                   int* subfield_indices,
+                                   int* full_field_indices);
+	int* generate_subfield_secondary_neighbors(int num_points_subarray,
+                                             int* subfield_indices,
+                                             int* full_field_indices);
 };
 
 /**
