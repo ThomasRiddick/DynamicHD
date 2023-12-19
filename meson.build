@@ -5,6 +5,8 @@ project('dynamic HD scripts',['c','cpp','fortran','cython'],
                          'cython_language=cpp'])
 add_project_arguments('-DPROCESSED_CELL_COUNTER','-DDARWIN',language:'cpp')
 add_project_arguments('-cpp','-c','-fmessage-length=0','-fPIC',language:'fortran')
+bin_dir = meson.project_source_root() / 'bin'
+lib_dir = meson.project_source_root() / 'lib'
 cpp_src = []
 cpp_test_src = []
 fortran_src = []
@@ -35,7 +37,8 @@ if get_option('build_unit_tests')
                  cpp_test_src,
                  include_directories: cpp_inc,
                  link_with: lib_cpp,
-                 install: false)
+                 install: true,
+                 install_dir: bin_dir)
   test('Cpp unit tests',e)
 endif
 if get_option('build_cython')
@@ -50,7 +53,9 @@ if get_option('build_cython')
                         cython_src_path /
                         cython_library + '.pyx',
                         include_directories: [numpy_inc,cpp_inc],
-                        link_with: lib_cpp)
+                        link_with: lib_cpp,
+                        install: true,
+                        install_dir: lib_dir)
   endforeach
 endif
 lib_fortran = library('dyhd_fortran',fortran_src,
@@ -62,7 +67,8 @@ if get_option('build_unit_tests')
                   include_directories: fortran_inc,
                   dependencies: netcdf_fortran_lib,
                   link_with: lib_fortran,
-                  install: false)
+                  install: true,
+                  install_dir: bin_dir)
   test('Fortran unit tests',fe)
 endif
 if get_option('build_tools')
@@ -77,6 +83,7 @@ if get_option('build_tools')
                include_directories: fortran_inc,
                dependencies: netcdf_fortran_lib,
                link_with: lib_fortran,
-               install: false)
+               install: true,
+               install_dir: bin_dir)
   endforeach
 endif
