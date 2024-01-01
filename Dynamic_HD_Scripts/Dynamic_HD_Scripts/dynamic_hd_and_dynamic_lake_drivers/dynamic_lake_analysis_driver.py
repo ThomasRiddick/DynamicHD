@@ -440,7 +440,7 @@ class Dynamic_Lake_Analysis_Run_Framework:
                  self.corrections_file_for_current_version)
             self.dyn_lake_driver.date_based_sill_height_corrections_list_filename = \
                 self.date_based_corrections_file_for_current_version
-            self.dyn_lake_driver.additional_orography_corrections_filepath = \
+            self.dyn_lake_driver.additional_orography_corrections_list_filepath = \
                 self.additional_corrections_file_for_current_version
             self.dyn_lake_driver.current_date = slice_time
             os.mkdir(join(self.lakes_directory,
