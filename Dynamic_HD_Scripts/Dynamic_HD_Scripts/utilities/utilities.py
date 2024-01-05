@@ -1740,6 +1740,7 @@ def apply_date_based_sill_height_corrections(orography_field,
                                              current_date):
     """
     """
+    version_number_pattern = re.compile(r"# Version")
     most_recent_only_full_pattern = re.compile(r"# *most_recent_only_full")
     additive_condensed_pattern = re.compile(r"# *additive_condensed")
     new_entry_line_pattern = re.compile(r"-*new *entry*-")
@@ -1754,6 +1755,8 @@ def apply_date_based_sill_height_corrections(orography_field,
     coords = None
     with open(date_based_sill_height_corrections_list_filename) as f:
         first_line = f.readline().strip('\n')
+        if version_number_pattern.match(first_line):
+            first_line = f.readline().strip('\n')
         if most_recent_only_full_pattern.match(first_line):
             most_recent_only = True
             previous_line_type = LineTypes.NOTSET

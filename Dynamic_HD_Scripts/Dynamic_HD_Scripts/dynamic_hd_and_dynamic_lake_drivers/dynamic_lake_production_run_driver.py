@@ -50,7 +50,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                  non_standard_orog_correction_filename=None,
                  date_based_sill_height_corrections_list_filename=None,
                  current_date=None,
-                 additional_orography_corrections_list_filepath=None):
+                 additional_orography_corrections_list_filename=None):
         """Class constructor.
 
         Deliberately does NOT call constructor of Dynamic_HD_Drivers so the many paths
@@ -74,7 +74,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
              date_based_sill_height_corrections_list_filename
         self.current_date = current_date
         self.additional_orography_corrections_list_filename = \
-             additional_orography_corrections_list_filepath
+             additional_orography_corrections_list_filename
         if self.ancillary_data_path is not None:
             self.python_config_filename=path.join(self.ancillary_data_path,
                                                   "dynamic_lake_production_driver.cfg")
@@ -433,9 +433,13 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                       field_type='Orography')
         orography_uncorrected_10min = orography_10min.copy()
         orography_10min.add(orography_corrections_10min)
+        print("Applying sill height corrections from {}"\
+              .format(self.date_based_sill_height_corrections_list_filename))
         if self.date_based_sill_height_corrections_list_filename is not None:
             utilities.apply_date_based_sill_height_corrections(orography_10min,
                 self.date_based_sill_height_corrections_list_filename,int(self.current_date))
+        print("Applying additional corrections from {}"\
+              .format(self.additional_orography_corrections_list_filename))
         if self.additional_orography_corrections_list_filename is not None:
             utilities.apply_date_based_sill_height_corrections(
                 orography_10min,
@@ -1146,7 +1150,7 @@ def parse_arguments():
                         help='Current date for date based orography corrections',
                         type=str,
                         default=None)
-    parser.add_argument('-a','--additional-orography-corrections-list-filepath',
+    parser.add_argument('-a','--additional-orography-corrections-list-filename',
                         help='Filepath to list with data based custom relative'
                              ' orography corrections to apply',
                         type=str,
