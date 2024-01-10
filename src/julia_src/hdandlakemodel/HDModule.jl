@@ -188,10 +188,13 @@ end
 
 mutable struct RiverDiagnosticOutputFields
   cumulative_river_flow::Field{Float64}
+  mean_river_flow::Field{Float64}
   function RiverDiagnosticOutputFields(river_parameters::RiverParameters)
     cumulative_river_flow::Field{Float64} =
       Field{Float64}(river_parameters.grid,0.0)
-    new(cumulative_river_flow)
+    mean_river_flow::Field{Float64} =
+      Field{Float64}(river_parameters.grid,0.0)
+    new(cumulative_river_flow,mean_river_flow)
   end
 end
 
@@ -522,27 +525,30 @@ function print_river_results_section(prognostic_fields::PrognosticFields)
   println("")
 end
 
-struct WriteRiverInitialValues <: Event end
+struct WriteRiverInitialValues <: Event
+  hd_start_filepath::AbstractString
+end
 
 function handle_event(prognostic_fields::PrognosticFields,
-                      print_results::WriteRiverInitialValues)
+                      write_river_initial_values::WriteRiverInitialValues)
   river_fields::RiverPrognosticFields = get_river_fields(prognostic_fields)
   river_parameters::RiverParameters = get_river_parameters(prognostic_fields)
-  hd_start_filepath::AbstractString = "/Users/thomasriddick/Documents/data/temp/river_model_out.nc"
-  #write_river_initial_values(hd_start_filepath,river_parameters,river_fields)
+  write_river_initial_values(write_river_initial_values.hd_start_filepath,
+                             river_parameters,river_fields)
   return prognostic_fields
 end
 
 struct WriteRiverFlow <: Event
   timestep::Int64
+  river_flow_filepath::AbstractString
 end
 
 function handle_event(prognostic_fields::PrognosticFields,
                       write_river_flow::WriteRiverFlow)
   river_fields::RiverPrognosticFields = get_river_fields(prognostic_fields)
   river_parameters::RiverParameters = get_river_parameters(prognostic_fields)
-  #write_river_flow_field(river_parameters,river_fields.river_inflow,
-  #                      timestep=write_river_flow.timestep)
+  write_river_flow_field(river_parameters,river_fields.river_inflow,
+                         write_river_flow.river_flow_filepath)
   return prognostic_fields
 end
 
@@ -551,13 +557,14 @@ struct AccumulateRiverFlow <: Event end
 function handle_event(prognostic_fields::PrognosticFields,
                       accumulate_river_flow::AccumulateRiverFlow)
   river_fields::RiverPrognosticFields = get_river_fields(prognostic_fields)
+  river_parameters::RiverParameters = get_river_parameters(prognostic_fields)
   river_diagnostic_output_fields::RiverDiagnosticOutputFields =
     get_river_diagnostic_output_fields(prognostic_fields)
   data::Dict{Symbol,SharedArray} =
     Dict{Symbol,SharedArray}(
       :cumulative_river_flow => river_diagnostic_output_fields.cumulative_river_flow.data,
       :river_inflow => river_fields.river_inflow.data)
-  for_all_parallel(grid) do coords::CartesianIndex
+  for_all_parallel(river_parameters.grid) do coords::CartesianIndex
     data[:cumulative_river_flow][coords] += data[:river_inflow][coords]
   end
   return prognostic_fields
@@ -576,6 +583,7 @@ end
 struct WriteMeanRiverFlow <: Event
   timestep::Int64
   number_of_timesteps::Int64
+  mean_river_flow_filepath::AbstractString
 end
 
 function handle_event(prognostic_fields::PrognosticFields,
@@ -583,15 +591,17 @@ function handle_event(prognostic_fields::PrognosticFields,
   river_diagnostic_output_fields::RiverDiagnosticOutputFields =
     get_river_diagnostic_output_fields(prognostic_fields)
   river_parameters::RiverParameters = get_river_parameters(prognostic_fields)
-  mean_river_flow::Field{Float64} =
-      Field{Float64}(river_parameters.grid,0.0)
-  for_all(river_parameters.grid) do coords::Coords
-    set!(mean_river_flow,coords,
-         river_diagnostic_output_fields.cumulative_river_flow(coords)/
-         convert(Float64,write_mean_river_flow.number_of_timesteps))
+  number_of_timesteps::Float64 = convert(Float64,write_mean_river_flow.number_of_timesteps)
+  data::Dict{Symbol,SharedArray} =
+    Dict{Symbol,SharedArray}(
+      :mean_river_flow => river_diagnostic_output_fields.mean_river_flow.data
+      :cumulative_river_flow => river_diagnostic_output_fields.cumulative_river_flow.data)
+  for_all_parallel(river_parameters.grid) do coords::CartesianIndex
+    mean_river_flow[coords] =
+         data[:cumulative_river_flow][coords]/number_of_timesteps
   end
   write_river_flow_field(river_parameters,mean_river_flow,
-                         timestep=write_mean_river_flow.timestep)
+                         write_mean_river_flow.mean_river_flow_filepath)
   return prognostic_fields
 end
 

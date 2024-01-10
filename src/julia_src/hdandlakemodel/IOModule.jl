@@ -364,9 +364,10 @@ function load_lake_parameters(lake_para_filepath::AbstractString,grid::Grid,hd_g
   end
 end
 
-function write_river_flow_field(river_parameters::RiverParameters,river_flow_field::Field{Float64};timestep::Int64=-1)
+function write_river_flow_field(river_parameters::RiverParameters,
+                                river_flow_field::Field{Float64},
+                                filepath::AbstractString)
   variable_name::String = "river_flow"
-  filepath::String = timestep == -1 ? "/Users/thomasriddick/Documents/data/temp/river_model_results.nc" : "/Users/thomasriddick/Documents/data/temp/river_model_results_$(timestep).nc"
   write_field(river_parameters.grid,variable_name,river_flow_field,filepath)
 end
 

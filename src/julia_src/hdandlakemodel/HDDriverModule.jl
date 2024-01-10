@@ -135,10 +135,11 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
       if i%output_timestep == 0 || i == 1
         print_global_values::PrintGlobalValues = PrintGlobalValues()
         handle_event(hsm,print_global_values::PrintGlobalValues)
-        #write_mean_river_flow::WriteMeanRiverFlow = WriteMeanRiverFlow(i,output_timestep)
-        #handle_event(hsm,write_mean_river_flow)
-        write_river_flow::WriteRiverFlow = WriteRiverFlow(i)
-        handle_event(hsm,write_river_flow)
+        write_mean_river_flow::WriteMeanRiverFlow =
+          WriteMeanRiverFlow(i,output_timestep,"mean_river_flow_$(i).nc")
+        handle_event(hsm,write_mean_river_flow)
+        #write_river_flow::WriteRiverFlow = WriteRiverFlow(river_flow_$(i).nc")
+        #handle_event(hsm,write_river_flow)
         reset_cumulative_river_flow::ResetCumulativeRiverFlow = ResetCumulativeRiverFlow()
         handle_event(hsm,reset_cumulative_river_flow)
         if run_lakes_flag
@@ -156,7 +157,8 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
     handle_event(hsm,calculate_true_lake_depths)
   end
   if write_output
-    write_river_initial_values::WriteRiverInitialValues = WriteRiverInitialValues()
+    write_river_initial_values::WriteRiverInitialValues =
+      WriteRiverInitialValues("hdstart_new.nc")
     handle_event(hsm,write_river_initial_values)
     if run_lakes_flag
       write_lake_volumes::WriteLakeVolumes = WriteLakeVolumes()
