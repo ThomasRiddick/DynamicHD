@@ -21,7 +21,7 @@ using LakeModule: calculate_effective_lake_height_on_surface_grid
 using LakeModule: MergeAndRedirectIndices,MergeAndRedirectIndicesCollection
 using LakeModule: LatLonMergeAndRedirectIndices,add_offset,reset
 using LakeModule: create_merge_indices_collections_from_array
-using IOModule: load_lake_parameters
+using InputModule: load_lake_parameters
 
 @testset "HD model tests" begin
   grid = LatLonGrid(4,4,true)

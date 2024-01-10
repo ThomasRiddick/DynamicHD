@@ -1,10 +1,10 @@
 push!(LOAD_PATH, "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/src/julia_src/hdandlakemodel")
 using ArgParse
 using HDDriverModule: drive_hd_model,drive_hd_and_lake_model
-using IOModule: load_river_parameters, load_lake_parameters
-using IOModule: load_drainage_fields, load_runoff_fields
-using IOModule: load_lake_evaporation_fields
-using IOModule: load_lake_initial_values,load_river_initial_values
+using InputModule: load_river_parameters, load_lake_parameters
+using InputModule: load_drainage_fields, load_runoff_fields
+using InputModule: load_lake_evaporation_fields
+using InputModule: load_lake_initial_values,load_river_initial_values
 using GridModule: Grid, LatLonGrid
 using FieldModule: Field,LatLonField,repeat,divide
 using Profile

@@ -14,6 +14,8 @@ using GridModule: for_section_with_line_breaks,find_coarse_cell_containing_fine_
 using FieldModule: Field, set!,elementwise_divide, elementwise_multiple
 using SplittableRootedTree: RootedTreeForest,make_new_link,split_set,add_set,find_root
 using SplittableRootedTree: get_all_node_labels_of_set
+using OutputModule: write_diagnostic_lake_volumes_field, write_lake_volumes_field
+using OutputModule: write_lake_numbers_field
 import HDModule: water_to_lakes,water_from_lakes
 import HierarchicalStateMachineModule: handle_event
 import FieldModule: add_offset
@@ -1762,7 +1764,8 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
                       write_lake_numbers::WriteLakeNumbers)
   lake_parameters::LakeParameters = get_lake_parameters(prognostic_fields)
   lake_fields::LakeFields = get_lake_fields(prognostic_fields)
-  write_lake_numbers_field(lake_parameters,lake_fields,timestep=write_lake_numbers.timestep)
+  write_lake_numbers_field(lake_parameters.grid,lake_fields.lake_numbers,
+                           timestep=write_lake_numbers.timestep)
   return prognostic_fields
 end
 
@@ -1777,7 +1780,7 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
     set!(lake_volumes,lake_center_cell,lake_variables.lake_volume +
                                       lake_variables.unprocessed_water)
   end
-  write_lake_volumes_field(lake_parameters,lake_volumes)
+  write_lake_volumes_field(lake_parameters.grid,lake_volumes)
   return prognostic_fields
 end
 
@@ -1789,7 +1792,7 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
   diagnostic_lake_volumes::Field{Float64} = calculate_diagnostic_lake_volumes_field(lake_parameters,
                                                                                     lake_fields,
                                                                                     lake_prognostics)
-  write_diagnostic_lake_volumes_field(lake_parameters,diagnostic_lake_volumes,
+  write_diagnostic_lake_volumes_field(lake_parameters.grid,diagnostic_lake_volumes,
                                       timestep=write_diagnostic_lake_volumes.timestep)
   return prognostic_fields
 end

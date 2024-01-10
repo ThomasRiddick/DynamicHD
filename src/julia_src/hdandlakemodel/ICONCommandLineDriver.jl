@@ -3,9 +3,9 @@ using Profile
 using ArgParse
 using HDDriverModule: drive_hd_model,drive_hd_and_lake_model
 using FieldModule: UnstructuredField,Field,repeat
-using IOModule: load_river_parameters, load_river_initial_values,get_ncells
-using IOModule: load_lake_initial_values,load_lake_parameters
-using IOModule: get_additional_grid_information
+using InputModule: load_river_parameters, load_river_initial_values,get_ncells
+using InputModule: load_lake_initial_values,load_lake_parameters
+using InputModule: get_additional_grid_information
 using GridModule: UnstructuredGrid
 @everywhere using HDModule: cascade_kernel
 @everywhere using CoordsModule: is_ocean, is_outflow, is_truesink, is_lake
