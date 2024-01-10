@@ -7,7 +7,7 @@ using CoordsModule: Coords, DirectionIndicator,LatLonSectionCoords,
       is_ocean, is_outflow, is_truesink, is_lake, get_linear_index
 using GridModule: Grid, for_all,for_all_parallel, get_linear_indices
 using GridModule: find_downstream_coords,for_section_with_line_breaks
-using GridModule: get_number_of_neighbors
+using GridModule: get_number_of_neighbors, for_all_parallel_sum
 using UserExceptionModule: UserError
 import HierarchicalStateMachineModule: handle_event
 using InteractiveUtils
@@ -555,8 +555,8 @@ function handle_event(prognostic_fields::PrognosticFields,
     get_river_diagnostic_output_fields(prognostic_fields)
   data::Dict{Symbol,SharedArray} =
     Dict{Symbol,SharedArray}(
-      :cumulative_river_flow => river_diagnostic_output_fields.cumulative_river_flow,
-      :river_inflow => river_fields.river_inflow)
+      :cumulative_river_flow => river_diagnostic_output_fields.cumulative_river_flow.data,
+      :river_inflow => river_fields.river_inflow.data)
   for_all_parallel(grid) do coords::CartesianIndex
     data[:cumulative_river_flow][coords] += data[:river_inflow][coords]
   end
@@ -610,8 +610,8 @@ function handle_event(prognostic_fields::PrognosticFields,
   river_flow_reservoirs_data::Array{SharedArray{Float64},1} =
     get_data_vector(river_fields.river_flow_reservoirs)
   global_reservoir_totals::Array{Float64,1} =
-      for_all_parallel(river_parameters.grid) do coords::CartesianIndex
-    local_reservoir_totals::Array{Float64,1} = Float64[0.0 0.0 0.0]
+      for_all_parallel_sum(river_parameters.grid) do coords::CartesianIndex
+    local_reservoir_totals::Array{Float64,1} = vec(Float64[0.0 0.0 0.0])
     local_reservoir_totals[1] += base_flow_reservoirs_data[1][coords]
     local_reservoir_totals[2] += overland_flow_reservoirs_data[1][coords]
     for i = 1:5

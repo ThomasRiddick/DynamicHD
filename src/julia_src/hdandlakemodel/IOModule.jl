@@ -207,9 +207,9 @@ function load_river_parameters(hd_para_filepath::AbstractString,grid::Grid;
     base_retention_coefficients::Field{Float64} =
       load_field(file_handle,grid,"AGF_K",Float64)
     if use_bifurcated_rivers
-      cells_up =
+      cells_up::Array{Field{Int64}} =
         load_array_of_fields(file_handle,grid,"CELLS_UP",Int64,12)
-      nsplit::Field{Float64} =
+      nsplit::Field{Int64} =
         load_field(file_handle,grid,"NSPLIT",Int64)
       return  RiverParameters(flow_directions,
                               cells_up,
