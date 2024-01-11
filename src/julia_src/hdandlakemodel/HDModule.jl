@@ -536,6 +536,7 @@ function handle_event(prognostic_fields::PrognosticFields,
   river_parameters::RiverParameters = get_river_parameters(prognostic_fields)
   write_river_initial_values(write_river_initial_values_event.hd_start_filepath,
                              river_parameters.grid,river_parameters.step_length,
+                             river_fields.river_inflow,
                              river_fields.base_flow_reservoirs
                              river_fields.overland_flow_reservoirs
                              river_fields.river_flow_reservoirs)
@@ -604,7 +605,8 @@ function handle_event(prognostic_fields::PrognosticFields,
     data[:mean_river_flow][coords] =
          data[:cumulative_river_flow][coords]/number_of_timesteps
   end
-  write_river_flow_field(river_parameters.grid,mean_river_flow,
+  write_river_flow_field(river_parameters.grid,
+                         river_diagnostic_output_fields.mean_river_flow,
                          write_mean_river_flow.mean_river_flow_filepath)
   return prognostic_fields
 end

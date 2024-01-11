@@ -3,11 +3,12 @@ using NetCDF
 using NetCDF: NcFile,NcVar,NC_NETCDF4
 using GridModule: Grid, LatLonGrid, UnstructuredGrid
 using FieldModule: Field, LatLonField,UnstructuredField,get_data
+using SharedArrays: sdata
 
 function prep_array_of_fields(dims::Array{NcDim},
                               variable_base_name::AbstractString,
-                              array_of_fields::Array{Field{T},1},
-                              fields_to_write::Vector{Pair}) where {T}
+                              array_of_fields::Array{T,1},
+                              fields_to_write::Vector{Pair}) where {T <: Field}
   number_of_fields::Int64 = size(array_of_fields,1)
   if number_of_fields == 1
     return prep_field(dims,variable_base_name,array_of_fields[1],fields_to_write)
@@ -54,7 +55,7 @@ function write_fields(grid::Grid,fields_to_write::Vector{Pair},filepath::Abstrac
     NetCDF.create(filepath,variables,mode=NC_NETCDF4)
   end
   for (variable,data) in fields_to_write
-    NetCDF.putvar(variable,data)
+    NetCDF.putvar(variable,sdata(data))
   end
 end
 
@@ -94,9 +95,9 @@ function write_field(grid::Grid,variable_name::AbstractString,
     NetCDF.create(filepath,variable,mode=NC_NETCDF4)
   end
   if isa(grid,LatLonGrid)
-    NetCDF.putvar(variable,permutedims(get_data(field), [2,1]))
+    NetCDF.putvar(variable,permutedims(sdata(get_data(field)), [2,1]))
   else
-    NetCDF.putvar(variable,get_data(field))
+    NetCDF.putvar(variable,sdata(get_data(field)))
   end
 end
 
@@ -110,9 +111,10 @@ end
 function write_river_initial_values(hd_start_filepath::AbstractString,
                                     grid::Grid,
                                     step_length::Float64,
-                                    base_flow_reservoirs::Array{Field{T},1},
-                                    overland_flow_reservoirs::Array{Field{T},1},
-                                    river_flow_reservoirs::Array{Field{T},1})
+				    river_inflow::Field{Float64},
+                                    base_flow_reservoirs::Array{Field{Float64},1},
+                                    overland_flow_reservoirs::Array{Field{Float64},1},
+                                    river_flow_reservoirs::Array{Field{Float64},1})
   println("Writing: " * hd_start_filepath)
   if ! isa(grid,UnstructuredGrid)
     reservoir_units_adjustment = step_length
@@ -124,8 +126,12 @@ function write_river_initial_values(hd_start_filepath::AbstractString,
   river_flow_reservoirs *= reservoir_units_adjustment
   fields_to_write::Vector{Pair} = Pair[]
   dims::Array{NcDim} = prep_dims(grid)
-  prep_field(dims,"FINFL",
-             river_inflow,fields_to_write)
+  if ! isa(grid,UnstructuredGrid)
+    prep_field(dims,"FINFL",
+               river_inflow,fields_to_write)
+  else
+	river_flow_reservoirs[1] += river_inflow
+  end
   prep_array_of_fields(dims,"FGMEM",
                        base_flow_reservoirs,
                        fields_to_write)
@@ -138,7 +144,7 @@ function write_river_initial_values(hd_start_filepath::AbstractString,
   write_fields(grid,fields_to_write,hd_start_filepath,dims)
 end
 
-function write_lake_numbers_field(grid::Grid,lake_numbers::Field{Float64;
+function write_lake_numbers_field(grid::Grid,lake_numbers::Field{Float64};
                                   timestep::Int64=-1)
   variable_name::String = "lake_field"
   filepath::String = timestep == -1 ? "/Users/thomasriddick/Documents/data/temp/lake_model_results.nc" : "/Users/thomasriddick/Documents/data/temp/lake_model_results_$(timestep).nc"

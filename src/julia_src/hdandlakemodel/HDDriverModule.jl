@@ -135,13 +135,15 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
       if i%output_timestep == 0 || i == 1
         print_global_values::PrintGlobalValues = PrintGlobalValues()
         handle_event(hsm,print_global_values::PrintGlobalValues)
-        write_mean_river_flow::WriteMeanRiverFlow =
-          WriteMeanRiverFlow(i,output_timestep,"mean_river_flow_$(i).nc")
-        handle_event(hsm,write_mean_river_flow)
         #write_river_flow::WriteRiverFlow = WriteRiverFlow(river_flow_$(i).nc")
         #handle_event(hsm,write_river_flow)
-        reset_cumulative_river_flow::ResetCumulativeRiverFlow = ResetCumulativeRiverFlow()
-        handle_event(hsm,reset_cumulative_river_flow)
+        if i%output_timestep == 0
+          write_mean_river_flow::WriteMeanRiverFlow =
+            WriteMeanRiverFlow(i,output_timestep,"mean_river_flow_$(i).nc")
+          handle_event(hsm,write_mean_river_flow)
+          reset_cumulative_river_flow::ResetCumulativeRiverFlow = ResetCumulativeRiverFlow()
+          handle_event(hsm,reset_cumulative_river_flow)
+        end
         if run_lakes_flag
            #write_lake_numbers::WriteLakeNumbers = WriteLakeNumbers(i)
            #handle_event(hsm,write_lake_numbers)
