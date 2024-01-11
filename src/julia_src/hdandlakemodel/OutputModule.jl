@@ -14,17 +14,17 @@ function prep_array_of_fields(dims::Array{NcDim},
     return prep_field(dims,variable_base_name,array_of_fields[1],data_to_write)
   else
     if isa( array_of_fields[1],UnstructuredField)
-      extended_dims = vcat(dims,NcVar("n",5))
+      extended_dims = vcat(dims,NcDim[NcDim("n",5)])
       variable = NcVar(variable_base_name,extended_dims,
                        atts=Dict("grid_type"=>"unstructured",
                                  "coordinates"=>"clat clon"))
-      if isa(get_data(field),SharedArray)
-        sdata(get_data(field))
-        reduce(hcat,map(x -> sdata(get_data(x)),array_of_fields)
+      local combined_array::Array
+      if isa(get_data(array_of_fields[1]),SharedArray)
+        combined_array = reduce(hcat,map(x -> sdata(get_data(x)),array_of_fields))
       else
-        reduce(hcat,map(x -> get_data(x),array_of_fields)
+        combined_array = reduce(hcat,map(x -> get_data(x),array_of_fields))
       end
-      push!(data_to_write,Pair(variable,combined_array)
+      push!(data_to_write,Pair(variable,combined_array))
     else
       for i = 1:number_of_fields
         prep_field(dims,variable_base_name*string(i),

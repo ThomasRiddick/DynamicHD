@@ -537,8 +537,8 @@ function handle_event(prognostic_fields::PrognosticFields,
   write_river_initial_values(write_river_initial_values_event.hd_start_filepath,
                              river_parameters.grid,river_parameters.step_length,
                              river_fields.river_inflow,
-                             river_fields.base_flow_reservoirs
-                             river_fields.overland_flow_reservoirs
+                             river_fields.base_flow_reservoirs,
+                             river_fields.overland_flow_reservoirs,
                              river_fields.river_flow_reservoirs)
   return prognostic_fields
 end

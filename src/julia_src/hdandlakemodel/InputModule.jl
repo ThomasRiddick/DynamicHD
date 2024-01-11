@@ -27,7 +27,7 @@ function get_additional_grid_information(file_name::AbstractString)
 end
 
 function load_field(file_handle::NcFile,grid::Grid,variable_name::AbstractString,
-                    field_type::DataType,;timestep::Int64=-1)
+                    field_type::DataType;timestep::Int64=-1,convert_to::Union{Nothing,DataType}=nothing)
   variable::NcVar = file_handle[variable_name]
   extra_dims = timestep == -1 ? 0 : 1
   values_orig::Array{field_type,get_number_of_dimensions(grid)+extra_dims} =
@@ -40,9 +40,16 @@ function load_field(file_handle::NcFile,grid::Grid,variable_name::AbstractString
       values = permutedims(values_orig[:,:,timestep], [2,1])
     end
   else
-    values = values_orig
+    if timestep == -1
+	    values = values_orig
+    else
+      values = values_orig[:,timestep]
+    end
   end
-  return Field{field_type}(grid,values)
+  if ! isnothing(convert_to)
+	converted_values::Array{convert_to,get_number_of_dimensions(grid)} = convert(Array{convert_to},values)
+  end
+  return Field{isnothing(convert_to) ? field_type : convert_to}(grid,isnothing(convert_to) ? values : converted_values)
 end
 
 function load_3d_field(file_handle::NcFile,grid::Grid,variable_name::AbstractString,
@@ -303,8 +310,8 @@ function load_drainage_fields(drainages_filename::AbstractString,grid::Grid;
   drainages::Array{Field{Float64},1} = Field{Float64}[]
   try
     for i::Int64 = first_timestep:last_timestep
-      push!(drainages,load_field(file_handle,grid,"drainage",
-                                 Float64;timestep=i))
+      push!(drainages,load_field(file_handle,grid,"hydro_drainage_box",
+                                 Float32 ;timestep=i,convert_to=Float64))
     end
   finally
     NetCDF.close(file_handle)
@@ -319,8 +326,8 @@ function load_runoff_fields(runoffs_filename::AbstractString,grid::Grid;
   runoffs::Array{Field{Float64},1} = Field{Float64}[]
   try
     for i::Int64 = first_timestep:last_timestep
-      push!(runoffs,load_field(file_handle,grid,"runoff",
-                               Float64;timestep=i))
+      push!(runoffs,load_field(file_handle,grid,"hydro_runoff_box",
+                               Float32 ;timestep=i,convert_to=Float64))
     end
   finally
     NetCDF.close(file_handle)
