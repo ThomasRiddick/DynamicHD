@@ -414,7 +414,7 @@ class Dynamic_Lake_Analysis_Run_Framework:
         landsea_mask_filepath = replace_rightmost(self.landsea_mask_filepath_template,
                                                   "DATE",str(slice_time))
         glacier_mask_filepath = replace_rightmost(self.glacier_mask_filepath_template,
-                                                  "DATE",str(slice_time))
+                                                  "DATE",str(slice_time_formatted))
         if self.run_lake_scripting or force_run_all:
             self.dyn_lake_driver.original_orography_filename=orography_filepath
             self.dyn_lake_driver.original_ls_mask_filename=landsea_mask_filepath

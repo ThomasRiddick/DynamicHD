@@ -906,8 +906,8 @@ class InteractiveTimeSeriesPlots():
         self.timeseries_plots[index].ax.broken_barh(bars[Basins.CAR],(0,9),facecolor="tab:red")
         ypos = (4.5,15.5,24.5)
         self.timeseries_plots[index].ax.set_yticks(ypos,tuple(basins.values()))
-        self.timeseries_plots[index].ax.set_xticks(range(len(lake_outflow_sequence))[0::10],
-                                                   labels=self.date_sequence[0::10])
+        self.timeseries_plots[index].ax.set_xticks(range(len(lake_outflow_sequence))[0::2],
+                                                   labels=self.date_sequence[0::2])
 
         if index == 0:
             self.timeseries_plots[index].ax.set_title("Lake Agassiz Outflow Ocean")
