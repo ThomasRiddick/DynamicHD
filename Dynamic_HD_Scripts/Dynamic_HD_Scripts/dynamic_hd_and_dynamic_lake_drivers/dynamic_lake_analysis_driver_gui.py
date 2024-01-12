@@ -3,6 +3,7 @@ import PySimpleGUI as sg
 import json
 import shutil
 import pprint
+import traceback as tb
 from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers.dynamic_lake_analysis_driver \
     import Dynamic_Lake_Analysis_Run_Framework
 
@@ -54,7 +55,7 @@ class DynamicLakeAnalysisDriverGUI:
                   self.get_string("glacier_mask_filepath_template"),
                   self.get_boolean("generate_lake_orography_corrections",False),
                   self.get_boolean("apply_orography_tweaks",False),
-                  self.get_boolean("change_date_based_correction",False),
+                  self.get_boolean("change_date_based_corrections",False),
                   self.get_boolean("make_analysis_run",False),
                   self.get_boolean("skip_dynamic_river_production",False),
                   self.get_boolean("skip_dynamic_lake_production",False),
@@ -99,6 +100,7 @@ class DynamicLakeAnalysisDriverGUI:
                     sg.popup("Run Finished")
                 except Exception as e:
                     print(e)
+                    print(tb.format_tb(e.__traceback__))
                     sg.popup("Run failed: ",str(e))
             else:
                 break

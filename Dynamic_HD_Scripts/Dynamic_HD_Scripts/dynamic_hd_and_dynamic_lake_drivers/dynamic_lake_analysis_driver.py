@@ -40,7 +40,7 @@ class Dynamic_Lake_Analysis_Run_Framework:
                  ancillary_data_directory=None,
                  present_day_base_orography_filepath=None,
                  base_corrections_filepath=None,
-                 base_date_based_correction_filepath=None,
+                 base_date_based_corrections_filepath=None,
                  base_additional_corrections_filepath=None,
                  base_true_sinks_filepath=None,
                  orography_filepath_template=None,
@@ -95,27 +95,33 @@ class Dynamic_Lake_Analysis_Run_Framework:
             self.base_corrections_filepath =\
                 self.read_info(self.base_corrections_filepath_match,
                                self.base_directory)
-        if base_date_based_correction_filepath is not None:
-            self.base_date_based_correction_filepath = base_date_based_correction_filepath
+        if base_date_based_corrections_filepath is not None:
+            self.base_date_based_corrections_filepath = base_date_based_corrections_filepath
             if os.path.isfile(join(base_directory,"analysis_info.txt")):
                 self.replace_info(self.base_date_based_corrections_filepath_match,
-                                  base_date_based_correction_filepath,
+                                  base_date_based_corrections_filepath,
                                   self.base_directory)
         else:
-            self.base_date_based_correction_filepath =\
-                self.read_info(self.base_date_based_corrections_filepath_match,
-                               self.base_directory)
+            if os.path.isfile(join(base_directory,"analysis_info.txt")):
+                self.base_date_based_corrections_filepath =\
+                    self.read_info(self.base_date_based_corrections_filepath_match,
+                                   self.base_directory)
+            else:
+                self.base_date_based_corrections_filepath = None
         if base_additional_corrections_filepath is not None:
             self.base_additional_corrections_filepath = \
                 base_additional_corrections_filepath
             if os.path.isfile(join(base_directory,"analysis_info.txt")):
-                self.replace_info(self.base_additional_corrections_filepath,
+                self.replace_info(self.base_additional_corrections_filepath_match,
                                   base_additional_corrections_filepath,
                                   self.base_directory)
         else:
-            self.base_additional_corrections_filepath =\
-                self.read_info(self.base_additional_corrections_filepath_match,
-                               self.base_directory)
+            if os.path.isfile(join(base_directory,"analysis_info.txt")):
+                self.base_additional_corrections_filepath =\
+                    self.read_info(self.base_additional_corrections_filepath_match,
+                                   self.base_directory)
+            else:
+                self.base_additional_corrections_filepath = None
         if base_true_sinks_filepath is not None:
             self.base_true_sinks_filepath = base_true_sinks_filepath
             if os.path.isfile(join(base_directory,"analysis_info.txt")):
@@ -209,6 +215,20 @@ class Dynamic_Lake_Analysis_Run_Framework:
                                                                                   "corrections","work"))
         if self.setup_directory_structure:
             self.corrections_version = 0
+            if base_date_based_corrections_filepath is not None:
+                self.date_based_corrections_file_for_current_version = \
+                    join(self.corrections_directory,
+                         "date_based_correction_sets",
+                         "date_based_corrections_set_version_0.txt")
+            else:
+                self.date_based_corrections_file_for_current_version = None
+            if base_additional_corrections_filepath is not None:
+                self.additional_corrections_file_for_current_version = \
+                    join(self.corrections_directory,
+                         "additional_correction_sets",
+                         "additional_corrections_set_version_0.txt")
+            else:
+                self.additional_corrections_file_for_current_version = None
         else:
             #Version should be in order but don't assume this
             version_temp = 0
@@ -224,23 +244,23 @@ class Dynamic_Lake_Analysis_Run_Framework:
                                                              "correction_fields",
                                                              "correction_field_version_{}.nc".\
                                                              format(self.corrections_version))
-        if len(os.listdir(join(self.corrections_directory,
-                               "date_based_correction_sets"))) != 0:
-            self.date_based_corrections_file_for_current_version = join(self.corrections_directory,
-                                                                        "date_based_correction_sets",
-                                                                        "date_based_corrections_set_version_{}.nc".\
-                                                                        format(self.corrections_version))
-        else:
-            self.date_based_corrections_file_for_current_version = None
+            if len(os.listdir(join(self.corrections_directory,
+                                   "date_based_correction_sets"))) != 0:
+                self.date_based_corrections_file_for_current_version = join(self.corrections_directory,
+                                                                            "date_based_correction_sets",
+                                                                            "date_based_corrections_set_version_{}.txt".\
+                                                                            format(self.corrections_version))
+            else:
+                self.date_based_corrections_file_for_current_version = None
 
-        if len(os.listdir(join(self.corrections_directory,
-                               "additional_correction_sets"))) != 0:
-            self.additional_corrections_file_for_current_version = join(self.corrections_directory,
-                                                                        "additional_correction_sets",
-                                                                        "additional_corrections_set_version_{}.nc".\
-                                                                        format(self.corrections_version))
-        else:
-            self.additional_corrections_file_for_current_version = None
+            if len(os.listdir(join(self.corrections_directory,
+                                   "additional_correction_sets"))) != 0:
+                self.additional_corrections_file_for_current_version = join(self.corrections_directory,
+                                                                            "additional_correction_sets",
+                                                                            "additional_corrections_set_version_{}.txt".\
+                                                                            format(self.corrections_version))
+            else:
+                self.additional_corrections_file_for_current_version = None
 
     @staticmethod
     def read_info(required_match,base_directory):
@@ -323,24 +343,28 @@ class Dynamic_Lake_Analysis_Run_Framework:
             corrs_txt_copy.write("# Version {} - {}\n".format(self.corrections_version,
                                                               datetime.now()))
             corrs_txt_copy.write(corrs_txt_data)
-        with open(join(self.corrections_directory,
-                       "working_date_based_correction_set.txt"),"r") as date_based_corrs_txt:
-            date_based_corrs_txt_data = date_based_corrs_txt.read()
-        with open(join(self.corrections_directory,"date_based_correction_sets",
-                       "date_based_corrections_set_version_{}.txt".\
-                       format(self.corrections_version)),"w") as date_based_corrs_txt_copy:
-            date_based_corrs_txt_copy.write("# Version {} - {}\n".format(self.corrections_version,
-                                                                         datetime.now()))
-            date_based_corrs_txt_copy.write(date_based_corrs_txt_data)
-        with open(join(self.corrections_directory,
-                       "working_additional_correction_set.txt"),"r") as additional_corrs_txt:
-            additional_corrs_txt_data = additional_corrs_txt.read()
-        with open(join(self.corrections_directory,"additional_correction_sets",
-                       "additional_corrections_set_version_{}.txt".\
-                       format(self.corrections_version)),"w") as additional_corrs_txt_copy:
-            additional_corrs_txt_copy.write("# Version {} - {}\n".format(self.corrections_version,
-                                                                         datetime.now()))
-            additional_corrs_txt_copy.write(additional_corrs_txt_data)
+        if os.path.exists(join(self.corrections_directory,
+                               "working_date_based_correction_set.txt")):
+            with open(join(self.corrections_directory,
+                           "working_date_based_correction_set.txt"),"r") as date_based_corrs_txt:
+                date_based_corrs_txt_data = date_based_corrs_txt.read()
+            with open(join(self.corrections_directory,"date_based_correction_sets",
+                           "date_based_corrections_set_version_{}.txt".\
+                           format(self.corrections_version)),"w") as date_based_corrs_txt_copy:
+                date_based_corrs_txt_copy.write("# Version {} - {}\n".format(self.corrections_version,
+                                                                             datetime.now()))
+                date_based_corrs_txt_copy.write(date_based_corrs_txt_data)
+        if os.path.exists(join(self.corrections_directory,
+                               "working_additional_correction_set.txt")):
+            with open(join(self.corrections_directory,
+                           "working_additional_correction_set.txt"),"r") as additional_corrs_txt:
+                additional_corrs_txt_data = additional_corrs_txt.read()
+            with open(join(self.corrections_directory,"additional_correction_sets",
+                           "additional_corrections_set_version_{}.txt".\
+                           format(self.corrections_version)),"w") as additional_corrs_txt_copy:
+                additional_corrs_txt_copy.write("# Version {} - {}\n".format(self.corrections_version,
+                                                                             datetime.now()))
+                additional_corrs_txt_copy.write(additional_corrs_txt_data)
         with open(join(self.corrections_directory,
                        "working_true_sinks_set.txt"),"r") as true_sinks_txt:
             true_sinks_txt_data = true_sinks_txt.read()
@@ -359,14 +383,15 @@ class Dynamic_Lake_Analysis_Run_Framework:
         processed_orography_corrections_with_final_adjustments_filename = \
                 join(self.corrections_directory,"work",
                      "processed_orography_corrections_with_final_adjustments.nc")
-        self.dyn_lake_correction_driver.clean_work_dir(partial_clean=False)
+        self.dyn_lake_correction_driver.clean_work_dir(partial_clean=True)
+        true_sinks_filename = join(self.corrections_directory,"true_sinks_fields",
+                                       "true_sinks_field_version_{}.nc".\
+                                       format(self.corrections_version))
         if self.generate_lake_orography_corrections:
+            self.dyn_lake_correction_driver.clean_work_dir(partial_clean=False)
             unprocessed_orography_corrections_with_initial_adjustments_filename = \
                 join(self.corrections_directory,"work",
                      "unprocessed_orography_with_initial_adjustments.nc")
-            true_sinks_filename = join(self.corrections_directory,"true_sinks_fields",
-                                       "true_sinks_field_version_{}.nc".\
-                                       format(self.corrections_version))
             if os.path.exists(unprocessed_orography_corrections_with_initial_adjustments_filename):
                 os.remove(unprocessed_orography_corrections_with_initial_adjustments_filename)
             if os.path.exists(intermediate_processed_orography_corrections_filename):
@@ -401,9 +426,31 @@ class Dynamic_Lake_Analysis_Run_Framework:
                                                               "working_correction_set.txt"),
                                                          CorrectionTypes.FINAL)
             self.dyn_lake_correction_driver.clean_work_dir(partial_clean=True)
+            if self.corrections_version == 0:
+                self.dyn_lake_correction_driver.\
+                    prepare_true_sinks(self.base_true_sinks_filepath,
+                                       true_sinks_filename,
+                                       join(self.corrections_directory,
+                                            "working_true_sinks_set.txt"))
+            else:
+                shutil.copyfile(join(self.corrections_directory,"true_sinks_fields",
+                                     "true_sinks_field_version_{}.nc".\
+                                     format(self.corrections_version-1)),
+                                true_sinks_filename)
         elif self.change_date_based_corrections:
             shutil.copyfile(intermediate_processed_orography_corrections_filename,
                             self.corrections_file_for_current_version)
+            if self.corrections_version == 0:
+                self.dyn_lake_correction_driver.\
+                    prepare_true_sinks(self.base_true_sinks_filepath,
+                                       true_sinks_filename,
+                                       join(self.corrections_directory,
+                                            "working_true_sinks_set.txt"))
+            else:
+                shutil.copyfile(join(self.corrections_directory,"true_sinks_fields",
+                                     "true_sinks_field_version_{}.nc".\
+                                     format(self.corrections_version-1)),
+                                true_sinks_filename)
 
     def run_slice(self,slice_time,force_run_all=False):
         slice_label = "version_{}_date_{}".format(self.corrections_version,
@@ -440,7 +487,7 @@ class Dynamic_Lake_Analysis_Run_Framework:
                  self.corrections_file_for_current_version)
             self.dyn_lake_driver.date_based_sill_height_corrections_list_filename = \
                 self.date_based_corrections_file_for_current_version
-            self.dyn_lake_driver.additional_orography_corrections_filepath = \
+            self.dyn_lake_driver.additional_orography_corrections_list_filename = \
                 self.additional_corrections_file_for_current_version
             self.dyn_lake_driver.current_date = slice_time
             os.mkdir(join(self.lakes_directory,
@@ -612,11 +659,11 @@ class Dynamic_Lake_Analysis_Run_Framework:
             shutil.copyfile(self.base_date_based_corrections_filepath,
                             join(self.corrections_directory,"date_based_correction_sets",
                                  "date_based_corrections_set_version_0.txt"))
-        if self.additional_based_corrections_filepath is not None:
-            shutil.copyfile(self.additional_based_corrections_filepath,
+        if self.base_additional_corrections_filepath is not None:
+            shutil.copyfile(self.base_additional_corrections_filepath,
                             join(self.corrections_directory,
                                  "working_additional_correction_set.txt"))
-            shutil.copyfile(self.additional_based_corrections_filepath,
+            shutil.copyfile(self.base_additional_corrections_filepath,
                             join(self.corrections_directory,"additional_correction_sets",
                                  "additional_corrections_set_version_0.txt"))
 
@@ -751,6 +798,7 @@ def parse_arguments():
                         type=str)
     parser.add_argument("-c",'--base-corrections-filepath',type=str)
     parser.add_argument("-b",'--base-date-based-corrections-filepath',type=str,default=None)
+    parser.add_argument("-a",'--base-additional-corrections-filepath',type=str,default=None)
     parser.add_argument("-u",'--base-true-sinks-filepath',type=str)
     parser.add_argument('-g','--generate-lake-orography-corrections',
                         action="store_true")
