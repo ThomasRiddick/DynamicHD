@@ -41,7 +41,7 @@ function load_field(file_handle::NcFile,grid::Grid,variable_name::AbstractString
     end
   else
     if timestep == -1
-	    values = values_orig
+      values = values_orig
     else
       values = values_orig[:,timestep]
     end
@@ -310,7 +310,7 @@ function load_drainage_fields(drainages_filename::AbstractString,grid::Grid;
   drainages::Array{Field{Float64},1} = Field{Float64}[]
   try
     for i::Int64 = first_timestep:last_timestep
-      push!(drainages,load_field(file_handle,grid,"hydro_drainage_box",
+      push!(drainages,load_field(file_handle,grid,"drainage",
                                  Float32 ;timestep=i,convert_to=Float64))
     end
   finally
@@ -326,7 +326,7 @@ function load_runoff_fields(runoffs_filename::AbstractString,grid::Grid;
   runoffs::Array{Field{Float64},1} = Field{Float64}[]
   try
     for i::Int64 = first_timestep:last_timestep
-      push!(runoffs,load_field(file_handle,grid,"hydro_runoff_box",
+      push!(runoffs,load_field(file_handle,grid,"runoff",
                                Float32 ;timestep=i,convert_to=Float64))
     end
   finally

@@ -8,17 +8,20 @@ using SharedArrays: sdata, SharedArray
 function prep_array_of_fields(dims::Array{NcDim},
                               variable_base_name::AbstractString,
                               array_of_fields::Array{T,1},
-                              data_to_write::Vector{Pair}) where {T <: Field}
-  number_of_fields::Int64 = size(array_of_fields,1)
-  if number_of_fields == 1
+                              data_type::DataType,
+                              data_to_write::Vector{Pair};
+                              no_grid_info::Bool=false) where {T <: Field}
+  number_of_fields::Int64 = length(array_of_fields)
+  if number_of_fields == 1 && length(dims) == 1
     return prep_field(dims,variable_base_name,array_of_fields[1],data_to_write)
   else
     if isa( array_of_fields[1],UnstructuredField)
-      extended_dims = vcat(dims,NcDim[NcDim("n",5)])
-      variable = NcVar(variable_base_name,extended_dims,
+      variable = no_grid_info ?
+                 NcVar(variable_base_name,dims) :
+                 NcVar(variable_base_name,dims,
                        atts=Dict("grid_type"=>"unstructured",
                                  "coordinates"=>"clat clon"))
-      local combined_array::Array
+      local combined_array::Array{data_type,2}
       if isa(get_data(array_of_fields[1]),SharedArray)
         combined_array = reduce(hcat,map(x -> sdata(get_data(x)),array_of_fields))
       else
@@ -42,7 +45,7 @@ function prep_dims(grid::LatLonGrid)
 end
 
 function prep_dims(grid::UnstructuredGrid)
-  ncells = NcDim("ncells",grid.ncells)
+  ncells::NcDim = NcDim("cell",grid.ncells)
   dims::Array{NcDim} = NcDim[ ncells ]
   return dims
 end
@@ -69,10 +72,11 @@ function prep_field(dims::Array{NcDim},variable_name::AbstractString,
 end
 
 function write_fields(grid::Grid,data_to_write::Vector{Pair},filepath::AbstractString,
-                      dims::Array{NcDim})
+                      dims::Array{NcDim};no_grid_info::Bool=false)
   variables::Array{NcVar} = NcVar[ pair.first for pair in data_to_write ]
   if isa(grid,UnstructuredGrid)
-    prepare_icon_file(grid,filepath,dims,variables)
+    prepare_icon_file(grid,filepath,dims,variables,
+          no_grid_info=no_grid_info)
   else
     NetCDF.create(filepath,variables,mode=NC_NETCDF4)
   end
@@ -82,7 +86,8 @@ function write_fields(grid::Grid,data_to_write::Vector{Pair},filepath::AbstractS
 end
 
 function prepare_icon_file(grid::UnstructuredGrid,filepath::AbstractString,
-                           dims::Array{NcDim},variables::Array{NcVar})
+                           dims::Array{NcDim},variables::Array{NcVar};
+                           no_grid_info::Bool=false)
   vertices = NcDim("vertices",3)
   extended_dims::Array{NcDim} = vcat(NcDim[ vertices ], dims)
   clat = NcVar("clat",dims,atts=Dict("long_name"=>"center_latitude",
@@ -95,12 +100,15 @@ function prepare_icon_file(grid::UnstructuredGrid,filepath::AbstractString,
                                      "standard_name"=>"longitude"))
   clat_bounds = NcVar("clat_bnds",extended_dims)
   clon_bounds = NcVar("clon_bnds",extended_dims)
-  extended_variables::Array{NcVar} = vcat(variables,NcVar[ clat, clon, clat_bounds, clon_bounds])
+  extended_variables::Array{NcVar} = no_grid_info ? variables :
+     vcat(variables,NcVar[ clat, clon, clat_bounds, clon_bounds])
   NetCDF.create(filepath,extended_variables,mode=NC_NETCDF4)
-  NetCDF.putvar(clat,grid.clat)
-  NetCDF.putvar(clon,grid.clon)
-  NetCDF.putvar(clat_bounds,grid.clat_bounds)
-  NetCDF.putvar(clon_bounds,grid.clon_bounds)
+  if ! no_grid_info
+    NetCDF.putvar(clat,grid.clat)
+    NetCDF.putvar(clon,grid.clon)
+    NetCDF.putvar(clat_bounds,grid.clat_bounds)
+    NetCDF.putvar(clon_bounds,grid.clon_bounds)
+  end
 end
 
 function write_field(grid::Grid,variable_name::AbstractString,
@@ -133,7 +141,7 @@ end
 function write_river_initial_values(hd_start_filepath::AbstractString,
                                     grid::Grid,
                                     step_length::Float64,
-				    river_inflow::Field{Float64},
+                                    river_inflow::Field{Float64},
                                     base_flow_reservoirs::Array{Field{Float64},1},
                                     overland_flow_reservoirs::Array{Field{Float64},1},
                                     river_flow_reservoirs::Array{Field{Float64},1})
@@ -147,23 +155,43 @@ function write_river_initial_values(hd_start_filepath::AbstractString,
   overland_flow_reservoirs *= reservoir_units_adjustment
   river_flow_reservoirs *= reservoir_units_adjustment
   data_to_write::Vector{Pair} = Pair[]
-  dims::Array{NcDim} = prep_dims(grid)
+  dims::Array{NcDim,1} = prep_dims(grid)
   if ! isa(grid,UnstructuredGrid)
     prep_field(dims,"FINFL",
-               river_inflow,data_to_write)
+               river_inflow,
+               Float64,
+               data_to_write)
   else
-	river_flow_reservoirs[1] += river_inflow
+    river_flow_reservoirs[1] += river_inflow
   end
-  prep_array_of_fields(dims,"FGMEM",
+  local dims_fgmem::Array{NcDim,1}
+  local dims_flfmem::Array{NcDim,1}
+  local dims_frfmem::Array{NcDim,1}
+  if  isa(grid,UnstructuredGrid)
+    dims_fgmem = vcat(dims,NcDim[NcDim("bresnum",1)])
+    dims_flfmem = vcat(dims,NcDim[NcDim("oresnum",1)])
+    dims_frfmem = vcat(dims,NcDim[NcDim("rresnum",5)])
+  else
+    dims_fgmem = dims
+    dims_flfmem = dims
+    dims_frfmem = dims
+  end
+  prep_array_of_fields(dims_fgmem,"FGMEM",
                        base_flow_reservoirs,
-                       data_to_write)
-  prep_array_of_fields(dims,"FLFMEM",
+                       Float64,
+                       data_to_write,
+                       no_grid_info=true)
+  prep_array_of_fields(dims_flfmem,"FLFMEM",
                        overland_flow_reservoirs,
-                       data_to_write)
-  prep_array_of_fields(dims,"FRFMEM",
+                       Float64,
+                       data_to_write,
+                       no_grid_info=true)
+  prep_array_of_fields(dims_frfmem,"FRFMEM",
                        river_flow_reservoirs,
-                       data_to_write)
-  write_fields(grid,data_to_write,hd_start_filepath,dims)
+                       Float64,
+                       data_to_write,
+                       no_grid_info=true)
+  write_fields(grid,data_to_write,hd_start_filepath,dims,no_grid_info=true)
 end
 
 function write_lake_numbers_field(grid::Grid,lake_numbers::Field{Float64};

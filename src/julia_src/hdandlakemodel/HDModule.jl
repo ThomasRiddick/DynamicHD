@@ -253,7 +253,7 @@ function handle_event(prognostic_fields::PrognosticFields,
           river_fields.runoff,
           river_diagnostic_fields.runoff_to_rivers,
           river_parameters.overland_retention_coefficients,
-          river_parameters.base_reservoir_nums,
+          river_parameters.overland_reservoir_nums,
           river_parameters.cascade_flag,river_parameters.grid,
           river_parameters.step_length)
   cascade(river_fields.base_flow_reservoirs,
