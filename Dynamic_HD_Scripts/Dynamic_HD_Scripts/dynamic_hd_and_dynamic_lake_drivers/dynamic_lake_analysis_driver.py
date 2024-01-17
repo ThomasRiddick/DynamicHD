@@ -244,23 +244,8 @@ class Dynamic_Lake_Analysis_Run_Framework:
                                                              "correction_fields",
                                                              "correction_field_version_{}.nc".\
                                                              format(self.corrections_version))
-            if len(os.listdir(join(self.corrections_directory,
-                                   "date_based_correction_sets"))) != 0:
-                self.date_based_corrections_file_for_current_version = join(self.corrections_directory,
-                                                                            "date_based_correction_sets",
-                                                                            "date_based_corrections_set_version_{}.txt".\
-                                                                            format(self.corrections_version))
-            else:
-                self.date_based_corrections_file_for_current_version = None
+            self.update_date_based_and_additional_corrections_files()
 
-            if len(os.listdir(join(self.corrections_directory,
-                                   "additional_correction_sets"))) != 0:
-                self.additional_corrections_file_for_current_version = join(self.corrections_directory,
-                                                                            "additional_correction_sets",
-                                                                            "additional_corrections_set_version_{}.txt".\
-                                                                            format(self.corrections_version))
-            else:
-                self.additional_corrections_file_for_current_version = None
 
     @staticmethod
     def read_info(required_match,base_directory):
@@ -298,6 +283,25 @@ class Dynamic_Lake_Analysis_Run_Framework:
                             join(base_directory,"analysis_info.txt"))
         finally:
             os.remove(join(base_directory,"new_analysis_info.txt"))
+
+    def update_date_based_and_additional_corrections_files(self):
+        if len(os.listdir(join(self.corrections_directory,
+                               "date_based_correction_sets"))) != 0:
+            self.date_based_corrections_file_for_current_version = join(self.corrections_directory,
+                                                                        "date_based_correction_sets",
+                                                                        "date_based_corrections_set_version_{}.txt".\
+                                                                        format(self.corrections_version))
+        else:
+            self.date_based_corrections_file_for_current_version = None
+
+        if len(os.listdir(join(self.corrections_directory,
+                               "additional_correction_sets"))) != 0:
+            self.additional_corrections_file_for_current_version = join(self.corrections_directory,
+                                                                        "additional_correction_sets",
+                                                                        "additional_corrections_set_version_{}.txt".\
+                                                                        format(self.corrections_version))
+        else:
+            self.additional_corrections_file_for_current_version = None
 
     def run_selected_processes(self):
         if self.setup_directory_structure:
@@ -451,6 +455,7 @@ class Dynamic_Lake_Analysis_Run_Framework:
                                      "true_sinks_field_version_{}.nc".\
                                      format(self.corrections_version-1)),
                                 true_sinks_filename)
+        self.update_date_based_and_additional_corrections_files()
 
     def run_slice(self,slice_time,force_run_all=False):
         slice_label = "version_{}_date_{}".format(self.corrections_version,
