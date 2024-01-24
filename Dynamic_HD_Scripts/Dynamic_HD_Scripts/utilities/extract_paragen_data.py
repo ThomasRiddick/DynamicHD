@@ -107,35 +107,34 @@ class Paragen_Data_Extractor(object):
             print(extracted_data)
 
 def main():
-    paragen_data_base_path = "/Users/thomasriddick/Documents/data/temp/paragen_test_data"
+    paragen_data_base_path = "/Users/thomasriddick/Documents/data/paragen_test_data"
     extract_data_to_run_paragen_model = Paragen_Data_Extractor()
     extract_data_to_run_paragen_model.\
         extract_data_to_run_paragen_model(rdirs_filename=path.join(paragen_data_base_path,
                                                                    "30min_rdirs.nc"),
                                           orography_filename=path.join(paragen_data_base_path,
-                                                                       "30minute_filled_orog_temp.nc"),
+                                                                       "30min_filled_orog.nc"),
                                           variance_filename=path.join(paragen_data_base_path,
                                                                       "bin_toposig.nc"),
                                           innerslope_filename=path.join(paragen_data_base_path,
-                                                                        "innerslope.nc"),
+                                                                        "bin_innerslope.nc"),
                                           glacier_filename=path.join(paragen_data_base_path,
                                                                      "null.nc"),
                                           landsea_filename=path.join(paragen_data_base_path,
                                                                      "30minute_ls_mask_temp.nc"),
                                           cell_areas_filename=path.join(paragen_data_base_path,
-                                                                         ),
+                                                                        "hdcellareas.nc"),
                                           hdpara_filename=path.join(paragen_data_base_path,
-                                                                    "hdpara_trial_run_using_data_from_"
-                                                                    "new_data_from_virna_2016_version_"
-                                                                    "20221009_114734.nc"),
+                                                                    "hdpara_trial_run_using_ice6g_"
+                                                                    "present_day_data_20240124_214451.nc"),
                                           section_coords={"min_lat":90,
                                                           "max_lat":110,
                                                           "min_lon":200,
                                                           "max_lon":220},
                                           language="Julia",
-                                          write_to_text_file_filename=None)
-                                          #write_to_text_file_filename="/Users/thomasriddick/Documents/"
-                                          #                          "data/temp/extracted_data.txt")
+                                          #write_to_text_file_filename=None
+                                          write_to_text_file_filename="/Users/thomasriddick/Documents/"
+                                                                      "data/temp/extracted_data_new.txt")
 
 if __name__ == '__main__':
     main()
