@@ -1,39 +1,53 @@
 {%- macro header() -%}
-!/bin/bash
+#!/bin/bash
 {% if input.slurm_headers -%}
 #SLURM HEADERS
 #SBATCH --job-name=create_icon_hdpara
 #SBATCH --partition=shared
-#SBATCH --account=YOURACCOUNT
+#SBATCH --account=YOUR_ACCOUNT
 #SBATCH --ntasks=1
 #SBATCH --time=02:00:00
 #SBATCH --output=create_icon_hdpara.o%j    # File name for standard output
 #SBATCH --error=create_icon_hdpara.e%j     # File name for standard error output
 #SBATCH --mail-type=FAIL                   # Notify user by email in case of job failure
-#SBATCH --mail-user=YOUR EMAIL
+#SBATCH --mail-user=YOUR_EMAIL
 {%- endif -%}
-
 {% endmacro -%}
 
 {% macro set_variables_pre_user_input() %}
 script_path=$(dirname ${0})
 project_name=$(basename ${0})
-{%- if input.create_project_at_runtime -%}
+{%- if input.create_project_at_runtime %}
 repository_path=${script_path%/run}
-{%- else -%}
+{%- else %}
 repository_path=${script_path%/projects/*/scripts}
-{%- endif -%}
+{%- endif %}
 input_directory=${repository_path}/projects/${project_name}/input
 output_directory=${repository_path}/projects/${project_name}/output
 working_directory=${repository_path}/projects/${project_name}/workdir
 {%- endmacro -%}
 
 {% macro set_variables_post_user_input() %}
+icon_atmo_grid_res=$(echo ${icon_atmo_grid_res} | tr [:upper] [:lower] | tr -d 0)
+icon_ocean_grid_res=$(echo ${icon_ocean_grid_res} | tr [:upper] [:lower] | tr -d 0)
 etop01_filepath=/work/mj0060/m300468/data/ETOPO1_Ice_g_gmt4_grid_registered.nc
 config_filepath=${working_directory}/bash_script.cfg
 python_config_filepath=${working_directory}/python_script.cfg
 binary_lsmask_filepath=${working_directory}/binary_lsmask.nc
 orography_filepath=${working_directory}/orography.nc
+if [[ icon_atmo_grid_res == "r2b3" ]] || [[ icon_atmo_grid_res == "r2b4" ]] ||
+   [[ icon_atmo_grid_res == "r2b5" ]] || [[ icon_atmo_grid_res == "r2b6" ]] then
+   binary_conversion_method_default=hfrac
+else
+   binary_conversion_method_default=maxl
+fi
+binary_conversion_method=${binary_conversion_method:-binary_conversion_method_default}
+true_sinks_filepath_default=/work/mj0060/m300468/data/true_sinks_version_41???.nc
+if ${use_true_sinks}; then
+  true_sinks_filepath=${true_sinks_filepath:-true_sinks_filepath_default}
+else
+  true_sinks_filepath=
+fi
 
 cat << EOF > ${config_filepath}
 source_directory=${repository_path}
@@ -43,7 +57,12 @@ no_env_gen=true
 python_config_filepath=${python_config_filepath}
 EOF
 
-cat << EOF > ${config_filepath}
+if ${use_true_sinks} then
+  keep_all_internal_basins="True"
+else
+  keep_all_internal_basins="False"
+fi
+cat << EOF > ${python_config_filepath}
 #Output option for test run of dynamic hd production code
 [input_options]
 ten_minute_corrected_orography_filename=/home/m/m300468/les_workdir/workdirs/icon_rdirs_r2b5_workdir_sc_0030_0035_seamless_p3/corrected_orog_intermediary_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_20170517_003802_with_grid.nc
@@ -58,7 +77,7 @@ output_river_directions_fieldname=rdirs
 output_catchments_fieldname=catchments
 output_cumulative_flow_fieldname=acc
 [general_options]
-keep_all_internal_basins=False
+keep_all_internal_basins=${keep_all_internal_basins}
 replace_internal_basins_with_rdirs_with_truesinks=False
 replace_only_catchments=
 exclude_catchments=
@@ -73,7 +92,7 @@ mkdir -p ${repository_path}/projects/${project_name}
 mkdir -p ${input_directory}
 mkdir -p ${output_directory}
 mkdir -p ${working_directory}
-{%- if input.script_type == 'createproject' -%}
+{%- if input.script_type == 'createproject' %}
 mkdir -p ${repository_path}/projects/${project_name}/scripts/
 {%- endif -%}
 {%- endmacro -%}
