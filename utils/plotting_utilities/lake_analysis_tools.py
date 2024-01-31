@@ -41,7 +41,7 @@ def in_bounds(coords,array):
             and coords[1] < array.shape[1])
 
 class Basins(Enum):
-    CAR = 1
+    GOM = 1
     ART = 2
     NATL = 3
 
@@ -316,7 +316,7 @@ class CoastlineIdentifier:
 class OutflowBasinIdentifier:
 
     ocean_basins_30min_latlon = {Basins.ART:[[[30,88],[60,88]],[[12,190],[45,190]]],
-                                 Basins.CAR:[[[133,167],[122,167]],[[107,190],[121,207]]],
+                                 Basins.GOM:[[[133,167],[122,167]],[[107,190],[121,207]]],
                                  Basins.NATL:[[[112,221],[104,188]],[[80,262],[80,200]]]}
     ocean_basins_definitions = {"30minLatLong":ocean_basins_30min_latlon}
     field_shapes = {"30minLatLong":(360,720)}

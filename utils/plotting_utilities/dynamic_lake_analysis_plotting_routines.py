@@ -881,7 +881,7 @@ class InteractiveTimeSeriesPlots():
 
     def lake_outflow_plot_base(self,index,lake_outflow_sequence):
         self.timeseries_plots[index].ax.clear()
-        basins = {Basins.CAR:"Carib.",Basins.ART:"Artic",Basins.NATL:"N. Atl."}
+        basins = {Basins.GOM:"Gulf Mex.",Basins.ART:"Artic",Basins.NATL:"N. Atl."}
         bars = { name:[] for name in basins.keys() }
         current_basin=None
         for i,item in enumerate(lake_outflow_sequence):
@@ -903,14 +903,15 @@ class InteractiveTimeSeriesPlots():
         self.timeseries_plots[index].ax.set_xlim(0,len(lake_outflow_sequence))
         self.timeseries_plots[index].ax.broken_barh(bars[Basins.NATL],(20,9),facecolor="tab:green")
         self.timeseries_plots[index].ax.broken_barh(bars[Basins.ART],(10,9),facecolor="tab:blue")
-        self.timeseries_plots[index].ax.broken_barh(bars[Basins.CAR],(0,9),facecolor="tab:red")
+        self.timeseries_plots[index].ax.broken_barh(bars[Basins.GOM],(0,9),facecolor="tab:red")
         ypos = (4.5,15.5,24.5)
         self.timeseries_plots[index].ax.set_yticks(ypos,tuple(basins.values()))
         self.timeseries_plots[index].ax.set_xticks(range(len(lake_outflow_sequence))[0::2],
                                                    labels=self.date_sequence[0::2])
+        self.timeseries_plots[index].ax.set_xlabel("YBP")
 
         if index == 0:
-            self.timeseries_plots[index].ax.set_title("Lake Agassiz Outflow Ocean")
+            self.timeseries_plots[index].ax.set_title("Destination Ocean Basin for Lake Agassiz Outflow")
         data_dates, data_to_add = \
             self.data_configuration.get_data_for_datatype("agassizoutlet-time")
         if data_to_add is not None:
@@ -932,7 +933,7 @@ class InteractiveTimeSeriesPlots():
                                                              last_outlet_start]))
                 last_outlet = {"E":Basins.NATL,
                                "N":Basins.ART,
-                               "S":Basins.CAR,
+                               "S":Basins.GOM,
                                "-":None}[entry.strip()]
                 if min(self.date_sequence) > int(date):
                     last_outlet_start = min(self.date_sequence)
@@ -942,7 +943,7 @@ class InteractiveTimeSeriesPlots():
                     last_outlet_start = self.date_sequence.index(int(date))
             self.timeseries_plots[index].ax.broken_barh(data_bars[Basins.NATL],(50,9),facecolor="tab:green")
             self.timeseries_plots[index].ax.broken_barh(data_bars[Basins.ART],(40,9),facecolor="tab:blue")
-            self.timeseries_plots[index].ax.broken_barh(data_bars[Basins.CAR],(30,9),facecolor="tab:red")
+            self.timeseries_plots[index].ax.broken_barh(data_bars[Basins.GOM],(30,9),facecolor="tab:red")
             ypos = (4.5,15.5,24.5,34.5,45.5,54.5)
             self.timeseries_plots[index].ax.set_yticks(ypos,
                                                        tuple(["S","NW","E",
