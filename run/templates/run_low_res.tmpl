@@ -1,12 +1,3 @@
-#Set output filenames
-if ${use_true_sinks}; then
-  true_sinks_flag_string="${binary_conversion_method}_"
-else
-  true_sinks_flag_string=""
-fi
-output_hdpara_filepath=${output_directory}/hdpara_${icon_atmo_grid_res}_${icon_atmo_grid_id}_sc_${binary_conversion_method}_${true_sinks_flag_string}v${version_num}.nc
-output_catchments_filepath=${output_directory}/catch_${icon_atmo_grid_res}_${icon_atmo_grid_id}_sc_${binary_conversion_method}_${true_sinks_flag_string}v${version_num}.nc
-output_accumulated_flow_filepath=${output_directory}/acc_${icon_atmo_grid_res}_${icon_atmo_grid_id}_sc_${binary_conversion_method}_${true_sinks_flag_string}v${version_num}.nc
 #Run
 cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath} ${config_filepath} ${working_directory} ${icon_grid_filepath} ${repository_path}/Dynamic_HD_Resources/cotat_plus_standard_params.nl False ${true_sinks_filepath}"
 echo "Running:"

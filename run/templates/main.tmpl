@@ -3,11 +3,13 @@
 
 {{ components.set_variables_pre_user_input() }}
 
+{% if input.script_type != 'createproject'%}
 {% block user_input required -%}{%- endblock %}
 
 {{ components.set_variables_post_user_input() }}
+{%- endif %}
 
-{%- block user_commands_start -%}{%- endblock -%}
+{% block user_commands_start -%}{%- endblock -%}
 
 {%- if input.create_project_at_runtime or input.script_type == 'createproject'-%}
 {{ components.create_project_dirs() }}

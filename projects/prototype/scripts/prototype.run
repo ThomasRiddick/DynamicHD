@@ -1,6 +1,4 @@
-{%- macro header() -%}
 #!/bin/bash
-{% if input.slurm_headers -%}
 #SLURM HEADERS
 #SBATCH --job-name=create_icon_hdpara
 #SBATCH --partition=shared
@@ -11,30 +9,95 @@
 #SBATCH --error=create_icon_hdpara.e%j     # File name for standard error output
 #SBATCH --mail-type=FAIL                   # Notify user by email in case of job failure
 #SBATCH --mail-user=YOUR_EMAIL
-{%- endif -%}
-{% endmacro -%}
 
-{% macro set_variables_pre_user_input() %}
-
-{%- if input.script_type == 'createproject' %}
-script_path={{ input.script_path }}
-project_name={{ input.project_name }}
-{%- else -%}
 script_path=$(dirname ${0})
 project_name=$(basename ${0})
-{%- endif -%}
-
-{%- if input.create_project_at_runtime or input.script_type == 'createproject' %}
-repository_path=${script_path%/run}
-{%- else %}
 repository_path=${script_path%/projects/*/scripts}
-{%- endif %}
 input_directory=${repository_path}/projects/${project_name}/input
 output_directory=${repository_path}/projects/${project_name}/output
 working_directory=${repository_path}/projects/${project_name}/workdir
-{%- endmacro -%}
 
-{% macro set_variables_post_user_input() %}
+
+
+########################################
+########################################
+#--------------USER INPUT--------------#
+########################################
+########################################
+
+########################################
+#--------------KEY SETTINGS------------#
+########################################
+
+#SETTINGS THAT USUALLY NEED TO BE EDITED
+
+#Atmospheric Grid ID
+icon_atmo_grid_id=
+
+#Ocean Grid ID
+icon_ocean_grid_id=
+
+#Atmospheric Grid Resolution
+#Accepts most formats
+#e.g. 'r2b3', 'R2B4', 'r02b07', 'R02B09'
+icon_atmo_grid_res=r2b8
+
+#Ocean Grid Resolution
+#Accepts most formats
+#e.g. 'r2b3', 'R2B4', 'r02b07', 'R02B09'
+icon_atmo_grid_res=
+
+#Path to atmospheric grid file
+icon_grid_filepath=
+
+#Path to (fractional) lsmask
+lsmask_filepath=
+
+#Version number
+#Use '1' unless this exact configuration
+#(same resolutions of both grids, same binary conversion method,
+# and same internal sink point option) has been used before
+version_num=1
+
+########################################
+#------------OTHER SETTINGS------------#
+########################################
+
+#SETTINGS THAT CAN USUALLY BE LEFT ALONE
+
+#By default mkproject wil automatically be decided whether
+#to use the low or high resolution method based on the
+#resolutions chosen but this can be overriden by setting
+#this variable to 'high_res' or 'low_res'. The default
+#value is 'automatic'
+#Note this value is read by mkproject.py itself and
+#not actually refer to within the scripts produced
+method_to_use=automatic
+
+#Include endorheic basins and internal sink points
+#By default set to 'true'. Options are 'true'/'false'
+use_true_sinks=true
+
+#By default the script will decide a suitable
+#method for converting the fractional landsea
+#mask to a binary mask
+#For r2b3, r2b4, r2b5 and r2b6 it will use 'hfrac'
+#For other resolutions it will use maxl
+#Options are: 'maxl', 'minl' and 'hfrac'
+binary_conversion_method=
+
+#By default the true sinks filepath should
+#be left blank and the true sinks file will
+#be set automatically if required
+true_sinks_filepath=
+
+########################################
+########################################
+#-----------END OF USER INPUT----------#
+########################################
+########################################
+
+
 icon_atmo_grid_res=$(echo ${icon_atmo_grid_res} | tr [:upper] [:lower] | tr -d 0)
 icon_ocean_grid_res=$(echo ${icon_ocean_grid_res} | tr [:upper] [:lower] | tr -d 0)
 etop01_filepath=/work/mj0060/m300468/data/ETOPO1_Ice_g_gmt4_grid_registered.nc
@@ -90,36 +153,7 @@ replace_only_catchments=
 exclude_catchments=
 EOF
 
-#Set output filenames
-if ${use_true_sinks}; then
-  true_sinks_flag_string="s_"
-else
-  true_sinks_flag_string=""
-fi
-output_hdpara_filepath=${output_directory}/hdpara_${icon_atmo_grid_res}_${icon_atmo_grid_id}_sc_${binary_conversion_method}_${true_sinks_flag_string}v${version_num}.nc
-output_catchments_filepath=${output_directory}/catch_${icon_atmo_grid_res}_${icon_atmo_grid_id}_sc_${binary_conversion_method}_${true_sinks_flag_string}v${version_num}.nc
-output_accumulated_flow_filepath=${output_directory}/acc_${icon_atmo_grid_res}_${icon_atmo_grid_id}_sc_${binary_conversion_method}_${true_sinks_flag_string}v${version_num}.nc
-{%- endmacro -%}
 
-{% macro create_project_dirs() %}
-#Prepare folders
-mkdir -p ${repository_path}/projects
-mkdir -p ${repository_path}/projects/${project_name}
-mkdir -p ${input_directory}
-mkdir -p ${output_directory}
-mkdir -p ${working_directory}
-{% if input.script_type == 'createproject' %}
-mkdir -p ${repository_path}/projects/${project_name}/scripts/
-{%- endif -%}
-cd ${working_directory}
-{%- endmacro -%}
-
-{% macro preproc() %}
-# Create links to input files
-ln -s ${fractional_lsmask_filepath} $(basename ${fractional_lsmask_filepath})
-fractional_lsmask_filepath=$(basename ${fractional_lsmask_filepath})
-ln -s ${icon_grid_filepath} $(basename ${icon_grid_filepath})
-icon_grid_filepath=$(basename ${icon_grid_filepath})
 # Pre-processing
 if [[ ${binary_conversion_method} == "hfrac" ]]; then
   cdo expr,cell_sea_land_mask='(cell_sea_land_mask > 0.5)' ${fractional_lsmask_filepath} ${binary_lsmask_filepath}
@@ -134,27 +168,22 @@ else
 fi
 
 cdo remapbil,${icon_grid_filepath} ${etop01_filepath} ${orography_filepath}
-{%- endmacro -%}
+#Set output filenames
+if ${use_true_sinks}; then
+  true_sinks_flag_string="${binary_conversion_method}_"
+else
+  true_sinks_flag_string=""
+fi
+output_hdpara_filepath=${output_directory}/hdpara_${icon_atmo_grid_res}_${icon_atmo_grid_id}_sc_${binary_conversion_method}_${true_sinks_flag_string}v${version_num}.nc
+output_catchments_filepath=${output_directory}/catch_${icon_atmo_grid_res}_${icon_atmo_grid_id}_sc_${binary_conversion_method}_${true_sinks_flag_string}v${version_num}.nc
+output_accumulated_flow_filepath=${output_directory}/acc_${icon_atmo_grid_res}_${icon_atmo_grid_id}_sc_${binary_conversion_method}_${true_sinks_flag_string}v${version_num}.nc
+#Run
+cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath} ${config_filepath} ${working_directory} ${icon_grid_filepath} ${repository_path}/Dynamic_HD_Resources/cotat_plus_standard_params.nl False ${true_sinks_filepath}"
+echo "Running:"
+echo ${cmd}
+eval ${cmd}
 
-{% macro postproc() %}
 # Post Processing
 # (No post-processing required at present)
-{%- endmacro -%}
-
-{% macro clean() %}
 # Clean-up
 echo "Post run clean-up not yet implemented!"
-{%- endmacro -%}
-
-{% macro report_pre() %}
-# Prepare preliminary report
-echo "Preliminary report not yet implemented!"
-#python ${repository_path}/utils/run_utilities/prepare_report.py prelim
-{%- endmacro -%}
-
-{% macro report_post() %}
-# Prepare post-run report
-echo "Post run report not yet implemented!"
-#python ${repository_path}/utils/run_utilities/prepare_report.py post
-{%- endmacro -%}
-

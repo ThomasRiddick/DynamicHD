@@ -3,13 +3,13 @@ import subprocess
 import re
 import argparse
 import os.path as path
-
-rundir = "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/run"
+import os
 
 def generate_scripts(input_template_filepath,
                      store_scripts_in_project=True,
                      method_to_use=None,
                      atmo_grid_res=None):
+    rundir = os.get_cwd()
     input_template_filepath = path.join(rundir,input_template_filepath)
     if atmo_grid_res:
         atmo_grid_res = atmo_grid_res.replace("0","").lower()
@@ -49,14 +49,17 @@ def generate_scripts(input_template_filepath,
     run_script_env = Environment(loader=FileSystemLoader(rundir))
     template  = run_script_env.get_template(path.basename(input_template_filepath))
     if store_scripts_in_project:
-        print(store_scripts_in_project)
         create_project = template.render(input={"slurm_headers":False,
-                                                "script_type":"createproject"})
-        print(create_project)
-        #subprocess.check_output(create_project,shell=True)
-    print("******")
-    print(template.render(input={"slurm_headers":True,
-                                 "script_type":"run"}))
+                                                "script_type":"createproject",
+                                                "script_path":rundir,
+                                                "project_name":path.basename(input_template_filepath)})
+        print(subprocess.check_output(create_project,shell=True))
+        run_script_path = "/".join(rundir.rstrip("/").split("/")[0:-1])+"/projects/"+path.basename(input_template_filepath)+"/scripts/"+path.basename(input_template_filepath)+".run"
+    else:
+        run_script_path = path.join(rundir,input_template_filepath)+".run"
+    with open(run_script_path,"w") as f:
+        f.write(template.render(input={"slurm_headers":True,
+                                       "script_type":"run"}))
 
     # print(template.render(input={"slurm_headers":False,
     #                          "script_type":"'prerep'"}))
