@@ -15,10 +15,10 @@ class IconToLatLonLandSeaDownscalerDriver:
         check_input_files([self.args["input_coarse_to_fine_cell_numbers_mapping_filepath"],
                            self.args["input_coarse_landsea_mask_filepath"]])
         check_output_files([self.args["output_fine_landsea_mask_filepath"]])
-        input_coarse_to_fine_cell_numbers_mapping_in_ds =
+        coarse_to_fine_cell_numbers_mapping_in_ds =
             open_dataset(self.args["input_coarse_to_fine_cell_numbers_mapping_filepath"])
-        input_coarse_to_fine_cell_numbers_mapping_in = \
-            input_coarse_to_fine_cell_numbers_mapping_in_ds[self.args[
+        coarse_to_fine_cell_numbers_mapping_in = \
+            coarse_to_fine_cell_numbers_mapping_in_ds[self.args[
             "input_coarse_to_fine_cell_numbers_mapping_fieldname"]].values
         coarse_landsea_mask_in_ds =
             open_dataset(self.args["input_coarse_landsea_mask_filepath"])
@@ -51,9 +51,9 @@ class IconToLatLonLandSeaDownscalerDriver:
         # end do
 
         fine_landsea_mask_out_ds = \
-            input_coarse_to_fine_cell_numbers_mapping_in_ds.Copy(deep=True,
-                                                                 data={"lsm":
-                                                                       fine_landsea_mask_out})
+            coarse_to_fine_cell_numbers_mapping_in_ds.Copy(deep=True,
+                                                           data={"lsm":
+                                                                 fine_landsea_mask_out})
         fine_landsea_mask_out_ds.to_netcdf(self.args["output_fine_landsea_mask_filepath"])
 
 class Arguments:
