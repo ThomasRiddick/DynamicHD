@@ -56,36 +56,36 @@ def parse_arguments():
                                                  'river direction on the ICON icosahedral '
                                                  'grid',
                                      epilog='')
-    parser.add_argument(next_cell_index_filepath,metavar='Next Cell Index Filepath',
+    parser.add_argument("next_cell_index_filepath",metavar='Next Cell Index Filepath',
                         type=str,
                         help="Filepath to input next cell index (river directions) netCDF file")
-    parser.add_argument(output_catchment_number_filepath,
+    parser.add_argument("output_catchment_number_filepath",
                         metavar='Output Catchment Number Filepath',
                         type=str,
                         help="Target filepath for output catchment number "
                              "netCDF file")
-    parser.add_argument(grid_params_filepath,
+    parser.add_argument("grid_params_filepath",
                         metavar='Grid Parameters Filepath',
                         type=str,
                         help="Filepath of the input atmospheric grid parameters"
                              " netCDF file")
-    parser.add_argument(next_cell_index_fieldname,
+    parser.add_argument("next_cell_index_fieldname",
                         metavar='Next Cell Index Fieldname',
                         type=str,
                         help="Fieldname of the input next cell index"
                              "(river directions) input field")
-    parser.add_argument(use_secondary_neighbors_flag,
+    parser.add_argument("use_secondary_neighbors_flag",
                         metavar="Use Secondary Neighbors Flag",
                         type=bool,
                         default=True,
                         help="Use the 8 or 9 additional neighbors which "
                              "share vertices with this cell but not edges")
-    parser.add_argument(loop_log_file_path,
+    parser.add_argument("loop_log_file_path",
                         metavar="Loop Log File Path",
                         type=str,
                         default="",
                         help="Filepath to the target loop log text file")
-    parser.add_argument(sort_catchments_by_size_flag,
+    parser.add_argument("sort_catchments_by_size_flag",
                         metavar="Sort Catchments By Size Flag",
                         type=bool,
                         default=False,

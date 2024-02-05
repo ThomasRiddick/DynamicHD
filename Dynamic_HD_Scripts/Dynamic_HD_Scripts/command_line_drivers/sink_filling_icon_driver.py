@@ -63,51 +63,52 @@ def parse_arguments():
                                                  "flood technique on a ICON "
                                                  "icosohedral grid",
                                      epilog='')
-    parser.add_argument(input_orography_filepath,metavar='Input Orography Filepath',
+    parser.add_argument("input_orography_filepath",metavar='Input Orography Filepath',
                         type=str,
                         help="Full path to the input orography file")
-    parser.add_argument(landsea_filepath,metavar='Landsea Mask Filepath',
+    parser.add_argument("landsea_filepath",metavar='Landsea Mask Filepath',
                         type=str,
                         help="Full path to input landsea mask file")
-    parser.add_argument(true_sinks_filepath,metavar='True Sinks Filepath',
+    parser.add_argument("true_sinks_filepath",metavar='True Sinks Filepath',
                         type=str,
                         help="Full path to input true sinks file")
-    parser.add_argument(output_orography_filepath,metavar='Output Orography Filepath',
+    parser.add_argument("output_orography_filepath",metavar='Output Orography Filepath',
                         type=str,
                         help="Full path to target output orography file")
-    parser.add_argument(grid_params_filepath,metavar='Grid Parameters Filepath',
+    parser.add_argument("grid_params_filepath",metavar='Grid Parameters Filepath',
                         type=str,
                         help="Full path to the grid description file for the ICON "
                              "grid being used")
-    parser.add_argument(input_orography_fieldname,metavar='Input Orography Fieldname',
+    parser.add_argument("input_orography_fieldname",metavar='Input Orography Fieldname',
                         type=str,
                         help="Name of input orography field within the specified file")
-    parser.add_argument(landsea_fieldname,metavar='Landsea Fieldname',
+    parser.add_argument("landsea_fieldname",metavar='Landsea Fieldname',
                         type=str,
                         help="Name of the landsea mask field within the specified file")
-    parser.add_argument(true_sinks_fieldname,metavar='True Sinks Fieldname',
+    parser.add_argument("true_sinks_fieldname",metavar='True Sinks Fieldname',
                         type=str,
                         help="Name of the true sinks field within the specified file")
-    parser.add_argument(set_land_sea_as_no_data_flag,metavar='Set Landsea as No Data Flag',
+    parser.add_argument("set_land_sea_as_no_data_flag",metavar='Set Landsea as No Data Flag',
                         type=bool,
                         help="Flag to turn on and off setting "
                              "all landsea points to no data")
-    parser.add_argument(add_slope_flag,metavar='Add Slope Flag',
+    parser.add_argument("add_slope_flag",metavar='Add Slope Flag',
                         type=bool,
                         help="Land sea mask expresses fraction of land "
                              "as a floating point number which requires "
                              "conversion to a binary mask(default false)")
-    parser.add_argument(epsilon,metavar='Epsilon',
+    parser.add_argument("epsilon",metavar='Epsilon',
                         type=float,
                         help="Additional height added to each progressive cell when"
                              "adding a slight slope")
-    parser.add_argument(use_secondary_neighbors_flag,
+    parser.add_argument("use_secondary_neighbors_flag",
                         metavar="Use Secondary Neighbors Flag",
                         type=bool,
                         default=True,
                         help="Use the 8 or 9 additional neighbors which "
                              "share vertices with this cell but not edges")
-    parser.add_argument(fractional_landsea_mask_flag,metavar='Fractional Landsea Mask Flag',
+    parser.add_argument("fractional_landsea_mask_flag",
+                        metavar='Fractional Landsea Mask Flag',
                         type=bool,
                         default=False,
                         help="Land sea mask expresses fraction of land "

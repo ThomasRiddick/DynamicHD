@@ -69,48 +69,48 @@ def parse_arguments():
                                                  'points (terminal lakes of endorheic '
                                                  'basins).',
                                      epilog='')
-    parser.add_argument(next_cell_index_out_filepath,
+    parser.add_argument("next_cell_index_out_filepath",
                         metavar='Output Next Cell Index Filepath',
                         type=str,
                         help="Full path to target output file for the next "
                              "cell index values; these are the ICON equivalent "
                              "of river directions.")
-    parser.add_argument(orography_filepath,metavar='Orography Filepath',
+    parser.add_argument("orography_filepath",metavar='Orography Filepath',
                         type=str,
                         help="Full path to the input orography file")
-    parser.add_argument(landsea_filepath,metavar='Landsea Mask Filepath',
+    parser.add_argument("landsea_filepath",metavar='Landsea Mask Filepath',
                         type=str,
                         help="Full path to input landsea mask file")
-    parser.add_argument(true_sinks_filepath,metavar='True Sinks Filepath',
+    parser.add_argument("true_sinks_filepath",metavar='True Sinks Filepath',
                         type=str,
                         help="Full path to input true sinks file")
-    parser.add_argument(grid_params_filepath,metavar='Grid Parameters Filepath',
+    parser.add_argument("grid_params_filepath",metavar='Grid Parameters Filepath',
                         type=str,
                         help="Full path to the grid description file for the ICON "
                              "grid being used")
-    parser.add_argument(orography_fieldname,metavar='Orography Fieldname',
+    parser.add_argument("orography_fieldname",metavar='Orography Fieldname',
                         type=str,
                         help="Name of orography field within the orography file")
-    parser.add_argument(landsea_fieldname,metavar='Landsea Fieldname',
+    parser.add_argument("landsea_fieldname",metavar='Landsea Fieldname',
                         type=str,
                         help="Name of the landsea mask field within the landsea "
                              "mask file")
-    parser.add_argument(true_sinks_fieldname,metavar='True Sinks Fieldname',
+    parser.add_argument("true_sinks_fieldname",metavar='True Sinks Fieldname',
                         type=str,
                         help="Name of the true sinks field within the true sinks "
                              "file")
-    parser.add_argument(fractional_landsea_mask_flag,metavar='Fractional Landsea Mask Flag',
+    parser.add_argument("fractional_landsea_mask_flag",metavar='Fractional Landsea Mask Flag',
                         type=bool,
                         default=False,
                         help="Land sea mask expresses fraction of land "
                              "as a floating point number (default false)")
-    parser.add_argument(always_flow_to_sea_flag,metavar='Always Flow to Sea Flag',
+    parser.add_argument("always_flow_to_sea_flag",metavar='Always Flow to Sea Flag',
                         type=bool,
                         default=True,
                         help="Alway mark flow direction towards a neighboring "
                              "ocean point even when a neighboring land point "
                              "has a lower elevation (default true)")
-    parser.add_argument(mark_pits_as_true_sinks_flag,metavar='Mark Pits As True Sinks Flag',
+    parser.add_argument("mark_pits_as_true_sinks_flag",metavar='Mark Pits As True Sinks Flag',
                         type=bool,
                         default=False,
                         help="Mark any depression found as a true sink point "

@@ -69,62 +69,62 @@ def parse_arguments():
                                      description='Add bifurcated river mouths to existing'
                                                  'river directions on icosahedral grids ',
                                      epilog='')
-    parser.add_argument(next_cell_index_filepath,metavar='Next Cell Index Filepath',
+    parser.add_argument("next_cell_index_filepath",metavar='Next Cell Index Filepath',
                         type=str,
                         help="Filepath to input next cell index (river directions) netCDF file")
-    parser.add_argument(cumulative_flow_filepath,metavar='Cumulative Flow Filepath',
+    parser.add_argument("cumulative_flow_filepath",metavar='Cumulative Flow Filepath',
                         type=str,
                         help="Filepath to input accumulated flow input netCDF file")
-    parser.add_argument(landsea_mask_filepath,metavar='Landsea Filepath',
+    parser.add_argument("landsea_mask_filepath",metavar='Landsea Filepath',
                         type=str,
                         help="Filepath to input binary landsea mask netCDF file")
-    parser.add_argument(output_number_of_outflows_filepath,
+    parser.add_argument("output_number_of_outflows_filepath",
                         metavar='Output Number of Outflows Filepath',
                         type=str,
                         help="Target filepath for output number of outflows netCDF file")
-    parser.add_argument(output_next_cell_index_filepath,
+    parser.add_argument("output_next_cell_index_filepath",
                         metavar='Output Next Cell Index Filepath',
                         type=str,
                         help="Target filepath for output next cell index "
                              "(river directions) netCDF file")
-    parser.add_argument(output_bifurcated_next_cell_index_filepath,
+    parser.add_argument("output_bifurcated_next_cell_index_filepath",
                         metavar='Output Bifurcated Next Cell Index Filepath',
                         type=str,
                         help="Target filepath for output bifurcated next cell index"
                              "(river directions) netCDF file")
-    parser.add_argument(grid_params_filepath,
+    parser.add_argument("grid_params_filepath",
                         metavar='Grid Parameters Filepath',
                         type=str,
                         help="Filepath of the input atmospheric grid parameters"
                              " netCDF file")
-    parser.add_argument(mouth_positions_filepath,
+    parser.add_argument("mouth_positions_filepath",
                         metavar='River Mouth Positions Filepath',
                         type=str,
                         help="Filepath of the input river mouth position file")
-    parser.add_argument(next_cell_index_fieldname,
+    parser.add_argument("next_cell_index_fieldname",
                         metavar='Next Cell Index Fieldname',
                         type=str,
                         help="Fieldname of the input next cell index"
                              "(river directions) input field")
-    parser.add_argument(cumulative_flow_fieldname,
+    parser.add_argument("cumulative_flow_fieldname",
                         metavar='Cumulative Flow Fieldname',
                         type=str,
                         help="Fieldname of the accumulated flow input field")
-    parser.add_argument(landsea_mask_fieldname,
+    parser.add_argument("landsea_mask_fieldname",
                         metavar='Landsea Fieldname',
                         type=str,
                         help="Fieldname of the binary landsea mask input field")
-    parser.add_argument(minimum_cells_from_split_to_main_mouth,
+    parser.add_argument("minimum_cells_from_split_to_main_mouth",
                         metavar='Minimum cells from split to main mouth',
                         type=int,
                         help="Minimum number of cells to follow a river upstream from the"
                              "primary river mouth before allowing bifurcation")
-    parser.add_argument(maximum_cells_from_split_to_main_mouth,
+    parser.add_argument("maximum_cells_from_split_to_main_mouth",
                         metavar='Maximum cells from split to main mouth',
                         type=int,
                         help="Maximum number of cells to follow a river upstream from the"
                              "primary river mouth for which bifurcation is allowed")
-    parser.add_argument(cumulative_flow_threshold_fraction,
+    parser.add_argument("cumulative_flow_threshold_fraction",
                         metavar='Cumulative flow threshold fration',
                         type=double,
                         help="Protect any tributary from being broken if their accumulated "
