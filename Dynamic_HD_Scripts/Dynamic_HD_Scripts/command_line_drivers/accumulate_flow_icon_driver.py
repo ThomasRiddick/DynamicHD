@@ -72,7 +72,7 @@ def parse_arguments():
                         metavar='Next Cell Index Fieldname',
                         type=str,
                         help="Fieldname of the input next cell index"
-                             "(river directions) input field")
+                             "(river directions) field")
     parser.add_argument("next_cell_index_filepath",metavar='Bifurcated Next Cell Index Filepath',
                         type=str,
                         default=None,
@@ -83,7 +83,7 @@ def parse_arguments():
                         type=str,
                         default=None,
                         help="Fieldname of the bifurcated input next cell index"
-                             "(river directions) input field")
+                             "(river directions) field")
     parser.parse_args(namespace=args)
     return args
 
