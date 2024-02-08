@@ -2,7 +2,7 @@
 
 include config/set_config
 
-default: compile
+default: install
 
 compile: | build
 		meson compile -C build
@@ -10,7 +10,7 @@ compile: | build
 build:
 		meson setup --native-file $(SYSTEM_CONFIG_FILE) build
 
-install: 	
+install: compile
 		meson install -C build
 
 clean:
