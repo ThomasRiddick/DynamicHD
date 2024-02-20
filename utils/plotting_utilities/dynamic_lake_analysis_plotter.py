@@ -67,10 +67,14 @@ class DynamicLakeAnalysisPlotter:
             config_section["sequence_two_base_dir"]
         self.configuration["glacier_mask_file_template"] = \
             config_section["glacier_mask_file_template"]
-        self.configuration["input_orography_file_template"] = \
-            config_section["input_orography_file_template"]
-        self.configuration["present_day_base_input_orography_filepath"] = \
-            config_section["present_day_base_input_orography_filepath"]
+        self.configuration["input_orography_file_template_one"] = \
+            config_section["input_orography_file_template_one"]
+        self.configuration["input_orography_file_template_two"] = \
+            config_section["input_orography_file_template_two"]
+        self.configuration["present_day_base_input_orography_one_filepath"] = \
+            config_section["present_day_base_input_orography_one_filepath"]
+        self.configuration["present_day_base_input_orography_two_filepath"] = \
+            config_section["present_day_base_input_orography_two_filepath"]
         self.configuration["super_fine_orography_filepath"] = \
             config_section["super_fine_orography_filepath"]
         self.configuration["use_connected_catchments"] = \
@@ -133,8 +137,8 @@ class DynamicLakeAnalysisPlotter:
         logging.info("Starting lake stats generation")
         self.lake_stats_one = {}
         self.lake_stats_two = {}
-        sequences = {"lsmask":
-                     self.time_sequences.lsmask_sequence,
+        sequences = {"lsmask_one":
+                     self.time_sequences.lsmask_one_sequence,
                      "connected_lake_basin_numbers_one":
                      self.time_sequences.connected_lake_basin_numbers_one_sequence,
                      "filled_orography_one":
@@ -147,6 +151,8 @@ class DynamicLakeAnalysisPlotter:
                      self.time_sequences.sinkless_rdirs_one_sequence,
                      "orography_one":
                      self.time_sequences.orography_one_sequence,
+                     "lsmask_two":
+                     self.time_sequences.lsmask_two_sequence,
                      "connected_lake_basin_numbers_two":
                      self.time_sequences.connected_lake_basin_numbers_two_sequence,
                      "filled_orography_two":
@@ -178,9 +184,9 @@ class DynamicLakeAnalysisPlotter:
             self.lake_stats_two[lake_name] = {name:[] for name in stat_names}
         for i,subsequence_collection in enumerate(subsequence_collections):
             for lake_name,lake in self.lake_defs.items():
-                self.ocean_basin_identifier.\
-                    set_lsmask_sequence(subsequence_collection["lsmask"])
                 for exp in ["one","two"]:
+                    vars(self)[f"ocean_basin_identifier_{exp}"].\
+                        set_lsmask_sequence(subsequence_collection[f"lsmask_{exp}"])
                     lake_points = vars(self)[f"lake_point_extractor_{exp}"].\
                         extract_lake_point_sequence(initial_lake_center=lake["initial_lake_center"],
                                                     lake_emergence_date=lake["lake_emergence_date"],
@@ -198,7 +204,7 @@ class DynamicLakeAnalysisPlotter:
                                                                 lake_volumes_sequence=
                                                                 subsequence_collection[
                                                                 f"lake_volumes_{exp}"])
-                    lake_outflow_basins = self.ocean_basin_identifier.\
+                    lake_outflow_basins = vars(self)[f"ocean_basin_identifier_{exp}"].\
                         extract_ocean_basin_for_lake_outflow_sequence(dates=
                                                                       subsequence_collection["date"],
                                                                       input_area_bounds=lake["input_area_bounds"],
@@ -209,7 +215,8 @@ class DynamicLakeAnalysisPlotter:
                                                                       scale_factor=3)
                     lake_spillway_height_profiles,lake_spillway_masks = \
                         self.exit_profiler.profile_exit_sequence(lake_center_sequence=lake_points,
-                                                                 ocean_basin_numbers_sequence=self.ocean_basin_identifier.\
+                                                                 ocean_basin_numbers_sequence=
+                                                                 vars(self)[f"ocean_basin_identifier_{exp}"].\
                                                                     get_ocean_basin_numbers_sequence(),
                                                                 rdirs_sequence=
                                                                 subsequence_collection[
@@ -231,7 +238,8 @@ class DynamicLakeAnalysisPlotter:
         timeseries = []
         self.corrections = []
         self.lake_height_and_volume_extractor = LakeHeightAndVolumeExtractor()
-        self.ocean_basin_identifier = OutflowBasinIdentifier("30minLatLong",self.dbg_plts)
+        self.ocean_basin_identifier_one = OutflowBasinIdentifier("30minLatLong",self.dbg_plts)
+        self.ocean_basin_identifier_two = OutflowBasinIdentifier("30minLatLong",self.dbg_plts)
         self.lake_point_extractor_one = LakePointExtractor()
         self.lake_point_extractor_two = LakePointExtractor()
         self.exit_profiler = ExitProfiler()

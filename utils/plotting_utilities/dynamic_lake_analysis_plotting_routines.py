@@ -331,9 +331,11 @@ class TimeSequences:
                  sequence_one_base_dir,
                  sequence_two_base_dir,
                  glacier_mask_file_template,
-                 input_orography_file_template,
+                 input_orography_file_template_one,
+                 input_orography_file_template_two,
                  super_fine_orography_filepath,
-                 present_day_base_input_orography_filepath,
+                 present_day_base_input_orography_one_filepath,
+                 present_day_base_input_orography_two_filepath,
                  use_connected_catchments=True,
                  missing_fields=[],
                  use_latest_version_for_sequence_one=True,
@@ -345,7 +347,8 @@ class TimeSequences:
         self.sequence_one_results_base_dirs = []
         self.sequence_two_results_base_dirs = []
         self.glacier_mask_filepaths = []
-        self.input_orography_filepaths = []
+        self.input_orography_filepaths_one = []
+        self.input_orography_filepaths_two = []
         for date in self.date_sequence:
             #Note latest version may differ between dates hence calculate this
             #on a date by date basis
@@ -372,15 +375,20 @@ class TimeSequences:
                                                   format(sequence_two_lakes_version,date))
             self.sequence_two_results_base_dirs.append(sequence_two_results_base_dir)
             self.glacier_mask_filepaths.append(glacier_mask_file_template.replace("DATE",str(date)))
-            self.input_orography_filepaths.append(input_orography_file_template.replace("DATE",
-                                                                                        str(date)))
+            self.input_orography_filepaths_one.append(input_orography_file_template_one.replace("DATE",
+                                                                                                str(date)))
+            self.input_orography_filepaths_two.append(input_orography_file_template_two.replace("DATE",
+                                                                                                str(date)))
         executor = ProcessPoolExecutor(max_workers=1)
         self.glacier_mask_sequence = TimeSequence(filepaths=self.glacier_mask_filepaths,
                                                   fieldname="glac",
                                                   executor=executor)
-        self.input_orography_sequence = TimeSequence(filepaths=self.input_orography_filepaths,
-                                                     fieldname="Topo",
-                                                     executor=executor)
+        self.input_orography_one_sequence = TimeSequence(filepaths=self.input_orography_filepaths_one,
+                                                         fieldname="Topo",
+                                                         executor=executor)
+        self.input_orography_two_sequence = TimeSequence(filepaths=self.input_orography_filepaths_two,
+                                                         fieldname="Topo",
+                                                         executor=executor)
         self.catchment_nums_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                         fieldname="catchments",
                                                         filename=
@@ -399,13 +407,16 @@ class TimeSequences:
                                                fieldname="rdirs",
                                                filename="30min_rdirs.nc",
                                                executor=executor)
-        self.lsmask_sequence = DerivedTimeSequence(self.rdirs_one_sequence,
-                                                   func=lambda base_array:
-                                                   RiverDirections(base_array,"HD").get_lsmask())
+        self.lsmask_one_sequence = DerivedTimeSequence(self.rdirs_one_sequence,
+                                                       func=lambda base_array:
+                                                       RiverDirections(base_array,"HD").get_lsmask())
         self.rdirs_two_sequence = TimeSequence(filepaths=self.sequence_two_results_base_dirs,
                                                fieldname="rdirs",
                                                filename="30min_rdirs.nc",
                                                executor=executor)
+        self.lsmask_two_sequence = DerivedTimeSequence(self.rdirs_two_sequence,
+                                                       func=lambda base_array:
+                                                       RiverDirections(base_array,"HD").get_lsmask())
         self.river_flow_one_sequence= TimeSequence(filepaths=self.sequence_one_results_base_dirs,
                                                    fieldname="cumulative_flow",
                                                    filename=
@@ -568,35 +579,63 @@ class TimeSequences:
         else:
             self.super_fine_orography = None
         if not "corrected_orographies" in missing_fields:
-            self.first_corrected_orography = advanced_field_loader(filename=join(sequence_one_base_dir,
-                                                                            "corrections","work",
-                                                              "pre_preliminary_tweak_orography.nc"),
-                                                              time_slice=None,
-                                                              fieldname="orog",
-                                                              adjust_orientation=True).get_data()
-            self.second_corrected_orography = advanced_field_loader(filename=join(sequence_one_base_dir,
-                                                                             "corrections","work",
-                                                               "post_preliminary_tweak_orography.nc"),
-                                                               time_slice=None,
-                                                               fieldname="orog",
-                                                               adjust_orientation=True).get_data()
-            self.third_corrected_orography = advanced_field_loader(filename=join(sequence_one_base_dir,
-                                                                            "corrections","work",
-                                                              "pre_final_tweak_orography.nc"),
+            self.first_corrected_orography_one = advanced_field_loader(filename=join(sequence_one_base_dir,
+                                                                       "corrections","work",
+                                                                       "pre_preliminary_tweak_orography.nc"),
+                                                                       time_slice=None,
+                                                                       fieldname="orog",
+                                                                       adjust_orientation=True).get_data()
+            self.second_corrected_orography_one = advanced_field_loader(filename=join(sequence_one_base_dir,
+                                                                        "corrections","work",
+                                                                        "post_preliminary_tweak_orography.nc"),
+                                                                        time_slice=None,
+                                                                        fieldname="orog",
+                                                                        adjust_orientation=True).get_data()
+            self.third_corrected_orography_one = advanced_field_loader(filename=join(sequence_one_base_dir,
+                                                                       "corrections","work",
+                                                                       "pre_final_tweak_orography.nc"),
+                                                                       time_slice=None,
+                                                                       fieldname="orog",
+                                                                       adjust_orientation=True).get_data()
+            self.fourth_corrected_orography_one = advanced_field_loader(filename=join(sequence_one_base_dir,
+                                                                        "corrections","work",
+                                                                        "post_final_tweak_orography.nc"),
+                                                                        time_slice=None,
+                                                                        fieldname="orog",
+                                                                        adjust_orientation=True).get_data()
+            self.first_corrected_orography_two = advanced_field_loader(filename=join(sequence_two_base_dir,
+                                                                       "corrections","work",
+                                                                       "pre_preliminary_tweak_orography.nc"),
+                                                                       time_slice=None,
+                                                                       fieldname="orog",
+                                                                       adjust_orientation=True).get_data()
+            self.second_corrected_orography_two = advanced_field_loader(filename=join(sequence_two_base_dir,
+                                                                        "corrections","work",
+                                                                        "post_preliminary_tweak_orography.nc"),
+                                                                        time_slice=None,
+                                                                        fieldname="orog",
+                                                                        adjust_orientation=True).get_data()
+            self.third_corrected_orography_two = advanced_field_loader(filename=join(sequence_two_base_dir,
+                                                                       "corrections","work",
+                                                                       "pre_final_tweak_orography.nc"),
                                                              time_slice=None,
                                                              fieldname="orog",
                                                              adjust_orientation=True).get_data()
-            self.fourth_corrected_orography = advanced_field_loader(filename=join(sequence_one_base_dir,
-                                                                            "corrections","work",
-                                                               "post_final_tweak_orography.nc"),
-                                                               time_slice=None,
-                                                               fieldname="orog",
-                                                               adjust_orientation=True).get_data()
+            self.fourth_corrected_orography_two = advanced_field_loader(filename=join(sequence_two_base_dir,
+                                                                        "corrections","work",
+                                                                        "post_final_tweak_orography.nc"),
+                                                                        time_slice=None,
+                                                                        fieldname="orog",
+                                                                        adjust_orientation=True).get_data()
         else:
-            self.first_corrected_orography = None
-            self.second_corrected_orography = None
-            self.third_corrected_orography = None
-            self.fourth_corrected_orography = None
+            self.first_corrected_orography_one = None
+            self.second_corrected_orography_one = None
+            self.third_corrected_orography_one = None
+            self.fourth_corrected_orography_one = None
+            self.first_corrected_orography_two = None
+            self.second_corrected_orography_two = None
+            self.third_corrected_orography_two = None
+            self.fourth_corrected_orography_two = None
         if not "true_sinks" in missing_fields:
             highest_true_sinks_version = find_highest_version(join(sequence_one_base_dir,
                                                              "corrections","true_sinks_fields",
@@ -611,11 +650,19 @@ class TimeSequences:
                                                                   adjust_orientation=True).get_data()
         else:
             self.true_sinks = None
-        if not "present_day_base_input_orography" in missing_fields:
-            self.present_day_base_input_orography = \
+        if not "present_day_base_input_orography_one" in missing_fields:
+            self.present_day_base_input_orography_one = \
                 advanced_field_loader(
                     filename=
-                    present_day_base_input_orography_filepath,
+                    present_day_base_input_orography_one_filepath,
+                    time_slice=None,
+                    fieldname="Topo",
+                    adjust_orientation=True).get_data()
+        if not "present_day_base_input_orography_two" in missing_fields:
+            self.present_day_base_input_orography_two = \
+                advanced_field_loader(
+                    filename=
+                    present_day_base_input_orography_two_filepath,
                     time_slice=None,
                     fieldname="Topo",
                     adjust_orientation=True).get_data()
@@ -1003,19 +1050,28 @@ class InteractiveTimeSlicePlots:
                            "morog2":self.modified_orography_plot_two,
                            "orogcomp":self.orography_comp_plot,
                            "sforog":self.super_fine_orography_plot,
-                           "firstcorrorog":self.first_corrected_orography_plot,
-                           "secondcorrorog":self.second_corrected_orography_plot,
-                           "thirdcorrorog":self.third_corrected_orography_plot,
-                           "fourthcorrorog":self.fourth_corrected_orography_plot,
-                           "corrorog12comp":self.first_vs_second_corrected_orography_plot,
-                           "corrorog23comp":self.second_vs_third_corrected_orography_plot,
-                           "corrorog34comp":self.third_vs_fourth_corrected_orography_plot,
+                           "firstcorrorog1":self.first_corrected_orography_plot_one,
+                           "secondcorrorog1":self.second_corrected_orography_plot_one,
+                           "thirdcorrorog1":self.third_corrected_orography_plot_one,
+                           "fourthcorrorog1":self.fourth_corrected_orography_plot_one,
+                           "corrorog12comp1":self.first_vs_second_corrected_orography_plot_one,
+                           "corrorog23comp1":self.second_vs_third_corrected_orography_plot_one,
+                           "corrorog34comp1":self.third_vs_fourth_corrected_orography_plot_one,
+                           "firstcorrorog2":self.first_corrected_orography_plot_two,
+                           "secondcorrorog2":self.second_corrected_orography_plot_two,
+                           "thirdcorrorog2":self.third_corrected_orography_plot_two,
+                           "fourthcorrorog2":self.fourth_corrected_orography_plot_two,
+                           "corrorog12comp2":self.first_vs_second_corrected_orography_plot_two,
+                           "corrorog23comp2":self.second_vs_third_corrected_orography_plot_two,
+                           "corrorog34comp2":self.third_vs_fourth_corrected_orography_plot_two,
                            "orogplusspillway1":self.orography_plus_lake_spillway_one,
                            "orogplusspillway2":self.orography_plus_lake_spillway_two,
                            "orogpluspspillway1":self.orography_potential_lake_spillways_one,
                            "orogpluspspillway2":self.orography_potential_lake_spillways_two,
-                           "inputorog":self.input_orography_plot,
-                           "inputorogchange":self.input_orography_change_plot,
+                           "inputorog1":self.input_orography_plot_one,
+                           "inputorog2":self.input_orography_plot_two,
+                           "inputorogchange1":self.input_orography_change_plot_one,
+                           "inputorogchange2":self.input_orography_change_plot_two,
                            "truesinks":self.true_sinks_plot,
                            "lakev1":self.lake_volume_plot_one,
                            "lakev2":self.lake_volume_plot_two,
@@ -1181,11 +1237,16 @@ class InteractiveTimeSlicePlots:
                         filled_orography_one_sequence,
                         filled_orography_two_sequence,
                         super_fine_orography,
-                        present_day_base_input_orography,
-                        first_corrected_orography,
-                        second_corrected_orography,
-                        third_corrected_orography,
-                        fourth_corrected_orography,
+                        present_day_base_input_orography_one,
+                        present_day_base_input_orography_two,
+                        first_corrected_orography_one,
+                        second_corrected_orography_one,
+                        third_corrected_orography_one,
+                        fourth_corrected_orography_one,
+                        first_corrected_orography_two,
+                        second_corrected_orography_two,
+                        third_corrected_orography_two,
+                        fourth_corrected_orography_two,
                         true_sinks,
                         date_sequence,
                         **kwargs):
@@ -1196,12 +1257,26 @@ class InteractiveTimeSlicePlots:
                                                       **kwargs)
         self.gen = generate_catchment_and_cflow_sequence_tuple(combined_sequences,
                                                                super_fine_orography=super_fine_orography,
-                                                               present_day_base_input_orography=
-                                                               present_day_base_input_orography,
-                                                               first_corrected_orography=first_corrected_orography,
-                                                               second_corrected_orography=second_corrected_orography,
-                                                               third_corrected_orography=third_corrected_orography,
-                                                               fourth_corrected_orography=fourth_corrected_orography,
+                                                               present_day_base_input_orography_one=
+                                                               present_day_base_input_orography_one,
+                                                               present_day_base_input_orography_two=
+                                                               present_day_base_input_orography_two,
+                                                               first_corrected_orography_one=
+                                                               first_corrected_orography_one,
+                                                               second_corrected_orography_one=
+                                                               second_corrected_orography_one,
+                                                               third_corrected_orography_one=
+                                                               third_corrected_orography_one,
+                                                               fourth_corrected_orography_one=
+                                                               fourth_corrected_orography_one,
+                                                               first_corrected_orography_two=
+                                                               first_corrected_orography_two,
+                                                               second_corrected_orography_two=
+                                                               second_corrected_orography_two,
+                                                               third_corrected_orography_two=
+                                                               third_corrected_orography_two,
+                                                               fourth_corrected_orography_two=
+                                                               fourth_corrected_orography_two,
                                                                true_sinks=true_sinks,
                                                                bidirectional=True,
                                                                zoom_settings=self.zoom_settings,
@@ -1306,7 +1381,7 @@ class InteractiveTimeSlicePlots:
             self.timeslice_plots[index].plot.set_data(color_codes)
 
     def catchment_and_cflow_comp_plot(self,index):
-        color_codes = generate_color_codes_comp(self.slice_data["lsmask_slice_zoomed"],
+        color_codes = generate_color_codes_comp(self.slice_data["lsmask_one_slice_zoomed"],
                                                 self.slice_data["glacier_mask_slice_zoomed"],
                                                 self.slice_data["matched_catchment_nums_one"],
                                                 self.slice_data["matched_catchment_nums_two"],
@@ -1394,15 +1469,23 @@ class InteractiveTimeSlicePlots:
         self.cflow_plot_base(index,False)
 
     def cflow_plot_base(self,index,use_first_sequence_set):
-        color_codes_cflow = np.zeros(self.slice_data["lsmask_slice_zoomed"].shape)
-        color_codes_cflow[self.slice_data["lsmask_slice_zoomed"] == 0] = 1
+        color_codes_cflow = np.zeros(self.slice_data["lsmask_one_slice_zoomed"].shape if
+                                     use_first_sequence_set else
+                                     self.slice_data["lsmask_two_slice_zoomed"].shape)
+        if use_first_sequence_set:
+            color_codes_cflow[self.slice_data["lsmask_one_slice_zoomed"] == 0] = 1
+        else
+            color_codes_cflow[self.slice_data["lsmask_two_slice_zoomed"] == 0] = 1
         river_flow_slice = (self.slice_data["river_flow_one_slice_zoomed"]
                             if use_first_sequence_set
                             else self.slice_data["river_flow_two_slice_zoomed"])
         color_codes_cflow[river_flow_slice >= self.minflowcutoff] = 2
         if self.use_glacier_mask:
             color_codes_cflow[self.slice_data["glacier_mask_slice_zoomed"] == 1] = 3
-        color_codes_cflow[self.slice_data["lsmask_slice_zoomed"] == 1] = 0
+        if use_first_sequence_set:
+            color_codes_cflow[self.slice_data["lsmask_one_slice_zoomed"] == 1] = 0
+        else:
+            color_codes_cflow[self.slice_data["lsmask_two_slice_zoomed"] == 1] = 0
         self.plot_from_color_codes(color_codes_cflow,index)
 
     def fine_cflow_plot_one(self,index):
@@ -1441,16 +1524,27 @@ class InteractiveTimeSlicePlots:
                                          >= self.minflowcutoff*self.fine_cutoff_scaling)] = 0
         self.plot_from_color_codes(color_codes_cflow,index)
 
-    def input_orography_plot(self,index):
+    def input_orography_plot_one(self,index):
         self.timeslice_plots[index].scale = PlotScales.FINE
-        self.orography_plot_base(index,self.slice_data["input_orography_slice_zoomed"])
+        self.orography_plot_base(index,self.slice_data["input_orography_one_slice_zoomed"])
 
-    def input_orography_change_plot(self,index):
+    def input_orography_plot_two(self,index):
+        self.timeslice_plots[index].scale = PlotScales.FINE
+        self.orography_plot_base(index,self.slice_data["input_orography_two_slice_zoomed"])
+
+    def input_orography_change_plot_one(self,index):
         self.timeslice_plots[index].scale = PlotScales.FINE
         self.orography_plot_base(
             index,
-            self.slice_data["input_orography_slice_zoomed"] -
-            self.slice_data["present_day_base_input_orography_slice_zoomed"])
+            self.slice_data["input_orography_one_slice_zoomed"] -
+            self.slice_data["present_day_base_input_orography_one_slice_zoomed"])
+
+    def input_orography_change_plot_two(self,index):
+        self.timeslice_plots[index].scale = PlotScales.FINE
+        self.orography_plot_base(
+            index,
+            self.slice_data["input_orography_two_slice_zoomed"] -
+            self.slice_data["present_day_base_input_orography_two_slice_zoomed"])
 
     def orography_plot_one(self,index):
         self.timeslice_plots[index].scale = PlotScales.FINE
@@ -1518,36 +1612,67 @@ class InteractiveTimeSlicePlots:
         self.timeslice_plots[index].scale = PlotScales.SUPERFINE
         self.orography_plot_base(index,self.slice_data["super_fine_orography_slice_zoomed"])
 
-    def first_corrected_orography_plot(self,index):
+    def first_corrected_orography_plot_one(self,index):
         self.timeslice_plots[index].scale = PlotScales.FINE
-        self.orography_plot_base(index,self.slice_data["first_corrected_orography_slice_zoomed"])
+        self.orography_plot_base(index,self.slice_data["first_corrected_orography_one_slice_zoomed"])
 
-    def second_corrected_orography_plot(self,index):
+    def second_corrected_orography_plot_one(self,index):
         self.timeslice_plots[index].scale = PlotScales.FINE
-        self.orography_plot_base(index,self.slice_data["second_corrected_orography_slice_zoomed"])
+        self.orography_plot_base(index,self.slice_data["second_corrected_orography_one_slice_zoomed"])
 
-    def third_corrected_orography_plot(self,index):
+    def third_corrected_orography_plot_one(self,index):
         self.timeslice_plots[index].scale = PlotScales.FINE
-        self.orography_plot_base(index,self.slice_data["third_corrected_orography_slice_zoomed"])
+        self.orography_plot_base(index,self.slice_data["third_corrected_orography_one_slice_zoomed"])
 
-    def fourth_corrected_orography_plot(self,index):
+    def fourth_corrected_orography_plot_one(self,index):
         self.timeslice_plots[index].scale = PlotScales.FINE
-        self.orography_plot_base(index,self.slice_data["fourth_corrected_orography_slice_zoomed"])
+        self.orography_plot_base(index,self.slice_data["fourth_corrected_orography_one_slice_zoomed"])
 
-    def first_vs_second_corrected_orography_plot(self,index):
+    def first_vs_second_corrected_orography_plot_one(self,index):
         self.timeslice_plots[index].scale = PlotScales.FINE
-        self.orography_plot_base(index,self.slice_data["second_corrected_orography_slice_zoomed"] -
-                                       self.slice_data["first_corrected_orography_slice_zoomed"])
+        self.orography_plot_base(index,self.slice_data["second_corrected_orography_one_slice_zoomed"] -
+                                       self.slice_data["first_corrected_orography_one_slice_zoomed"])
 
-    def second_vs_third_corrected_orography_plot(self,index):
+    def second_vs_third_corrected_orography_plot_one(self,index):
         self.timeslice_plots[index].scale = PlotScales.FINE
-        self.orography_plot_base(index,self.slice_data["third_corrected_orography_slice_zoomed"] -
-                                       self.slice_data["second_corrected_orography_slice_zoomed"])
+        self.orography_plot_base(index,self.slice_data["third_corrected_orography_one_slice_zoomed"] -
+                                       self.slice_data["second_corrected_orography_one_slice_zoomed"])
 
-    def third_vs_fourth_corrected_orography_plot(self,index):
+    def third_vs_fourth_corrected_orography_plot_one(self,index):
         self.timeslice_plots[index].scale = PlotScales.FINE
-        self.orography_plot_base(index,self.slice_data["fourth_corrected_orography_slice_zoomed"] -
-                                       self.slice_data["third_corrected_orography_slice_zoomed"])
+        self.orography_plot_base(index,self.slice_data["fourth_corrected_orography_one_slice_zoomed"] -
+                                       self.slice_data["third_corrected_orography_one_slice_zoomed"])
+
+    def first_corrected_orography_plot_two(self,index):
+        self.timeslice_plots[index].scale = PlotScales.FINE
+        self.orography_plot_base(index,self.slice_data["first_corrected_orography_two_slice_zoomed"])
+
+    def second_corrected_orography_plot_two(self,index):
+        self.timeslice_plots[index].scale = PlotScales.FINE
+        self.orography_plot_base(index,self.slice_data["second_corrected_orography_two_slice_zoomed"])
+
+    def third_corrected_orography_plot_two(self,index):
+        self.timeslice_plots[index].scale = PlotScales.FINE
+        self.orography_plot_base(index,self.slice_data["third_corrected_orography_two_slice_zoomed"])
+
+    def fourth_corrected_orography_plot_two(self,index):
+        self.timeslice_plots[index].scale = PlotScales.FINE
+        self.orography_plot_base(index,self.slice_data["fourth_corrected_orography_two_slice_zoomed"])
+
+    def first_vs_second_corrected_orography_plot_two(self,index):
+        self.timeslice_plots[index].scale = PlotScales.FINE
+        self.orography_plot_base(index,self.slice_data["second_corrected_orography_two_slice_zoomed"] -
+                                       self.slice_data["first_corrected_orography_two_slice_zoomed"])
+
+    def second_vs_third_corrected_orography_plot_two(self,index):
+        self.timeslice_plots[index].scale = PlotScales.FINE
+        self.orography_plot_base(index,self.slice_data["third_corrected_orography_two_slice_zoomed"] -
+                                       self.slice_data["second_corrected_orography_two_slice_zoomed"])
+
+    def third_vs_fourth_corrected_orography_plot_two(self,index):
+        self.timeslice_plots[index].scale = PlotScales.FINE
+        self.orography_plot_base(index,self.slice_data["fourth_corrected_orography_two_slice_zoomed"] -
+                                       self.slice_data["third_corrected_orography_two_slice_zoomed"])
 
     def true_sinks_plot(self,index):
         self.timeslice_plots[index].scale = PlotScales.FINE
@@ -2137,7 +2262,7 @@ def prep_combined_sequences(date_text_sequence,
                 generate_color_codes_lake_and_river_sequence(kwargs["river_flow_one_sequence"],
                                                              kwargs["lake_volumes_one_sequence"],
                                                              kwargs["glacier_mask_sequence"],
-                                                             kwargs["lsmask_sequence"],
+                                                             kwargs["lsmask_one_sequence"],
                                                              minflowcutoff)
         if (kwargs["river_flow_two_sequence"] is not None and
             kwargs["lake_volumes_two_sequence"] is not None):
@@ -2145,7 +2270,7 @@ def prep_combined_sequences(date_text_sequence,
                 generate_color_codes_lake_and_river_sequence(kwargs["river_flow_two_sequence"],
                                                              kwargs["lake_volumes_two_sequence"],
                                                              kwargs["glacier_mask_sequence"],
-                                                             kwargs["lsmask_sequence"],
+                                                             kwargs["lsmask_one_sequence"],
                                                              minflowcutoff)
     combined_sequences = {re.sub("_sequence","",name):change_none_to_list(sequence) for name,sequence in kwargs.items()}
     combined_sequences['lake_and_river_color_codes_one'] = lake_and_river_color_codes_sequence_one
@@ -2170,8 +2295,9 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequences,
     run_backwards = False
     skip_to_index = False
     i = 0
-    sequence_names = ["rdirs_one","rdirs_two",
-                      "lsmask","glacier_mask","input_orography",
+    sequence_names = ["rdirs_one","rdirs_two","lsmask_one",
+                      "lsmask_two","glacier_mask",
+                      "input_orography_one","input_orography_two",
                       "catchment_nums_one","catchment_nums_two",
                       "river_flow_one","river_flow_two","river_mouths_one",
                       "river_mouths_two","lake_volumes_one",
@@ -2210,7 +2336,8 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequences,
                 slice_data["date"] = combined_sequences["date"][0]
         zoomed_slice_data = {}
         slices_to_zoom_normal_scale = ["rdirs_one_slice","rdirs_two_slice",
-                                       "lsmask_slice","glacier_mask_slice",
+                                       "lsmask_one_slice","lsmask_two_slice",
+                                       "glacier_mask_slice",
                                        "catchment_nums_one_slice",
                                        "catchment_nums_two_slice",
                                        "river_flow_one_slice",
@@ -2228,7 +2355,7 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequences,
                 extract_zoomed_section(slice_data[slice_name],
                                        zoom_settings.zoomed_section_bounds) \
                 if zoom_settings.zoomed else slice_data[slice_name]
-        slices_to_zoom_fine_scale = ["input_orography_slice",
+        slices_to_zoom_fine_scale = ["input_orography_one_slice","input_orography_two_slice",
                                      "lake_volumes_one_slice","lake_volumes_two_slice",
                                      "lake_basin_numbers_one_slice",
                                      "lake_basin_numbers_two_slice",
@@ -2248,11 +2375,16 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequences,
                                        zoom_settings.zoomed_section_bounds,
                                        zoom_settings.fine_scale_factor) \
                 if zoom_settings.zoomed else slice_data[slice_name]
-        fixed_fields_to_zoom_fine_scale = ["first_corrected_orography",
-                                           "second_corrected_orography",
-                                           "third_corrected_orography",
-                                           "fourth_corrected_orography",
-                                           "present_day_base_input_orography",
+        fixed_fields_to_zoom_fine_scale = ["first_corrected_orography_one",
+                                           "second_corrected_orography_one",
+                                           "third_corrected_orography_one",
+                                           "fourth_corrected_orography_one",
+                                           "first_corrected_orography_two",
+                                           "second_corrected_orography_two",
+                                           "third_corrected_orography_two",
+                                           "fourth_corrected_orography_two",
+                                           "present_day_base_input_orography_one",
+                                           "present_day_base_input_orography_two",
                                            "true_sinks"]
         for slice_name in fixed_fields_to_zoom_fine_scale:
             zoomed_slice_data[f"{slice_name}_slice_zoomed"] = \
@@ -2292,11 +2424,12 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequences,
         if bidirectional:
             if i < 0:
                 i = 0
-            elif i >= len(combined_sequences["lsmask"]):
-                i = len(combined_sequences["lsmask"]) - 1
+            elif i >= len(combined_sequences["lsmask_one"]):
+                i = len(combined_sequences["lsmask_one"]) - 1
 
 def generate_catchment_and_cflow_comp_sequence(colors,
-                                               lsmask_sequence,
+                                               lsmask_one_sequence,
+                                               lsmask_two_sequence,
                                                glacier_mask_sequence,
                                                catchment_nums_one_sequence,
                                                catchment_nums_two_sequence,
@@ -2310,7 +2443,8 @@ def generate_catchment_and_cflow_comp_sequence(colors,
                                                zoomed=False,
                                                zoomed_section_bounds={}):
     im_list = []
-    combined_sequences = prep_combined_sequences(lsmask_slice=lsmask_sequence,
+    combined_sequences = prep_combined_sequences(lsmask_one_slice=lsmask_one_sequence,
+                                                 lsmask_two_slice=lsmask_two_sequence,
                                                  glacier_mask_slice=glacier_mask_sequence,
                                                  catchment_nums_one_slice=catchment_nums_one_sequence,
                                                  catchment_nums_two_slice=catchment_nums_two_sequence,
@@ -2325,7 +2459,8 @@ def generate_catchment_and_cflow_comp_sequence(colors,
                                                                     ZoomSettings(zoomed,
                                                                                  zoomed_section_bounds)):
         im_list.append([generate_catchment_and_cflow_comp_slice(colors,
-                                                                slice_data["lsmask_slice_zoomed"],
+                                                                slice_data["lsmask_one_slice_zoomed"],
+                                                                slice_data["lsmask_two_slice_zoomed"],
                                                                 slice_data["glacier_mask_slice_zoomed"],
                                                                 slice_data["matched_catchment_nums_one"],
                                                                 slice_data["matched_catchment_nums_two"],
