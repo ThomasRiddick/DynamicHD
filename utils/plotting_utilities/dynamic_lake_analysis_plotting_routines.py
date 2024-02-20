@@ -571,6 +571,34 @@ class TimeSequences:
             self.rdirs_jump_next_cell_lat_two_sequence = None
             self.rdirs_jump_next_cell_lon_two_sequence = None
             self.coarse_lake_outflows_two_sequence = None
+        if not "true_sinks_one" in missing_fields:
+            highest_true_sinks_version_one = find_highest_version(join(sequence_one_base_dir,
+                                                             "corrections","true_sinks_fields",
+                                                             "true_sinks_field_version_"
+                                                             "VERSION_NUMBER.nc"))
+            self.true_sinks_one = advanced_field_loader(filename=join(sequence_one_base_dir,
+                                                                      "corrections","true_sinks_fields",
+                                                                      "true_sinks_field_version_{}.nc".\
+                                                                      format(highest_true_sinks_version_one)),
+                                                                      time_slice=None,
+                                                                      fieldname="true_sinks",
+                                                                      adjust_orientation=True).get_data()
+        else:
+            self.true_sinks_one = None
+        if not "true_sinks_two" in missing_fields:
+            highest_true_sinks_version_two = find_highest_version(join(sequence_two_base_dir,
+                                                             "corrections","true_sinks_fields",
+                                                             "true_sinks_field_version_"
+                                                             "VERSION_NUMBER.nc"))
+            self.true_sinks_two = advanced_field_loader(filename=join(sequence_two_base_dir,
+                                                                      "corrections","true_sinks_fields",
+                                                                      "true_sinks_field_version_{}.nc".\
+                                                                      format(highest_true_sinks_version_two)),
+                                                                      time_slice=None,
+                                                                      fieldname="true_sinks",
+                                                                      adjust_orientation=True).get_data()
+        else:
+            self.true_sinks_two = None
         if not "super_fine_orography" in missing_fields:
             self.super_fine_orography = advanced_field_loader(filename=join(super_fine_orography_filepath),
                                                          time_slice=None,
@@ -636,20 +664,6 @@ class TimeSequences:
             self.second_corrected_orography_two = None
             self.third_corrected_orography_two = None
             self.fourth_corrected_orography_two = None
-        if not "true_sinks" in missing_fields:
-            highest_true_sinks_version = find_highest_version(join(sequence_one_base_dir,
-                                                             "corrections","true_sinks_fields",
-                                                             "true_sinks_field_version_"
-                                                             "VERSION_NUMBER.nc"))
-            self.true_sinks = advanced_field_loader(filename=join(sequence_one_base_dir,
-                                                                  "corrections","true_sinks_fields",
-                                                                  "true_sinks_field_version_{}.nc".\
-                                                                  format(highest_true_sinks_version)),
-                                                                  time_slice=None,
-                                                                  fieldname="true_sinks",
-                                                                  adjust_orientation=True).get_data()
-        else:
-            self.true_sinks = None
         if not "present_day_base_input_orography_one" in missing_fields:
             self.present_day_base_input_orography_one = \
                 advanced_field_loader(
@@ -1072,7 +1086,8 @@ class InteractiveTimeSlicePlots:
                            "inputorog2":self.input_orography_plot_two,
                            "inputorogchange1":self.input_orography_change_plot_one,
                            "inputorogchange2":self.input_orography_change_plot_two,
-                           "truesinks":self.true_sinks_plot,
+                           "truesinks1":self.true_sinks_plot_one,
+                           "truesinks2":self.true_sinks_plot_two,
                            "lakev1":self.lake_volume_plot_one,
                            "lakev2":self.lake_volume_plot_two,
                            "loglakev1":self.log_lake_volume_plot_one,
@@ -1095,15 +1110,21 @@ class InteractiveTimeSlicePlots:
                            "debuglakepoints1":self.debug_lake_points_one}
         self.orog_plot_types  = ["orog1","orog2","orogcomp","sforog",
                                  "morog1","morog2",
-                                 "firstcorrorog","secondcorrorog",
-                                 "thirdcorrorog","fourthcorrorog",
-                                 "corrorog12comp","corrorog23comp",
-                                 "corrorog34comp",
+                                 "firstcorrorog1","secondcorrorog1",
+                                 "thirdcorrorog1","fourthcorrorog1",
+                                 "corrorog12comp1","corrorog23comp1",
+                                 "corrorog34comp1",
+                                 "firstcorrorog2","secondcorrorog2",
+                                 "thirdcorrorog2","fourthcorrorog2",
+                                 "corrorog12comp2","corrorog23comp2",
+                                 "corrorog34comp2",
                                  "orogplusspillway1",
                                  "orogplusspillway2",
                                  "orogpluspspillway1",
                                  "orogpluspspillway2",
-                                 "inputorog","inputorogchange"]
+                                 "inputorog1","inputorog2",
+                                 "inputorogchange1",
+                                 "inputorogchange2"]
         self.cflow_plot_types = ["fcflow1","fcflow1","fcflow1comp",
                                  "cflow1","cflow2","comp"]
         self.plot_configuration = [initial_plot_configuration[0] for _ in range(13)]
@@ -1247,7 +1268,8 @@ class InteractiveTimeSlicePlots:
                         second_corrected_orography_two,
                         third_corrected_orography_two,
                         fourth_corrected_orography_two,
-                        true_sinks,
+                        true_sinks_one,
+                        true_sinks_two,
                         date_sequence,
                         **kwargs):
         combined_sequences =  prep_combined_sequences(["{} YBP".format(date) for date in date_sequence],
@@ -1277,7 +1299,8 @@ class InteractiveTimeSlicePlots:
                                                                third_corrected_orography_two,
                                                                fourth_corrected_orography_two=
                                                                fourth_corrected_orography_two,
-                                                               true_sinks=true_sinks,
+                                                               true_sinks_one=true_sinks_one,
+                                                               true_sinks_two=true_sinks_two,
                                                                bidirectional=True,
                                                                zoom_settings=self.zoom_settings,
                                                                return_zero_slice_only_one=
@@ -1474,7 +1497,7 @@ class InteractiveTimeSlicePlots:
                                      self.slice_data["lsmask_two_slice_zoomed"].shape)
         if use_first_sequence_set:
             color_codes_cflow[self.slice_data["lsmask_one_slice_zoomed"] == 0] = 1
-        else
+        else:
             color_codes_cflow[self.slice_data["lsmask_two_slice_zoomed"] == 0] = 1
         river_flow_slice = (self.slice_data["river_flow_one_slice_zoomed"]
                             if use_first_sequence_set
@@ -1674,9 +1697,13 @@ class InteractiveTimeSlicePlots:
         self.orography_plot_base(index,self.slice_data["fourth_corrected_orography_two_slice_zoomed"] -
                                        self.slice_data["third_corrected_orography_two_slice_zoomed"])
 
-    def true_sinks_plot(self,index):
+    def true_sinks_plot_one(self,index):
         self.timeslice_plots[index].scale = PlotScales.FINE
-        self.plot_from_color_codes(self.slice_data["true_sinks_slice_zoomed"],index)
+        self.plot_from_color_codes(self.slice_data["true_sinks_one_slice_zoomed"],index)
+
+    def true_sinks_plot_two(self,index):
+        self.timeslice_plots[index].scale = PlotScales.FINE
+        self.plot_from_color_codes(self.slice_data["true_sinks_two_slice_zoomed"],index)
 
     def modified_orography_plot_base(self,index,orography):
         modified_orography = np.copy(orography)
@@ -2385,7 +2412,8 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequences,
                                            "fourth_corrected_orography_two",
                                            "present_day_base_input_orography_one",
                                            "present_day_base_input_orography_two",
-                                           "true_sinks"]
+                                           "true_sinks_one",
+                                           "true_sinks_two"]
         for slice_name in fixed_fields_to_zoom_fine_scale:
             zoomed_slice_data[f"{slice_name}_slice_zoomed"] = \
                 extract_zoomed_section(kwargs[slice_name],
