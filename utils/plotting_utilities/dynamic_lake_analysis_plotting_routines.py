@@ -342,6 +342,8 @@ class TimeSequences:
                  sequence_one_fixed_version=-1,
                  use_latest_version_for_sequence_two=True,
                  sequence_two_fixed_version=-1,
+                 sequence_one_is_transient_run_data=False,
+                 sequence_two_is_transient_run_data=False,
                  **kwargs):
         self.date_sequence = dates
         self.sequence_one_results_base_dirs = []
@@ -680,6 +682,60 @@ class TimeSequences:
                     time_slice=None,
                     fieldname="Topo",
                     adjust_orientation=True).get_data()
+        if sequence_one_is_transient_run_data:
+            self.discharge_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
+                                                       fieldname="discharge",
+                                                       filename=
+                                                       "30min_discharge.nc",
+                                                       executor=executor)
+            self.discharge_to_ocean_one_sequence = /
+                TimeSequence(filepaths=self.sequence_one_results_base_dirs,
+                             fieldname="discharge",
+                             filename=
+                             "30min_discharge_to_ocean.nc",
+                             executor=executor)
+            self.filled_lake_volume_one_sequence = /
+                TimeSequence(filepaths=self.sequence_one_results_base_dirs,
+                             fieldname="lake_volume",
+                             filename=
+                             "10min_lake_volume.nc",
+                             executor=executor)
+            self.filled_lake_mask_one_sequence = /
+                DerivedTimeSequence(self.filled_lake_volume_one_sequence,
+                                    func=lambda base_array:
+                                    base_array>0.0)
+        else:
+            self.discharge_one_sequence = None
+            self.discharge_to_ocean_one_sequence = None
+            self.filled_lake_mask_one_sequence = None
+            self.filled_lake_volume_one_sequence = None
+        if sequence_two_is_transient_run_data:
+            self.discharge_two_sequence = TimeSequence(filepaths=self.sequence_two_results_base_dirs,
+                                                       fieldname="discharge",
+                                                       filename=
+                                                       "30min_discharge.nc",
+                                                       executor=executor)
+            self.discharge_to_ocean_two_sequence = /
+                TimeSequence(filepaths=self.sequence_two_results_base_dirs,
+                             fieldname="discharge",
+                             filename=
+                             "30min_discharge_to_ocean.nc",
+                             executor=executor)
+            self.filled_lake_volume_two_sequence = /
+                TimeSequence(filepaths=self.sequence_two_results_base_dirs,
+                             fieldname="lake_volume",
+                             filename=
+                             "10min_lake_volume.nc",
+                             executor=executor)
+            self.filled_lake_mask_two_sequence = /
+                DerivedTimeSequence(self.filled_lake_volume_two_sequence,
+                                    func=lambda base_array:
+                                    base_array>0.0)
+        else:
+            self.discharge_two_sequence = None
+            self.discharge_to_ocean_two_sequence = None
+            self.filled_lake_mask_two_sequence = None
+            self.filled_lake_volume_two_sequence = None
 
     def poll_io_worker_procs(self):
         for var in vars(self):
@@ -819,19 +875,11 @@ class InteractiveSpillwayPlots:
 class InteractiveTimeSeriesPlots():
 
     def __init__(self,colors,
-                 data_configuration,
+                 data_configuration,,
                  **kwargs):
         mpl.use('TkAgg')
         self.setup_sequences(**kwargs)
-        self.plot_types = {"none":self.no_plot,
-                           "height1":self.lake_height_plot_one,
-                           "height2":self.lake_height_plot_two,
-                           "volume1":self.lake_volume_plot_one,
-                           "volume2":self.lake_volume_plot_two,
-                           "outflow1":self.lake_outflow_plot_one,
-                           "outflow2":self.lake_outflow_plot_two,
-                           "sillheight1":self.lake_sill_height_plot_one,
-                           "sillheight2":self.lake_sill_height_plot_two, }
+        self.prep_plot_types()
         self.plot_configuration = ["height1" for _ in range(10)]
         self.data_configuration = data_configuration
         self.figs = []
@@ -872,6 +920,25 @@ class InteractiveTimeSeriesPlots():
         self.timeseries_plots.append(TimeSeriesPlot(fig.add_subplot(gs[3,0])))
         self.step()
 
+    def prep_plot_types(self,**kwargs):
+        self.plot_types = {"none":self.no_plot,
+                           "height1":self.lake_height_plot_one,
+                           "height2":self.lake_height_plot_two,
+                           "volume1":self.lake_volume_plot_one,
+                           "volume2":self.lake_volume_plot_two,
+                           "outflow1":self.lake_outflow_plot_one,
+                           "outflow2":self.lake_outflow_plot_two,
+                           "sillheight1":self.lake_sill_height_plot_one,
+                           "sillheight2":self.lake_sill_height_plot_two}
+        if self.time_sequences.discharge_to_ocean_one_sequence is not None:
+            self.plot_types["disctobasin1"] = self.discharge_to_basin_plot_one
+        if self.time_sequences.filled_lake_volumes_one_sequence is not None:
+            self.plot_types["filledvolume1"] = self.filled_lake_volume_plot_one
+        if self.time_sequences.discharge_to_ocean_two_sequence is not None:
+            self.plot_types["disctobasin2"] = self.discharge_to_basin_plot_two
+        if self.time_sequences.filled_lake_volumes_two_sequence is not None:
+            self.plot_types["filledvolume2"] = self.filled_lake_volume_plot_two
+
     def setup_sequences(self,date_sequence,
                         lake_heights_one_sequence,
                         lake_heights_two_sequence,
@@ -881,6 +948,10 @@ class InteractiveTimeSeriesPlots():
                         lake_outflow_basin_two_sequence,
                         lake_sill_heights_one_sequence,
                         lake_sill_heights_two_sequence,
+                        discharge_to_basin_one_sequence,
+                        discharge_to_basin_two_sequence,
+                        filled_lake_volume_one_sequence,
+                        filled_lake_volume_two_sequence,
                         **kwargs):
         self.date_sequence = date_sequence
         self.lake_heights_one_sequence = lake_heights_one_sequence
@@ -891,9 +962,14 @@ class InteractiveTimeSeriesPlots():
         self.lake_outflow_basin_two_sequence = lake_outflow_basin_two_sequence
         self.lake_sill_heights_one_sequence = lake_sill_heights_one_sequence
         self.lake_sill_heights_two_sequence = lake_sill_heights_two_sequence
+        self.discharge_to_basin_one_sequence = discharge_to_basin_one_sequence
+        self.discharge_to_basin_two_sequence = discharge_to_basin_two_sequence
+        self.filled_lake_volume_one_sequence = filled_lake_volume_one_sequence
+        self.filled_lake_volume_two_sequence = filled_lake_volume_two_sequence
 
     def replot(self,**kwargs):
         self.setup_sequences(**kwargs)
+        self.prep_plot_types(**kwargs)
         self.step()
 
     def step(self):
@@ -939,6 +1015,12 @@ class InteractiveTimeSeriesPlots():
 
     def lake_volume_plot_two(self,index):
         self.lake_volume_plot_base(index,self.lake_volume_two_sequence)
+
+    def filled_lake_volume_plot_one(self,index):
+        self.lake_volume_plot_base(index,self.filled_lake_volume_one_sequence)
+
+    def filled_lake_volume_plot_two(self,index):
+        self.lake_volume_plot_base(index,self.filled_lake_volume_two_sequence)
 
     def lake_outflow_plot_base(self,index,lake_outflow_sequence):
         self.timeseries_plots[index].ax.clear()
@@ -1031,6 +1113,22 @@ class InteractiveTimeSeriesPlots():
     def lake_sill_height_plot_two(self,index):
         self.lake_sill_height_plot_base(index,self.lake_sill_heights_two_sequence)
 
+    def discharge_to_basin_plot_base(self,index,discharge_to_basin_sequence)
+        basins = {Basins.GOM:"Gulf Mex.",Basins.ART:"Artic",Basins.NATL:"N. Atl."}
+        discharge_to_basin_individual_sequences = {basin:[] for basin in basins.keys()}
+        for element in discharge_to_basin_sequence:
+            for basin_name,basin_discharge in element.items():
+                discharge_to_basin_individual_sequences[basin_name].append(basin_discharge)
+        self.timeseries_plots[index].ax.clear()
+        for basin_name,basin_label in basins.items():
+            self.timeseries_plots[index].ax.plot(discharge_to_basin_individual_sequences[basin_name])
+        if index == 0:
+            self.timeseries_plots[index].ax.set_title("Outflow to Ocean Basins")
+        else:
+            self.timeseries_plots[index].ax.text(0.05,0.85,"Outflow to Ocean Basins",
+                                                 transform=
+                                                 self.timeseries_plots[index].ax.transAxes)
+
 class InteractiveTimeSlicePlots:
 
     def __init__(self,colors,
@@ -1055,9 +1153,9 @@ class InteractiveTimeSlicePlots:
                            "cflow2":self.cflow_plot_two,
                            "catch1":self.catchments_plot_one,
                            "catch2":self.catchments_plot_two,
-                           #"fcflow1":self.fine_cflow_plot_one,
-                           #"fcflow2":self.fine_cflow_plot_two,
-                           #"fcflowcomp":self.fine_cflow_comp_plot,
+                           "fcflow1":self.fine_cflow_plot_one,
+                           "fcflow2":self.fine_cflow_plot_two,
+                           "fcflowcomp":self.fine_cflow_comp_plot,
                            "orog1":self.orography_plot_one,
                            "orog2":self.orography_plot_one,
                            "morog1":self.modified_orography_plot_one,
@@ -2340,6 +2438,14 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequences,
                       "coarse_lake_outflows_two",
                       "sinkless_rdirs_one",
                       "sinkless_rdirs_two",
+                      "discharge_one",
+                      "discharge_to_ocean_one",
+                      "filled_lake_mask_one",
+                      "filled_lake_volume_one",
+                      "discharge_two",
+                      "discharge_to_ocean_two",
+                      "filled_lake_mask_two",
+                      "filled_lake_volume_two",
                       "lake_and_river_color_codes_one",
                       "lake_and_river_color_codes_two"]
     while i < len(combined_sequences) or bidirectional:
@@ -2376,7 +2482,15 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequences,
                                        "rdirs_jump_next_cell_lat_two_slice",
                                        "rdirs_jump_next_cell_lon_two_slice",
                                        "coarse_lake_outflows_one_slice",
-                                       "coarse_lake_outflows_two_slice"]
+                                       "coarse_lake_outflows_two_slice",
+                                       "discharge_one",
+                                       "discharge_to_ocean_one",
+                                       "discharge_one",
+                                       "discharge_to_ocean_one",
+                                       "discharge_two",
+                                       "discharge_to_ocean_two",
+                                       "discharge_two",
+                                       "discharge_to_ocean_two"]
         for slice_name in slices_to_zoom_normal_scale:
             zoomed_slice_data[f"{slice_name}_zoomed"] = \
                 extract_zoomed_section(slice_data[slice_name],
@@ -2395,7 +2509,11 @@ def generate_catchment_and_cflow_sequence_tuple(combined_sequences,
                                      "sinkless_rdirs_one_slice",
                                      "sinkless_rdirs_two_slice",
                                      "lake_and_river_color_codes_one_slice",
-                                     "lake_and_river_color_codes_two_slice"]
+                                     "lake_and_river_color_codes_two_slice",
+                                     "filled_lake_mask_one",
+                                     "filled_lake_volume_one",
+                                     "filled_lake_mask_two",
+                                     "filled_lake_volume_two"]
         for slice_name in slices_to_zoom_fine_scale:
             zoomed_slice_data[f"{slice_name}_zoomed"] = \
                 extract_zoomed_section(slice_data[slice_name],

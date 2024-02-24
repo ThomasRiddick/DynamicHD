@@ -576,6 +576,8 @@ def latest_lake_version_vs_previous_analysis_lakes_comparison():
     initial_configuration["sequence_one_fixed_version"] = -1
     initial_configuration["use_latest_version_for_sequence_two"] = True
     initial_configuration["sequence_two_fixed_version"] = -1
+    initial_configuration["sequence_one_is_transient_run_data"] = False
+    initial_configuration["sequence_two_is_transient_run_data"] = False
     plotter = DynamicLakeAnalysisPlotter(colors,
                                          initial_configuration_in=initial_configuration,
                                          dataset_catalog_filepath=

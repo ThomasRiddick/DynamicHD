@@ -388,10 +388,12 @@ class OutflowBasinIdentifier:
                                             ocean_basin_numbers,
                                             discharge_to_ocean,
                                             input_area_bounds):
-        discharge_to_ocean_basins = []
+        discharge_to_ocean_basins = {}
         for ocean_basin_number in range(len(self.coastline_identifiers)):
-            discharge_to_ocean_basins.append(sum(discharge_to_ocean[ocean_basin_numbers ==
-                                                                    ocean_basin_number]))
+            ocean_basin_name = self.ocean_basin_names[ocean_basin_number]
+            discharge_to_ocean_basins[ocean_basin_name] = \
+                sum(discharge_to_ocean[ocean_basin_numbers ==
+                                       ocean_basin_number])
         return discharge_to_ocean_basins
 
     def calculate_discharge_to_ocean_basins_sequence(self,

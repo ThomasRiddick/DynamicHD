@@ -88,6 +88,10 @@ class DynamicLakeAnalysisPlotter:
             config.getboolean("config","use_latest_version_for_sequence_two")
         self.configuration["sequence_two_fixed_version"] = \
             config.getinteger("config","sequence_two_fixed_version")
+        self.configuration["sequence_one_is_transient_run_data"] = \
+            config.getboolean("config","sequence_one_is_transient_run_data")
+        self.configuration["sequence_two_is_transient_run_data"] = \
+            config.getboolean("config","sequence_two_is_transient_run_data")
 
     def setup_configuration(self,configuration,reprocessing=False):
         self.configuration = configuration
@@ -115,23 +119,32 @@ class DynamicLakeAnalysisPlotter:
                                                    self.lake_stats_two["Agassiz"]\
                                                    ["lake_spillway_height_profiles"],
                                                    **vars(self.time_sequences))
-            self.interactive_timeseries_plots.replot(lake_heights_one_sequence=
-                                                     self.lake_stats_one["Agassiz"]["lake_heights"],
-                                                     lake_heights_two_sequence=
-                                                     self.lake_stats_two["Agassiz"]["lake_heights"],
-                                                     lake_volume_one_sequence=
-                                                     self.lake_stats_one["Agassiz"]["lake_volumes"],
-                                                     lake_volume_two_sequence=
-                                                     self.lake_stats_two["Agassiz"]["lake_volumes"],
-                                                     lake_outflow_basin_one_sequence=
-                                                     self.lake_stats_one["Agassiz"]["lake_outflow_basins"],
-                                                     lake_outflow_basin_two_sequence=
-                                                     self.lake_stats_two["Agassiz"]["lake_outflow_basins"],
-                                                     lake_sill_heights_one_sequence=
-                                                     self.lake_stats_one["Agassiz"]["lake_sill_heights"],
-                                                     lake_sill_heights_two_sequence=
-                                                     self.lake_stats_two["Agassiz"]["lake_sill_heights"],
-                                                     **vars(self.time_sequences))
+            self.interactive_timeseries_plots.\
+                replot(lake_heights_one_sequence=
+                       self.lake_stats_one["Agassiz"]["lake_heights"],
+                       lake_heights_two_sequence=
+                       self.lake_stats_two["Agassiz"]["lake_heights"],
+                       lake_volume_one_sequence=
+                       self.lake_stats_one["Agassiz"]["lake_volumes"],
+                       lake_volume_two_sequence=
+                       self.lake_stats_two["Agassiz"]["lake_volumes"],
+                       lake_outflow_basin_one_sequence=
+                       self.lake_stats_one["Agassiz"]["lake_outflow_basins"],
+                       lake_outflow_basin_two_sequence=
+                       self.lake_stats_two["Agassiz"]["lake_outflow_basins"],
+                       lake_sill_heights_one_sequence=
+                       self.lake_stats_one["Agassiz"]["lake_sill_heights"],
+                       lake_sill_heights_two_sequence=
+                       self.lake_stats_two["Agassiz"]["lake_sill_heights"],
+                       discharge_to_basin_one_sequence=,
+                       self.lake_stats_one["Agassiz"]["discharge_to_basin"]
+                       discharge_to_basin_two_sequence=,
+                       self.lake_stats_two["Agassiz"]["discharge_to_basin"]
+                       filled_lake_volumes_one_sequence=,
+                       self.lake_stats_one["Agassiz"]["filled_lake_volumes"]
+                       filled_lake_volumes_two_sequence=
+                       self.lake_stats_two["Agassiz"]["filled_lake_volumes"]
+                       **vars(self.time_sequences))
 
     def generate_lake_stats(self):
         logging.info("Starting lake stats generation")
@@ -165,6 +178,17 @@ class DynamicLakeAnalysisPlotter:
                      self.time_sequences.sinkless_rdirs_two_sequence,
                      "orography_two":
                      self.time_sequences.orography_two_sequence}
+        additional_sequences = {"discharge_to_ocean_one":
+                                self.time_sequences.discharge_to_ocean_one_sequence,
+                                "filled_lake_volumes_one":
+                                self.time_sequences.filled_lake_volumes_one_sequence,
+                                "discharge_to_ocean_two":
+                                self.time_sequences.discharge_to_ocean_two_sequence,
+                                "filled_lake_volumes_two":
+                                self.time_sequences.filled_lake_volumes_two_sequence}
+        for key,value in additional_sequences.items()
+            if value is not None:
+                sequences[key] = value
         subsequence_length = 5
         blocks_to_retain = [0,1,2]
         subsequence_collections = [{"date":
@@ -178,13 +202,15 @@ class DynamicLakeAnalysisPlotter:
         stat_names = ["lake_points","lake_heights","lake_volumes",
                       "lake_outflow_basins","lake_sill_heights",
                       "lake_spillway_height_profiles",
-                      "lake_spillway_masks"]
+                      "lake_spillway_masks","discharge_to_basin",
+                      "filled_lake_volumes"]
         for lake_name in self.lake_defs.keys():
             self.lake_stats_one[lake_name] = {name:[] for name in stat_names}
             self.lake_stats_two[lake_name] = {name:[] for name in stat_names}
         for i,subsequence_collection in enumerate(subsequence_collections):
             for lake_name,lake in self.lake_defs.items():
                 for exp in ["one","two"]:
+                    unused_stats = []
                     vars(self)[f"ocean_basin_identifier_{exp}"].\
                         set_lsmask_sequence(subsequence_collection[f"lsmask_{exp}"])
                     lake_points = vars(self)[f"lake_point_extractor_{exp}"].\
@@ -204,6 +230,19 @@ class DynamicLakeAnalysisPlotter:
                                                                 lake_volumes_sequence=
                                                                 subsequence_collection[
                                                                 f"lake_volumes_{exp}"])
+                    if f"filled_lake_volume_{exp}" in sequences:
+                    #Use this only for the filled lake volumes; doesn't apply for
+                    #filled lake heights so just insert dummy height data and ignore output
+                        _,filled_lake_volumes = self.lake_height_and_volume_extractor.\
+                            extract_lake_height_and_volume_sequence(lake_point_sequence=lake_points,
+                                                                    filled_orography_sequence=
+                                                                    subsequence_collection[
+                                                                    f"filled_orography_{exp}"],
+                                                                    lake_volumes_sequence=
+                                                                    subsequence_collection[
+                                                                    f"filled_lake_volume_{exp}"])
+                    else:
+                        unused_stats["filled_lake_volumes"]
                     lake_outflow_basins = vars(self)[f"ocean_basin_identifier_{exp}"].\
                         extract_ocean_basin_for_lake_outflow_sequence(dates=
                                                                       subsequence_collection["date"],
@@ -213,6 +252,14 @@ class DynamicLakeAnalysisPlotter:
                                                                       subsequence_collection[
                                                                       f"catchment_nums_{exp}"],
                                                                       scale_factor=3)
+                    if f"discharge_to_ocean_{exp}" in sequences:
+                        discharge_to_basin = vars(self)[f"ocean_basin_identifier_{exp}"].\
+                            calculate_discharge_to_ocean_basins_sequence(
+                                dates=subsequence_collection["date"],
+                                discharge_to_ocean_sequence=subsequence_collection[
+                                                            f"discharge_to_ocean_{exp}"])
+                    else:
+                        unused_stats["discharge_to_basin"]
                     lake_spillway_height_profiles,lake_spillway_masks = \
                         self.exit_profiler.profile_exit_sequence(lake_center_sequence=lake_points,
                                                                  ocean_basin_numbers_sequence=
@@ -226,7 +273,7 @@ class DynamicLakeAnalysisPlotter:
                                                                 f"orography_{exp}"])
                     lake_sill_heights = [ [max(profile) for profile in profile_set]
                                           for profile_set in lake_spillway_height_profiles ]
-                    for stat_name in stat_names:
+                    for stat_name in filter(lambda name:name not in unused_stats ,stat_names):
                         vars(self)[f"lake_stats_{exp}"][lake_name][stat_name].extend(locals()[stat_name])
             for key,sequence in filter(lambda item:type(item[1]) is TimeSequence,sequences.items()):
                 sequence.insert_subsequence_data(subsequence_collection[key])
@@ -325,7 +372,15 @@ class DynamicLakeAnalysisPlotter:
                                        lake_sill_heights_one_sequence=
                                        self.lake_stats_one["Agassiz"]["lake_sill_heights"],
                                        lake_sill_heights_two_sequence=
-                                       self.lake_stats_two["Agassiz"]["lake_sill_heights"],)
+                                       self.lake_stats_two["Agassiz"]["lake_sill_heights"],
+                                       discharge_to_basin_one_sequence=,
+                                       self.lake_stats_one["Agassiz"]["discharge_to_basin"]
+                                       discharge_to_basin_two_sequence=,
+                                       self.lake_stats_two["Agassiz"]["discharge_to_basin"]
+                                       filled_lake_volumes_one_sequence=,
+                                       self.lake_stats_one["Agassiz"]["filled_lake_volumes"]
+                                       filled_lake_volumes_two_sequence=
+                                       self.lake_stats_two["Agassiz"]["filled_lake_volumes"])
         figures = {**figures,**build_dict(self.interactive_timeseries_plots.figs,[1,2,3,4],"TS")}
         gui = dla_gui.DynamicLakeAnalysisGUI(list(self.interactive_plots.plot_types.keys()),
                                              list(self.interactive_timeseries_plots.plot_types.keys()),
