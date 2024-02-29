@@ -1,6 +1,10 @@
 import xarray as xr
+import numpy as np
+import argparse
 from Dynamic_HD_Scripts.utilities.check_driver_inputs \
     import check_input_files, check_output_files
+from Dynamic_HD_Scripts.interface.cpp_interface.libs \
+    import determine_river_directions_icon_wrapper
 
 class DetermineRiverDirectionsIconDriver:
 
@@ -16,41 +20,49 @@ class DetermineRiverDirectionsIconDriver:
                            self.args["landsea_filepath"],
                            self.args["true_sinks_filepath"],
                            self.args["grid_params_filepath"]])
-        check_output_files(self.args["next_cell_index_out_filepath"],
-                           self.args["loop_log_file_path"])
-        orography_in_ds = open_dataset(self.args["orography_filepath"])
+        check_output_files([self.args["next_cell_index_out_filepath"]])
+        orography_in_ds = xr.open_dataset(self.args["orography_filepath"])
         orography_in = \
-            next_cell_index_in_ds[self.args["orography_fieldname"]].values
-        landsea_in_ds = open_dataset(self.args["landsea_filepath"])
+            orography_in_ds[self.args["orography_fieldname"]].values
+        landsea_in_ds = xr.open_dataset(self.args["landsea_filepath"])
         landsea_in = \
             landsea_in_ds[self.args["landsea_fieldname"]].values
-        if landsea_in.dtype == np.int64 or landsea.dtype == np.int32:
+        if landsea_in.dtype == np.int64 or landsea_in.dtype == np.int32:
             landsea_in_int = landsea_in
-            landsea_in_double = None
-        else if landsea_in.dtype == np.float64 or landsea.dtype == np.float32:
-            landsea_in_int = None
+            landsea_in_double = np.zeros((1,),dtype=np.float64)
+        elif landsea_in.dtype == np.float64 or landsea_in.dtype == np.float32:
+            landsea_in_int = np.zeros((1,),dtype=np.int32)
             landsea_in_double = landsea_in
-        else raise RuntimeError("Landsea mask type not recognised")
-        true_sinks_in_ds = open_dataset(self.args["true_sinks_filepath"])
+        else:
+            raise RuntimeError("Landsea mask type not recognised")
+        true_sinks_in_ds = xr.open_dataset(self.args["true_sinks_filepath"])
         true_sinks_in_int = \
             true_sinks_in_ds[self.args["true_sinks_fieldname"]].values
-        grid_params_ds = open_dataset(self.args["grid_params_filepath"])
-        neighboring_cell_indices_in = grid_params_ds["neighbor_cell_index"]
+        grid_params_ds = xr.open_dataset(self.args["grid_params_filepath"])
+        neighboring_cell_indices_in = grid_params_ds["neighbor_cell_index"].values
         next_cell_index_out = np.zeros(orography_in.shape,
-                                       dtype=np.int64)
-        determine_river_directions_icon_cpp(orography_in,
-                                            landsea_in_int,
-                                            landsea_in_double,
-                                            true_sinks_in_int,
-                                            neighboring_cell_indices_in,
-                                            next_cell_index_out,
-                                            self.args["fractional_landsea_mask_in"],
-                                            self.args["always_flow_to_sea_in"],
-                                            self.args["mark_pits_as_true_sinks_in"])
+                                       dtype=np.int32)
+        determine_river_directions_icon_wrapper.\
+            determine_river_directions_icon_cpp(orography_in.astype(np.float64),
+                                                landsea_in_int.astype(np.int32),
+                                                landsea_in_double.astype(np.float64),
+                                                true_sinks_in_int.astype(np.int32),
+                                                neighboring_cell_indices_in.\
+                                                astype(np.int32).swapaxes(0,1).flatten(),
+                                                next_cell_index_out,
+                                                self.args["fractional_landsea_mask_flag"],
+                                                self.args["always_flow_to_sea_flag"],
+                                                self.args["mark_pits_as_true_sinks_flag"])
         next_cell_index_out_ds = \
-            orography_in_ds.Copy(deep=True,
-                                 data={"next_cell_index":
-                                       next_cell_index_out})
+            xr.Dataset(data_vars={"next_cell_index":(["cell"],next_cell_index_out)},
+                       coords={"clat":orography_in_ds["clat"],
+                               "clon":orography_in_ds["clon"],
+                               "clon_bnds":(["cell","nv"],orography_in_ds["clon_bnds"].values),
+                               "clat_bnds":(["cell","nv"],orography_in_ds["clat_bnds"].values)},
+                       attrs={"number_of_grid_used":orography_in_ds.attrs["number_of_grid_used"],
+                              "grid_file_uri":orography_in_ds.attrs["grid_file_uri"],
+                              "uuidOfHGrid":orography_in_ds.attrs["uuidOfHGrid"]})
+        next_cell_index_out_ds["next_cell_index"].attrs["CDI_grid_type"] = "unstructured"
         next_cell_index_out_ds.\
             to_netcdf(self.args["next_cell_index_out_filepath"])
 
@@ -119,7 +131,7 @@ def parse_arguments():
     return args
 
 def setup_and_run_determine_river_directions_icon_driver(args):
-    driver = DetermineRiverDirectionsIconDriver(**vars(args))
+    driver = DetermineRiverDirectionsIconDriver(vars(args))
     driver.run()
 
 if __name__ == '__main__':
