@@ -104,6 +104,8 @@ contains
                                                                        write_cell_numbers)
                 end if
             end if
+            deallocate(cell_vertices_lats_alloc)
+            deallocate(cell_vertices_lons_alloc)
     end subroutine cotat_plus_icon_icosohedral_cell_latlon_pixel_f2py_wrapper
 
 end module cotat_plus_driver_mod
