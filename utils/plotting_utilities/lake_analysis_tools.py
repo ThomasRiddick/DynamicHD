@@ -68,6 +68,8 @@ class LakeTracker:
     def __init__(self,initial_connected_lake_numbers,initial_lake_center):
         initial_lake_center = tuple(initial_lake_center)
         initial_lake_number = initial_connected_lake_numbers[initial_lake_center]
+        if initial_lake_number == 0:
+            raise RuntimeError("Tracked lake not found with center: {}".format(initial_lake_center))
         self.lake = (initial_connected_lake_numbers == initial_lake_number)
 
     def get_current_lake_mask(self):
@@ -150,10 +152,10 @@ class LakePointExtractor:
 
     def extract_lake(self,connected_lake_basin_numbers):
         if self.lake_tracker is None:
-           self.lake_tracker = LakeTracker(connected_lake_basin_numbers,self.initial_lake_center)
-           lake_mask = self.lake_tracker.get_current_lake_mask()
+            self.lake_tracker = LakeTracker(connected_lake_basin_numbers,self.initial_lake_center)
+            lake_mask = self.lake_tracker.get_current_lake_mask()
         else:
-           lake_mask = self.lake_tracker.track_lake(connected_lake_basin_numbers)
+            lake_mask = self.lake_tracker.track_lake(connected_lake_basin_numbers)
         lake_points = np.argwhere(lake_mask)
         num_lake_points = len(lake_points)
         lat_sum = 0
@@ -484,7 +486,9 @@ class ExitProfiler:
 
     EndPoints = namedtuple("EndPoints",["start","end","adjust"])
     blocking_ridges = [EndPoints((200,507),(5,520),True),
-                       EndPoints((323,582),(545,995),True),
+                       EndPoints((308,600),(577,1024),False),
+                       EndPoints((299,571),(268,544),False),
+                       EndPoints((268,544),(308,600),False),
                        EndPoints((274,457),(630,187),True)]
     reference_lake_center = (260,500)
     section_bounds = ((0,0),(450,750))
