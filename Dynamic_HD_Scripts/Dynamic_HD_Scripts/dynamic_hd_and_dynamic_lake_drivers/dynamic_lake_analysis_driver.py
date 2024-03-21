@@ -812,11 +812,11 @@ def parse_arguments():
                         action="store_true")
     parser.add_argument('-t','--apply-orography-tweaks',action="store_true")
     parser.add_argument('-y','--change-date-based-corrections',action="store_true")
-    parser.add_argument('-r','--make_analysis_run',action="store_true")
+    parser.add_argument('-r','--make-analysis-run',action="store_true")
     parser.add_argument('-S','--skip-dynamic-river-production',action="store_true")
     parser.add_argument('-K','--skip-dynamic-lake-production',action="store_true")
     parser.add_argument('-I','--skip-current-day-time-slice',action="store_true")
-    parser.add_argument('-D','--run_hd_scripting_default_orography_corrections',
+    parser.add_argument('-D','--run-hd-scripting-default-orography-corrections',
                         action="store_true")
     parser.add_argument('-d','--start-date',type=int,default=0)
     parser.add_argument('-e','--end-date',type=int,default=0)
