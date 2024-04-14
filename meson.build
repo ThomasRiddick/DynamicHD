@@ -71,19 +71,3 @@ if get_option('build_unit_tests')
                   install_dir: bin_dir)
   test('Fortran unit tests',fe)
 endif
-if get_option('build_tools')
-  fortran_command_line_drivers = ['accumulate_flow_icon_simple_interface',
-                                  'cotat_plus_latlon_to_icon_simple_interface',
-                                  'cross_grid_mapper_latlon_to_icon_simple_interface',
-                                  'icon_to_latlon_landsea_downscaler_simple_interface',
-                                  'latlon_to_icon_loop_breaker_simple_interface']
-  foreach driver : fortran_command_line_drivers
-    executable(driver,
-               [fortran_src_path / 'command_line_drivers' / driver + '.f90'],
-               include_directories: fortran_inc,
-               dependencies: netcdf_fortran_lib,
-               link_with: lib_fortran,
-               install: true,
-               install_dir: bin_dir)
-  endforeach
-endif

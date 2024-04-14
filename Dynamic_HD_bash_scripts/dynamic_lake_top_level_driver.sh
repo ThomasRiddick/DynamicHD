@@ -333,7 +333,7 @@ if ! $no_modules ; then
 fi
 
 #Setup correct python path
-export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${PYTHONPATH}
+export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${source_directory}/lib:${PYTHONPATH}
 
 #Set library path
 export LD_LIBRARY_PATH="${HOME}/sw-spack/netcdf-cxx4-4.3.1-d54zya/lib":"${HOME}/sw-spack/netcdf-c-4.8.1-khy3ru/lib":${LD_LIBRARY_PATH}

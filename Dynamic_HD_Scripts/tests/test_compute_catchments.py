@@ -11,7 +11,7 @@ import numpy as np
 import textwrap
 import os
 from Dynamic_HD_Scripts.tools import compute_catchments as cc
-from Dynamic_HD_Scripts.interface.cpp_interface.libs.compute_catchments_icon_wrapper import compute_catchments_icon_cpp
+from compute_catchments_icon_wrapper import compute_catchments_icon_cpp
 from Dynamic_HD_Scripts.interface.fortran_interface import f2py_manager as f2py_mg
 from tests.context import fortran_source_path,data_dir
 

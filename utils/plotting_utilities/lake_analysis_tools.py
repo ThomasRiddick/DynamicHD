@@ -7,8 +7,7 @@ import matplotlib as mpl
 import sys
 import warnings
 from enum import Enum
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import fill_sinks_wrapper
+import fill_sinks_wrapper
 from Dynamic_HD_Scripts.utilities.utilities import downscale_ls_mask
 from Dynamic_HD_Scripts.base.field import Field
 

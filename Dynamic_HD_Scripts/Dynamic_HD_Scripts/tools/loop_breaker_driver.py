@@ -26,7 +26,7 @@ def loop_breaker_icon_icosohedral_cell_latlon_pixel(input_fine_rdirs,
                                                     pixel_center_lats,
                                                     pixel_center_lons,
                                                     cell_vertices_lats,
-                                                    cell_vertices_lons)
+                                                    cell_vertices_lons):
     additional_fortran_filenames =  \
         ["Dynamic_HD_Fortran_Code_src_base_area_mod.f90.o",
          "Dynamic_HD_Fortran_Code_src_base_coords_mod.f90.o",
@@ -66,7 +66,7 @@ def loop_breaker_icon_icosohedral_cell_latlon_pixel(input_fine_rdirs,
                                                  astype(np.int32,order='F'),
                                                  coarse_rdirs,
                                                  loop_nums_list_array.\
-                                                 astype(np.int32,order='F')
+                                                 astype(np.int32,order='F'),
                                                  cell_neighbors.\
                                                  astype(np.int32,order='F'),
                                                  pixel_center_lats.\

@@ -8,7 +8,7 @@ def landsea_downscaler_icosohedral_cell_latlon_pixel(input_coarse_landsea_mask,
                                                      pixel_center_lats,
                                                      pixel_center_lons,
                                                      cell_vertices_lats,
-                                                     cell_vertices_lons)
+                                                     cell_vertices_lons):
     additional_fortran_filenames =  \
         ["Dynamic_HD_Fortran_Code_src_base_area_mod.f90.o",
          "Dynamic_HD_Fortran_Code_src_base_coords_mod.f90.o",

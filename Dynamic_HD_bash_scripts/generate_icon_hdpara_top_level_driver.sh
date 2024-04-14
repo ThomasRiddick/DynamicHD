@@ -40,9 +40,11 @@ config_filepath=${6}
 working_directory=${7}
 grid_file=${8}
 cotat_params_file=${9}
-compilation_required=${10:-true}
-true_sinks_filepath=${11}
-
+atmos_resolution=${10}
+compilation_required=${11:-true}
+use_hfrac=${12:-false}
+maxl_ls_mask_filepath=${13}
+true_sinks_filepath=${14}
 
 #Change first_timestep into a bash command for true or false
 shopt -s nocasematch
@@ -57,12 +59,12 @@ fi
 shopt -u nocasematch
 
 #Check number of arguments makes sense
-if [[ $# -ne 9 ]] && [[ $# -ne 10 ]] && [[ $# -ne 11 ]]; then
-	echo "Wrong number of positional arguments ($# supplied), script only takes 9, 10 or 11 arguments"	1>&2
+if [[ $# -ne 10 ]] && [[ $# -ne 11 ]] && [[ $# -ne 12 ]] && [[ $# -ne 13 ]] && [[ $# -ne 14 ]] ; then
+	echo "Wrong number of positional arguments ($# supplied), script only takes between 10 and 14 arguments"	1>&2
 	exit 1
 fi
 
-if [[ $# -eq 11 ]]; then
+if [[ $# -eq 14 ]]; then
 	use_truesinks=true
 else
 	use_truesinks=false
@@ -70,6 +72,11 @@ fi
 
 #Check the arguments have the correct file extensions
 if ! [[ ${input_orography_filepath##*.} == "nc" ]] || ! [[ ${input_ls_mask_filepath##*.} == "nc" ]] || ! [[ ${grid_file##*.} == "nc" ]] || ! [[ ${cotat_params_file##*.} == "nl" ]]; then
+	echo "One or more input files has the wrong file extension" 1>&2
+	exit 1
+fi
+
+if ${use_hfrac} && ! [[ ${maxl_ls_mask_filepath##*.} == "nc" ]]; then
 	echo "One or more input files has the wrong file extension" 1>&2
 	exit 1
 fi
@@ -99,10 +106,18 @@ output_catchments_filepath=$(find_abs_path $output_catchments_filepath)
 output_accumulated_flow_filepath=$(find_abs_path $output_accumulated_flow_filepath)
 grid_file=$(find_abs_path $grid_file)
 cotat_params_file=$(find_abs_path $cotat_params_file)
+if ${use_hfrac}; then
+	maxl_ls_mask_filepath=$(find_abs_path $maxl_ls_mask_filepath)
+fi
 
 #Check input files, ancillary data directory and diagnostic output directory exist
 
 if ! [[ -e $input_ls_mask_filepath ]] || ! [[ -e $input_orography_filepath ]] || ! [ -e $grid_file ] || ! [ -e $cotat_params_file ]; then
+	echo "One or more input files does not exist" 1>&2
+	exit 1
+fi
+
+if ${use_hfrac} && ! [[ -e $maxl_ls_mask_filepath ]]; then
 	echo "One or more input files does not exist" 1>&2
 	exit 1
 fi
@@ -248,10 +263,6 @@ if ! $no_modules ; then
 	fi
 fi
 
-export LD_LIBRARY_PATH="/sw/stretch-x64/netcdf/netcdf_fortran-4.4.4-gcc63/lib:/sw/stretch-x64/netcdf/netcdf_c-4.6.1/lib:/sw/stretch-x64/netcdf/netcdf_cxx-4.3.0-gccsys/lib:${LD_LIBRARY_PATH}"
-export LD_LIBRARY_PATH="/sw/spack-levante/netcdf-fortran-4.5.3-l2ulgp/lib":${LD_LIBRARY_PATH}
-export LD_LIBRARY_PATH=/Users/thomasriddick/anaconda3/pkgs/netcdf-cxx4-4.3.0-h703b707_9/lib:/Users/thomasriddick/anaconda3/lib:${LD_LIBRARY_PATH}
-export LD_LIBRARY_PATH="${HOME}/sw-spack/netcdf-cxx4-4.3.1-d54zya/lib":"${HOME}/sw-spack/netcdf-c-4.8.1-khy3ru/lib":${LD_LIBRARY_PATH}
 export DYLD_LIBRARY_PATH=$LD_LIBRARY_PATH:$DYLD_LIBRARY_PATH
 
 if ! $no_modules && ! $no_conda ; then
@@ -288,7 +299,7 @@ if ! $no_modules ; then
 fi
 
 #Setup correct python path
-export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${PYTHONPATH}
+export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${source_directory}/lib:${PYTHONPATH}
 
 #Call compilation script
 ${source_directory}/Dynamic_HD_bash_scripts/compile_dynamic_hd_code.sh ${compilation_required} false ${source_directory} ${working_directory} false "tools_only"
@@ -323,9 +334,10 @@ ten_minute_orography_file_and_fieldname=$(python ${source_directory}/Dynamic_HD_
 ten_minute_orography_filepath=$(cut -d ' ' -f 1 <<< ${ten_minute_orography_file_and_fieldname})
 ten_minute_orography_fieldname=$(cut -d ' ' -f 2 <<< ${ten_minute_orography_file_and_fieldname})
 cell_numbers_filepath="cell_numbers_temp.nc"
-${source_directory}/Dynamic_HD_Fortran_Code/Release/LatLon_To_Icon_Cross_Grid_Mapper_Simple_Interface ${grid_file} ${ten_minute_orography_filepath} ${ten_minute_orography_fieldname} ${cell_numbers_filepath} "cell_index"
+drivers_path=${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/command_line_drivers
+python ${drivers_path}/cross_grid_mapper_latlon_to_icon_driver.py ${grid_file} ${ten_minute_orography_filepath} ${ten_minute_orography_fieldname} ${cell_numbers_filepath} "cell_index"
 echo "Downscaling Landsea Mask" 1>&2
-${source_directory}/Dynamic_HD_Fortran_Code/Release/Icon_To_LatLon_Landsea_Downscaler_Simple_Interface ${cell_numbers_filepath} ${input_ls_mask_filepath} downscaled_ls_mask_temp.nc "cell_index" "cell_sea_land_mask" "lsm"
+python ${drivers_path}/icon_to_latlon_landsea_downscaler_driver.py ${cell_numbers_filepath} ${input_ls_mask_filepath} downscaled_ls_mask_temp.nc "cell_index" "cell_sea_land_mask" "lsm"
 cdo expr,'lsm=(!lsm)' downscaled_ls_mask_temp.nc downscaled_ls_mask_temp_inverted.nc
 echo "Generating Combined Hydrosheds and Corrected Data River Directions" 1>&2
 ten_minute_river_direction_filepath="ten_minute_river_direction_temp.nc"
@@ -350,12 +362,12 @@ while [[ $(grep -c "[0-9]" "${ten_minute_catchments_filepath%%.nc}_loops.log") -
 	rm -f ten_minute_catchments_temp_loops.log
 	python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/command_line_drivers/create_icon_coarse_river_directions_driver.py -r ${ten_minute_river_direction_filepath} downscaled_ls_mask_temp_inverted.nc dummy.nc ${ten_minute_catchments_filepath} ${ten_minute_accumulated_flow_filepath} ${python_config_filepath} ${working_directory}
 done
- ${source_directory}/Dynamic_HD_Fortran_Code/Release/COTAT_Plus_LatLon_To_Icon_Fortran_Exec ${ten_minute_river_direction_filepath}  ${ten_minute_accumulated_flow_filepath} ${grid_file} ${icon_intermediate_rdirs_filepath} "rdirs" "acc" "rdirs" ${cotat_params_file}
-  ${source_directory}/Dynamic_HD_Cpp_Code/Release/Compute_Catchments_SI_Exec ${icon_intermediate_rdirs_filepath} ${icon_intermediate_catchments_filepath} ${grid_file} "rdirs" 1 ${icon_intermediate_catchments_filepath%%.nc}_loops_log.log 1
- 	${source_directory}/Dynamic_HD_Fortran_Code/Release/Accumulate_Flow_Icon_Simple_Interface_Exec ${grid_file} ${icon_intermediate_rdirs_filepath} ${icon_intermediate_accumulated_flow_filepath} "rdirs" "acc"
-  ${source_directory}/Dynamic_HD_Fortran_Code/Release/LatLon_To_Icon_Loop_Breaker_Fortran_Exec ${ten_minute_river_direction_filepath}  ${ten_minute_accumulated_flow_filepath} ${cell_numbers_filepath}  ${grid_file} ${icon_final_filepath} ${icon_intermediate_catchments_filepath} ${icon_intermediate_accumulated_flow_filepath} ${icon_intermediate_rdirs_filepath}  "rdirs" "acc" "cell_index" "next_cell_index" "catchment" "acc" "rdirs"  ${icon_intermediate_catchments_filepath%%.nc}_loops_log.log
-  ${source_directory}/Dynamic_HD_Cpp_Code/Release/Compute_Catchments_SI_Exec ${icon_final_filepath} ${output_catchments_filepath} ${grid_file} "next_cell_index" 1 ${output_catchments_filepath%%.nc}_loops_log.log 1
-  ${source_directory}/Dynamic_HD_Fortran_Code/Release/Accumulate_Flow_Icon_Simple_Interface_Exec ${grid_file} ${icon_final_filepath} ${output_accumulated_flow_filepath} "next_cell_index" "acc"
+python ${drivers_path}/cotat_plus_latlon_to_icon_driver.py ${ten_minute_river_direction_filepath}  ${ten_minute_accumulated_flow_filepath} ${grid_file} ${icon_intermediate_rdirs_filepath} "rdirs" "acc" "rdirs" ${cotat_params_file}
+python ${drivers_path}/compute_catchments_icon_driver.py ${icon_intermediate_rdirs_filepath} ${icon_intermediate_catchments_filepath} ${grid_file} "rdirs" 1 ${icon_intermediate_catchments_filepath%%.nc}_loops_log.log 1
+python ${drivers_path}/accumulate_flow_icon_driver.py ${grid_file} ${icon_intermediate_rdirs_filepath} ${icon_intermediate_accumulated_flow_filepath} "rdirs" "acc"
+python ${drivers_path}/latlon_to_icon_loop_breaker_driver.py ${ten_minute_river_direction_filepath}  ${ten_minute_accumulated_flow_filepath} ${cell_numbers_filepath}  ${grid_file} ${icon_final_filepath} ${icon_intermediate_catchments_filepath} ${icon_intermediate_accumulated_flow_filepath} ${icon_intermediate_rdirs_filepath}  "rdirs" "acc" "cell_index" "next_cell_index" "catchment" "acc" "rdirs"  ${icon_intermediate_catchments_filepath%%.nc}_loops_log.log
+python ${drivers_path}/compute_catchments_icon_driver.py ${icon_final_filepath} ${output_catchments_filepath} ${grid_file} "next_cell_index" 1 ${output_catchments_filepath%%.nc}_loops_log.log 1
+python ${drivers_path}/accumulate_flow_icon_driver.py ${grid_file} ${icon_final_filepath} ${output_accumulated_flow_filepath} "next_cell_index" "acc"
   rm -f paragen/area_dlat_dlon.txt
   rm -f paragen/ddir.inp
   rm -f paragen/hd_partab.txt
@@ -370,9 +382,15 @@ done
   cp ${grid_file} grid_in_temp.nc
   cp ${input_ls_mask_filepath} mask_in_temp.nc
    	cdo expr,"acc=(rdirs == -9999999)" ${icon_intermediate_rdirs_filepath} zeros_temp.nc
-  ${source_directory}/Dynamic_HD_Cpp_Code/Release/Fill_Sinks_Icon_SI_Exec ${input_orography_filepath} ${input_ls_mask_filepath} zeros_temp.nc orography_filled.nc ${grid_file} "z" "cell_sea_land_mask" "acc" 0 0 0.0 1 0
+  python ${drivers_path}/Fill_Sinks_Icon_SI_Exec ${input_orography_filepath} ${input_ls_mask_filepath} zeros_temp.nc orography_filled.nc ${grid_file} "z" "cell_sea_land_mask" "acc" 0 0 0.0 1 0
   ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/generate_icon_hd_file_driver.sh ${working_directory}/paragen ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran ${working_directory} grid_in_temp.nc mask_in_temp.nc ${icon_final_filepath}  orography_filled.nc
-${source_directory}/Dynamic_HD_bash_scripts/adjust_icon_k_parameters.sh  ${working_directory}/paragen/hdpara_icon.nc ${output_hdpara_filepath} "r2b4"
+${source_directory}/Dynamic_HD_bash_scripts/adjust_icon_k_parameters.sh  ${working_directory}/paragen/hdpara_icon.nc ${working_directory}/hdpara_adjusted_temp.nc ${atmos_resolution}
+if ! ${use_hfrac}; then
+	mv ${working_directory}/hdpara_adjusted_temp.nc ${output_hdpara_filepath}
+else
+ ${source_directory}/Dynamic_HD_bash_scripts/adjust_icon_hdpara_for_partial_ls.sh ${maxl_ls_mask_filepath}  ${input_ls_mask_filepath} ${working_directory}/hdpara_adjusted_temp.nc  ${output_hdpara_filepath} ${atmos_resolution}
+  rm -f hdpara_adjusted_temp.nc
+fi
   #Clean up temporary files
   rm -f paragen/area_dlat_dlon.txt
   rm -f paragen/ddir.inp

@@ -27,12 +27,9 @@ from Dynamic_HD_Scripts.tools import river_mouth_marking_driver
 from Dynamic_HD_Scripts.utilities import utilities
 from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers \
     import dynamic_hd_driver as dyn_hd_dr
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import fill_sinks_wrapper
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import lake_operators_wrapper
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import evaluate_basins_wrapper
+import fill_sinks_wrapper
+import lake_operators_wrapper
+import evaluate_basins_wrapper
 
 class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
     """A class with methods used for running a production run of the dynamic HD and Lake generation code"""

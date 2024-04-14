@@ -10,7 +10,7 @@ import unittest
 import numpy as np
 import os.path as path
 from tests.context import data_dir
-from Dynamic_HD_Scripts.interface.cpp_interface.libs.bifurcate_rivers_basic_icon_wrapper import bifurcate_rivers_basic_icon_cpp
+from bifurcate_rivers_basic_icon_wrapper import bifurcate_rivers_basic_icon_cpp
 
 class BifurcateRiversTestCase(unittest.TestCase):
 

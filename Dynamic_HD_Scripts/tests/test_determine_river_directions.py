@@ -6,10 +6,8 @@ Created on February 26, 2019
 '''
 import unittest
 import numpy as np
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import determine_river_directions_wrapper
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import determine_river_directions_icon_wrapper
+import determine_river_directions_wrapper
+import determine_river_directions_icon_wrapper
 
 class TestRiverDirectionDeterminationDriver(unittest.TestCase):
 
