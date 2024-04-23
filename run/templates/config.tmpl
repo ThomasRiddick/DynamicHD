@@ -1,0 +1,44 @@
+{%- extends "base.tmpl" -%}
+
+{%- block header -%}
+{%- endblock -%}
+
+{%- block top_level_preamble %}
+{%- endblock -%}
+
+{%- block key_settings_header %}
+[Key Settings]
+{%- endblock -%}
+
+{%- block other_settings_header %}
+[Other Settings]
+{%- endblock -%}
+
+{%- end_of_user_input_header -%}
+{%- endblock -%}
+
+{%- block additional_user_commands %}
+[Additional User Commands]
+# Insert additional command into blocks as required
+# and they will be inserted into the runscript/utility script
+# at the specified point
+# ADDITIONAL USER COMMANDS ARE USUALLY NOT REQUIRED
+# At the start after the headers
+user_commands_start=
+# Before user input
+user_command_pre_user_input=
+# Before making the directory for the project (if option is selected)
+user_commands_pre_create_project=
+# After making the directory for the project (if option is selected)
+user_commands_post_create_project=
+# Before pre-processing
+user_commands_pre_preproc=
+# Before running the main program but after pre-processing
+user_commands_pre_run=
+# After running the main program
+user_commands_post_run=
+# Before clean-up but after post-processing
+user_commands_pre_cleanup=
+# At the end of script after clean-up
+user_commands_end=
+{%- endblock -%}

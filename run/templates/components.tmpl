@@ -1,19 +1,3 @@
-{%- macro header() -%}
-#!/bin/bash
-{% if input.slurm_headers -%}
-#SLURM HEADERS
-#SBATCH --job-name=create_icon_hdpara
-#SBATCH --partition=shared
-#SBATCH --account=YOUR_ACCOUNT
-#SBATCH --ntasks=1
-#SBATCH --time=02:00:00
-#SBATCH --output=create_icon_hdpara.o%j    # File name for standard output
-#SBATCH --error=create_icon_hdpara.e%j     # File name for standard error output
-#SBATCH --mail-type=FAIL                   # Notify user by email in case of job failure
-#SBATCH --mail-user=YOUR_EMAIL
-{%- endif -%}
-{% endmacro -%}
-
 {% macro set_variables_pre_user_input() %}
 
 {%- if input.script_type == 'createproject' %}
@@ -42,6 +26,7 @@ config_filepath=${working_directory}/bash_script.cfg
 python_config_filepath=${working_directory}/python_script.cfg
 binary_lsmask_filepath=${working_directory}/binary_lsmask.nc
 orography_filepath=${working_directory}/orography.nc
+max_land_binary_lsmask_filepath=${working_directory}/maxl_binary_lsmask.nc
 if [[ icon_atmo_grid_res == "r2b3" ]] || [[ icon_atmo_grid_res == "r2b4" ]] ||
    [[ icon_atmo_grid_res == "r2b5" ]] || [[ icon_atmo_grid_res == "r2b6" ]]; then
    binary_conversion_method_default=hfrac
@@ -113,48 +98,3 @@ mkdir -p ${repository_path}/projects/${project_name}/scripts/
 {%- endif -%}
 cd ${working_directory}
 {%- endmacro -%}
-
-{% macro preproc() %}
-# Create links to input files
-ln -s ${fractional_lsmask_filepath} $(basename ${fractional_lsmask_filepath})
-fractional_lsmask_filepath=$(basename ${fractional_lsmask_filepath})
-ln -s ${icon_grid_filepath} $(basename ${icon_grid_filepath})
-icon_grid_filepath=$(basename ${icon_grid_filepath})
-# Pre-processing
-if [[ ${binary_conversion_method} == "hfrac" ]]; then
-  cdo expr,cell_sea_land_mask='(cell_sea_land_mask > 0.5)' ${fractional_lsmask_filepath} ${binary_lsmask_filepath}
-  cdo expr,cell_sea_land_mask='(cell_sea_land_mask > 0.0)' ${fractional_lsmask_filepath} ${max_land_binary_lsmask_filepath}
-elif [[ ${binary_conversion_method} == "minl" ]]; then
-  cdo expr,cell_sea_land_mask='(cell_sea_land_mask >= 1.0)' ${fractional_lsmask_filepath} ${binary_lsmask_filepath}
-  cdo expr,cell_sea_land_mask='(cell_sea_land_mask >  0.0)' ${fractional_lsmask_filepath} ${max_land_binary_lsmask_filepath}
-elif [[ ${binary_conversion_method} == "maxl" ]]; then
-  cdo expr,cell_sea_land_mask='(cell_sea_land_mask >  0.0)' ${fractional_lsmask_filepath} ${binary_lsmask_filepath}
-else
-  exit 1
-fi
-
-cdo remapbil,${icon_grid_filepath} ${etop01_filepath} ${orography_filepath}
-{%- endmacro -%}
-
-{% macro postproc() %}
-# Post Processing
-# (No post-processing required at present)
-{%- endmacro -%}
-
-{% macro clean() %}
-# Clean-up
-echo "Post run clean-up not yet implemented!"
-{%- endmacro -%}
-
-{% macro report_pre() %}
-# Prepare preliminary report
-echo "Preliminary report not yet implemented!"
-#python ${repository_path}/utils/run_utilities/prepare_report.py prelim
-{%- endmacro -%}
-
-{% macro report_post() %}
-# Prepare post-run report
-echo "Post run report not yet implemented!"
-#python ${repository_path}/utils/run_utilities/prepare_report.py post
-{%- endmacro -%}
-
