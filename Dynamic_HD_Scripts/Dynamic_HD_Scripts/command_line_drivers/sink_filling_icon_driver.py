@@ -26,29 +26,30 @@ class SinkFillingIconDriver:
         landsea_in_ds = xr.open_dataset(self.args["landsea_filepath"])
         landsea_in = \
             landsea_in_ds[self.args["landsea_fieldname"]].values
-        if landsea_in.dtype == np.int64 or landsea_in.dtype == np.int32:
-            landsea_in_int = landsea_in
-            landsea_in_double = np.zeros((1,),dtype=np.float64)
-        elif landsea_in.dtype == np.float64 or landsea_in.dtype == np.float32:
+        if self.args["fractional_landsea_mask"]:
             landsea_in_int = np.zeros((1,),dtype=np.int32)
             landsea_in_double = landsea_in
         else:
-            raise RuntimeError("Landsea mask type not recognised")
+            landsea_in_int = landsea_in
+            landsea_in_double = np.zeros((1,),dtype=np.float64)
         true_sinks_in_ds = xr.open_dataset(self.args["true_sinks_filepath"])
         true_sinks_in_int = \
             true_sinks_in_ds[self.args["true_sinks_fieldname"]].values
         grid_params_ds = xr.open_dataset(self.args["grid_params_filepath"])
         neighboring_cell_indices_in = grid_params_ds["neighbor_cell_index"].values
+        #Reassign variable to be the result of astype so that we retain reference
+        #to output
+        orography_inout = orography_inout.astype(np.float64)
         sink_filling_icon_cpp(neighboring_cell_indices_in.\
                               astype(np.int32).swapaxes(0,1).flatten(),
-                              orography_inout.astype(np.float64),
+                              orography_inout,
                               landsea_in_int.astype(np.int32),
                               landsea_in_double.astype(np.float64),
                               true_sinks_in_int.astype(np.int32),
-                              self.args["fractional_landsea_mask_flag"],
-                              self.args["set_land_sea_as_no_data_flag"],
-                              self.args["add_slope_flag"],
-                              self.args["epsilon"])
+                              self.args["fractional_landsea_mask"],
+                              self.args["set_land_sea_as_no_data"],
+                              self.args["add_slope"] != 0.0,
+                              self.args["add_slope"])
 
         output_orography_ds = \
             xr.Dataset(data_vars={"cell_elevation":(["cell"],orography_inout)},
@@ -100,24 +101,18 @@ def parse_arguments():
     parser.add_argument("true_sinks_fieldname",metavar='True_Sinks_Fieldname',
                         type=str,
                         help="Name of the true sinks field within the specified file")
-    parser.add_argument("epsilon",metavar='Epsilon',
-                        type=float,
-                        nargs="?",
-                        default=0.0,
-                        help="Additional height added to each progressive cell when"
-                             "adding a slight slope")
-    parser.add_argument("-n","--set-land-sea-as-no-data-flag",
+    parser.add_argument("-n","--set-land-sea-as-no-data",
                         action="store_true",
                         default=False,
                         help="Flag to turn on and off setting "
                              "all landsea points to no data")
-    parser.add_argument("-s","--add-slope-flag",
-                        action="store_true",
-                        default=False,
-                        help="Land sea mask expresses fraction of land "
-                             "as a floating point number which requires "
-                             "conversion to a binary mask(default false)")
-    parser.add_argument("-f","--fractional-landsea-mask-flag",
+    parser.add_argument("-s","--add-slope",
+                        type=float,
+                        nargs="?",
+                        default=0.0,
+                        help="Add slight slope to filled sinks, increase the height "
+                             "of each progressive cell by the given value")
+    parser.add_argument("-f","--fractional-landsea-mask",
                         action="store_true",
                         default=False,
                         help="Land sea mask expresses fraction of land "

@@ -16,7 +16,7 @@ void compute_catchments_icon_cython_interface(int ncells,
                                               string subcatchment_list_filepath){
   bool sort_catchments_by_size_in = bool(sort_catchments_by_size_in_int);
   bool generate_selected_subcatchments_only_in = \
-    generate_selected_subcatchments_only_in_int;
+    bool(generate_selected_subcatchments_only_in_int);
   bool use_secondary_neighbors = true;
   int* secondary_neighboring_cell_indices = nullptr;
   auto grid_params_obj =
@@ -45,14 +45,16 @@ void compute_catchments_icon_cython_interface(int ncells,
     }
   }
   if (sort_catchments_by_size_in) alg.renumber_catchments_by_size();
-  vector<int>* loop_numbers = nullptr;
-  loop_numbers = alg.identify_loops();
-  ofstream loop_log_file;
-  loop_log_file.open(loop_log_filepath);
-  loop_log_file << "Loops found in catchments:" << endl;
-  for (auto i = loop_numbers->begin(); i != loop_numbers->end(); ++i)
-    loop_log_file << to_string(*i) << endl;
-  loop_log_file.close();
-  delete loop_numbers;
+  if (loop_log_filepath != "") {
+    vector<int>* loop_numbers = nullptr;
+    loop_numbers = alg.identify_loops();
+    ofstream loop_log_file;
+    loop_log_file.open(loop_log_filepath);
+    loop_log_file << "Loops found in catchments:" << endl;
+    for (auto i = loop_numbers->begin(); i != loop_numbers->end(); ++i)
+      loop_log_file << to_string(*i) << endl;
+    loop_log_file.close();
+    delete loop_numbers;
+  }
   delete grid_params_obj;
 }

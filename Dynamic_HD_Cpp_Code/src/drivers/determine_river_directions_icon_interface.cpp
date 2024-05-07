@@ -33,18 +33,19 @@ void determine_river_directions_icon_cython_interface(int ncells,
       landsea_in[i] = ! bool(landsea_in_double[i]);
     }
   } else {
-    //invert landsea mask
     for (auto i = 0; i <ncells;i++){
       landsea_in[i] = ! bool(landsea_in_int[i]);
     }
   }
   bool* true_sinks_in = new bool[ncells];
+  bool mark_pits_as_true_sinks_in = bool(mark_pits_as_true_sinks_in_int);
   for (auto i = 0; i < ncells;i++){
-    true_sinks_in[i] = bool(true_sinks_in_int[i]);
+    mark_pits_as_true_sinks_in =  mark_pits_as_true_sinks_in || bool(true_sinks_in_int[i]);
+    true_sinks_in[i] = false;
   }
   auto alg = river_direction_determination_algorithm_icon_single_index();
   alg.setup_flags(bool(always_flow_to_sea_in_int),use_secondary_neighbors,
-                  bool(mark_pits_as_true_sinks_in_int));
+                  mark_pits_as_true_sinks_in);
   alg.setup_fields(next_cell_index_out,orography_in,landsea_in,true_sinks_in,
                    grid_params_obj);
   alg.determine_river_directions();

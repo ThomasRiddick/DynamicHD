@@ -21,7 +21,7 @@ def compute_catchments_icon_cpp(np.ndarray[int,ndim=1,mode='c'] next_cell_index_
                                 bint sort_catchments_by_size,
                                 str loop_log_filepath,
                                 bint generate_selected_subcatchments_only,
-                                str subcatchment_list_filepath=""):
+                                str subcatchment_list_filepath):
     cdef int ncells
     ncells = len(next_cell_index_in)
     cdef string loop_log_filepath_c = string(bytes(loop_log_filepath,'utf-8'))
