@@ -16,12 +16,12 @@ def cross_grid_mapper_latlon_to_icon(cell_neighbors,
          "Dynamic_HD_Fortran_Code_src_base_field_section_mod.f90.o",
          "Dynamic_HD_Fortran_Code_src_base_precision_mod.f90.o",
          "Dynamic_HD_Fortran_Code_src_base_subfield_mod.f90.o",
-         "Dynamic_HD_Fortran_Code_src_algorithms_cross_grid_mapper.f90.o"
+         "Dynamic_HD_Fortran_Code_src_algorithms_cross_grid_mapper.f90.o",
          "Dynamic_HD_Fortran_Code_src_algorithms_map_non_coincident_grids_mod.f90.o",
+         "Dynamic_HD_Fortran_Code_src_algorithms_cotat_parameters_mod.f90.o",
          "Dynamic_HD_Fortran_Code_src_base_unstructured_grid_mod.f90.o"]
     additional_fortran_filepaths = \
-        [path.join("/Users/thomasriddick/Documents/workspace/"
-                   "Dynamic_HD_Code/build/libdyhd_fortran.a.p",filename)
+        [path.join("/Users/thomasriddick/Documents/workspace/worktrees/feature/improved-run-and-build-structure/build/libdyhd_fortran.a.p",filename)
         for filename in additional_fortran_filenames]
     f2py_mngr = f2py_manager.f2py_manager(
         path.join(fortran_project_source_path,"drivers",
@@ -37,9 +37,10 @@ def cross_grid_mapper_latlon_to_icon(cell_neighbors,
                                            pixel_center_lons.\
                                            astype(np.float32),
                                            cell_vertices_lats.\
-                                           astype(np.float32,order='F'),
+                                           astype(np.float64,order='F'),
                                            cell_vertices_lons.\
-                                           astype(np.float32,order='F'),
-                                           *input_fine_river_directions.shape,
+                                           astype(np.float64,order='F'),
+                                           len(pixel_center_lats),
+                                           len(pixel_center_lons),
                                            cell_neighbors.shape[0])
     return output_cell_numbers

@@ -1,6 +1,9 @@
 import xarray as xr
+import argparse
 from Dynamic_HD_Scripts.utilities.check_driver_inputs \
     import check_input_files, check_output_files
+from Dynamic_HD_Scripts.tools.cross_grid_mapper_driver \
+    import cross_grid_mapper_latlon_to_icon
 
 class CrossGridMapperLatLonToICONDriver:
 
@@ -15,30 +18,24 @@ class CrossGridMapperLatLonToICONDriver:
         check_input_files([self.args["coarse_grid_params_filepath"],
                            self.args["input_fine_orography_filepath"]])
         check_output_files([self.args["output_cell_numbers_filepath"]])
-        fine_orography_ds  = open_dataset(self.args["input_fine_orography_filepath"])
-        fine_orography = \
-            fine_orography_ds[self.args["input_fine_orography_fieldname"]].values
-        coarse_grid_params_ds = open_dataset(self.args["coarse_grid_params_filepath"])
-
-        # do j = 1,3
-        #   do i=1,ncells_coarse
-        #     cell_vertices_lats(i,j) = cell_vertices_lats_raw(j,i)*(180.0/PI)
-        #     if(cell_vertices_lats(i,j) > 90.0 - ABS_TOL_FOR_DEG) cell_vertices_lats(i,j) = 90.0
-        #     if(cell_vertices_lats(i,j) < -90.0 + ABS_TOL_FOR_DEG) cell_vertices_lats(i,j) = -90.0
-        #     cell_vertices_lons(i,j) = cell_vertices_lons_raw(j,i)*(180.0/PI)
-        #   end do
-        # end do
-        # call cross_grid_mapper_latlon_to_icon(pixel_center_lats,&
-        #                                       pixel_center_lons,&
-        #                                       cell_vertices_lats, &
-        #                                       cell_vertices_lons, &
-        #                                       cell_neighbors, &
-        #                                       output_cell_numbers, &
-        #                                       .true.)
-        # output_cell_numbers_processed = transpose(output_cell_numbers)
-        output_cell_numbers_ds = fine_orography_ds.Copy(deep=True,
-                                                        data={"cell_index":
-                                                              output_cell_numbers})
+        fine_orography_ds  = xr.open_dataset(self.args["input_fine_orography_filepath"])
+        pixel_center_lats = fine_orography_ds["lat"]
+        pixel_center_lons = fine_orography_ds["lon"]
+        coarse_grid_params_ds = xr.open_dataset(self.args["coarse_grid_params_filepath"])
+        neighboring_cell_indices_in = coarse_grid_params_ds["neighbor_cell_index"].values
+        cell_vertices_lats = coarse_grid_params_ds["clat_vertices"]
+        cell_vertices_lons = coarse_grid_params_ds["clon_vertices"]
+        output_cell_numbers = \
+            cross_grid_mapper_latlon_to_icon(cell_neighbors=
+                                             neighboring_cell_indices_in.swapaxes(0,1),
+                                             pixel_center_lats=pixel_center_lats,
+                                             pixel_center_lons=pixel_center_lons,
+                                             cell_vertices_lats=cell_vertices_lats,
+                                             cell_vertices_lons=cell_vertices_lons)
+        output_cell_numbers_ds = \
+            xr.Dataset(data_vars={"cell_numbers":(["lat","lon"],output_cell_numbers)},
+                       coords={"lat":fine_orography_ds["lat"],
+                               "lon":fine_orography_ds["lon"]})
         output_cell_numbers_ds.to_netcdf(self.args["output_cell_numbers_filepath"])
 
 class Arguments:
@@ -53,24 +50,20 @@ def parse_arguments():
                                             "latitude-longitude grid "
                                             "to an ICON icosohedral grid")
     parser.add_argument("coarse_grid_params_filepath",
-                        metavar='Coarse Grid Parameters Filepath',
+                        metavar='Coarse_Grid_Parameters_Filepath',
                         type=str,
                         help="Filepath of the input coarse atmospheric grid parameters"
                              " netCDF file")
     parser.add_argument("input_fine_orography_filepath",
-                        metavar='Input Fine Orography Filepath',
+                        metavar='Input_Fine_Orography_Filepath',
                         type=str,
                         help="Filepath of the input fine orography"
                              " netCDF file - this is only used to"
                              " determine the parameters of the"
                              " latitude-longitude grid itself"
                              " and not for the actual height data")
-    parser.add_argument("input_fine_orography_fieldname",
-                        metavar='Input Fine Orography Fieldname',
-                        type=str,
-                        help="Filepath of the input fine orography field")
     parser.add_argument("output_cell_numbers_filepath",
-                        metavar='Output Cell Numbers Filepath',
+                        metavar='Output_Cell_Numbers_Filepath',
                         type=str,
                         help="Target output filepath for cell numbers"
                              " netCDF file")
@@ -78,7 +71,7 @@ def parse_arguments():
     return args
 
 def setup_and_run_cross_grid_mapper_latlon_to_icon_driver(args):
-    driver = CrossGridMapperLatLonToICONDriver(**vars(args))
+    driver = CrossGridMapperLatLonToICONDriver(vars(args))
     driver.run()
 
 if __name__ == '__main__':
