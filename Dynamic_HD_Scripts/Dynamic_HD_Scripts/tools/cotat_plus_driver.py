@@ -27,7 +27,7 @@ def cotat_plus_icon_icosohedral_cell_latlon_pixel(input_fine_river_directions,
                                                   cell_vertices_lats,
                                                   cell_vertices_lons,
                                                   cotat_plus_parameters_filepath=None,
-                                                  output_cell_numbers=None):
+                                                  output_cell_numbers=False):
     additional_fortran_filenames =  \
         ["Dynamic_HD_Fortran_Code_src_base_area_mod.f90.o",
          "Dynamic_HD_Fortran_Code_src_base_coords_mod.f90.o",
@@ -41,8 +41,7 @@ def cotat_plus_icon_icosohedral_cell_latlon_pixel(input_fine_river_directions,
          "Dynamic_HD_Fortran_Code_src_algorithms_map_non_coincident_grids_mod.f90.o",
          "Dynamic_HD_Fortran_Code_src_base_unstructured_grid_mod.f90.o"]
     additional_fortran_filepaths = \
-        [path.join("/Users/thomasriddick/Documents/workspace/"
-                   "Dynamic_HD_Code/build/libdyhd_fortran.a.p",filename)
+        [path.join("/Users/thomasriddick/Documents/workspace/worktrees/feature/improved-run-and-build-structure/build/libdyhd_fortran.a.p",filename)
         for filename in additional_fortran_filenames]
     f2py_mngr = f2py_manager.f2py_manager(
         path.join(fortran_project_source_path,"drivers",
@@ -50,67 +49,26 @@ def cotat_plus_icon_icosohedral_cell_latlon_pixel(input_fine_river_directions,
                   func_name="cotat_plus_icon_icosohedral_cell_latlon_pixel_f2py_wrapper",
                   additional_fortran_files=additional_fortran_filepaths,
                   include_path=fortran_project_include_path)
-    if output_cell_numbers is not None:
-        output_coarse_next_cell_index,output_cell_numbers = f2py_mngr.\
-            run_current_function_or_subroutine(input_fine_river_directions.\
-                                               astype(np.float32,order='F'),
-                                               input_fine_total_cumulative_flow.\
-                                               astype(np.int32,order='F'),
-                                               cell_neighbors.\
-                                               astype(np.int32,order='F'),
-                                               pixel_center_lats.\
-                                               astype(np.float32),
-                                               pixel_center_lons.\
-                                               astype(np.float32),
-                                               cell_vertices_lats.\
-                                               astype(np.float32,order='F'),
-                                               cell_vertices_lons.\
-                                               astype(np.float32,order='F'),
-                                               1,
-                                               *input_fine_river_directions.shape,
-                                               cell_neighbors.shape[0],
-                                               cotat_plus_parameters_filepath)
-    else:
-        if cotat_plus_parameters_filepath is not None:
-            output_coarse_next_cell_index,_ = f2py_mngr.\
-                run_current_function_or_subroutine(input_fine_river_directions.\
-                                                   astype(np.float32,order='F'),
-                                                   input_fine_total_cumulative_flow.\
-                                                   astype(np.int32,order='F'),
-                                                   cell_neighbors.\
-                                                   astype(np.int32,order='F'),
-                                                   pixel_center_lats.\
-                                                   astype(np.float32),
-                                                   pixel_center_lons.\
-                                                   astype(np.float32),
-                                                   cell_vertices_lats.\
-                                                   astype(np.float32,order='F'),
-                                                   cell_vertices_lons.\
-                                                   astype(np.float32,order='F'),
-                                                   0,
-                                                   *input_fine_river_directions.shape,
-                                                   cell_neighbors.shape[0],
-                                                   cotat_plus_parameters_filepath)
-        else:
-            output_coarse_next_cell_index,_ = f2py_mngr.\
-                run_current_function_or_subroutine(input_fine_river_directions.\
-                                                   astype(np.float32,order='F'),
-                                                   input_fine_total_cumulative_flow.\
-                                                   astype(np.int32,order='F'),
-                                                   cell_neighbors.\
-                                                   astype(np.int32,order='F'),
-                                                   pixel_center_lats.\
-                                                   astype(np.float32),
-                                                   pixel_center_lons.\
-                                                   astype(np.float32),
-                                                   cell_vertices_lats.\
-                                                   astype(np.float32,order='F'),
-                                                   cell_vertices_lons.\
-                                                   astype(np.float32,order='F'),
-                                                   0,
-                                                   *input_fine_river_directions.shape,
-                                                   cell_neighbors.shape[0])
-    return output_coarse_next_cell_index
+    output_coarse_next_cell_index,output_cell_numbers = f2py_mngr.\
+        run_current_function_or_subroutine(input_fine_river_directions.\
+                                           astype(np.float32,order='F'),
+                                           input_fine_total_cumulative_flow.\
+                                           astype(np.int32,order='F'),
+                                           cell_neighbors.\
+                                           astype(np.int32,order='F'),
+                                           pixel_center_lats.\
+                                           astype(np.float32),
+                                           pixel_center_lons.\
+                                           astype(np.float32),
+                                           cell_vertices_lats.\
+                                           astype(np.float64,order='F'),
+                                           cell_vertices_lons.\
+                                           astype(np.float64,order='F'),
+                                           1,
+                                           *input_fine_river_directions.shape,
+                                           cell_neighbors.shape[0],
+                                           cotat_plus_parameters_filepath)
+    return output_coarse_next_cell_index,output_cell_numbers
 
 def run_cotat_plus(fine_rdirs_field,fine_total_cumulative_flow_field,cotat_plus_parameters_filepath,
                    coarse_grid_type,**coarse_grid_kwargs):
