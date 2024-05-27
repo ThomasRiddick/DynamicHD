@@ -34,8 +34,6 @@ class CotatPlusLatLonToIconDriver:
         neighboring_cell_indices_in = coarse_grid_params_ds["neighbor_cell_index"].values
         cell_vertices_lats = coarse_grid_params_ds["clat_vertices"]
         cell_vertices_lons = coarse_grid_params_ds["clon_vertices"]
-        coarse_next_cell_index_out = np.zeros((coarse_grid_params_ds["cell"].values.shape[0],),
-                                               dtype=np.int64)
         next_cell_index_out,cell_numbers_out = \
             cotat_plus_icon_icosohedral_cell_latlon_pixel(input_fine_river_directions=
                                                           fine_rdirs_in,

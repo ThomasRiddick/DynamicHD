@@ -33,9 +33,9 @@ def cross_grid_mapper_latlon_to_icon(cell_neighbors,
         run_current_function_or_subroutine(cell_neighbors.\
                                            astype(np.int32,order='F'),
                                            pixel_center_lats.\
-                                           astype(np.float32),
+                                           astype(np.float64),
                                            pixel_center_lons.\
-                                           astype(np.float32),
+                                           astype(np.float64),
                                            cell_vertices_lats.\
                                            astype(np.float64,order='F'),
                                            cell_vertices_lons.\

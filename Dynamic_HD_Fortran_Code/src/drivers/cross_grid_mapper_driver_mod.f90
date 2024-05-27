@@ -13,9 +13,9 @@ contains
       nlat_fine,nlon_fine,ncells_coarse)
     integer, intent(in) :: ncells_coarse
     integer, intent(in) :: nlat_fine,nlon_fine
-    real, intent(in), dimension(nlat_fine) :: pixel_center_lats
-    real, intent(in), dimension(nlon_fine) :: pixel_center_lons
-    !Need to set precision using a constant for f2py to work correctly
+    ! Need to set precision using a constant for f2py to work correctly
+    real(kind=8), intent(in), dimension(nlat_fine) :: pixel_center_lats
+    real(kind=8), intent(in), dimension(nlon_fine) :: pixel_center_lons
     real(kind=8), intent(in), dimension(ncells_coarse,3) :: cell_vertices_lats
     real(kind=8), intent(in), dimension(ncells_coarse,3) :: cell_vertices_lons
     integer, intent(in), dimension(ncells_coarse,3), target :: cell_neighbors

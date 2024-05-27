@@ -26,8 +26,7 @@ def cotat_plus_icon_icosohedral_cell_latlon_pixel(input_fine_river_directions,
                                                   pixel_center_lons,
                                                   cell_vertices_lats,
                                                   cell_vertices_lons,
-                                                  cotat_plus_parameters_filepath=None,
-                                                  output_cell_numbers=False):
+                                                  cotat_plus_parameters_filepath=None):
     additional_fortran_filenames =  \
         ["Dynamic_HD_Fortran_Code_src_base_area_mod.f90.o",
          "Dynamic_HD_Fortran_Code_src_base_coords_mod.f90.o",
@@ -57,9 +56,9 @@ def cotat_plus_icon_icosohedral_cell_latlon_pixel(input_fine_river_directions,
                                            cell_neighbors.\
                                            astype(np.int32,order='F'),
                                            pixel_center_lats.\
-                                           astype(np.float32),
+                                           astype(np.float64),
                                            pixel_center_lons.\
-                                           astype(np.float32),
+                                           astype(np.float64),
                                            cell_vertices_lats.\
                                            astype(np.float64,order='F'),
                                            cell_vertices_lons.\

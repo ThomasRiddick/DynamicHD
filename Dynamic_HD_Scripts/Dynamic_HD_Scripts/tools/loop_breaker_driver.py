@@ -38,22 +38,22 @@ def loop_breaker_icon_icosohedral_cell_latlon_pixel(input_fine_rdirs,
          "Dynamic_HD_Fortran_Code_src_algorithms_break_loops_mod.f90.o",
          "Dynamic_HD_Fortran_Code_src_algorithms_loop_breaker_mod.f90.o",
          "Dynamic_HD_Fortran_Code_src_algorithms_map_non_coincident_grids_mod.f90.o",
+         "Dynamic_HD_Fortran_Code_src_algorithms_cotat_parameters_mod.f90.o",
          "Dynamic_HD_Fortran_Code_src_base_unstructured_grid_mod.f90.o"]
     additional_fortran_filepaths = \
-        [path.join("/Users/thomasriddick/Documents/workspace/"
-                   "Dynamic_HD_Code/build/libdyhd_fortran.a.p",filename)
+        [path.join("/Users/thomasriddick/Documents/workspace/worktrees/feature/improved-run-and-build-structure/build/libdyhd_fortran.a.p",filename)
         for filename in additional_fortran_filenames]
     f2py_mngr = f2py_manager.f2py_manager(
         path.join(fortran_project_source_path,"drivers",
                   "break_loops_driver_mod.f90"),
-                  func_name="break_loops_icon_icosohedral_cell_latlon_pixel_f2py_wrapper",
+                  func_name="break_loops_iic_llp_f2py_wrap",
                   additional_fortran_files=additional_fortran_filepaths,
                   include_path=fortran_project_include_path)
-    loop_nums_list_array = np.asarray(loop_nums_list)
-    if len(loop_nums_list) == 0:
+    loop_nums_list_array = np.asarray(input_loop_nums_list)
+    if len(input_loop_nums_list) == 0:
         print("List of loops to remove is empty!")
         return coarse_rdirs
-    coarse_rdirs = input_coarse_rdirs.get_data().astype(np.int32,order='F')
+    coarse_rdirs = input_coarse_rdirs.astype(np.int32,order='F')
     f2py_mngr.run_current_function_or_subroutine(input_fine_rdirs.\
                                                  astype(np.float32,order='F'),
                                                  input_fine_total_cumulative_flow.\
@@ -74,10 +74,10 @@ def loop_breaker_icon_icosohedral_cell_latlon_pixel(input_fine_rdirs,
                                                  pixel_center_lons.\
                                                  astype(np.float32),
                                                  cell_vertices_lats.\
-                                                 astype(np.float32,order='F'),
+                                                 astype(np.float64,order='F'),
                                                  cell_vertices_lons.\
-                                                 astype(np.float32,order='F'),
-                                                 *input_fine_river_directions.shape,
+                                                 astype(np.float64,order='F'),
+                                                 *input_fine_rdirs.shape,
                                                  cell_neighbors.shape[0])
     return coarse_rdirs
 

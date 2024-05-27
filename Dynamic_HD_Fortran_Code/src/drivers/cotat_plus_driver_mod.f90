@@ -40,8 +40,8 @@ contains
         real(kind=double_precision), parameter :: PI = 4.0*atan(1.0)
         real, intent(in), dimension(nlat_fine,nlon_fine) :: input_fine_rdirs
         integer, intent(in), dimension(nlat_fine,nlon_fine) :: input_fine_total_cumulative_flow
-        real, intent(in), dimension(nlat_fine) :: pixel_center_lats
-        real, intent(in), dimension(nlon_fine) :: pixel_center_lons
+        real(kind=8), intent(in), dimension(nlat_fine) :: pixel_center_lats
+        real(kind=8), intent(in), dimension(nlon_fine) :: pixel_center_lons
         real(kind=8), intent(in), dimension(ncells_coarse,3) :: cell_vertices_lats
         real(kind=8), intent(in), dimension(ncells_coarse,3) :: cell_vertices_lons
         integer, intent(in), dimension(ncells_coarse,3), target :: cell_neighbors
@@ -57,7 +57,6 @@ contains
         integer, dimension(:,:), pointer :: output_cell_numbers_ptr
         integer :: i,j
             cell_neighbors_ptr => cell_neighbors
-            output_cell_numbers_ptr => output_cell_numbers
             allocate(cell_vertices_lats_deg(ncells_coarse,3))
             allocate(cell_vertices_lons_deg(ncells_coarse,3))
             do j = 1,3
@@ -113,6 +112,7 @@ contains
                                                                        write_cell_numbers)
                 end if
             end if
+            output_cell_numbers(:,:) = output_cell_numbers_ptr(:,:)
             deallocate(cell_vertices_lats_deg)
             deallocate(cell_vertices_lons_deg)
     end subroutine cotat_plus_icon_icosohedral_cell_latlon_pixel_f2py_wrapper

@@ -42,7 +42,7 @@ contains
             coarse_rdirs = coarse_rdirs_ptr
     end subroutine break_loops_latlon_f2py_wrapper
 
-    subroutine break_loops_icon_icosohedral_cell_latlon_pixel_f2py_wrapper( &
+    subroutine break_loops_iic_llp_f2py_wrap( &
             input_fine_rdirs,input_fine_total_cumulative_flow,cell_numbers, &
             coarse_cumulative_flow,coarse_catchments,coarse_rdirs, loop_nums_list, &
             cell_neighbors,pixel_center_lats,pixel_center_lons,cell_vertices_lats, &
@@ -62,8 +62,8 @@ contains
         integer, intent(in), dimension(:) :: loop_nums_list
         real, intent(in), dimension(nlat_fine), target :: pixel_center_lats
         real, intent(in), dimension(nlon_fine), target :: pixel_center_lons
-        real, intent(in), dimension(ncells_coarse,3) :: cell_vertices_lats
-        real, intent(in), dimension(ncells_coarse,3) :: cell_vertices_lons
+        real(kind=8), intent(in), dimension(ncells_coarse,3) :: cell_vertices_lats
+        real(kind=8), intent(in), dimension(ncells_coarse,3) :: cell_vertices_lons
         integer, intent(in), dimension(ncells_coarse,3), target :: cell_neighbors
         real(kind=double_precision), dimension(:,:), pointer :: cell_vertices_lats_ptr
         real(kind=double_precision), dimension(:,:), pointer :: cell_vertices_lons_ptr
@@ -109,6 +109,6 @@ contains
             deallocate(pixel_center_lats_ptr)
             deallocate(pixel_center_lons_ptr)
             deallocate(input_fine_rdirs_ptr)
-    end subroutine break_loops_icon_icosohedral_cell_latlon_pixel_f2py_wrapper
+    end subroutine break_loops_iic_llp_f2py_wrap
 
 end module break_loops_driver_mod
