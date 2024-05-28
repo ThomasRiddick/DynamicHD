@@ -41,7 +41,7 @@ def loop_breaker_icon_icosohedral_cell_latlon_pixel(input_fine_rdirs,
          "Dynamic_HD_Fortran_Code_src_algorithms_cotat_parameters_mod.f90.o",
          "Dynamic_HD_Fortran_Code_src_base_unstructured_grid_mod.f90.o"]
     additional_fortran_filepaths = \
-        [path.join("/Users/thomasriddick/Documents/workspace/worktrees/feature/improved-run-and-build-structure/build/libdyhd_fortran.a.p",filename)
+        [path.join(fortran_project_object_path,filename)
         for filename in additional_fortran_filenames]
     f2py_mngr = f2py_manager.f2py_manager(
         path.join(fortran_project_source_path,"drivers",
