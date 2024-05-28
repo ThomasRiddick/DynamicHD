@@ -1,9 +1,9 @@
 {% macro set_variables_pre_user_input() %}
 
-{%- if input.script_type == 'createproject' %}
+{% if input.script_type == 'createproject' %}
 script_path={{ input.script_path }}
 project_name={{ input.project_name }}
-{%- else -%}
+{% else -%}
 script_path=$(dirname ${0})
 project_name=$(basename ${0})
 {%- endif -%}

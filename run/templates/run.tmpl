@@ -1,7 +1,7 @@
 {%- extends "base.tmpl" -%}
-{%- import "templates/components.tmpl" as components with context -%}
+{%- import "components.tmpl" as components with context -%}
 
-{%- block slurm_headers %-}
+{%- block slurm_headers -%}
 {% if input.slurm_headers -%}
 #SLURM HEADERS
 #SBATCH --job-name=create_icon_hdpara
@@ -18,9 +18,9 @@
 
 {%- block user_commands_start -%}
 {{ input.user_commands_start }}
-{%- endblock -%}
+{%- endblock %}
 
-{%- block set_variables_pre_user_input -%}
+{% block set_variables_pre_user_input -%}
 {{ components.set_variables_pre_user_input() }}
 {%- endblock -%}
 
@@ -34,7 +34,7 @@
 {%- endif -%}
 {%- endblock -%}
 
-{%- block create_project %-}
+{%- block create_project -%}
 {%- if input.create_project_at_runtime -%}
 {{ components.create_project_dirs() }}
 {%- endif -%}
@@ -50,7 +50,7 @@
 {{ input.user_commands_pre_preproc }}
 {%- endblock -%}
 
-{%- block preprocessing %-}
+{%- block preprocessing -%}
 # Create links to input files
 ln -s ${fractional_lsmask_filepath} $(basename ${fractional_lsmask_filepath})
 fractional_lsmask_filepath=$(basename ${fractional_lsmask_filepath})
@@ -109,9 +109,9 @@ eval ${cmd}
 
 {%- block user_commands_pre_clean -%}
 {{ input.user_commands_pre_clean }}
-{%- endblock -%}
+{%- endblock %}
 
-{%- block clean_up -%}
+{% block clean_up -%}
 # Clean-up
 echo "Post run clean-up not yet implemented!"
 {%- endblock -%}

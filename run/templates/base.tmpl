@@ -30,39 +30,39 @@
 
 {%- block key_settings_preamble %}
 #SETTINGS THAT USUALLY NEED TO BE EDITED
-{%- endblock -%}
+{%- endblock %}
 
-{%- block key_settings -%}
+{% block key_settings -%}
 #Atmospheric Grid ID
-icon_atmo_grid_id=
+icon_atmo_grid_id={{ input.icon_atmo_grid_id }}
 
 #Ocean Grid ID
-icon_ocean_grid_id=
+icon_ocean_grid_id={{ input.icon_ocean_grid_id }}
 
 #Atmospheric Grid Resolution
 #Accepts most formats
 #e.g. 'r2b3', 'R2B4', 'r02b07', 'R02B09'
-icon_atmo_grid_res=r2b8
+icon_atmo_grid_res={{ input.icon_atmo_grid_res }}
 
 #Ocean Grid Resolution
 #Accepts most formats
 #e.g. 'r2b3', 'R2B4', 'r02b07', 'R02B09'
-icon_atmo_grid_res=
+icon_ocean_grid_res={{ input.icon_ocean_grid_res }}
 
 #Path to atmospheric grid file
-icon_grid_filepath=
+icon_grid_filepath={{ input.icon_grid_filepath }}
 
 #Path to (fractional) lsmask
-lsmask_filepath=
+lsmask_filepath={{ input.lsmask_filepath }}
 
 #Version number
 #Use '1' unless this exact configuration
 #(same resolutions of both grids, same binary conversion method,
 # and same internal sink point option) has been used before
-version_num=1
-{%- endblock -%}
+version_num={{ input.version_num }}
+{%- endblock %}
 
-{%- block other_settings_header %}
+{% block other_settings_header %}
 ########################################
 #------------OTHER SETTINGS------------#
 ########################################
@@ -70,21 +70,19 @@ version_num=1
 
 {%- block other_settings_preamble %}
 #SETTINGS THAT CAN USUALLY BE LEFT ALONE
-{%- endblock -%}
+{%- endblock %}
 
-{%- block other_settings -%}
+{% block other_settings -%}
 #By default mkproject will automatically be decided whether
 #to use the low or high resolution method based on the
 #resolutions chosen but this can be overriden by setting
 #this variable to 'high_res' or 'low_res'. The default
 #value is 'automatic'
-#Note this value is read by mkproject.py itself and
-#not actually refer to within the scripts produced
-method_to_use=automatic
+method_to_use={{ input.method_to_use }}
 
 #Include endorheic basins and internal sink points
 #By default set to 'true'. Options are 'true'/'false'
-use_true_sinks=true
+use_true_sinks={{ input.use_true_sinks }}
 
 #By default the script will decide a suitable
 #method for converting the fractional landsea
@@ -92,31 +90,31 @@ use_true_sinks=true
 #For r2b3, r2b4, r2b5 and r2b6 it will use 'hfrac'
 #For other resolutions it will use maxl
 #Options are: 'maxl', 'minl' and 'hfrac'
-binary_conversion_method=
+binary_conversion_method={{ input.binary_conversion_method }}
 
 #By default the true sinks filepath should
 #be left blank and the true sinks file will
 #be set automatically if required
-true_sinks_filepath=
-{%- endblock -%}
+true_sinks_filepath={{ input.true_sinks_filepath }}
+{%- endblock %}
 
-{%- end_of_user_input_header -%}
+{% block end_of_user_input_header -%}
 ########################################
 ########################################
 #-----------END OF USER INPUT----------#
 ########################################
 ########################################
-{%- endblock -%}
+{%- endblock %}
 
 {# This block is used to SET these commands in config templates -
    all other configuration will leave this blank #}
-{%- block additional_user_commands %}
+{% block additional_user_commands %}
 {%- endblock %}
 
 {%- block user_commands_pre_create_project -%}
 {%- endblock -%}
 
-{%- block create_project %-}
+{%- block create_project -%}
 {%- endblock -%}
 
 {%- block user_commands_post_create_project -%}
@@ -125,7 +123,7 @@ true_sinks_filepath=
 {%- block user_commands_pre_preproc -%}
 {%- endblock -%}
 
-{%- block preprocessing %-}
+{%- block preprocessing -%}
 {%- endblock -%}
 
 {%- block user_commands_pre_run -%}

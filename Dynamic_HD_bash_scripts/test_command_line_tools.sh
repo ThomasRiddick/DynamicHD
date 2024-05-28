@@ -36,6 +36,7 @@ function test_command {
 
 if [[ $# -ne 2 ]]; then
   echo "Wrong number of command line arguments"
+  exit 1
 fi
 
 #Command line arguments
