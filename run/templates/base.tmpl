@@ -111,9 +111,6 @@ true_sinks_filepath={{ input.true_sinks_filepath }}
 {% block additional_user_commands %}
 {%- endblock %}
 
-{%- block set_variables_post_user_input -%}
-{%- endblock -%}
-
 {%- block user_commands_pre_create_project -%}
 {%- endblock -%}
 
@@ -121,6 +118,9 @@ true_sinks_filepath={{ input.true_sinks_filepath }}
 {%- endblock -%}
 
 {%- block user_commands_post_create_project -%}
+{%- endblock -%}
+
+{%- block set_variables_post_user_input -%}
 {%- endblock -%}
 
 {%- block user_commands_pre_preproc -%}

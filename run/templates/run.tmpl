@@ -28,10 +28,6 @@
 {{ input.user_commands_pre_user_input }}
 {%- endblock -%}
 
-{%- block set_variables_post_user_input -%}
-{{ components.set_variables_post_user_input() }}
-{%- endblock -%}
-
 {%- block user_commands_pre_create_project -%}
 {%- if input.create_project_at_runtime -%}
 {{ input.user_commands_pre_create_project }}
@@ -48,6 +44,10 @@
 {%- if input.create_project_at_runtime -%}
 {{ input.user_commands_post_create_project }}
 {%- endif -%}
+{%- endblock -%}
+
+{%- block set_variables_post_user_input -%}
+{{ components.set_variables_post_user_input() }}
 {%- endblock -%}
 
 {%- block user_commands_pre_preproc -%}
