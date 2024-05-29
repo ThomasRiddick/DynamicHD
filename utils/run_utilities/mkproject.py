@@ -16,17 +16,16 @@ def convert_to_dict(config_sections):
 def generate_scripts(input_config_file,
                      store_scripts_in_project,
                      method_to_use=None,
-                     atmo_grid_res=None,
                      generate_config_template_file=None,
                      config_template_settings={}):
     rundir = os.getcwd()
     templates_env = Environment(loader=FileSystemLoader(path.join(rundir,"templates")))
-    config = configparser.ConfigParser()
     if generate_config_template_file is not None:
         cfg_template = templates_env.get_template("config.tmpl")
         with open(path.join(rundir,generate_config_template_file),"w") as f:
             f.write(cfg_template.render(input=config_template_settings))
     else:
+        config = configparser.ConfigParser()
         config.read(path.join(rundir,input_config_file))
         config_dict = convert_to_dict([config["Key Settings"],
                                        config["Other Settings"],
@@ -43,16 +42,24 @@ def generate_scripts(input_config_file,
             high_res = (method_to_use == "high_res")
         else:
             raise RuntimeError("method_to_use value unknown")
+        config_dict["high_res"] = high_res
+        if high_res:
+            config_dict["slurm_headers"] = True
         run_template  = templates_env.get_template("run.tmpl")
         if store_scripts_in_project:
             cp_template  = templates_env.get_template("createproject.tmpl")
+            cp_config_dict = config_dict.copy()
+            cp_config_dict["script_path"] = rundir
+            cp_config_dict["project_name"] = path.basename(input_config_file)
             create_project = cp_template.render(input=config_dict)
             print(subprocess.check_output(create_project,shell=True))
             run_script_path = ("/".join(rundir.rstrip("/").split("/")[0:-1]) +
                                "/projects/"+path.basename(input_config_file) +
                                "/scripts/"+path.basename(input_config_file)+".run")
+            config_dict["create_project_at_runtime"] = False
         else:
             run_script_path = path.join(rundir,input_config_file)+".run"
+            config_dict["create_project_at_runtime"] = True
         with open(run_script_path,"w") as f:
             f.write(run_template.render(input=config_dict))
 
@@ -77,7 +84,8 @@ def parse_arguments():
                         type=str,
                         nargs="?",
                         default=None,
-                        help="Create a template for config files")
+                        help="Create a config template for config file at the "
+                             "specified location")
     parser.add_argument("-s","--store-scripts-in-project",
                         action="store_true",
                         help="When true will create a project folder when the "

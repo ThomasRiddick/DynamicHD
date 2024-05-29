@@ -34,4 +34,5 @@ upscale_orography_wrapper.cpp
 build
 bin
 lib
+run/examples
 gtest-internal-inl.h

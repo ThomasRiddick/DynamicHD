@@ -6,7 +6,7 @@
 {%- endblock -%}
 
 {%- block set_variables_pre_user_input -%}
-{{ components.set_variables_pre_user_input() }}
+{{ components.set_variables_pre_user_input(is_create_project_script=true) }}
 {%- endblock -%}
 
 {%- block user_commands_pre_user_input -%}
@@ -18,7 +18,7 @@
 {%- endblock -%}
 
 {%- block create_project %-}
-{{ components.create_project_dirs() }}
+{{ components.create_project_dirs(is_create_project_script=true) }}
 {%- endblock -%}
 
 {%- block user_commands_post_create_project -%}

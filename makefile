@@ -1,8 +1,8 @@
-.PHONY: clean default test compile install
+.PHONY: clean clean_examples default test compile install create_examples
 
 include config/set_config
 
-default: install
+default: install create_examples
 
 compile: | build
 		meson compile -C build
@@ -17,6 +17,17 @@ clean:
 		rm -rf build
 		rm -rf bin
 		rm -rf lib
+
+create_examples: | run/examples
+
+run/examples:
+		cd run && \
+		mkdir examples && \
+		export PYTHONPATH=../utils/run_utilities:${PYTHONPATH} && \
+		python ../utils/run_utilities/generate_examples.py configs_for_examples.cfg
+
+clean_examples:
+	  rm -rf run/examples
 
 test:
 		meson test -C build
