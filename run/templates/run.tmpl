@@ -74,13 +74,13 @@ else
 fi
 
 cdo remapbil,${icon_grid_filepath} ${etop01_filepath} ${orography_filepath}
-{%- endblock -%}
+{% endblock -%}
 
 {%- block user_commands_pre_run -%}
 {{ input.user_commands_pre_run }}
 {%- endblock -%}
 
-{%- block run -%}
+{% block run -%}
 #Run
 {% if input.high_res %}
 echo "Not yet implemented!"
@@ -89,12 +89,12 @@ if [[ ${binary_conversion_method} == "maxl" ]]; then
   use_hfrac = False
   max_land_binary_lsmask_filepath = null
 elif [[ ${binary_conversion_method} == "minl" ]] &&
-     [[ ${binary_conversion_method} == "maxl" ]];
+     [[ ${binary_conversion_method} == "maxl" ]]; then
   use_hfrac = True
 else
   exit 1
 fi
-cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath} ${config_filepath} ${working_directory} ${icon_grid_filepath} ${repository_path}/Dynamic_HD_Resources/cotat_plus_standard_params.nl False ${use_hfrac} ${maxl_binary_lsmask_filepath} ${true_sinks_filepath}"
+cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath} ${config_filepath} ${working_directory} ${icon_grid_filepath} ${repository_path}/Dynamic_HD_Resources/cotat_plus_standard_params.nl ${icon_atmo_grid_res} False ${use_hfrac} ${maxl_binary_lsmask_filepath} ${true_sinks_filepath}"
 echo "Running:"
 echo ${cmd}
 eval ${cmd}

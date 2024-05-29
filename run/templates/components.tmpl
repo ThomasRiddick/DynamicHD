@@ -40,7 +40,7 @@ if [[ icon_atmo_grid_res == "r2b3" ]] || [[ icon_atmo_grid_res == "r2b4" ]] ||
 else
    binary_conversion_method_default=maxl
 fi
-binary_conversion_method=${binary_conversion_method:-binary_conversion_method_default}
+binary_conversion_method=${binary_conversion_method:-${binary_conversion_method_default}}
 true_sinks_filepath_default=/work/mj0060/m300468/data/true_sinks_version_41???.nc
 if ${use_true_sinks}; then
   true_sinks_filepath=${true_sinks_filepath:-true_sinks_filepath_default}
@@ -48,7 +48,7 @@ else
   true_sinks_filepath=
 fi
 
-cat << EOF > ${config_filepath}
+cat > ${config_filepath} << EOF
 source_directory=${repository_path}
 no_conda=false
 no_modules=false
@@ -61,7 +61,7 @@ if ${use_true_sinks}; then
 else
   keep_all_internal_basins="False"
 fi
-cat << EOF > ${python_config_filepath}
+cat > ${python_config_filepath} << EOF
 #Output option for test run of dynamic hd production code
 [input_options]
 ten_minute_corrected_orography_filename=/home/m/m300468/les_workdir/workdirs/icon_rdirs_r2b5_workdir_sc_0030_0035_seamless_p3/corrected_orog_intermediary_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_20170517_003802_with_grid.nc
