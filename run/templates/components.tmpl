@@ -4,7 +4,14 @@
 script_path={{ input.script_path }}
 project_name={{ input.project_name }}
 {% else -%}
+function find_abs_path {
+  rel_path=${1}
+  cd ${rel_path}
+  pwd -P
+  cd - > /dev/null
+}
 script_path=$(dirname ${0})
+script_path=$(find_abs_path ${script_path})
 project_name=$(basename ${0})
 {%- endif -%}
 

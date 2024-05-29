@@ -28,6 +28,10 @@
 {{ input.user_commands_pre_user_input }}
 {%- endblock -%}
 
+{%- block set_variables_post_user_input -%}
+{{ components.set_variables_post_user_input() }}
+{%- endblock -%}
+
 {%- block user_commands_pre_create_project -%}
 {%- if input.create_project_at_runtime -%}
 {{ input.user_commands_pre_create_project }}
@@ -50,7 +54,7 @@
 {{ input.user_commands_pre_preproc }}
 {%- endblock -%}
 
-{%- block preprocessing -%}
+{%- block preprocessing %}
 # Create links to input files
 ln -s ${fractional_lsmask_filepath} $(basename ${fractional_lsmask_filepath})
 fractional_lsmask_filepath=$(basename ${fractional_lsmask_filepath})
@@ -81,7 +85,6 @@ cdo remapbil,${icon_grid_filepath} ${etop01_filepath} ${orography_filepath}
 {% if input.high_res %}
 echo "Not yet implemented!"
 {% else %}
-#Run
 if [[ ${binary_conversion_method} == "maxl" ]]; then
   use_hfrac = False
   max_land_binary_lsmask_filepath = null
