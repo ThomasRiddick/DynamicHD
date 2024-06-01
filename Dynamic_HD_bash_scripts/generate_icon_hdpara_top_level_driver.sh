@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e
-
 echo "Running Version 1.3 of the ICON HD Parameters Generation Code"
 
 #Define module loading function
@@ -335,9 +334,9 @@ ten_minute_orography_filepath=$(cut -d ' ' -f 1 <<< ${ten_minute_orography_file_
 ten_minute_orography_fieldname=$(cut -d ' ' -f 2 <<< ${ten_minute_orography_file_and_fieldname})
 cell_numbers_filepath="cell_numbers_temp.nc"
 drivers_path=${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/command_line_drivers
-python ${drivers_path}/cross_grid_mapper_latlon_to_icon_driver.py ${grid_file} ${ten_minute_orography_filepath} ${ten_minute_orography_fieldname} ${cell_numbers_filepath} "cell_index"
+python ${drivers_path}/cross_grid_mapper_latlon_to_icon_driver.py ${grid_file} ${ten_minute_orography_filepath} ${cell_numbers_filepath}
 echo "Downscaling Landsea Mask" 1>&2
-python ${drivers_path}/icon_to_latlon_landsea_downscaler_driver.py ${cell_numbers_filepath} ${input_ls_mask_filepath} downscaled_ls_mask_temp.nc "cell_index" "cell_sea_land_mask" "lsm"
+python ${drivers_path}/icon_to_latlon_landsea_downscaler_driver.py ${cell_numbers_filepath} ${input_ls_mask_filepath} downscaled_ls_mask_temp.nc "cell_numbers" "cell_sea_land_mask"
 cdo expr,'lsm=(!lsm)' downscaled_ls_mask_temp.nc downscaled_ls_mask_temp_inverted.nc
 echo "Generating Combined Hydrosheds and Corrected Data River Directions" 1>&2
 ten_minute_river_direction_filepath="ten_minute_river_direction_temp.nc"
@@ -363,10 +362,10 @@ while [[ $(grep -c "[0-9]" "${ten_minute_catchments_filepath%%.nc}_loops.log") -
 	python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/command_line_drivers/create_icon_coarse_river_directions_driver.py -r ${ten_minute_river_direction_filepath} downscaled_ls_mask_temp_inverted.nc dummy.nc ${ten_minute_catchments_filepath} ${ten_minute_accumulated_flow_filepath} ${python_config_filepath} ${working_directory}
 done
 python ${drivers_path}/cotat_plus_latlon_to_icon_driver.py ${ten_minute_river_direction_filepath}  ${ten_minute_accumulated_flow_filepath} ${grid_file} ${icon_intermediate_rdirs_filepath} "rdirs" "acc" ${cotat_params_file}
-python ${drivers_path}/compute_catchments_icon_driver.py --sort-catchments-by-size ${icon_intermediate_rdirs_filepath} ${icon_intermediate_catchments_filepath} ${grid_file} "rdirs" ${icon_intermediate_catchments_filepath%%.nc}_loops_log.log
-python ${drivers_path}/accumulate_flow_icon_driver.py ${grid_file} ${icon_intermediate_rdirs_filepath} ${icon_intermediate_accumulated_flow_filepath} "rdirs"
-python ${drivers_path}/latlon_to_icon_loop_breaker_driver.py ${ten_minute_accumulated_flow_filepath}  ${ten_minute_river_direction_filepath}  ${cell_numbers_filepath}  ${grid_file} ${icon_final_filepath} ${icon_intermediate_catchments_filepath} ${icon_intermediate_accumulated_flow_filepath} ${icon_intermediate_rdirs_filepath}  "rdirs" "acc" "cell_index" "catchment" "acc" "rdirs"  ${icon_intermediate_catchments_filepath%%.nc}_loops_log.log
-python ${drivers_path}/compute_catchments_icon_driver.py --sort-catchments-by-size ${icon_final_filepath} ${output_catchments_filepath} ${grid_file} "next_cell_index" ${output_catchments_filepath%%.nc}_loops_log.log 1
+python ${drivers_path}/compute_catchments_icon_driver.py --sort-catchments-by-size ${icon_intermediate_rdirs_filepath} ${icon_intermediate_catchments_filepath} ${grid_file} "next_cell_index" ${icon_intermediate_catchments_filepath%%.nc}_loops_log.log
+python ${drivers_path}/accumulate_flow_icon_driver.py ${grid_file} ${icon_intermediate_rdirs_filepath} ${icon_intermediate_accumulated_flow_filepath} "next_cell_index"
+python ${drivers_path}/latlon_to_icon_loop_breaker_driver.py ${ten_minute_accumulated_flow_filepath}  ${ten_minute_river_direction_filepath}  ${cell_numbers_filepath}  ${grid_file} ${icon_final_filepath} ${icon_intermediate_catchments_filepath} ${icon_intermediate_accumulated_flow_filepath} ${icon_intermediate_rdirs_filepath}  "rdirs" "acc" "cell_numbers" "catchment" "acc" "next_cell_index"  ${icon_intermediate_catchments_filepath%%.nc}_loops_log.log
+python ${drivers_path}/compute_catchments_icon_driver.py --sort-catchments-by-size ${icon_final_filepath} ${output_catchments_filepath} ${grid_file} "next_cell_index" ${output_catchments_filepath%%.nc}_loops_log.log
 python ${drivers_path}/accumulate_flow_icon_driver.py ${grid_file} ${icon_final_filepath} ${output_accumulated_flow_filepath} "next_cell_index"
   rm -f paragen/area_dlat_dlon.txt
   rm -f paragen/ddir.inp
@@ -381,8 +380,8 @@ python ${drivers_path}/accumulate_flow_icon_driver.py ${grid_file} ${icon_final_
   mkdir paragen
   cp ${grid_file} grid_in_temp.nc
   cp ${input_ls_mask_filepath} mask_in_temp.nc
-   	cdo expr,"acc=(rdirs == -9999999)" ${icon_intermediate_rdirs_filepath} zeros_temp.nc
-  python ${drivers_path}/Fill_Sinks_Icon_SI_Exec ${input_orography_filepath} ${input_ls_mask_filepath} zeros_temp.nc orography_filled.nc ${grid_file} "z" "cell_sea_land_mask" "acc" 0 0 0.0 1 0
+  cdo expr,"acc=(next_cell_index == -9999999)" ${icon_intermediate_rdirs_filepath} zeros_temp.nc
+  python ${drivers_path}/sink_filling_icon_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} zeros_temp.nc orography_filled.nc ${grid_file} "z" "cell_sea_land_mask" "acc"
   ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/generate_icon_hd_file_driver.sh ${working_directory}/paragen ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran ${working_directory} grid_in_temp.nc mask_in_temp.nc ${icon_final_filepath}  orography_filled.nc
 ${source_directory}/Dynamic_HD_bash_scripts/adjust_icon_k_parameters.sh  ${working_directory}/paragen/hdpara_icon.nc ${working_directory}/hdpara_adjusted_temp.nc ${atmos_resolution}
 if ! ${use_hfrac}; then
@@ -401,7 +400,7 @@ fi
   rm -f paragen/paragen.inp
   rm -f paragen/paragen_icon.mod
   rm -f paragen/paragen_icon_driver
-  rmdir paragen
+  #rmdir paragen
   rm -f downscaled_ls_mask_temp.nc
   rm -f downscaled_ls_mask_temp_inverted.nc
   rm -f grid_in_temp.nc

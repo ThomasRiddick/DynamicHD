@@ -55,7 +55,7 @@ class AccumulateFlowIconDriver:
                                "clon_bnds":(["cell","nv"],next_cell_index_in_ds["clon_bnds"].values),
                                "clat_bnds":(["cell","nv"],next_cell_index_in_ds["clat_bnds"].values)},
                        attrs={"number_of_grid_used":next_cell_index_in_ds.attrs["number_of_grid_used"],
-                              "grid_file_uri":next_cell_index_in_ds.attrs["grid_file_uri"],
+                              "ICON_grid_file_uri":grid_params_ds.attrs["ICON_grid_file_uri"],
                               "uuidOfHGrid":next_cell_index_in_ds.attrs["uuidOfHGrid"]})
         cumulative_flow_out_ds["acc"].attrs["CDI_grid_type"] = "unstructured"
         cumulative_flow_out_ds.to_netcdf(self.args["output_cumulative_flow_filepath"])

@@ -99,6 +99,7 @@ class LatLonToIconLoopBreakerDriver:
                                "clon_bnds":(["cell","nv"],coarse_grid_params_ds["clon_vertices"].values),
                                "clat_bnds":(["cell","nv"],coarse_grid_params_ds["clat_vertices"].values)},
                        attrs={"number_of_grid_used":coarse_grid_params_ds.attrs["number_of_grid_used"],
+                              "ICON_grid_file_uri":coarse_grid_params_ds.attrs["ICON_grid_file_uri"],
                               "uuidOfHGrid":coarse_grid_params_ds.attrs["uuidOfHGrid"]})
         next_cell_index_out_ds["next_cell_index"].attrs["CDI_grid_type"] = "unstructured"
         next_cell_index_out_ds["clat"].attrs["bounds"] = "clat_bnds"

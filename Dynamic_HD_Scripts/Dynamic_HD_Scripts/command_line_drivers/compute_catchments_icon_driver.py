@@ -56,7 +56,7 @@ class ComputeCatchmentsIconDriver:
                                "clon_bnds":(["cell","nv"],next_cell_index_in_ds["clon_bnds"].values),
                                "clat_bnds":(["cell","nv"],next_cell_index_in_ds["clat_bnds"].values)},
                        attrs={"number_of_grid_used":next_cell_index_in_ds.attrs["number_of_grid_used"],
-                              "grid_file_uri":next_cell_index_in_ds.attrs["grid_file_uri"],
+                              "ICON_grid_file_uri":grid_params_ds.attrs["ICON_grid_file_uri"],
                               "uuidOfHGrid":next_cell_index_in_ds.attrs["uuidOfHGrid"]})
         catchment_numbers_out_ds["catchment"].attrs["CDI_grid_type"] = "unstructured"
         catchment_numbers_out_ds.\

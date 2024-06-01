@@ -50,10 +50,10 @@ def loop_breaker_icon_icosohedral_cell_latlon_pixel(input_fine_rdirs,
                   additional_fortran_files=additional_fortran_filepaths,
                   include_path=fortran_project_include_path)
     loop_nums_list_array = np.asarray(input_loop_nums_list)
+    coarse_rdirs = input_coarse_rdirs.astype(np.int32,order='F')
     if len(input_loop_nums_list) == 0:
         print("List of loops to remove is empty!")
         return coarse_rdirs
-    coarse_rdirs = input_coarse_rdirs.astype(np.int32,order='F')
     f2py_mngr.run_current_function_or_subroutine(input_fine_rdirs.\
                                                  astype(np.float32,order='F'),
                                                  input_fine_total_cumulative_flow.\
