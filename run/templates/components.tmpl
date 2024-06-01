@@ -13,6 +13,7 @@ function find_abs_path {
 script_path=$(dirname ${0})
 script_path=$(find_abs_path ${script_path})
 project_name=$(basename ${0})
+project_name=${project_name%.run}
 {%- endif -%}
 
 {%- if input.create_project_at_runtime or is_create_project_script %}

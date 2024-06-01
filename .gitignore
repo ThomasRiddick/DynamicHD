@@ -36,4 +36,7 @@ projects
 bin
 lib
 run/examples
+run/*.cfg
+!run/configs_for_examples.cfg
+run/*.run
 gtest-internal-inl.h

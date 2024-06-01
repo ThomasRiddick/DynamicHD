@@ -5,6 +5,7 @@ import re
 import argparse
 import os.path as path
 import os
+import stat
 
 def convert_to_dict(config_sections):
     config_dict = {}
@@ -25,6 +26,7 @@ def generate_scripts(input_config_file,
         with open(path.join(rundir,generate_config_template_file),"w") as f:
             f.write(cfg_template.render(input=config_template_settings))
     else:
+        project_name = path.basename(input_config_file).removesuffix(".cfg")
         config = configparser.ConfigParser()
         config.read(path.join(rundir,input_config_file))
         config_dict = convert_to_dict([config["Key Settings"],
@@ -50,18 +52,19 @@ def generate_scripts(input_config_file,
             cp_template  = templates_env.get_template("createproject.tmpl")
             cp_config_dict = config_dict.copy()
             cp_config_dict["script_path"] = rundir
-            cp_config_dict["project_name"] = path.basename(input_config_file)
+            cp_config_dict["project_name"] = project_name
             create_project = cp_template.render(input=config_dict)
             print(subprocess.check_output(create_project,shell=True))
             run_script_path = ("/".join(rundir.rstrip("/").split("/")[0:-1]) +
-                               "/projects/"+path.basename(input_config_file) +
-                               "/scripts/"+path.basename(input_config_file)+".run")
+                               "/projects/" + project_name +
+                               "/scripts/" + project_name+ ".run")
             config_dict["create_project_at_runtime"] = False
         else:
-            run_script_path = path.join(rundir,input_config_file)+".run"
+            run_script_path = path.join(rundir,project_name) + ".run"
             config_dict["create_project_at_runtime"] = True
         with open(run_script_path,"w") as f:
             f.write(run_template.render(input=config_dict))
+        os.chmod(run_script_path,os.stat(run_script_path).st_mode|stat.S_IXUSR)
 
 class Arguments:
     pass
