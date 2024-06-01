@@ -1,8 +1,8 @@
-.PHONY: clean clean_examples default test compile install generate_examples
+.PHONY: clean clean_examples default test compile install examples
 
 include config/set_config
 
-default: install generate_examples
+default: install examples
 
 compile: | build
 		meson compile -C build
@@ -18,7 +18,7 @@ clean:
 		rm -rf bin
 		rm -rf lib
 
-generate_examples: | run/examples
+examples: | run/examples
 
 run/examples:
 		cd run && \
