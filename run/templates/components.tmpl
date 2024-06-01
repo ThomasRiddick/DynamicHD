@@ -41,9 +41,9 @@ else
    binary_conversion_method_default=maxl
 fi
 binary_conversion_method=${binary_conversion_method:-${binary_conversion_method_default}}
-true_sinks_filepath_default=/work/mj0060/m300468/data/true_sinks_version_41???.nc
+true_sinks_filepath_default=/work/mj0060/m300468/data/true_sinks_version_41.nc
 if ${use_true_sinks}; then
-  true_sinks_filepath=${true_sinks_filepath:-true_sinks_filepath_default}
+  true_sinks_filepath=${true_sinks_filepath:-${true_sinks_filepath_default}}
 else
   true_sinks_filepath=
 fi

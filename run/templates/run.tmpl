@@ -86,11 +86,11 @@ cdo remapbil,${icon_grid_filepath} ${etop01_filepath} ${orography_filepath}
 echo "Not yet implemented!"
 {% else %}
 if [[ ${binary_conversion_method} == "maxl" ]]; then
-  use_hfrac = False
-  max_land_binary_lsmask_filepath = null
+  use_hfrac=false
+  max_land_binary_lsmask_filepath=null
 elif [[ ${binary_conversion_method} == "minl" ]] &&
      [[ ${binary_conversion_method} == "maxl" ]]; then
-  use_hfrac = True
+  use_hfrac=true
 else
   exit 1
 fi
