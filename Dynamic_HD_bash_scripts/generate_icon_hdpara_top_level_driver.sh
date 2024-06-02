@@ -400,7 +400,8 @@ fi
   rm -f paragen/paragen.inp
   rm -f paragen/paragen_icon.mod
   rm -f paragen/paragen_icon_driver
-  #rmdir paragen
+  rm -f paragen/icon_fdir_temp.nc
+  rmdir paragen
   rm -f downscaled_ls_mask_temp.nc
   rm -f downscaled_ls_mask_temp_inverted.nc
   rm -f grid_in_temp.nc
