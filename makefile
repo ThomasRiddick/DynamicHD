@@ -4,17 +4,20 @@ include config/set_config
 
 default: install examples
 
-compile: | build meson_options.txt
+compile: | build
 		meson compile -C build
 
-build: | meson_options.txt
+build: | meson_options.txt | Dynamic_HD_Scripts/Dynamic_HD_Scripts/bin
 		meson setup --native-file $(SYSTEM_CONFIG_FILE) build
 
-install: compile | meson_options.txt
+install: compile
 		meson install -C build
 
 meson_options.txt:
 		ln -s meson.options meson_options.txt
+
+Dynamic_HD_Scripts/Dynamic_HD_Scripts/bin:
+		mkdir Dynamic_HD_Scripts/Dynamic_HD_Scripts/bin
 
 clean:
 		rm -rf build
