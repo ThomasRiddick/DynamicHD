@@ -14,7 +14,7 @@ install: compile | meson_options.txt
 		meson install -C build
 
 meson_options.txt:
-		ln -s meson_options meson_options.txt
+		ln -s meson.options meson_options.txt
 
 clean:
 		rm -rf build
