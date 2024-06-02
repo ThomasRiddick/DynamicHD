@@ -4,14 +4,17 @@ include config/set_config
 
 default: install examples
 
-compile: | build
+compile: | build meson_options.txt
 		meson compile -C build
 
-build:
+build: | meson_options.txt
 		meson setup --native-file $(SYSTEM_CONFIG_FILE) build
 
-install: compile
+install: compile | meson_options.txt
 		meson install -C build
+
+meson_options.txt:
+		ln -s meson_options meson_options.txt
 
 clean:
 		rm -rf build

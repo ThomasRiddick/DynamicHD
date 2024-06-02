@@ -14,7 +14,10 @@ fortran_test_src = ['/Users/thomasriddick/Documents/code/fruit_3.4.1/src_copy/fr
 cpp_src_path = 'Dynamic_HD_Cpp_Code/src'
 fortran_src_path = 'Dynamic_HD_Fortran_Code/src'
 cython_src_path = 'Dynamic_HD_Scripts/Dynamic_HD_Scripts/interface/cpp_interface'
-cpp_subdirs = ['algorithms','base','drivers','gtest','testing']
+cpp_subdirs = ['algorithms','base','drivers']
+if get_option('build_unit_tests')
+  cpp_subdirs += ['gtest','testing']
+endif
 foreach cpp_subdir : cpp_subdirs
   subdir(cpp_src_path / cpp_subdir)
 endforeach
@@ -44,6 +47,7 @@ endif
 if get_option('build_cython')
   py = import('python').find_installation(
           meson.get_external_property('python_installation_path'))
+  py_dependency = py.dependency()
   numpy_inc = run_command(py,['-c',
     'import numpy as np; print(np.get_include())'],check : true).stdout().strip()
   cython_libraries = []
@@ -53,6 +57,7 @@ if get_option('build_cython')
                         cython_src_path /
                         cython_library + '.pyx',
                         include_directories: [numpy_inc,cpp_inc],
+                        dependencies: py_dependency,
                         link_with: lib_cpp,
                         install: true,
                         install_dir: lib_dir)
