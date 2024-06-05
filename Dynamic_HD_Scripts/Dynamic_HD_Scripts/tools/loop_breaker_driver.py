@@ -15,6 +15,72 @@ from Dynamic_HD_Scripts.interface.fortran_interface import f2py_manager
 from Dynamic_HD_Scripts.utilities import coordinate_scaling_utilities
 from Dynamic_HD_Scripts.context import fortran_project_source_path,fortran_project_object_path,fortran_project_include_path
 
+def loop_breaker_icon_icosohedral_cell_latlon_pixel(input_fine_rdirs,
+                                                    input_fine_total_cumulative_flow,
+                                                    input_cell_numbers,
+                                                    input_coarse_cumulative_flow,
+                                                    input_coarse_catchments,
+                                                    input_coarse_rdirs,
+                                                    input_loop_nums_list,
+                                                    cell_neighbors,
+                                                    pixel_center_lats,
+                                                    pixel_center_lons,
+                                                    cell_vertices_lats,
+                                                    cell_vertices_lons):
+    additional_fortran_filenames =  \
+        ["Dynamic_HD_Fortran_Code_src_base_area_mod.f90.o",
+         "Dynamic_HD_Fortran_Code_src_base_coords_mod.f90.o",
+         "Dynamic_HD_Fortran_Code_src_base_doubly_linked_list_mod.f90.o",
+         "Dynamic_HD_Fortran_Code_src_base_doubly_linked_list_link_mod.f90.o",
+         "Dynamic_HD_Fortran_Code_src_base_field_section_mod.f90.o",
+         "Dynamic_HD_Fortran_Code_src_base_precision_mod.f90.o",
+         "Dynamic_HD_Fortran_Code_src_base_subfield_mod.f90.o",
+         "Dynamic_HD_Fortran_Code_src_algorithms_break_loops_mod.f90.o",
+         "Dynamic_HD_Fortran_Code_src_algorithms_loop_breaker_mod.f90.o",
+         "Dynamic_HD_Fortran_Code_src_algorithms_map_non_coincident_grids_mod.f90.o",
+         "Dynamic_HD_Fortran_Code_src_algorithms_cotat_parameters_mod.f90.o",
+         "Dynamic_HD_Fortran_Code_src_base_unstructured_grid_mod.f90.o"]
+    additional_fortran_filepaths = \
+        [path.join(fortran_project_object_path,filename)
+        for filename in additional_fortran_filenames]
+    f2py_mngr = f2py_manager.f2py_manager(
+        path.join(fortran_project_source_path,"drivers",
+                  "break_loops_driver_mod.f90"),
+                  func_name="break_loops_iic_llp_f2py_wrap",
+                  additional_fortran_files=additional_fortran_filepaths,
+                  include_path=fortran_project_include_path)
+    loop_nums_list_array = np.asarray(input_loop_nums_list)
+    coarse_rdirs = input_coarse_rdirs.astype(np.int32,order='F')
+    if len(input_loop_nums_list) == 0:
+        print("List of loops to remove is empty!")
+        return coarse_rdirs
+    f2py_mngr.run_current_function_or_subroutine(input_fine_rdirs.\
+                                                 astype(np.float32,order='F'),
+                                                 input_fine_total_cumulative_flow.\
+                                                 astype(np.int32,order='F'),
+                                                 input_cell_numbers.\
+                                                 astype(np.int32,order='F'),
+                                                 input_coarse_cumulative_flow.\
+                                                 astype(np.int32,order='F'),
+                                                 input_coarse_catchments.\
+                                                 astype(np.int32,order='F'),
+                                                 coarse_rdirs,
+                                                 loop_nums_list_array.\
+                                                 astype(np.int32,order='F'),
+                                                 cell_neighbors.\
+                                                 astype(np.int32,order='F'),
+                                                 pixel_center_lats.\
+                                                 astype(np.float32),
+                                                 pixel_center_lons.\
+                                                 astype(np.float32),
+                                                 cell_vertices_lats.\
+                                                 astype(np.float64,order='F'),
+                                                 cell_vertices_lons.\
+                                                 astype(np.float64,order='F'),
+                                                 *input_fine_rdirs.shape,
+                                                 cell_neighbors.shape[0])
+    return coarse_rdirs
+
 def run_loop_breaker(coarse_rdirs,coarse_cumulative_flow,coarse_catchments,fine_rdirs_field,
                      fine_cumulative_flow_field,loop_nums_list,coarse_grid_type,**coarse_grid_kwargs):
     """Run the Fortarn complex loop breaking code via f2py

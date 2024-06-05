@@ -1,0 +1,22 @@
+define system-not-found-error-msg
+
+  Unknown operating system or site
+  Please add a new ini file to the config folder
+  and then append logic to detect this system and
+  set the SYSTEM_CONFIG_FILE make variable to point
+  to the new ini file in config/set_config
+endef
+
+ifeq ($(shell uname -s), Darwin)
+  SYSTEM_CONFIG_FILE := config/darwin.ini
+else ifeq ($(shell uname -s), Linux)
+  ifeq ($(shell hostname -d),lvt.dkrz.de)
+    SYSTEM_CONFIG_FILE := config/levante.ini
+  else ifeq ($(shell hostname -d),mpimet.mpg.de)
+    SYSTEM_CONFIG_FILE := config/mpi.ini
+  else
+    $(error $(system-not-found-error-msg))
+  endif
+else
+  $(error $(system-not-found-error-msg))
+endif

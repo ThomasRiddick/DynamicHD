@@ -31,4 +31,13 @@ determine_river_directions_wrapper.cpp
 evaluate_basins_wrapper.cpp
 lake_operators_wrapper.cpp
 upscale_orography_wrapper.cpp
+build
+projects
+bin
+lib
+run/examples
+run/*.cfg
+!run/configs_for_examples.cfg
+run/*.run
 gtest-internal-inl.h
+meson_options.txt

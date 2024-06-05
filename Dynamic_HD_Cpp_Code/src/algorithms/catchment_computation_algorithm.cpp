@@ -218,7 +218,9 @@ void catchment_computation_algorithm::renumber_catchments_by_size() {
 		}
 	});
 	sort(catchment_sizes->begin(),catchment_sizes->end(),
-	     [](pair<int,int> i, pair<int,int> j){return (i.second > j.second);});
+	     [](pair<int,int> i, pair<int,int> j){return ((i.second > j.second)||
+	                                                  (i.second == j.second &&
+	                                                   i.first < j.first));});
 	for (int i = 1; i <= total_catchments; i++){
 		(*catchment_sizes)[i-1].second = i;
 	}

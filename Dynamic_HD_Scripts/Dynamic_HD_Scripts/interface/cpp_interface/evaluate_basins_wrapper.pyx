@@ -3,6 +3,7 @@ import cython
 from Cython.Shadow import bint
 cimport numpy as np
 import numpy as np
+from cython cimport view
 from libcpp cimport bool
 from libcpp.string cimport string
 
@@ -27,7 +28,10 @@ cdef extern from 'drivers/evaluate_basins.cpp':
                                                int* flood_merge_and_redirect_indices_index_in,
                                                int nlat_fine, int nlon_fine,
                                                int nlat_coarse,int nlon_coarse,
-                                               string merges_filepath)
+                                               int* flood_merges_and_redirects_in,
+                                               int* connect_merges_and_redirects_in,
+                                               int* flood_merges_and_redirects_dims_in,
+                                               int* connect_merges_and_redirects_dims_in)
     void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                                                double* raw_orography_in,
                                                double* corrected_orography_in,
@@ -48,7 +52,10 @@ cdef extern from 'drivers/evaluate_basins.cpp':
                                                int* flood_merge_and_redirect_indices_index_in,
                                                int nlat_fine, int nlon_fine,
                                                int nlat_coarse,int nlon_coarse,
-                                               string merges_filepath,
+                                               int* flood_merges_and_redirects_in,
+                                               int* connect_merges_and_redirects_in,
+                                               int* flood_merges_and_redirects_dims_in,
+                                               int* connect_merges_and_redirects_dims_in,
                                                int* basin_catchment_numbers_in)
     void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                                                double* raw_orography_in,
@@ -70,7 +77,10 @@ cdef extern from 'drivers/evaluate_basins.cpp':
                                                int* flood_merge_and_redirect_indices_index_in,
                                                int nlat_fine, int nlon_fine,
                                                int nlat_coarse,int nlon_coarse,
-                                               string merges_filepath,
+                                               int* flood_merges_and_redirects_in,
+                                               int* connect_merges_and_redirects_in,
+                                               int* flood_merges_and_redirects_dims_in,
+                                               int* connect_merges_and_redirects_dims_in,
                                                int* basin_catchment_numbers_in,
                                                int* sinkless_rdirs_in)
 
@@ -92,14 +102,18 @@ def evaluate_basins(np.ndarray[int,ndim=2,mode='c'] minima_in_int,
                     np.ndarray[int,ndim=2,mode='c'] connect_next_cell_lon_index_in,
                     np.ndarray[int,ndim=2,mode='c'] connect_merge_and_redirect_indices_index_in,
                     np.ndarray[int,ndim=2,mode='c'] flood_merge_and_redirect_indices_index_in,
-                    str merges_filepath,
+                    flood_merges_and_redirects_in,
+                    connect_merges_and_redirects_in,
+                    np.ndarray[int,ndim=1,mode='c'] flood_merges_and_redirects_dims_in,
+                    np.ndarray[int,ndim=1,mode='c'] connect_merges_and_redirects_dims_in,
                     np.ndarray[int,ndim=2,mode='c'] basin_catchment_numbers_in=None,
                     np.ndarray[int,ndim=2,mode='c'] sinkless_rdirs_in=None):
     cdef int nlat_fine,nlon_fine
     nlat_fine, nlon_fine = raw_orography_in.shape[0],raw_orography_in.shape[1]
     cdef int nlat_coarse,nlon_coarse
     nlat_coarse, nlon_coarse = coarse_catchment_nums_in.shape[0],coarse_catchment_nums_in.shape[1]
-    cdef string merges_filepath_c = string(bytes(merges_filepath,'utf-8'))
+    cdef int* flood_merges_and_redirects = NULL
+    cdef int* connect_merges_and_redirects = NULL
     if basin_catchment_numbers_in is None:
       latlon_evaluate_basins_cython_wrapper(&minima_in_int[0,0],
                                             &raw_orography_in[0,0],
@@ -121,7 +135,10 @@ def evaluate_basins(np.ndarray[int,ndim=2,mode='c'] minima_in_int,
                                             &flood_merge_and_redirect_indices_index_in[0,0],
                                             nlat_fine, nlon_fine,
                                             nlat_coarse, nlon_coarse,
-                                            merges_filepath_c)
+                                            flood_merges_and_redirects,
+                                            connect_merges_and_redirects,
+                                            &flood_merges_and_redirects_dims_in[0],
+                                            &connect_merges_and_redirects_dims_in[0])
     elif sinkless_rdirs_in is None:
       latlon_evaluate_basins_cython_wrapper(&minima_in_int[0,0],
                                             &raw_orography_in[0,0],
@@ -143,7 +160,10 @@ def evaluate_basins(np.ndarray[int,ndim=2,mode='c'] minima_in_int,
                                             &flood_merge_and_redirect_indices_index_in[0,0],
                                             nlat_fine, nlon_fine,
                                             nlat_coarse, nlon_coarse,
-                                            merges_filepath_c,
+                                            flood_merges_and_redirects,
+                                            connect_merges_and_redirects,
+                                            &flood_merges_and_redirects_dims_in[0],
+                                            &connect_merges_and_redirects_dims_in[0],
                                             &basin_catchment_numbers_in[0,0])
     else:
       latlon_evaluate_basins_cython_wrapper(&minima_in_int[0,0],
@@ -166,6 +186,15 @@ def evaluate_basins(np.ndarray[int,ndim=2,mode='c'] minima_in_int,
                                             &flood_merge_and_redirect_indices_index_in[0,0],
                                             nlat_fine, nlon_fine,
                                             nlat_coarse, nlon_coarse,
-                                            merges_filepath_c,
+                                            flood_merges_and_redirects,
+                                            connect_merges_and_redirects,
+                                            &flood_merges_and_redirects_dims_in[0],
+                                            &connect_merges_and_redirects_dims_in[0],
                                             &basin_catchment_numbers_in[0,0],
                                             &sinkless_rdirs_in[0,0])
+    cdef int flood_array_length = np.prod(flood_merges_and_redirects_dims_in)
+    flood_merges_and_redirects_in  = \
+      np.asarray(<int[:flood_array_length]>flood_merges_and_redirects)
+    cdef int connect_array_length = np.prod(connect_merges_and_redirects_dims_in)
+    connect_merges_and_redirects_in = \
+      np.asarray(<int[:connect_array_length]>connect_merges_and_redirects)

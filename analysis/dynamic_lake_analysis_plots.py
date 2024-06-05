@@ -10,8 +10,7 @@ from os.path import join
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from Dynamic_HD_Scripts.base.iodriver import advanced_field_loader
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import follow_streams_wrapper
+import follow_streams_wrapper
 from plotting_utilities.dynamic_lake_analysis_plotting_routines import generate_catchment_and_cflow_comp_sequence
 from plotting_utilities.dynamic_lake_analysis_plotting_routines import find_highest_version
 from plotting_utilities.dynamic_lake_analysis_plotting_routines import InteractiveTimeSlicePlots

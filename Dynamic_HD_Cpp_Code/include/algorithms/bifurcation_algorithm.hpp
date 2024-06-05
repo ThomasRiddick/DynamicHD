@@ -2,7 +2,6 @@
 #define INCLUDE_BIFURCATION_ALGORITHM_HPP_
 
 #include <vector>
-#include <queue>
 #include <climits>
 #include <map>
 #include "base/priority_cell_queue.hpp"

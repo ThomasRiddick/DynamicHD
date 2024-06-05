@@ -25,7 +25,7 @@ from Dynamic_HD_Scripts.utilities import utilities
 from Dynamic_HD_Scripts.utilities.process_manager import ProcessManager
 from Dynamic_HD_Scripts.utilities.process_manager import using_mpi
 from Dynamic_HD_Scripts.utilities.process_manager import MPICommands
-from Dynamic_HD_Scripts.interface.cpp_interface.libs import fill_sinks_wrapper
+import fill_sinks_wrapper
 from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers import dynamic_hd_driver as dyn_hd_dr
 
 

@@ -10,8 +10,7 @@ from collections import Counter
 import numpy as np
 from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.base import field
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import follow_streams_wrapper
+import follow_streams_wrapper
 from Dynamic_HD_Scripts.tools import compute_catchments as cc
 from netCDF4 import Dataset
 

@@ -1,0 +1,157 @@
+{%- block header -%}
+#!/bin/bash
+{%- endblock -%}
+
+{% block slurm_headers -%}
+{%- endblock -%}
+
+{%- block user_commands_start -%}
+{%- endblock -%}
+
+{%- block set_variables_pre_user_input -%}
+{%- endblock -%}
+
+{%- block user_commands_pre_user_input -%}
+{%- endblock -%}
+
+{%- block top_level_preamble %}
+########################################
+########################################
+#--------------USER INPUT--------------#
+########################################
+########################################
+{%- endblock -%}
+
+{%- block key_settings_header %}
+########################################
+#--------------KEY SETTINGS------------#
+########################################
+{%- endblock -%}
+
+{%- block key_settings_preamble %}
+#SETTINGS THAT USUALLY NEED TO BE EDITED
+{%- endblock %}
+
+{% block key_settings -%}
+#Atmospheric Grid ID
+icon_atmo_grid_id={{ input.icon_atmo_grid_id }}
+
+#Ocean Grid ID
+icon_ocean_grid_id={{ input.icon_ocean_grid_id }}
+
+#Atmospheric Grid Resolution
+#Accepts most formats
+#e.g. 'r2b3', 'R2B4', 'r02b07', 'R02B09'
+icon_atmo_grid_res={{ input.icon_atmo_grid_res }}
+
+#Ocean Grid Resolution
+#Accepts most formats
+#e.g. 'r2b3', 'R2B4', 'r02b07', 'R02B09'
+icon_ocean_grid_res={{ input.icon_ocean_grid_res }}
+
+#Path to atmospheric grid file
+icon_grid_filepath={{ input.icon_grid_filepath }}
+
+#Path to (fractional) lsmask
+fractional_lsmask_filepath={{ input.fractional_lsmask_filepath }}
+
+#Version number
+#Use '1' unless this exact configuration
+#(same resolutions of both grids, same binary conversion method,
+# and same internal sink point option) has been used before
+version_num={{ input.version_num }}
+{%- endblock %}
+
+{% block other_settings_header %}
+########################################
+#------------OTHER SETTINGS------------#
+########################################
+{%- endblock -%}
+
+{%- block other_settings_preamble %}
+#SETTINGS THAT CAN USUALLY BE LEFT ALONE
+{%- endblock %}
+
+{% block other_settings -%}
+#By default mkproject will automatically be decided whether
+#to use the low or high resolution method based on the
+#resolutions chosen but this can be overriden by setting
+#this variable to 'high_res' or 'low_res'. The default
+#value is 'automatic'
+method_to_use={{ input.method_to_use }}
+
+#Include endorheic basins and internal sink points
+#By default set to 'true'. Options are 'true'/'false'
+use_true_sinks={{ input.use_true_sinks }}
+
+#By default the script will decide a suitable
+#method for converting the fractional landsea
+#mask to a binary mask
+#For r2b3, r2b4, r2b5 and r2b6 it will use 'hfrac'
+#For other resolutions it will use maxl
+#Options are: 'maxl', 'minl' and 'hfrac'
+binary_conversion_method={{ input.binary_conversion_method }}
+
+#By default the true sinks filepath should
+#be left blank and the true sinks file will
+#be set automatically if required
+true_sinks_filepath={{ input.true_sinks_filepath }}
+{%- endblock %}
+
+{% block end_of_user_input_header -%}
+########################################
+########################################
+#-----------END OF USER INPUT----------#
+########################################
+########################################
+{%- endblock %}
+
+{# This block is used to SET these commands in config templates -
+   all other configuration will leave this blank #}
+{% block additional_user_commands %}
+{%- endblock %}
+
+{%- block user_commands_pre_create_project -%}
+{%- endblock -%}
+
+{%- block create_project -%}
+{%- endblock -%}
+
+{%- block user_commands_post_create_project -%}
+{%- endblock -%}
+
+{%- block set_variables_post_user_input -%}
+{%- endblock -%}
+
+{%- block user_commands_pre_preproc -%}
+{%- endblock -%}
+
+{%- block preprocessing -%}
+{%- endblock -%}
+
+{%- block user_commands_pre_run -%}
+{%- endblock -%}
+
+{%- block run -%}
+{%- endblock -%}
+
+{%- block user_commands_post_run -%}
+{%- endblock -%}
+
+{%- block postprocessing -%}
+{%- endblock -%}
+
+{%- block user_commands_pre_clean -%}
+{%- endblock -%}
+
+{%- block clean_up -%}
+{%- endblock -%}
+
+{%- block user_commands_end -%}
+{%- endblock -%}
+
+{%- block preliminary_report -%}
+{%- endblock -%}
+
+{%- block post_run_report -%}
+{%- endblock -%}

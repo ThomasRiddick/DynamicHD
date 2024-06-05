@@ -1,0 +1,26 @@
+{%- extends "base.tmpl" -%}
+{%- import "templates/components.tmpl" as components with context -%}
+
+{%- block user_commands_start -%}
+{{ input.user_commands_start }}
+{%- endblock -%}
+
+{%- block set_variables_pre_user_input -%}
+{{ components.set_variables_pre_user_input(is_create_project_script=true) }}
+{%- endblock -%}
+
+{%- block user_commands_pre_user_input -%}
+{{ input.user_commands_pre_user_input }}
+{%- endblock -%}
+
+{%- block user_commands_pre_create_project -%}
+{{ input.user_commands_pre_create_project }}
+{%- endblock -%}
+
+{%- block create_project %-}
+{{ components.create_project_dirs(is_create_project_script=true) }}
+{%- endblock -%}
+
+{%- block user_commands_post_create_project -%}
+{{ input.user_commands_post_create_project }}
+{%- endblock -%}

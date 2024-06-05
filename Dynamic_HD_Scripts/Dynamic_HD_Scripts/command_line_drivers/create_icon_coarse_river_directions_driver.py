@@ -17,7 +17,7 @@ import os.path as path
 import warnings
 import configparser
 from Dynamic_HD_Scripts.tools.flow_to_grid_cell import create_hypothetical_river_paths_map
-from Dynamic_HD_Scripts.interface.cpp_interface.libs import fill_sinks_wrapper
+import fill_sinks_wrapper
 from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers \
     import dynamic_hd_driver as dyn_hd_dr
 from Dynamic_HD_Scripts.tools import compute_catchments as comp_catchs

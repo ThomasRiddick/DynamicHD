@@ -1,0 +1,108 @@
+{% macro set_variables_pre_user_input(is_create_project_script=false) %}
+
+{% if is_create_project_script %}
+script_path={{ input.script_path }}
+project_name={{ input.project_name }}
+{% else -%}
+function find_abs_path {
+  rel_path=${1}
+  cd ${rel_path}
+  pwd -P
+  cd - > /dev/null
+}
+script_path=$(dirname ${0})
+script_path=$(find_abs_path ${script_path})
+project_name=$(basename ${0})
+project_name=${project_name%.run}
+{%- endif -%}
+
+{%- if input.create_project_at_runtime or is_create_project_script %}
+repository_path=${script_path%/run}
+{%- else %}
+repository_path=${script_path%/projects/*/scripts}
+{%- endif %}
+input_directory=${repository_path}/projects/${project_name}/input
+output_directory=${repository_path}/projects/${project_name}/output
+working_directory=${repository_path}/projects/${project_name}/workdir
+{%- endmacro -%}
+
+{% macro set_variables_post_user_input() %}
+icon_atmo_grid_res=$(echo ${icon_atmo_grid_res} | tr [:upper] [:lower] | tr -d 0)
+icon_ocean_grid_res=$(echo ${icon_ocean_grid_res} | tr [:upper] [:lower] | tr -d 0)
+etop01_filepath=/work/mj0060/m300468/data/ETOPO1_Ice_g_gmt4_grid_registered.nc
+config_filepath=${working_directory}/bash_script.cfg
+python_config_filepath=${working_directory}/python_script.cfg
+binary_lsmask_filepath=${working_directory}/binary_lsmask.nc
+orography_filepath=${working_directory}/orography.nc
+max_land_binary_lsmask_filepath=${working_directory}/maxl_binary_lsmask.nc
+if [[ icon_atmo_grid_res == "r2b3" ]] || [[ icon_atmo_grid_res == "r2b4" ]] ||
+   [[ icon_atmo_grid_res == "r2b5" ]] || [[ icon_atmo_grid_res == "r2b6" ]]; then
+   binary_conversion_method_default=hfrac
+else
+   binary_conversion_method_default=maxl
+fi
+binary_conversion_method=${binary_conversion_method:-${binary_conversion_method_default}}
+true_sinks_filepath_default=/work/mj0060/m300468/data/true_sinks_version_41.nc
+if ${use_true_sinks}; then
+  true_sinks_filepath=${true_sinks_filepath:-${true_sinks_filepath_default}}
+else
+  true_sinks_filepath=
+fi
+
+cat > ${config_filepath} << EOF
+source_directory=${repository_path}
+no_conda=false
+no_modules=false
+no_env_gen=true
+python_config_filepath=${python_config_filepath}
+EOF
+
+if ${use_true_sinks}; then
+  keep_all_internal_basins="True"
+else
+  keep_all_internal_basins="False"
+fi
+cat > ${python_config_filepath} << EOF
+#Output option for test run of dynamic hd production code
+[input_options]
+ten_minute_corrected_orography_filename=/home/m/m300468/les_workdir/workdirs/icon_rdirs_r2b5_workdir_sc_0030_0035_seamless_p3/corrected_orog_intermediary_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_20170517_003802_with_grid.nc
+ten_minute_hydrosheds_au_auf_sa_river_directions_filename=/home/m/m300468/les_workdir/workdirs/icon_rdirs_r2b5_workdir_sc_0030_0035_seamless_p3/rdirs_hydrosheds_au_af_sa_upscaled_10min_20200203_163646_corrg.nc
+[input_fieldname_options]
+ten_minute_hydrosheds_au_auf_sa_river_directions_fieldname=rdirs
+ten_minute_corrected_orography_fieldname=field_value
+input_landsea_mask_fieldname=lsm
+input_truesinks_fieldname=true_sinks
+[output_fieldname_options]
+output_river_directions_fieldname=rdirs
+output_catchments_fieldname=catchments
+output_cumulative_flow_fieldname=acc
+[general_options]
+keep_all_internal_basins=${keep_all_internal_basins}
+replace_internal_basins_with_rdirs_with_truesinks=False
+replace_only_catchments=
+exclude_catchments=
+EOF
+
+#Set output filenames
+if ${use_true_sinks}; then
+  true_sinks_flag_string="s_"
+else
+  true_sinks_flag_string=""
+fi
+output_hdpara_filepath=${output_directory}/hdpara_${icon_atmo_grid_res}_${icon_atmo_grid_id}_sc_${binary_conversion_method}_${true_sinks_flag_string}v${version_num}.nc
+output_catchments_filepath=${output_directory}/catch_${icon_atmo_grid_res}_${icon_atmo_grid_id}_sc_${binary_conversion_method}_${true_sinks_flag_string}v${version_num}.nc
+output_accumulated_flow_filepath=${output_directory}/acc_${icon_atmo_grid_res}_${icon_atmo_grid_id}_sc_${binary_conversion_method}_${true_sinks_flag_string}v${version_num}.nc
+{%- endmacro -%}
+
+{% macro create_project_dirs(is_create_project_script=false) %}
+#Prepare folders
+mkdir -p ${repository_path}/projects
+mkdir -p ${repository_path}/projects/${project_name}
+mkdir -p ${input_directory}
+mkdir -p ${output_directory}
+mkdir -p ${working_directory}
+{% if is_create_project_script %}
+mkdir -p ${repository_path}/projects/${project_name}/scripts/
+{%- endif -%}
+cd ${working_directory}
+{%- endmacro -%}

@@ -440,7 +440,10 @@ public:
 	 	: grid_params(false),ncells(ncells_in),
 		  neighboring_cell_indices(neighboring_cell_indices_in),
 		  use_secondary_neighbors(use_secondary_neighbors_in),
-		  secondary_neighboring_cell_indices(secondary_neighboring_cell_indices_in){};
+		  secondary_neighboring_cell_indices(secondary_neighboring_cell_indices_in)
+		  { if(use_secondary_neighbors &&
+		       ! secondary_neighboring_cell_indices)
+					icon_single_index_grid_calculate_secondary_neighbors(); }
 	///Class constructor
 	icon_single_index_grid_params(int ncells_in, int* neighboring_cell_indices_in,
 			bool use_secondary_neighbors_in, int* secondary_neighboring_cell_indices_in,
@@ -449,7 +452,10 @@ public:
 		  neighboring_cell_indices(neighboring_cell_indices_in),
 		  use_secondary_neighbors(use_secondary_neighbors_in),
 		  secondary_neighboring_cell_indices(secondary_neighboring_cell_indices_in),
-		  subgrid_mask(subgrid_mask_in){};
+		  subgrid_mask(subgrid_mask_in)
+		 { if(use_secondary_neighbors &&
+		      ! secondary_neighboring_cell_indices)
+					icon_single_index_grid_calculate_secondary_neighbors(); }
 	#if USE_NETCDFCPP
 	icon_single_index_grid_params(string icon_grid_params_filepath_in,
 	                              bool use_secondary_neighbors_in = true,
