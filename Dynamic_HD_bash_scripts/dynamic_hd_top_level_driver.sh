@@ -334,7 +334,7 @@ export LD_LIBRARY_PATH="${HOME}/sw-spack/netcdf-cxx4-4.3.1-d54zya/lib":"${HOME}/
 export OMPI_FC=/sw/rhel6-x64/gcc/gcc-6.2.0/bin/gfortran
 
 #Call compilation script
-${source_directory}/Dynamic_HD_bash_scripts/compile_dynamic_hd_code.sh ${compilation_required} ${compile_only} ${source_directory} ${working_directory} true "compile_only"
+${source_directory}/Dynamic_HD_bash_scripts/compile_dynamic_hd_code.sh ${compilation_required} ${compile_only} ${source_directory} ${working_directory} true
 
 if ! ${compile_only} ; then
 	#Set enviromental variable

@@ -339,7 +339,7 @@ export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${source_directory}/lib
 export LD_LIBRARY_PATH="${HOME}/sw-spack/netcdf-cxx4-4.3.1-d54zya/lib":"${HOME}/sw-spack/netcdf-c-4.8.1-khy3ru/lib":${LD_LIBRARY_PATH}
 
 #Call compilation script
-${source_directory}/Dynamic_HD_bash_scripts/compile_dynamic_hd_code.sh ${compilation_required} false ${source_directory} ${working_directory} true "compile_only"
+${source_directory}/Dynamic_HD_bash_scripts/compile_dynamic_hd_code.sh ${compilation_required} false ${source_directory} ${working_directory} true
 
 if ! ${first_timestep}; then
 output_hdstart_argument=""
