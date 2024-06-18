@@ -42,7 +42,9 @@ icon_ocean_grid_id={{ input.icon_ocean_grid_id }}
 #Atmospheric Grid Resolution
 #Accepts most formats
 #e.g. 'r2b3', 'R2B4', 'r02b07', 'R02B09'
+{% block icon_atmo_grid_res %}
 icon_atmo_grid_res={{ input.icon_atmo_grid_res }}
+{%- endblock %}
 
 #Ocean Grid Resolution
 #Accepts most formats
@@ -78,7 +80,9 @@ version_num={{ input.version_num }}
 #resolutions chosen but this can be overriden by setting
 #this variable to 'high_res' or 'low_res'. The default
 #value is 'automatic'
+{%- block method_to_use %}
 method_to_use={{ input.method_to_use }}
+{% endblock %}
 
 #Include endorheic basins and internal sink points
 #By default set to 'true'. Options are 'true'/'false'
@@ -96,6 +100,19 @@ binary_conversion_method={{ input.binary_conversion_method }}
 #be left blank and the true sinks file will
 #be set automatically if required
 true_sinks_filepath={{ input.true_sinks_filepath }}
+
+#Only used in by the high resolution method
+#By default set to false and script will generate
+#the appropriate file automatically
+use_existing_river_mouth_position_file={{ input.use_existing_river_mouth_position_file }}
+
+#Only used in by the high resolution method
+#By default leave this blank and the script will generate
+#the necessary file at run time - only use this to pass
+#in a preprepared file. Only used if above flag is set to
+#true
+river_mouth_position_filepath={{ input.river_mouth_position_filepath }}
+
 {%- endblock %}
 
 {% block end_of_user_input_header -%}
@@ -104,6 +121,11 @@ true_sinks_filepath={{ input.true_sinks_filepath }}
 #-----------END OF USER INPUT----------#
 ########################################
 ########################################
+{%- endblock %}
+
+{# This block will only be to set this variable in run scripts -
+   all other configuration will leave this blank #}
+{% block set_fixed_inputs %}
 {%- endblock %}
 
 {# This block is used to SET these commands in config templates -

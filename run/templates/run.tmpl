@@ -2,18 +2,7 @@
 {%- import "components.tmpl" as components with context -%}
 
 {%- block slurm_headers -%}
-{% if input.slurm_headers -%}
-#SLURM HEADERS
-#SBATCH --job-name=create_icon_hdpara
-#SBATCH --partition=shared
-#SBATCH --account=YOUR_ACCOUNT
-#SBATCH --ntasks=1
-#SBATCH --time=02:00:00
-#SBATCH --output=create_icon_hdpara.o%j    # File name for standard output
-#SBATCH --error=create_icon_hdpara.e%j     # File name for standard error output
-#SBATCH --mail-type=FAIL                   # Notify user by email in case of job failure
-#SBATCH --mail-user=YOUR_EMAIL
-{%- endif -%}
+{{ components.slurm_headers() }}
 {%- endblock -%}
 
 {%- block user_commands_start -%}
@@ -27,6 +16,23 @@
 {%- block user_commands_pre_user_input -%}
 {{ input.user_commands_pre_user_input }}
 {%- endblock -%}
+
+{%- block icon_atmo_grid_res -%}
+#Can't be changed here - regenerate runscript to change this
+#icon_atmo_grid_res={{ input.icon_atmo_grid_res }}
+{%- endblock -%}
+
+{% block method_to_use %}
+#Can't be changed here - regenerate runscript to change this
+#method_to_use={{ input.method_to_use }}
+{%- endblock -%}
+
+{% block set_fixed_inputs %}
+#Do not change this here - this variable was already used
+#to determine the structure of the script - instead regenerate
+#this run script from the config file to change this variable
+icon_atmo_grid_res={{ input.icon_atmo_grid_res }}
+{%- endblock %}
 
 {%- block user_commands_pre_create_project -%}
 {%- if input.create_project_at_runtime -%}
@@ -55,25 +61,7 @@
 {%- endblock -%}
 
 {%- block preprocessing %}
-# Create links to input files
-ln -s ${fractional_lsmask_filepath} $(basename ${fractional_lsmask_filepath})
-fractional_lsmask_filepath=$(basename ${fractional_lsmask_filepath})
-ln -s ${icon_grid_filepath} $(basename ${icon_grid_filepath})
-icon_grid_filepath=$(basename ${icon_grid_filepath})
-# Pre-processing
-if [[ ${binary_conversion_method} == "hfrac" ]]; then
-  cdo expr,cell_sea_land_mask='(cell_sea_land_mask > 0.5)' ${fractional_lsmask_filepath} ${binary_lsmask_filepath}
-  cdo expr,cell_sea_land_mask='(cell_sea_land_mask > 0.0)' ${fractional_lsmask_filepath} ${max_land_binary_lsmask_filepath}
-elif [[ ${binary_conversion_method} == "minl" ]]; then
-  cdo expr,cell_sea_land_mask='(cell_sea_land_mask >= 1.0)' ${fractional_lsmask_filepath} ${binary_lsmask_filepath}
-  cdo expr,cell_sea_land_mask='(cell_sea_land_mask >  0.0)' ${fractional_lsmask_filepath} ${max_land_binary_lsmask_filepath}
-elif [[ ${binary_conversion_method} == "maxl" ]]; then
-  cdo expr,cell_sea_land_mask='(cell_sea_land_mask >  0.0)' ${fractional_lsmask_filepath} ${binary_lsmask_filepath}
-else
-  exit 1
-fi
-
-cdo remapbil,${icon_grid_filepath} ${etop01_filepath} ${orography_filepath}
+{{ components.preprocessing() }}
 {% endblock -%}
 
 {%- block user_commands_pre_run -%}
@@ -81,27 +69,10 @@ cdo remapbil,${icon_grid_filepath} ${etop01_filepath} ${orography_filepath}
 {%- endblock -%}
 
 {% block run -%}
-#Run
-{% if input.high_res %}
-echo "Not yet implemented!"
-{% else %}
-if [[ ${binary_conversion_method} == "maxl" ]]; then
-  use_hfrac=false
-  max_land_binary_lsmask_filepath=null
-elif [[ ${binary_conversion_method} == "minl" ]] &&
-     [[ ${binary_conversion_method} == "maxl" ]]; then
-  use_hfrac=true
-else
-  exit 1
-fi
-cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath} ${config_filepath} ${working_directory} ${icon_grid_filepath} ${repository_path}/Dynamic_HD_Resources/cotat_plus_standard_params.nl ${icon_atmo_grid_res} False ${use_hfrac} ${maxl_binary_lsmask_filepath} ${true_sinks_filepath}"
-echo "Running:"
-echo ${cmd}
-eval ${cmd}
-{% endif %}
+{{ components.run() }}
 {%- endblock -%}
 
-{%- block user_commands_post_run -%}
+{% block user_commands_post_run %}
 {{ input.user_commands_post_run }}
 {%- endblock -%}
 
@@ -114,7 +85,7 @@ eval ${cmd}
 {{ input.user_commands_pre_clean }}
 {%- endblock %}
 
-{% block clean_up -%}
+{% block clean_up %}
 # Clean-up
 echo "Post run clean-up not yet implemented!"
 {%- endblock -%}

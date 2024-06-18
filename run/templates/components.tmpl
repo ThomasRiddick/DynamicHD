@@ -1,3 +1,18 @@
+{% macro slurm_headers() %}
+{% if input.slurm_headers -%}
+#SLURM HEADERS
+#SBATCH --job-name=create_icon_hdpara
+#SBATCH --partition=shared
+#SBATCH --account=YOUR_ACCOUNT
+#SBATCH --ntasks=1
+#SBATCH --time=02:00:00
+#SBATCH --output=create_icon_hdpara.o%j    # File name for standard output
+#SBATCH --error=create_icon_hdpara.e%j     # File name for standard error output
+#SBATCH --mail-type=FAIL                   # Notify user by email in case of job failure
+#SBATCH --mail-user=YOUR_EMAIL
+{%- endif -%}
+{% endmacro %}
+
 {% macro set_variables_pre_user_input(is_create_project_script=false) %}
 
 {% if is_create_project_script %}
@@ -26,6 +41,19 @@ output_directory=${repository_path}/projects/${project_name}/output
 working_directory=${repository_path}/projects/${project_name}/workdir
 {%- endmacro -%}
 
+{% macro create_project_dirs(is_create_project_script=false) %}
+#Prepare folders
+mkdir -p ${repository_path}/projects
+mkdir -p ${repository_path}/projects/${project_name}
+mkdir -p ${input_directory}
+mkdir -p ${output_directory}
+mkdir -p ${working_directory}
+{% if is_create_project_script %}
+mkdir -p ${repository_path}/projects/${project_name}/scripts/
+{%- endif -%}
+cd ${working_directory}
+{%- endmacro -%}
+
 {% macro set_variables_post_user_input() %}
 icon_atmo_grid_res=$(echo ${icon_atmo_grid_res} | tr [:upper] [:lower] | tr -d 0)
 icon_ocean_grid_res=$(echo ${icon_ocean_grid_res} | tr [:upper] [:lower] | tr -d 0)
@@ -42,12 +70,45 @@ else
    binary_conversion_method_default=maxl
 fi
 binary_conversion_method=${binary_conversion_method:-${binary_conversion_method_default}}
+if [[ ${binary_conversion_method} == "maxl" ]]; then
+  use_hfrac=false
+  max_land_binary_lsmask_filepath=null
+elif [[ ${binary_conversion_method} != "minl" ]] &&
+     [[ ${binary_conversion_method} != "maxl" ]]; then
+  use_hfrac=true
+else
+  echo "Unknown binary conversion method" 1>&2
+  exit 1
+fi
+if [[ -z ${use_true_sinks} ]]; then
+  use_true_sinks=false
+fi
 true_sinks_filepath_default=/work/mj0060/m300468/data/true_sinks_version_41.nc
 if ${use_true_sinks}; then
   true_sinks_filepath=${true_sinks_filepath:-${true_sinks_filepath_default}}
 else
   true_sinks_filepath=
 fi
+
+{% if input.high_res %}
+if [[ -z ${use_existing_river_mouth_position_file} ]]; then
+  use_existing_river_mouth_position_file=false
+fi
+
+if ! ${use_existing_river_mouth_position_file} ; then
+  if [[ -n ${river_mouth_position_filepath} ]]; then
+    echo "Warning - file ${river_mouth_position_filepath} not used" 1>&2
+    echo "as use_existing_river_mouth_position_file is set to False" 1>&2
+  fi
+else
+  if [[ -z ${river_mouth_position_filepath} ]]; then
+    echo "Error - river_mouth_position_filepath not set" 1>&2
+    echo "but is required when use_existing_river_mouth_position_file" 1>&2
+    echo "is set to True" 1>&2
+  fi
+fi
+{% endif %}
+
 
 cat > ${config_filepath} << EOF
 source_directory=${repository_path}
@@ -94,15 +155,46 @@ output_catchments_filepath=${output_directory}/catch_${icon_atmo_grid_res}_${ico
 output_accumulated_flow_filepath=${output_directory}/acc_${icon_atmo_grid_res}_${icon_atmo_grid_id}_sc_${binary_conversion_method}_${true_sinks_flag_string}v${version_num}.nc
 {%- endmacro -%}
 
-{% macro create_project_dirs(is_create_project_script=false) %}
-#Prepare folders
-mkdir -p ${repository_path}/projects
-mkdir -p ${repository_path}/projects/${project_name}
-mkdir -p ${input_directory}
-mkdir -p ${output_directory}
-mkdir -p ${working_directory}
-{% if is_create_project_script %}
-mkdir -p ${repository_path}/projects/${project_name}/scripts/
-{%- endif -%}
-cd ${working_directory}
+{% macro preprocessing() %}
+# Create links to input files
+ln -s ${fractional_lsmask_filepath} $(basename ${fractional_lsmask_filepath})
+fractional_lsmask_filepath=$(basename ${fractional_lsmask_filepath})
+ln -s ${icon_grid_filepath} $(basename ${icon_grid_filepath})
+icon_grid_filepath=$(basename ${icon_grid_filepath})
+# Pre-processing
+if [[ ${binary_conversion_method} == "hfrac" ]]; then
+  cdo expr,cell_sea_land_mask='(cell_sea_land_mask > 0.5)' ${fractional_lsmask_filepath} ${binary_lsmask_filepath}
+  cdo expr,cell_sea_land_mask='(cell_sea_land_mask > 0.0)' ${fractional_lsmask_filepath} ${max_land_binary_lsmask_filepath}
+elif [[ ${binary_conversion_method} == "minl" ]]; then
+  cdo expr,cell_sea_land_mask='(cell_sea_land_mask >= 1.0)' ${fractional_lsmask_filepath} ${binary_lsmask_filepath}
+  cdo expr,cell_sea_land_mask='(cell_sea_land_mask >  0.0)' ${fractional_lsmask_filepath} ${max_land_binary_lsmask_filepath}
+elif [[ ${binary_conversion_method} == "maxl" ]]; then
+  cdo expr,cell_sea_land_mask='(cell_sea_land_mask >  0.0)' ${fractional_lsmask_filepath} ${binary_lsmask_filepath}
+else
+  echo "Unknown binary conversion method" 1>&2
+  exit 1
+fi
+
+cdo remapbil,${icon_grid_filepath} ${etop01_filepath} ${orography_filepath}
 {%- endmacro -%}
+
+{% macro run() %}
+#Run
+{% if input.high_res %}
+if ! ${use_existing_river_mouth_position_file} ; then
+  #Determine non-bifurcated river direction and cumulative flow
+  echo "Not yet implemented" 1>&2
+  exit 1
+  #Determine bifurcated river mouth positions
+  river_mouth_position_filepath=
+fi
+#Run bifurcated hdpara file generation
+cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_filepath} "z" "landsea" "true_sinks" ${output_hdpara_filepath} ${ $output_catchments_filepath} ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} False True ${river_mouth_position_filepath}
+{% else %}
+cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath} ${config_filepath} ${working_directory} ${icon_grid_filepath} ${repository_path}/Dynamic_HD_Resources/cotat_plus_standard_params.nl ${icon_atmo_grid_res} False ${use_hfrac} ${maxl_binary_lsmask_filepath} ${true_sinks_filepath}"
+{% endif %}
+echo "Running:"
+echo ${cmd}
+eval ${cmd}
+{%- endmacro -%}
+
