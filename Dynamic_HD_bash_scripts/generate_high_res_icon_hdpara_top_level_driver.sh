@@ -295,7 +295,7 @@ rm -f mask_in_tmep.nc
 next_cell_index_filepath="next_cell_index.nc"
 next_cell_index_bifurcated_filepath="bifurcated_next_cell_index.nc"
 number_of_outflows_filepath="number_of_outflows.nc"
-${source_directory}/Dynamic_HD_bash_scripts/generate_fine_icon_rdirs.sh ${source_directory} ${grid_file} ${input_orography_filepath} orography_filled.nc ${input_ls_mask_filepath} ${input_true_sinks_filepath} ${next_cell_index_filepath} ${output_catchments_filepath} accumulated_flow.nc ${input_orography_fieldname} ${input_lsmask_fieldname} ${input_true_sinks_fieldname} 0 ${bifurcate_rivers} ${input_mouth_position_filepath} ${next_cell_index_bifurcated_filepath} ${number_of_outflows_filepath}
+${source_directory}/Dynamic_HD_bash_scripts/generate_fine_icon_rdirs.sh ${source_directory} ${grid_file} ${input_orography_filepath} orography_filled.nc ${input_ls_mask_filepath} ${input_true_sinks_filepath} ${next_cell_index_filepath} ${output_catchments_filepath} accumulated_flow.nc ${input_orography_fieldname} ${input_lsmask_fieldname} ${input_true_sinks_fieldname} ${bifurcate_rivers} ${input_mouth_position_filepath} ${next_cell_index_bifurcated_filepath} ${number_of_outflows_filepath}
 mv accumulated_flow.nc ${output_accumulated_flow_filepath}
 cp ${grid_file} grid_in_temp.nc
 cp ${input_ls_mask_filepath} mask_in_temp.nc
