@@ -43,9 +43,10 @@ output_accumulated_flow_filepath=${9}
 config_filepath=${10}
 working_directory=${11}
 grid_file=${12}
-compilation_required=${13}
-bifurcate_rivers=${14:-"false"}
-input_mouth_position_filepath=${15}
+atmos_resolution=${13}
+compilation_required=${14}
+bifurcate_rivers=${15:-"false"}
+input_mouth_position_filepath=${16}
 
 
 #Change first_timestep into a bash command for true or false
