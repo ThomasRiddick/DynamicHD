@@ -48,7 +48,7 @@ if [[ -e ${repository_path}/projects/${project_name} ]]; then
   echo "Error - project directory already exists" 1>&2
   exit 1
 fi
-{%- endif -%}
+{% endif %}
 mkdir -p ${repository_path}/projects
 mkdir -p ${repository_path}/projects/${project_name}
 mkdir -p ${input_directory}
@@ -157,9 +157,9 @@ else
   true_sinks_flag_string=""
 fi
 {% if input.high_res %}
-number_of_channels_label_string="_mc_"
+number_of_channels_label_string="mc"
 {% else %}
-number_of_channels_label_string="_sc_"
+number_of_channels_label_string="sc"
 {% endif %}
 output_hdpara_filepath=${output_directory}/hdpara_${icon_atmo_grid_res}_${icon_atmo_grid_id}_${icon_ocean_grid_id}_${number_of_channels_label_string}_${binary_conversion_method}_${true_sinks_flag_string}v${version_num}.nc
 output_catchments_filepath=${output_directory}/catch_${icon_atmo_grid_res}_${icon_atmo_grid_id}_${icon_ocean_grid_id}_${number_of_channels_label_string}_${binary_conversion_method}_${true_sinks_flag_string}v${version_num}.nc
@@ -200,7 +200,7 @@ if ! ${use_existing_river_mouth_position_file} ; then
   river_mouth_position_filepath=
 fi
 #Run bifurcated hdpara file generation
-cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_filepath} "z" "landsea" "true_sinks" ${output_hdpara_filepath} ${ $output_catchments_filepath} ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} ${icon_atmo_grid_res} False True ${river_mouth_position_filepath}
+cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_filepath} z cell_sea_land_mask true_sinks ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} ${icon_atmo_grid_res} False True ${river_mouth_position_filepath}"
 {% else %}
 cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath} ${config_filepath} ${working_directory} ${icon_grid_filepath} ${repository_path}/Dynamic_HD_Resources/cotat_plus_standard_params.nl ${icon_atmo_grid_res} False ${use_hfrac} ${maxl_binary_lsmask_filepath} ${true_sinks_filepath}"
 {% endif %}

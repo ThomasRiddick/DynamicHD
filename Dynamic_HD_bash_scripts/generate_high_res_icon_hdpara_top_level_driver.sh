@@ -70,8 +70,8 @@ fi
 shopt -u nocasematch
 
 #Check number of arguments makes sense
-if [[ $# -ne 13 && $# -ne 15 ]]; then
-  echo "Wrong number of positional arguments ($# supplied), script only takes 13 or 15 arguments"  1>&2
+if [[ $# -ne 14 && $# -ne 16 ]]; then
+  echo "Wrong number of positional arguments ($# supplied), script only takes 14 or 16 arguments"  1>&2
   exit 1
 fi
 
@@ -312,7 +312,7 @@ rm -f paragen/paragen_icon_driver
 rmdir paragen || true
 mkdir paragen
 ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/generate_icon_hd_file_driver.sh ${working_directory}/paragen ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran ${working_directory} grid_in_temp.nc mask_in_temp.nc ${next_cell_index_filepath} orography_filled.nc ${bifurcate_rivers} ${next_cell_index_bifurcated_filepath} ${number_of_outflows_filepath}
-${source_directory}/Dynamic_HD_bash_scripts/adjust_icon_k_parameters.sh  ${working_directory}/paragen/hdpara_icon.nc ${output_hdpara_filepath} "r2b10"
+${source_directory}/Dynamic_HD_bash_scripts/adjust_icon_k_parameters.sh  ${working_directory}/paragen/hdpara_icon.nc ${output_hdpara_filepath} ${atmos_resolution}
 
 #Clean up temporary files
 rm -f paragen/area_dlat_dlon.txt
