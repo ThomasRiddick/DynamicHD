@@ -56,11 +56,13 @@ void bifurcation_algorithm::setup_fields(int* cumulative_flow_in,
 }
 
 void bifurcation_algorithm::setup_flags(double cumulative_flow_threshold_fraction_in,
-                                              int minimum_cells_from_split_to_main_mouth_in,
-                                              int maximum_cells_from_split_to_main_mouth_in) {
+                                        int minimum_cells_from_split_to_main_mouth_in,
+                                        int maximum_cells_from_split_to_main_mouth_in,
+                                        bool remove_main_channel_in) {
   cumulative_flow_threshold_fraction = cumulative_flow_threshold_fraction_in;
   minimum_cells_from_split_to_main_mouth = minimum_cells_from_split_to_main_mouth_in;
   maximum_cells_from_split_to_main_mouth = maximum_cells_from_split_to_main_mouth_in;
+  remove_main_channel = remove_main_channel_in;
 }
 
 void bifurcation_algorithm::bifurcate_rivers(){
@@ -79,10 +81,12 @@ void bifurcation_algorithm::bifurcate_river(pair<coords*,vector<coords*>> river)
   // separation_from_primary_mouth_comparison comparison_object =
   //   separation_from_primary_mouth_comparison(river->first);
   // sort(river_mouths.begin(),river_mouths.end(),comparison_object)
+  if (remove_main_channel) is_first_distributory = true;
   for(vector<coords*>::iterator i = secondary_river_mouths.begin();
                                 i != secondary_river_mouths.end(); ++i){
     find_shortest_path_to_main_channel(*i);
   }
+  if (remove_main_channel) delete valid_main_channel_start_coords;
 }
 
 void bifurcation_algorithm::find_shortest_path_to_main_channel(coords* mouth_coords){
@@ -128,9 +132,22 @@ inline void bifurcation_algorithm::process_neighbor()
          (*landsea_mask)(nbr_coords) ||
          ((*main_channel_mask)(nbr_coords) == main_channel_invalid) ||
          connection_found ) ) {
-    if ((*main_channel_mask)(nbr_coords) == main_channel_valid) {
-      (*number_of_outflows)(nbr_coords) += 1;
-      mark_bifurcated_river_direction(nbr_coords,center_coords);
+    bool is_connection = false;
+    if (remove_main_channel && is_first_distributory) {
+      is_connection = (nbr_coords == valid_main_channel_start_coords);
+    } else {
+      is_connection = ((*main_channel_mask)(nbr_coords) ==
+                           main_channel_valid);
+    }
+    if (is_connection) {
+      if (remove_main_channel && is_first_distributory) {
+        mark_river_direction(nbr_coords,center_coords);
+        transcribe_river_direction(nbr_coords);
+        is_first_distributory = false;
+      } else {
+        (*number_of_outflows)(nbr_coords) += 1;
+        mark_bifurcated_river_direction(nbr_coords,center_coords);
+      }
       connection_found = true;
       connection_location = center_coords->clone();
       while (!q.empty()) {
@@ -169,6 +186,14 @@ void bifurcation_algorithm::track_main_channel(coords* mouth_coords){
         (cells_from_mouth >  minimum_cells_from_split_to_main_mouth &&
          cells_from_mouth <=  maximum_cells_from_split_to_main_mouth) ?
                             main_channel_valid : main_channel_invalid;
+      if (remove_main_channel) {
+        if (cells_from_mouth <= minimum_cells_from_split_to_main_mouth) {
+          (*main_channel_mask)(next_upstream_cell_coords) = not_main_channel;
+        } else if ( cells_from_mouth ==
+                   minimum_cells_from_split_to_main_mouth) {
+          valid_main_channel_start_coords = next_upstream_cell_coords->clone();
+        }
+      }
     }
     delete center_cell;
   }
@@ -195,7 +220,7 @@ inline void bifurcation_algorithm::process_neighbor_track_main_channel() {
   if ( cumulative_flow_at_nbr_coords > cumulative_flow_threshold &&
        cell_flows_into_cell(nbr_coords,center_coords) ){
       push_cell(nbr_coords);
-      (*major_side_channel_mask)(nbr_coords) = true;
+      if ( ! remove_main_channel) (*major_side_channel_mask)(nbr_coords) = true;
       if( cumulative_flow_at_nbr_coords  > highest_cumulative_flow_nbrs  ) {
         highest_cumulative_flow_nbrs = cumulative_flow_at_nbr_coords;
         next_upstream_cell_coords = nbr_coords;

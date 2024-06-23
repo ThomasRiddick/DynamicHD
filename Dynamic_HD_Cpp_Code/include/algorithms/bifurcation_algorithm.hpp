@@ -22,7 +22,8 @@ class bifurcation_algorithm {
                       grid_params* grid_params_in);
     void setup_flags(double cumulative_flow_threshold_fraction_in,
                      int minimum_cells_from_split_to_main_mouth_in,
-                     int maximum_cells_from_split_to_main_mouth_in=INT_MAX);
+                     int maximum_cells_from_split_to_main_mouth_in=INT_MAX,
+                     bool remove_main_channel_in = false);
     void bifurcate_rivers();
     virtual int get_maximum_bifurcations() = 0;
   protected:
@@ -58,6 +59,7 @@ class bifurcation_algorithm {
     coords* center_coords;
     coords* connection_location;
     coords* next_upstream_cell_coords;
+    coords* valid_main_channel_start_coords;
     double cumulative_flow_threshold_fraction;
     int cumulative_flow_threshold;
     int minimum_cells_from_split_to_main_mouth;
@@ -65,7 +67,8 @@ class bifurcation_algorithm {
     int highest_cumulative_flow_nbrs;
     int cells_from_mouth;
     bool connection_found;
-
+    bool is_first_distributory;
+    bool remove_main_channel;
 };
 
 class bifurcation_algorithm_latlon : public virtual bifurcation_algorithm {
