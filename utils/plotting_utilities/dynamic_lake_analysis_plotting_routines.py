@@ -692,21 +692,21 @@ class TimeSequences:
                     adjust_orientation=True).get_data()
         if sequence_one_is_transient_run_data:
             self.discharge_one_sequence = TimeSequence(filepaths=self.sequence_one_results_base_dirs,
-                                                       fieldname="discharge",
+                                                       fieldname="friv",
                                                        filename=
-                                                       "30min_discharge.nc",
+                                                       "30min_discharge_mean.nc",
                                                        executor=executor)
             self.discharge_to_ocean_one_sequence = \
                 TimeSequence(filepaths=self.sequence_one_results_base_dirs,
-                             fieldname="discharge",
+                             fieldname="disch",
                              filename=
-                             "30min_discharge_to_ocean.nc",
+                             "30min_discharge_mean.nc",
                              executor=executor)
             self.filled_lake_volumes_one_sequence = \
                 TimeSequence(filepaths=self.sequence_one_results_base_dirs,
-                             fieldname="lake_volume",
+                             fieldname="diagnostic_lake_vol",
                              filename=
-                             "10min_lake_volume.nc",
+                             "10min_lake_volume_mean.nc",
                              executor=executor)
             self.filled_lake_mask_one_sequence = \
                 DerivedTimeSequence(self.filled_lake_volumes_one_sequence,
@@ -719,21 +719,21 @@ class TimeSequences:
             self.filled_lake_volumes_one_sequence = None
         if sequence_two_is_transient_run_data:
             self.discharge_two_sequence = TimeSequence(filepaths=self.sequence_two_results_base_dirs,
-                                                       fieldname="discharge",
+                                                       fieldname="friv",
                                                        filename=
-                                                       "30min_discharge.nc",
+                                                       "30min_discharge_mean.nc",
                                                        executor=executor)
             self.discharge_to_ocean_two_sequence = \
                 TimeSequence(filepaths=self.sequence_two_results_base_dirs,
-                             fieldname="discharge",
+                             fieldname="disch",
                              filename=
-                             "30min_discharge_to_ocean.nc",
+                             "30min_discharge_mean.nc",
                              executor=executor)
             self.filled_lake_volumes_two_sequence = \
                 TimeSequence(filepaths=self.sequence_two_results_base_dirs,
-                             fieldname="lake_volume",
+                             fieldname="diagnostic_lake_vol",
                              filename=
-                             "10min_lake_volume.nc",
+                             "10min_lake_volume_mean.nc",
                              executor=executor)
             self.filled_lake_mask_two_sequence = \
                 DerivedTimeSequence(self.filled_lake_volumes_two_sequence,
@@ -1165,6 +1165,8 @@ class InteractiveTimeSlicePlots:
                  lake_points_two=None,
                  lake_potential_spillway_masks_one=None,
                  lake_potential_spillway_masks_two=None,
+                 sequence_one_is_transient_run_data=False,
+                 sequence_two_is_transient_run_data=False,
                  corrections=None,
                  **kwargs):
         mpl.use('TkAgg')
@@ -1227,6 +1229,19 @@ class InteractiveTimeSlicePlots:
                            "selpspill1":self.selected_lake_potential_spillways_one,
                            "selpspill2":self.selected_lake_potential_spillways_two,
                            "debuglakepoints1":self.debug_lake_points_one}
+        if sequence_one_is_transient_run_data:
+            self.plot_types["filledvolume1"] = self.filled_lake_volume_plot_one
+            self.plot_types["logfilledvolume1"] = self.log_filled_lake_volume_plot_one
+            self.plot_types["disc1"] = self.discharge_plot_one
+            self.plot_types["logdisc1"] = self.log_discharge_plot_one
+        if sequence_two_is_transient_run_data:
+            self.plot_types["filledvolume2"] = self.filled_lake_volume_plot_two
+            self.plot_types["logfilledvolume2"] = self.log_filled_lake_volume_plot_two
+            self.plot_types["disc2"] = self.discharge_plot_two
+            self.plot_types["logdisc2"] = self.log_discharge_plot_two
+        if (sequence_one_is_transient_run_data and
+            sequence_two_is_transient_run_data):
+            self.plot_types["filledlakevcomp"] = self.filled_lake_volume_comp_plot
         self.orog_plot_types  = ["orog1","orog2","orogcomp","sforog",
                                  "morog1","morog2",
                                  "firstcorrorog1","secondcorrorog1",
@@ -1911,9 +1926,25 @@ class InteractiveTimeSlicePlots:
     def log_lake_volume_plot_two(self,index):
         self.lake_volume_plot_base(index,self.slice_data["lake_volumes_two_slice_zoomed"],True)
 
+    def filled_lake_volume_plot_one(self,index):
+        self.lake_volume_plot_base(index,self.slice_data["filled_lake_volumes_one_slice_zoomed"])
+
+    def filled_lake_volume_plot_two(self,index):
+        self.lake_volume_plot_base(index,self.slice_data["filled_lake_volumes_two_slice_zoomed"])
+
+    def log_filled_lake_volume_plot_one(self,index):
+        self.lake_volume_plot_base(index,self.slice_data["filled_lake_volumes_one_slice_zoomed"],True)
+
+    def log_filled_lake_volume_plot_two(self,index):
+        self.lake_volume_plot_base(index,self.slice_data["filled_lake_volumes_two_slice_zoomed"],True)
+
     def lake_volume_comp_plot(self,index):
         self.lake_volume_plot_base(index,self.slice_data["lake_volumes_one_slice_zoomed"] -
                                          self.slice_data["lake_volumes_two_slice_zoomed"])
+
+    def filled_lake_volume_comp_plot(self,index):
+        self.lake_volume_plot_base(index,self.slice_data["filled_lake_volumes_one_slice_zoomed"] -
+                                         self.slice_data["filled_lake_volumes_two_slice_zoomed"])
 
     def lake_volume_plot_base(self,index,lake_volumes,use_log_scale=False):
         self.timeslice_plots[index].scale = PlotScales.FINE
@@ -2121,6 +2152,38 @@ class InteractiveTimeSlicePlots:
     def selected_lake_potential_spillways_two(self,index):
         self.selected_lake_potential_spillways_base(index,self.slice_data["sinkless_rdirs_two_slice_zoomed"].shape,
                                                     self.lake_potential_spillway_masks_two)
+
+
+    def discharge_plot_one(self,index):
+        self.discharge_plot_base(index,self.slice_data["discharge_one_slice_zoomed"])
+
+    def log_discharge_plot_one(self,index):
+        self.discharge_plot_base(index,self.slice_data["discharge_one_slice_zoomed"],True)
+
+    def discharge_plot_two(self,index):
+        self.discharge_plot_base(index,self.slice_data["discharge_two_slice_zoomed"])
+
+    def log_discharge_plot_two(self,index):
+        self.discharge_plot_base(index,self.slice_data["discharge_two_slice_zoomed"],True)
+
+    def discharge_plot_base(self,index,discharge,use_log_scale=False):
+        self.timeslice_plots[index].scale = PlotScales.NORMAL
+        if (not self.timeslice_plots[index].plot or
+            self.replot_required or np.all(discharge<=0)):
+            self.timeslice_plots[index].ax.clear()
+            if use_log_scale and not np.all(discharge<=0):
+                self.timeslice_plots[index].plot = \
+                    self.timeslice_plots[index].ax.imshow(discharge,
+                                                          norm=LogNorm(clip=True),
+                                                          interpolation="none")
+            else:
+                self.timeslice_plots[index].plot = \
+                    self.timeslice_plots[index].ax.imshow(discharge,interpolation="none")
+            pts.set_ticks_to_zero(self.timeslice_plots[index].ax)
+            self.set_format_coord(self.timeslice_plots[index].ax,
+                                  self.timeslice_plots[index].scale)
+        else:
+            self.timeslice_plots[index].plot.set_data(discharge)
 
     def debug_lake_points_one(self,index):
         if (self.lake_points_one is not None and

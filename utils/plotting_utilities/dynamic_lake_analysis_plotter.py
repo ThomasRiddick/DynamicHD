@@ -218,7 +218,6 @@ class DynamicLakeAnalysisPlotter:
                         extract_lake_point_sequence(initial_lake_center=lake["initial_lake_center"],
                                                     lake_emergence_date=lake["lake_emergence_date"],
                                                     dates=subsequence_collection["date"],
-                                                    input_area_bounds=lake["input_area_bounds"],
                                                     connected_lake_basin_numbers_sequence=
                                                     subsequence_collection[
                                                     f"connected_lake_basin_numbers_{exp}"],
@@ -231,9 +230,9 @@ class DynamicLakeAnalysisPlotter:
                                                                 lake_volumes_sequence=
                                                                 subsequence_collection[
                                                                 f"lake_volumes_{exp}"])
-                    if f"filled_lake_volume_{exp}" in sequences:
-                    #Use this only for the filled lake volumes; doesn't apply for
-                    #filled lake heights so just insert dummy height data and ignore output
+                    if f"filled_lake_volumes_{exp}" in sequences:
+                        #Use this only for the filled lake volumes; doesn't apply for
+                        #filled lake heights so just insert dummy height data and ignore output
                         _,filled_lake_volumes = self.lake_height_and_volume_extractor.\
                             extract_lake_height_and_volume_sequence(lake_point_sequence=lake_points,
                                                                     filled_orography_sequence=
@@ -241,14 +240,11 @@ class DynamicLakeAnalysisPlotter:
                                                                     f"filled_orography_{exp}"],
                                                                     lake_volumes_sequence=
                                                                     subsequence_collection[
-                                                                    f"filled_lake_volume_{exp}"])
+                                                                    f"filled_lake_volumes_{exp}"])
                     else:
                         unused_stats.append("filled_lake_volumes")
                     lake_outflow_basins = vars(self)[f"ocean_basin_identifier_{exp}"].\
-                        extract_ocean_basin_for_lake_outflow_sequence(dates=
-                                                                      subsequence_collection["date"],
-                                                                      input_area_bounds=lake["input_area_bounds"],
-                                                                      lake_point_sequence=lake_points,
+                        extract_ocean_basin_for_lake_outflow_sequence(lake_point_sequence=lake_points,
                                                                       connected_catchments_sequence=
                                                                       subsequence_collection[
                                                                       f"catchment_nums_{exp}"],
@@ -256,7 +252,6 @@ class DynamicLakeAnalysisPlotter:
                     if f"discharge_to_ocean_{exp}" in sequences:
                         discharge_to_basin = vars(self)[f"ocean_basin_identifier_{exp}"].\
                             calculate_discharge_to_ocean_basins_sequence(
-                                dates=subsequence_collection["date"],
                                 discharge_to_ocean_sequence=subsequence_collection[
                                                             f"discharge_to_ocean_{exp}"])
                     else:
@@ -308,6 +303,12 @@ class DynamicLakeAnalysisPlotter:
                                                       self.lake_stats_one["Agassiz"]["lake_spillway_masks"],
                                                       lake_potential_spillway_masks_two=
                                                       self.lake_stats_two["Agassiz"]["lake_spillway_masks"],
+                                                      sequence_one_is_transient_run_data=
+                                                      self.configuration[
+                                                        "sequence_one_is_transient_run_data"],
+                                                      sequence_two_is_transient_run_data=
+                                                      self.configuration[
+                                                        "sequence_two_is_transient_run_data"],
                                                       corrections=self.corrections)
         self.interactive_lake_plots = InteractiveTimeSlicePlots(self.colors,
                                                                 self.configuration['plots'],
@@ -324,6 +325,12 @@ class DynamicLakeAnalysisPlotter:
                                                                 self.lake_stats_one["Agassiz"]["lake_spillway_masks"],
                                                                 lake_potential_spillway_masks_two=
                                                                 self.lake_stats_two["Agassiz"]["lake_spillway_masks"],
+                                                                sequence_one_is_transient_run_data=
+                                                                self.configuration[
+                                                                    "sequence_one_is_transient_run_data"],
+                                                                sequence_two_is_transient_run_data=
+                                                                self.configuration[
+                                                                    "sequence_two_is_transient_run_data"],
                                                                 corrections=self.corrections)
 
         build_dict = lambda figs,nums,prefix : { f'-{prefix}CANVAS{i}-':figure for i,figure in zip(nums,figs) }

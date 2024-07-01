@@ -31,15 +31,16 @@ class DynamicLakeAnalysisDriverInterfaceGUI:
     entry = ttk.Entry(frame,textvariable=txt)
     entry.grid(column=1,row=row,sticky='ew')
     self.widget_variables[name] = txt
+    return entry
 
   def setup_filepath_field(self,name):
-    self.setup_string_field(name)
+    return self.setup_string_field(name)
 
-  def setup_boolean_field(self,name,default):
+  def setup_boolean_field(self,name,default,command=None):
     frame = ttk.Frame(self.main_panel)
     frame.grid(column=0,row=self.get_next_row(),sticky='w')
     flag = tk.BooleanVar(value=default)
-    box = ttk.Checkbutton(frame,variable=flag)
+    box = ttk.Checkbutton(frame,variable=flag,command=command)
     box.grid(column=0,row=0,sticky='w')
     label = ttk.Label(frame,text=name)
     label.grid(column=1,row=0)
@@ -69,41 +70,54 @@ class DynamicLakeAnalysisDriverInterfaceGUI:
     self.root.minsize(400,700)
     self.load_screen_tl = None
     self.widget_variables = {}
-    self.root.geometry('800x700+100+100')
+    self.setup_var_widgets = []
+    self.root.geometry('800x725+100+100')
     self.root.title("Dynamic Lake Analysis Driver Setup")
     #Required to display correctly on some systems
     self.main_panel = ttk.Frame(self.root)
-    self.main_panel.grid(column=0,row=0,sticky="nsew")
+    self.main_panel.grid(column=0,row=0,sticky="nsew",
+                         padx=5,pady=5)
     self.main_panel.columnconfigure(0,weight=1)
     #Setup required fields
     self.reset_row_count()
     self.setup_filepath_field("base_directory"),
-    self.setup_boolean_field("setup_directory_structure",False),
-    self.setup_filepath_field("ancillary_data_directory"),
-    self.setup_filepath_field("present_day_base_orography_filepath"),
-    self.setup_filepath_field("base_corrections_filepath"),
-    self.setup_filepath_field("base_date_based_corrections_filepath"),
-    self.setup_filepath_field("base_additional_corrections_filepath"),
-    self.setup_filepath_field("base_true_sinks_filepath"),
-    self.setup_string_field("orography_filepath_template"),
-    self.setup_string_field("landsea_mask_filepath_template"),
-    self.setup_string_field("glacier_mask_filepath_template"),
-    self.setup_boolean_field("generate_lake_orography_corrections",False),
-    self.setup_boolean_field("apply_orography_tweaks",False),
-    self.setup_boolean_field("change_date_based_corrections",False),
-    self.setup_boolean_field("make_analysis_run",False),
-    self.setup_boolean_field("skip_dynamic_river_production",False),
-    self.setup_boolean_field("skip_dynamic_lake_production",False),
-    self.setup_boolean_field("skip_current_day_time_slice",False),
-    self.setup_boolean_field("run_hd_scripting_default_orography_corrections",False),
+    self.setup_boolean_field("setup_directory_structure",False,command=self.toggle_setup)
+    frame = ttk.Frame(self.main_panel)
+    frame.grid(column=0,row=self.get_next_row(),sticky='w')
+    self.edit_analysis_config_flag = tk.BooleanVar(value=False)
+    self.old_edit_analysis_config_flag = False
+    self.edit_analysis_configuration_widget = \
+      ttk.Checkbutton(frame,variable=self.edit_analysis_config_flag,
+                      command=self.toggle_set_configuration)
+    self.edit_analysis_configuration_widget.grid(column=0,row=0,sticky='w')
+    label = ttk.Label(frame,text="edit analysis configuration")
+    label.grid(column=1,row=0)
+    self.setup_var_widgets.append(self.setup_filepath_field("ancillary_data_directory"))
+    self.setup_var_widgets.append(self.setup_filepath_field("present_day_base_orography_filepath"))
+    self.setup_var_widgets.append(self.setup_filepath_field("base_corrections_filepath"))
+    self.setup_var_widgets.append(self.setup_filepath_field("base_date_based_corrections_filepath"))
+    self.setup_var_widgets.append(self.setup_filepath_field("base_additional_corrections_filepath"))
+    self.setup_var_widgets.append(self.setup_filepath_field("base_true_sinks_filepath"))
+    self.setup_var_widgets.append(self.setup_string_field("orography_filepath_template"))
+    self.setup_var_widgets.append(self.setup_string_field("landsea_mask_filepath_template"))
+    self.setup_var_widgets.append(self.setup_string_field("glacier_mask_filepath_template"))
+    self.toggle_setup()
+    self.setup_boolean_field("generate_lake_orography_corrections",False)
+    self.setup_boolean_field("apply_orography_tweaks",False)
+    self.setup_boolean_field("change_date_based_corrections",False)
+    self.setup_boolean_field("make_analysis_run",False)
+    self.setup_boolean_field("skip_dynamic_river_production",False)
+    self.setup_boolean_field("skip_dynamic_lake_production",False)
+    self.setup_boolean_field("skip_current_day_time_slice",False)
+    self.setup_boolean_field("run_hd_scripting_default_orography_corrections",False)
     self.setup_integer_field("start_date",0),
     self.setup_integer_field("end_date",0),
     self.setup_integer_field("slice_spacing",10),
     self.setup_label("For clear lake and river result -2 is off, -1 is all, 0+ is version num")
-    self.setup_integer_field("clear_lake_results",-2),
-    self.setup_integer_field("clear_river_results",-2),
-    self.setup_boolean_field("clear_river_default_orog_corrs_results",False),
-    self.setup_boolean_field("generate_present_day_rivers_with_original_sink_set",False),
+    self.setup_integer_field("clear_lake_results",-2)
+    self.setup_integer_field("clear_river_results",-2)
+    self.setup_boolean_field("clear_river_default_orog_corrs_results",False)
+    self.setup_boolean_field("generate_present_day_rivers_with_original_sink_set",False)
     self.setup_boolean_field("generate_present_day_rivers_with_true_sinks",False)
     #Setup button and start
     frame = ttk.Frame(self.main_panel)
@@ -240,7 +254,10 @@ class DynamicLakeAnalysisDriverInterfaceGUI:
 
   def read_config(self):
     for name,var in self.widget_variables.items():
-      self.config[name] = var.get()
+      if isinstance(var.get(),str) and var.get() == "":
+        self.config[name] = None
+      else:
+        self.config[name] = var.get()
 
   def set_config(self):
     for name,value in self.config.items():
@@ -253,6 +270,26 @@ class DynamicLakeAnalysisDriverInterfaceGUI:
 
   def select_config(self,index):
     self.config = self.loaded_configs[index]
+
+  def toggle_setup(self):
+    if self.widget_variables["setup_directory_structure"].get():
+      self.old_edit_analysis_config_flag = self.edit_analysis_config_flag.get()
+      self.edit_analysis_config_flag.set(True)
+      self.edit_analysis_configuration_widget.configure(state='disabled')
+    else:
+      self.edit_analysis_configuration_widget.configure(state='enabled')
+      self.edit_analysis_config_flag.set(self.old_edit_analysis_config_flag)
+
+    self.toggle_set_configuration()
+
+  def toggle_set_configuration(self):
+    if (self.widget_variables["setup_directory_structure"].get() or
+        self.edit_analysis_config_flag.get()):
+      for widget in self.setup_var_widgets:
+        widget.configure(state='enabled')
+    else:
+      for widget in self.setup_var_widgets:
+        widget.configure(state='disabled')
 
 configs_filepath = "/Users/thomasriddick/Documents/data/temp/analysisconfig.json"
 gui =  DynamicLakeAnalysisDriverInterfaceGUI(configs_filepath)

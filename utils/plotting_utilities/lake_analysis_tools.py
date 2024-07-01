@@ -11,8 +11,6 @@ import fill_sinks_wrapper
 from Dynamic_HD_Scripts.utilities.utilities import downscale_ls_mask
 from Dynamic_HD_Scripts.base.field import Field
 
-warnings.warn("What does the input area bounds variable do???? Ditto dates")
-
 def get_neighbors(coords,bounds):
     nbr_coords = []
     if len(coords) == 2:
@@ -40,6 +38,7 @@ def in_bounds(coords,array):
             and coords[1] < array.shape[1])
 
 class Basins(Enum):
+    UNKNOWN = 0
     GOM = 1
     ART = 2
     NATL = 3
@@ -120,7 +119,6 @@ class LakePointExtractor:
                                     initial_lake_center,
                                     lake_emergence_date,
                                     dates,
-                                    input_area_bounds,
                                     connected_lake_basin_numbers_sequence,
                                     continue_from_previous_subsequence=False):
         if not continue_from_previous_subsequence:
@@ -347,8 +345,7 @@ class OutflowBasinIdentifier:
     def identify_ocean_basin_for_lake_outflow(self,
                                               ocean_basin_numbers,
                                               connected_catchments,
-                                              lake_point,
-                                              input_area_bounds):
+                                              lake_point):
         if lake_point is None:
             return -1
         catchment = connected_catchments[tuple(lake_point)]
@@ -361,17 +358,17 @@ class OutflowBasinIdentifier:
                                                            ocean_basin_numbers >= 0)] = 3
             fig.axes[0].imshow(ocean_basin_number_with_outflow,interpolation='none')
         ocean_basin_number = ocean_basin_number_opt[0] if len(ocean_basin_number_opt) > 0 else -1
+        if ocean_basin_number == -1:
+            return Basins.UNKNOWN
         return self.ocean_basin_names[ocean_basin_number]
 
     def extract_ocean_basin_for_lake_outflow_sequence(self,
-                                                      dates,
-                                                      input_area_bounds,
                                                       lake_point_sequence,
                                                       connected_catchments_sequence,
                                                       scale_factor):
         lake_outflow_basins = []
-        for date,ocean_basin_numbers,lake_point,connected_catchments in \
-              zip(dates,self.ocean_basin_numbers_sequence,lake_point_sequence,
+        for ocean_basin_numbers,lake_point,connected_catchments in \
+              zip(self.ocean_basin_numbers_sequence,lake_point_sequence,
                   connected_catchments_sequence):
               if lake_point is not None:
                 lake_point_coarse = [round(coord/scale_factor)
@@ -380,15 +377,13 @@ class OutflowBasinIdentifier:
                 lake_point_coarse = None
               basin_name = self.identify_ocean_basin_for_lake_outflow(ocean_basin_numbers,
                                                                       connected_catchments,
-                                                                      lake_point_coarse,
-                                                                      input_area_bounds)
+                                                                      lake_point_coarse)
               lake_outflow_basins.append(basin_name)
         return lake_outflow_basins
 
     def calculate_discharge_to_ocean_basins(self,
                                             ocean_basin_numbers,
-                                            discharge_to_ocean,
-                                            input_area_bounds):
+                                            discharge_to_ocean):
         discharge_to_ocean_basins = {}
         for ocean_basin_number in range(len(self.coastline_identifiers)):
             ocean_basin_name = self.ocean_basin_names[ocean_basin_number]
@@ -398,15 +393,13 @@ class OutflowBasinIdentifier:
         return discharge_to_ocean_basins
 
     def calculate_discharge_to_ocean_basins_sequence(self,
-                                                     dates,
                                                      discharge_to_ocean_sequence):
         discharge_to_ocean_basin_timeseries = []
-        for date,ocean_basin_numbers,discharge_to_ocean in \
-              zip(dates,self.ocean_basin_numbers_sequence,discharge_to_ocean_sequence):
+        for ocean_basin_numbers,discharge_to_ocean in \
+              zip(self.ocean_basin_numbers_sequence,discharge_to_ocean_sequence):
               discharge_to_ocean_basins = \
                 self.calculate_discharge_to_ocean_basins(ocean_basin_numbers,
-                                                         discharge_to_ocean,
-                                                         input_area_bounds)
+                                                         discharge_to_ocean)
               discharge_to_ocean_basin_timeseries.append(discharge_to_ocean_basins)
         return discharge_to_ocean_basin_timeseries
 

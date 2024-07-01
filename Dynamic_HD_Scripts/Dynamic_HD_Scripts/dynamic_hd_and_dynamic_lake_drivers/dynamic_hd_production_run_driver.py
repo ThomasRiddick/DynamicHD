@@ -12,6 +12,7 @@ import os.path as path
 import numpy as np
 import configparser
 import shutil
+import contextlib
 from mpi4py import MPI
 from timeit import default_timer as timer
 from Dynamic_HD_Scripts.base import field
