@@ -1,3 +1,5 @@
+module IdentifyBifurcatedRiverMouthsInput
+
 using NetCDF: NcFile,NcVar,NC_NETCDF4
 
 function load_icosahedral_grid(grid_filepath)
@@ -14,4 +16,6 @@ function load_icosahedral_grid(grid_filepath)
                cell_neighbors,
                cell_coords,
                cell_vertices)
+end
+
 end
