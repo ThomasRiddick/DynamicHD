@@ -1,5 +1,7 @@
 module IdentifyBifurcatedRiverMouths
 
+using TOML
+
 struct Cells
 	cell_indices::Array{CartesianIndex}
 	cell_neighbors::Array{CartesianIndex}
@@ -32,16 +34,25 @@ struct Cells
 					cell_extremes.min_lons[i] = cell_vertices.lons[i,3] > cell_vertices.lons[i,2] ?
 																		  cell_vertices.lons[i,3] :
 																		  min(cell_vertices.lons[i,2],cell_vertices.lons[i,1])
+					cell_extremes.max_lons[i] = cell_vertices.lons[i,3] > cell_vertices.lons[i,2] ?
+																		  max(cell_vertices.lons[i,2],cell_vertices.lons[i,1]) :
+																		  cell_vertices.lons[i,3]
 				elseif abs(cell_vertices.lons[i,2] - cell_vertices.lons[i,3]) > 180.0 &&
 				 	     abs(cell_vertices.lons[i,2] - cell_vertices.lons[i,1]) > 180.0
 				 	cell_extremes.min_lons[i] = cell_vertices.lons[i,2] > cell_vertices.lons[i,3] ?
 																		  cell_vertices.lons[i,2] :
 																		  min(cell_vertices.lons[i,3],cell_vertices.lons[i,1])
+					cell_extremes.max_lons[i] = cell_vertices.lons[i,2] > cell_vertices.lons[i,3] ?
+																		  max(cell_vertices.lons[i,3],cell_vertices.lons[i,1]) :
+																		  cell_vertices.lons[i,2]
 				elseif abs(cell_vertices.lons[i,1] - cell_vertices.lons[i,3]) > 180.0 &&
 					     abs(cell_vertices.lons[i,1] - cell_vertices.lons[i,2]) > 180.0
 				 	cell_extremes.min_lons[i] = cell_vertices.lons[i,1] > cell_vertices.lons[i,3] ?
 																		  cell_vertices.lons[i,1] :
 																		  min(cell_vertices.lons[i,3],cell_vertices.lons[i,2])
+					cell_extremes.max_lons[i] = cell_vertices.lons[i,1] > cell_vertices.lons[i,3] ?
+																		  max(cell_vertices.lons[i,3],cell_vertices.lons[i,2]) :
+																		  cell_vertices.lons[i,1]
 				else
   				throw(UserError())
   			end
@@ -59,14 +70,16 @@ const Line = @NamedTuple{start_point::@NamedTuple{lat::Float64,
 								     															lon::Float64}}
 
 struct RiverDelta
-	lines::Array{Line}
-	function RiverDelta(lines_in::Array{Array{Float64,Float64}})
-		lines::Array{Line} = Line[]
+	lines::Vector{Vector{Line}}
+	function RiverDelta(lines_in::Vector{Vector{Vector{Float64}}})
+		lines::Vector{Vector{Line}} = Vector{Line}[]
 		for line in lines_in
-			for i = 1:len(line)-1
-				push!(lines,(start_point=(lat=line[i][1],lon=line[i][2]),
-				 						 end_point=(lat=line[i+1][1],lon=line[i+1][2])))
+			line_sections::Vector{Line} = Line[]
+			for i = 1:length(line)-1
+				push!(line_sections,(start_point=(lat=line[i][1],lon=line[i][2]),
+				 						 				 end_point=(lat=line[i+1][1],lon=line[i+1][2])))
 			end
+			push!(lines,line_sections)
 		end
 		new(lines)
 	end
@@ -87,6 +100,7 @@ function load_river_deltas_from_string(river_deltas_input_string::String)
 	for river_delta_raw in values(river_deltas_raw)
 		push!(river_deltas,RiverDelta(river_delta_raw))
 	end
+	return river_deltas
 end
 
 function find_cells_on_line_section(line_section::@NamedTuple{start_point::
@@ -115,6 +129,7 @@ function find_cells_on_line_section(line_section::@NamedTuple{start_point::
 		             	cells.cell_extremes.max_lats[i],
 						      cells.cell_extremes.min_lons[i],
 						      cells.cell_extremes.max_lons[i],
+						      cells.is_wrapped_cell[i],
 						      min_lat,max_lat,min_lon,max_lon,
 						      is_wrapped_line),
 					 cells.cell_indices)
@@ -138,6 +153,7 @@ function check_if_line_section_passes_within_cell_extremes(cell_min_lat::Float64
 	                                                         cell_max_lat::Float64,
 																													 cell_min_lon::Float64,
 																													 cell_max_lon::Float64,
+																													 is_wrapped_cell::Bool,
 																													 line_min_lat::Float64,
 																													 line_max_lat::Float64,
 																													 line_min_lon::Float64,
@@ -145,7 +161,9 @@ function check_if_line_section_passes_within_cell_extremes(cell_min_lat::Float64
 																													 is_wrapped_line::Bool)
 	is_in_bounds::Bool = cell_max_lat > line_min_lat &&
 		  						     cell_min_lat < line_max_lat
-	if is_wrapped_line
+	if is_wrapped_line && is_wrapped_cell
+		return is_in_bounds
+	elseif is_wrapped_line || is_wrapped_cell
 		is_in_bounds = is_in_bounds &&
 									 (cell_max_lon > line_min_lon ||
 									  cell_min_lon < line_max_lon)
@@ -267,6 +285,11 @@ function calculate_separation_measure(cell_index::CartesianIndex,cells::Cells,
 	#Calculate (D/R)^2 (D = distance, R = Earths Radius) instead of D to reduce computation
 	delta_lat::Float64 = cells.cell_coords.lats[cell_index] - point.lat 
 	delta_lon::Float64 = cells.cell_coords.lons[cell_index] - point.lon 
+	if delta_lon > 180.0
+		delta_lon = cells.cell_coords.lons[cell_index] - 360.0 - point.lon
+	elseif delta_lon < -180.0
+		delta_lon = cells.cell_coords.lons[cell_index] + 360.0 - point.lon
+	end
 	return delta_lat^2 + (cos(0.5*(cells.cell_coords.lats[cell_index] + point.lat))*delta_lon)^2
 end
 
@@ -274,15 +297,18 @@ function search_for_river_mouth_location_on_line_section(
 																line_section::@NamedTuple{
 																	start_point::@NamedTuple{lat::Float64,lon::Float64},
 																	end_point::@NamedTuple{lat::Float64,lon::Float64}},
-																cells::Array{Cells},
+																cells::Cells,
+																lsmask::Array{Bool},
 							 									river_mouth_indices::Array{CartesianIndex})
 	cells_on_line_section_indices::Array{CartesianIndex} = find_cells_on_line_section(line_section,cells)
-	append!(cells_on_line_section_indices,[cells.cell_neighbors[i][j] for i in cells_on_line_section_indices,j=1:3])
+	append!(cells_on_line_section_indices,
+	        Set(CartesianIndex[cells.cell_neighbors[i,j] for i in cells_on_line_section_indices,j=1:3
+	            if !(cells.cell_neighbors[i,j] in cells_on_line_section_indices) ]))
 	sort!(cells_on_line_section_indices,by=x->calculate_separation_measure(x,cells,line_section.start_point))
 	for cell_indices in cells_on_line_section_indices
 		if lsmask[cell_indices]
 			is_coastal_cell::Bool = false
-			for neighbor in [cells.cell_neighbors[cell_indices][i] for i=1:3]
+			for neighbor in [cells.cell_neighbors[cell_indices,i] for i=1:3]
 				is_coastal_cell = is_coastal_cell || ! lsmask[neighbor]	
 			end
 			if is_coastal_cell
@@ -298,15 +324,18 @@ function search_for_river_mouth_location_on_line_section(
 end 
 
 function identify_bifurcated_river_mouths(river_deltas::Array{RiverDelta},
-																					cells::Array{Cells})
+																					cells::Cells,
+																					lsmask::Array{Bool})
 	river_mouth_indices_for_all_rivers::Array{Array{CartesianIndex}} =
 																			Array{Array{CartesianIndex}}[]
 	for delta in river_deltas
-		river_mouth_indices::river_mouth_indices::Array{CartesianIndex} =
-																							Array{CartesianIndex}[]
+		river_mouth_indices::Array{CartesianIndex} = Array{CartesianIndex}[]
 		for line in delta.lines
 			for line_section in line
-				if search_for_river_mouth_on_line_section(line_section,cells,river_mouth_indices)
+				if search_for_river_mouth_location_on_line_section(line_section,
+																													 cells,
+																													 lsmask,
+																													 river_mouth_indices)
 					break
 				end
 			end

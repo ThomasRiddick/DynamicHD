@@ -4,7 +4,10 @@ using Test: @test, @testset
 using IdentifyBifurcatedRiverMouths: check_if_line_intersects_cell
 using IdentifyBifurcatedRiverMouths: check_if_line_section_intersects_cell 
 using IdentifyBifurcatedRiverMouths: find_cells_on_line_section
+using IdentifyBifurcatedRiverMouths: search_for_river_mouth_location_on_line_section
+using IdentifyBifurcatedRiverMouths: identify_bifurcated_river_mouths
 using IdentifyBifurcatedRiverMouths: Cells
+using IdentifyBifurcatedRiverMouths: RiverDelta, load_river_deltas_from_string
 
 @testset "River mouth identification tests" begin
 	@test check_if_line_intersects_cell((start_point=(lat=2.0,lon=0.0),
@@ -140,14 +143,16 @@ using IdentifyBifurcatedRiverMouths: Cells
 									=# -15.0 -15.0 -15.0 -15.0 -15.0  -15.0 -15.0 -15.0 -15.0 -15.0 #=
 									=# -45.0 -45.0 -45.0 -45.0 -45.0  -45.0 -45.0 -45.0 -45.0 -45.0  #=
 									=# -45.0 -45.0 -45.0 -45.0 -45.0 #=
-									=# 75.0 75.0 75.0 75.0 75.0 ],
+									=# -75.0 -75.0 -75.0 -75.0 -75.0 ],
 		 lons = Float64[ -144.0 -72.0 0.0 72.0 144.0 #=
-								  =# -162.0 -144.0 -126.0 -90.0 -72.0 -54.0 -18.0 0.0 54.0 72.0 90.0 126.0 144.0 162.0 #=
+								  =# -162.0 -144.0 -126.0 -90.0 -72.0 -54.0 -18.0 0.0 18.0 54.0 #=
+								  =#   72.0 90.0 126.0 144.0 162.0 #=
 								  =# -162.0 -144.0 -126.0 -108.0 -90.0 -72.0 -54.0 -36.0 -18.0 0.0 #=
-								  =# 36.0 54.0 72.0 90.0 108.0 126.0 144.0 162.0 180.0 #=
+								  =# 18.0 36.0 54.0 72.0 90.0 108.0 126.0 144.0 162.0 180.0 #=
 								  =# -144.0 -126.0 -108.0 -90.0 -72.0 -54.0 -36.0 -18.0 0.0 #=
-								  =# 36.0 54.0 72.0 90.0 108.0 126.0 144.0 162.0 180.0 -162.0 #=
-								  =# -126.0 -108.0 -90.0 -54.0 -36.0 -18.0 18.0 36.0 54.0 90.0 108.0 126.0 162.0 180.0 -162.0 #=
+								  =# 18.0 36.0 54.0 72.0 90.0 108.0 126.0 144.0 162.0 180.0 -162.0 #=
+								  =# -126.0 -108.0 -90.0 -54.0 -36.0 -18.0 18.0 36.0 54.0 90.0 #=
+								  =#108.0 126.0 162.0 180.0 -162.0 #=
 							 	  =# -108.0 -36.0 36.0 108.0 180.0])
 	cell_vertices_lats = Float64[ #=
 	      # 1-5
@@ -184,7 +189,7 @@ using IdentifyBifurcatedRiverMouths: Cells
         -60.0 -60.0 -90.0; -60.0 -60.0 -90.0; -60.0 -60.0 -90.0; -60.0 -60.0 -90.0; -60.0 -60.0 -90.0 ]
 	cell_vertices_lons = Float64[ #=
 	      # 1-5
-        =# -180.0 -180.0 -108.0; -90.0 -108.0 -36.0; 0.0 -36.0 36.0; 90.0 36.0 108.0; 180.0 108.0 180.0
+        =# -144.0 -180.0 -108.0; -90.0 -108.0 -36.0; 0.0 -36.0 36.0; 90.0 36.0 108.0; 144.0 108.0 180.0
         # 6-10
         -180.0 -180.0 -144.0; -180.0 -108.0 -144.0; -108.0 -144.0 -108.0; -108.0 -108.0 -72.0; #=
         =#-108.0 -36.0 -72.0
@@ -202,8 +207,8 @@ using IdentifyBifurcatedRiverMouths: Cells
 				#31-35
         0.0 36.0 18.0; 36.0 54.0 18.0; 36.0 72.0 54.0; 72.0 54.0 90.0; 72.0 108.0 90.0
 				#36-40
-        108.0 90.0 126.0; 108.0 144.0 126.0; 108.0 144.0 126.0; #=
-        =# 144.0 126.0 162.0; 180.0 162.0 -162.0
+        108.0 90.0 126.0; 108.0 144.0 126.0; 144.0 126.0 162.0; #=
+        =# 144.0 180.0 162.0; 180.0 162.0 -162.0
         #41-45
         -162.0 -126.0 -144.0; -126.0 -144.0 -108.0; -126.0 -90.0 -108.0; #=
         =#-90.0 -108.0 -72.0; -90.0 -54.0 -72.0
@@ -213,7 +218,7 @@ using IdentifyBifurcatedRiverMouths: Cells
         18.0 54.0 36.0; 54.0 36.0 72.0; 54.0 90.0 72.0; 90.0 72.0 108.0; 90.0 126.0 108.0
 				#56-60
         126.0 108.0 144.0; 126.0 162.0 144.0; 162.0 144.0 180.0; #=
-        =#162.0 -162.0 180.0; 162.0 180.0 -144.0
+        =#162.0 -162.0 180.0; -162.0 180.0 -144.0
 				#61-65
         -144.0 -108.0 -126.0; -108.0 -126.0 -90.0; -108.0 -72.0 -90.0; #=
         =#-72.0 -36.0 -54.0; -36.0 -54.0 -18.0
@@ -224,7 +229,7 @@ using IdentifyBifurcatedRiverMouths: Cells
         108.0 90.0 126.0; 108.0 144.0 126.0; 144.0 180.0 126.0; #=
         =#180.0 162.0 -162.0; 180.0 -144.0 -162.0
         #76-80
-        -144.0 -72.0 -144.0; -72.0 0.0 -72.0; 0.0 72.0 0.0; 72.0 144.0 72.0; 144.0 -144.0 144.0 ]
+        -144.0 -72.0 -108.0; -72.0 0.0 -36.0; 0.0 72.0 36.0; 72.0 144.0 108.0; 144.0 -144.0 180.0 ]
 	cell_vertices::@NamedTuple{lats::Array{Float64},lons::Array{Float64}} =
 		(lats = cell_vertices_lats, lons = cell_vertices_lons)
 	cells::Cells = Cells(cell_indices,cell_neighbors,
@@ -284,6 +289,137 @@ using IdentifyBifurcatedRiverMouths: Cells
 																	 cells) == CartesianIndex[CartesianIndex(21,), CartesianIndex(22,),
 																														CartesianIndex(23,),CartesianIndex(38,),
 																														CartesianIndex(39,),CartesianIndex(40,)]
+	@test find_cells_on_line_section((start_point = (lat=-15.0,lon=144.0),
+																		end_point = (lat=-15.0,lon=-126.0)),
+																	 cells) == CartesianIndex[CartesianIndex(41,), CartesianIndex(42,),
+																														CartesianIndex(57,),CartesianIndex(58,),
+																														CartesianIndex(59,),CartesianIndex(60,)]
+	@test find_cells_on_line_section((start_point = (lat=-45.0,lon=162.0),
+																		end_point = (lat=-45.0,lon=-162.0)),
+																	 cells) == CartesianIndex[CartesianIndex(73,), CartesianIndex(74,),
+																														CartesianIndex(75,)]
+	@test find_cells_on_line_section((start_point = (lat=-75.0,lon=-36.0),
+																		end_point = (lat=-45.0,lon=18.0)),
+																	 cells) == CartesianIndex[CartesianIndex(67,), CartesianIndex(77,)]
+	@test find_cells_on_line_section((start_point = (lat=75.0,lon=0.0),
+																		end_point = (lat=45.0,lon=54.0)),
+																	 cells) == CartesianIndex[CartesianIndex(3,), CartesianIndex(13,),
+																														CartesianIndex(14,), CartesianIndex(15,),
+																														CartesianIndex(16,)]
+	@test find_cells_on_line_section((start_point = (lat=-75.0,lon=180.0),
+																		end_point = (lat=-45.0,lon=-126.0)),
+																	 cells) == CartesianIndex[CartesianIndex(61,),  CartesianIndex(75,),
+																												    CartesianIndex(80,)]
+	@test find_cells_on_line_section((start_point = (lat=75.0,lon=-144.0),
+																		end_point = (lat=45.0,lon=162.0)),
+																	 cells) == CartesianIndex[CartesianIndex(1,), CartesianIndex(6,),
+																														CartesianIndex(7,), CartesianIndex(19,),
+																														CartesianIndex(20,)]
+	@test find_cells_on_line_section((start_point = (lat=-75.0,lon=-108.0),
+																		end_point = (lat=-45.0,lon=180.0)),
+																	 cells) == CartesianIndex[CartesianIndex(74,), CartesianIndex(75,),
+																														CartesianIndex(76,), CartesianIndex(80,)]
+	@test find_cells_on_line_section((start_point = (lat=75.0,lon=144.0),
+																		end_point = (lat=45.0,lon=-162.0)),
+																	 cells) == CartesianIndex[CartesianIndex(5,), CartesianIndex(6,),
+																														CartesianIndex(7,), CartesianIndex(19,),
+																														CartesianIndex(20,)]
+	@test find_cells_on_line_section((start_point = (lat=-45.0,lon=162.0),
+																		end_point = (lat=75.0,lon=-144.0)),
+																	 cells) == CartesianIndex[CartesianIndex(1,), CartesianIndex(6,),
+																														CartesianIndex(7,), CartesianIndex(21,),
+																														CartesianIndex(40,), CartesianIndex(58,),
+																														CartesianIndex(59,), CartesianIndex(73,)]
+	@test find_cells_on_line_section((start_point = (lat=75.0,lon=-144.0),
+																		end_point = (lat=75.0,lon=144.0)),
+																	 cells) == CartesianIndex[CartesianIndex(1,), CartesianIndex(5,)]
+	@test find_cells_on_line_section((start_point = (lat=75.0,lon=-72.0),
+																		end_point = (lat=75.0,lon=72.0)),
+																	 cells) == CartesianIndex[CartesianIndex(2,), CartesianIndex(3,),
+																														CartesianIndex(4,),]
+	@test find_cells_on_line_section((start_point = (lat=-75.0,lon=-108.0),
+																		end_point = (lat=-75.0,lon=180.0)),
+																	 cells) == CartesianIndex[CartesianIndex(76,), CartesianIndex(80,)]
+	@test find_cells_on_line_section((start_point = (lat=-75.0,lon=-36.0),
+																		end_point = (lat=-75.0,lon=108.0)),
+																	 cells) == CartesianIndex[CartesianIndex(77,), CartesianIndex(78,),
+																														CartesianIndex(79,),]
+	lsmask::Array{Bool} = fill(false,80)
+	lsmask[4] = true
+	lsmask[14:19] .= true
+	lsmask[31:39] .= true
+	lsmask[50:59] .= true
+	lsmask[62:74] .= true
+	lsmask[76:79] .= true
+	river_mouth_indices = CartesianIndex[CartesianIndex(99,), CartesianIndex(-99,)]
+	@test search_for_river_mouth_location_on_line_section((start_point = (lat=15.0,lon=-72.0),
+																												 end_point = (lat=15.0,lon=72.0)),
+																	 											 cells,
+																												 lsmask,
+							 																					 river_mouth_indices)
+	@test river_mouth_indices == CartesianIndex[CartesianIndex(99,), CartesianIndex(-99,),
+																						  CartesianIndex(14,)]
+	river_mouth_indices = CartesianIndex[CartesianIndex(99,), CartesianIndex(-99,)]
+	@test search_for_river_mouth_location_on_line_section((start_point = (lat=15.0,lon=-144.0),
+																												 end_point = (lat=15.0,lon=144.0)),
+																	 											 cells,
+																												 lsmask,
+							 																					 river_mouth_indices)
+	@test river_mouth_indices == CartesianIndex[CartesianIndex(99,), CartesianIndex(-99,),
+																						  CartesianIndex(39,)]
+	river_mouth_indices = CartesianIndex[CartesianIndex(99,), CartesianIndex(-99,)]
+	@test search_for_river_mouth_location_on_line_section((start_point = (lat=15.0,lon=-90.0),
+																												 end_point = (lat=-75.0,lon=-36.0)),
+																	 											 cells,
+																												 lsmask,
+							 																					 river_mouth_indices)
+	@test river_mouth_indices == CartesianIndex[CartesianIndex(99,), CartesianIndex(-99,),
+																						  CartesianIndex(63,)]
+	river_mouth_indices = CartesianIndex[CartesianIndex(99,), CartesianIndex(-99,)]
+	@test ! search_for_river_mouth_location_on_line_section((start_point = (lat=45.0,lon=-90.0),
+																												   end_point = (lat=5.0,lon=-36.0)),
+																	 											   cells,
+																												   lsmask,
+							 																					   river_mouth_indices)
+	@test river_mouth_indices == CartesianIndex[CartesianIndex(99,), CartesianIndex(-99,)]
+  lsmask = .! lsmask
+  lsmask[6]  = false
+  lsmask[20] = false
+  lsmask[21] = false
+	lsmask[40] = false
+	lsmask[60] = false
+	river_mouth_indices = CartesianIndex[CartesianIndex(99,), CartesianIndex(-99,)]
+	@test search_for_river_mouth_location_on_line_section((start_point = (lat=15.0,lon=144.0),
+																												 end_point = (lat=15.0,lon=-144.0)),
+																	 											 cells,
+																												 lsmask,
+							 																					 river_mouth_indices)
+	@test river_mouth_indices == CartesianIndex[CartesianIndex(99,), CartesianIndex(-99,),
+																						  CartesianIndex(22,)]
+	lsmask = fill(false,80)
+  lsmask[34:36]  .= true
+  lsmask[46:57]  .= true
+  lsmask[64:72]  .= true
+  lsmask[77:78]  .= true
+	river_deltas::Array{RiverDelta} = load_river_deltas_from_string("""
+	River_A=[[[45.0,-126.0],[45.0,-90.0],[75.0,-72.0],[75.0,0.0],[-15.0,0.0],[-15.0,36.0]],
+					 [[45.0,-126.0],[45.0,-90.0],[75.0,-72.0],[-15.0,-36.0],[-45.0,18.0]],
+					 [[45.0,-126.0],[-15.0,-36.0]],
+		       [[45.0,-126.0],[15.0,-126.0],[15.0,-108.0],[-15.0,-108.0],[-15.0,-90.0],
+		        [-45.0,-90.0],[-45.0,-54.0],[-75.0,-36.0],[-75.0,36.0]]]
+	River_B=[[[75.0,90.0],[15.0,90.0]],
+				   [[75.0,90.0],[75.0,144.0],[-15.0,90.0]],
+				   [[75.0,90.0],[75.0,144.0],[45.0,162.0],[-45.0,126.0]]]
+	River_C=[[[-75.0,108.0],[-45.0,90.0]],]
+	""")
+	@test identify_bifurcated_river_mouths(river_deltas,
+																	 			 cells,
+																	 			 lsmask) ==
+    Array{CartesianIndex}[CartesianIndex[CartesianIndex(49,),CartesianIndex(46,),
+    																		 CartesianIndex(46,),CartesianIndex(64,)],
+    											CartesianIndex[CartesianIndex(71,),],
+    											CartesianIndex[CartesianIndex(35,),CartesianIndex(36,),
+    																		 CartesianIndex(57,)]]
 end
 
 end
