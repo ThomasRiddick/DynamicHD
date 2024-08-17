@@ -43,8 +43,8 @@ struct CommonParameters
   alpha::Float64
   C::Float64
   function CommonParameters()
-    minimum_height_threshold::Float64 = 0.0
-    default_height_change::Float64 = 0.0
+    minimum_height_threshold::Float64 = 0.00000001
+    default_height_change::Float64 = 0.1
     alpha::Float64 = 0.1
     C::Float64 = 2.0
     new(minimum_height_threshold,default_height_change,
@@ -192,8 +192,7 @@ function generate_parameters(configuration::Configuration,
   overlandflow_retention_coefficients = SharedArray{Float64}(grid_dimensions)
   number_of_baseflow_reservoirs = SharedArray{Float64}(grid_dimensions)
   baseflow_retention_coefficients = SharedArray{Float64}(grid_dimensions)
-  #@sync @distributed for i in CartesianIndices(input_data.landsea_mask)
-  for i in CartesianIndices(input_data.landsea_mask)
+  @sync @distributed for i in CartesianIndices(input_data.landsea_mask)
     if ( input_data.landsea_mask[i] && ! input_data.glacier_mask[i] )
       distance::Float64 = calculate_distance(i,input_data,grid)
       height_change::Float64 = calculate_height_change(i,input_data,grid)
@@ -263,7 +262,7 @@ function calculate_distance(i::CartesianIndex,input_data::InputData,
   else
     lon_index_change = 0
   end
-  distance::Float64 = sqrt((lat_index_change*grid.dlat^2)+
+  distance::Float64 = sqrt((lat_index_change*grid.dlat)^2+
                            (lon_index_change*grid.dlon[i[2]])^2)
   println(grid.dlat)
   println(grid.dlon[i[2]])
@@ -312,8 +311,18 @@ function get_next_cell_coords(i::CartesianIndex,input_data::InputData,
   else
     lon_index_change = 0
   end
-  return CartesianIndex(lat_index+lat_index_change,
-                        lon_index+lon_index_change)
+  new_lat_index::Int64 = lat_index+lat_index_change
+  new_lon_index::Int64 = lon_index+lon_index_change
+  if new_lat_index < 1 || new_lat_index > grid.nlat
+    new_lat_index = lat_index
+  end
+  if new_lon_index < 1
+    new_lon_index = grid.nlon + new_lon_index
+  elseif new_lon_index > grid.nlon
+    new_lon_index = new_lon_index - grid.nlon
+  end
+  return CartesianIndex(new_lat_index,
+                        new_lon_index)
 end
 
 function get_next_cell_coords(i::CartesianIndex,input_data::InputData,
