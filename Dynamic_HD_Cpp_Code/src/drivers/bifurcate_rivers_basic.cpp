@@ -18,7 +18,9 @@ void latlon_bifurcate_rivers_basic(map<pair<int,int>,
                                    double cumulative_flow_threshold_fraction_in,
                                    int minimum_cells_from_split_to_main_mouth_in,
                                    int maximum_cells_from_split_to_main_mouth_in,
-                                   int nlat_in,int nlon_in){
+                                   int nlat_in,int nlon_in,
+                                   bool remove_main_channel_in){
+
   cout << "Entering River Bifurcation C++ Code" << endl;
   auto alg = basic_bifurcation_algorithm_latlon();
   auto grid_params_in = new latlon_grid_params(nlat_in,nlon_in);
@@ -29,7 +31,8 @@ void latlon_bifurcate_rivers_basic(map<pair<int,int>,
                    grid_params_in);
   alg.setup_flags(cumulative_flow_threshold_fraction_in,
                   minimum_cells_from_split_to_main_mouth_in,
-                  maximum_cells_from_split_to_main_mouth_in);
+                  maximum_cells_from_split_to_main_mouth_in,
+                  remove_main_channel_in);
   alg.bifurcate_rivers();
   double* bifurcations_rdirs_out = alg.get_bifurcation_rdirs();
   copy(bifurcations_rdirs_out,

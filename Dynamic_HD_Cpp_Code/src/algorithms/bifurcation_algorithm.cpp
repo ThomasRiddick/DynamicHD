@@ -110,6 +110,8 @@ void bifurcation_algorithm::find_shortest_path_to_main_channel(coords* mouth_coo
     delete working_coords;
     working_coords = new_working_coords;
   }
+  //Allow single sea point to recieve multiple distributory
+  (*major_side_channel_mask)(working_coords) = false;
   delete working_coords;
 }
 
@@ -134,7 +136,7 @@ inline void bifurcation_algorithm::process_neighbor()
          connection_found ) ) {
     bool is_connection = false;
     if (remove_main_channel && is_first_distributory) {
-      is_connection = (nbr_coords == valid_main_channel_start_coords);
+      is_connection = ((*nbr_coords) == (*valid_main_channel_start_coords));
     } else {
       is_connection = ((*main_channel_mask)(nbr_coords) ==
                            main_channel_valid);
@@ -165,6 +167,7 @@ inline void bifurcation_algorithm::process_neighbor()
 }
 
 void bifurcation_algorithm::track_main_channel(coords* mouth_coords){
+  vector<coords*> cells_to_remove_from_main_channel;
   cells_from_mouth = 0;
   push_cell(mouth_coords->clone());
   (*main_channel_mask)(mouth_coords) = main_channel_invalid;
@@ -188,14 +191,18 @@ void bifurcation_algorithm::track_main_channel(coords* mouth_coords){
                             main_channel_valid : main_channel_invalid;
       if (remove_main_channel) {
         if (cells_from_mouth <= minimum_cells_from_split_to_main_mouth) {
-          (*main_channel_mask)(next_upstream_cell_coords) = not_main_channel;
+          cells_to_remove_from_main_channel.push_back(next_upstream_cell_coords->clone());
         } else if ( cells_from_mouth ==
-                   minimum_cells_from_split_to_main_mouth) {
+                    minimum_cells_from_split_to_main_mouth + 1) {
           valid_main_channel_start_coords = next_upstream_cell_coords->clone();
         }
       }
     }
     delete center_cell;
+  }
+  for(vector<coords*>::iterator i = cells_to_remove_from_main_channel.begin();
+                                    i != cells_to_remove_from_main_channel.end(); ++i){
+    (*main_channel_mask)(*i) = not_main_channel;
   }
 }
 

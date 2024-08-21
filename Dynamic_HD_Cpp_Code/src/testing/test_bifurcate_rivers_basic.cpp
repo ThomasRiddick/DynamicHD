@@ -2078,4 +2078,155 @@ TEST_F(BifurcateRiversBasicTest, BifurcateRiversBasicTestFive) {
   delete grid_params_in;
 }
 
+TEST_F(BifurcateRiversBasicTest, BifurcateRiversBasicTestSix){
+  int nlat = 9;
+  int nlon = 9;
+  auto grid_params_in = new latlon_grid_params(nlat,nlon);
+  double* original_rdirs = new double[9*9] {
+    0.0,3.0,2.0,2.0, 1.0,2.0,2.0,4.0,4.0,
+    0.0,6.0,0.0,0.0, 4.0,1.0,2.0,4.0,4.0,
+    0.0,4.0,0.0,0.0, 0.0,1.0,1.0,4.0,4.0,
+    0.0,0.0,0.0,0.0, 0.0,0.0,4.0,4.0,4.0,
+    0.0,0.0,0.0,0.0, 0.0,4.0,7.0,4.0,4.0,
+    0.0,7.0,0.0,0.0, 0.0,4.0,8.0,4.0,4.0,
+    0.0,9.0,8.0,8.0, 8.0,9.0,8.0,4.0,4.0,
+    0.0,9.0,8.0,8.0, 9.0,8.0,8.0,4.0,4.0,
+    0.0,4.0,8.0,8.0, 8.0,8.0,8.0,4.0,4.0
+  };
+  int* cumulative_flow_in = new int[9*9]{
+      0,  3,  1,  1,   1,  1,  7,  1,  1,
+      0,  3,  0,  0,   4,  3,  8,  1,  1,
+      0,  1,  0,  0,   0,  4,  9,  1,  1,
+      0,  0,  0,  0,   0,  0,  2,  1,  1,
+      0,  0,  0,  0,   0,  2, 501, 1,  1,
+      0,  3,  0,  0,   0,  8, 500, 1,  1,
+      0,  4,  5,  4,   4,100, 400, 1,  1,
+      0,  1,  3,  3,  99,  6, 399, 1,  1,
+      1,  1,  1,  1,  98,  1, 398, 1,  1,
+  };
+  bool* landsea_mask_in = new bool[9*9] {
+    true,false,false,false, false,false,false,false, false,
+    true,false, true, true, false,false,false,false, false,
+    true, false, true, true,  true,false,false,false, false,
+    true,  true, true, true,  true, true,false,false, false,
+    true,  true, true, true,  true,false,false,false, false,
+    true,false, true, true,  true,false,false,false, false,
+    true,false,false,false, false,false,false,false, false,
+    true,false,false,false, false,false,false,false, false,
+    true,false,false,false, false,false,false,false,false
+  };
+  int* expected_number_of_outflows_out = new int[9*9]{
+      1,  1,  1,  1,   1,  1,  1,  1,  1,
+      1,  1,  1,  1,   1,  1,  1,  1,  1,
+      1,  1,  1,  1,   1,  1,  1,  1,  1,
+      1,  1,  1,  1,   1,  1,  1,  1,  1,
+      1,  1,  1,  1,   1,  1,  1,  1,  1,
+      1,  1,  1,  1,   1,  1,  1,  1,  1,
+      1,  1,  1,  1,   1,  1,  1,  1,  1,
+      1,  1,  1,  1,   1,  1,  2,  1,  1,
+      1,  1,  1,  1,   1,  1,  3,  1,  1
+  };
+  double* expected_rdirs_out = new double[9*9] {
+    0.0,3.0,1.0,4.0, 4.0,2.0,2.0,4.0,4.0,
+    0.0,2.0,0.0,0.0, 1.0,7.0,2.0,4.0,4.0,
+    0.0,2.0,0.0,0.0, 0.0,7.0,7.0,4.0,4.0,
+    0.0,0.0,0.0,0.0, 0.0,0.0,7.0,7.0,4.0,
+    0.0,0.0,0.0,0.0, 0.0,4.0,7.0,7.0,7.0,
+    0.0,8.0,0.0,0.0, 0.0,4.0,8.0,9.0,7.0,
+    0.0,9.0,7.0,8.0, 1.0,9.0,8.0,9.0,7.0,
+    0.0,9.0,8.0,7.0, 9.0,7.0,8.0,9.0,4.0,
+    0.0,4.0,8.0,8.0, 8.0,8.0,8.0,4.0,4.0
+  };
+  double* expected_bifurcations_rdirs_out_slice_one = new double[9*9] {
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0, 9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0, 9.0,-9.0,-9.0
+  };
+  double* expected_bifurcations_rdirs_out_slice_two = new double[9*9] {
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0, 7.0,-9.0,-9.0
+  };
+  double* expected_bifurcations_rdirs_out_other_slices = new double[9*9] {
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0,
+    -9.0,-9.0,-9.0,-9.0, -9.0,-9.0,-9.0,-9.0,-9.0
+  };
+  map<pair<int,int>,vector<pair<int,int>>> river_mouths_in;
+  vector<pair<int,int>> additional_river_mouths;
+  additional_river_mouths.push_back(pair<int,int>(2,3));
+  additional_river_mouths.push_back(pair<int,int>(3,1));
+  additional_river_mouths.push_back(pair<int,int>(4,1));
+  river_mouths_in[pair<int,int>(3,5)] = additional_river_mouths;
+  double* bifurcations_rdirs_in = new double[9*9*7];
+  fill_n(bifurcations_rdirs_in,9*9*7,-9.0);
+  int* number_of_outflows_in = new int[9*9];
+  fill_n(number_of_outflows_in,9*9,1);
+  double cumulative_flow_threshold_fraction_in = 0.1;
+  int minimum_cells_from_split_to_main_mouth_in = 3;
+  int maximum_cells_from_split_to_main_mouth_in = INT_MAX;
+  latlon_bifurcate_rivers_basic(river_mouths_in,
+                                original_rdirs,
+                                bifurcations_rdirs_in,
+                                cumulative_flow_in,
+                                number_of_outflows_in,
+                                landsea_mask_in,
+                                cumulative_flow_threshold_fraction_in,
+                                minimum_cells_from_split_to_main_mouth_in,
+                                maximum_cells_from_split_to_main_mouth_in,
+                                nlat,nlon,true);
+  EXPECT_TRUE(field<int>(number_of_outflows_in,grid_params_in) ==
+              field<int>(expected_number_of_outflows_out,grid_params_in));
+  EXPECT_TRUE(field<double>(original_rdirs,grid_params_in) ==
+              field<double>(expected_rdirs_out,grid_params_in));
+  for (int i = 0; i < nlat*nlon;i++){
+    EXPECT_TRUE(bifurcations_rdirs_in[i] == expected_bifurcations_rdirs_out_slice_one[i]);
+  }
+  for (int i = 0; i < nlat*nlon;i++){
+    EXPECT_TRUE(bifurcations_rdirs_in[i+(nlat*nlon*1)] ==
+                expected_bifurcations_rdirs_out_slice_two[i]);
+  }
+  for (int i = 0; i < nlat; i++){
+    for (int j = 0; j < nlon; j++){
+      cout << setw(3) << number_of_outflows_in[nlat*i+j] << " ";
+    }
+    cout << endl;
+  }
+  for (int j = 2; j < 7;j++){
+    for (int i = 0; i < nlat*nlon;i++){
+      EXPECT_TRUE(bifurcations_rdirs_in[i+(nlat*nlon*j)] ==
+                  expected_bifurcations_rdirs_out_other_slices[i]);
+    }
+  }
+  delete[] cumulative_flow_in;
+  delete[] number_of_outflows_in;
+  delete[] landsea_mask_in;
+  delete[] original_rdirs;
+  delete[] expected_rdirs_out;
+  delete[] expected_number_of_outflows_out;
+  delete[] bifurcations_rdirs_in;
+  delete[] expected_bifurcations_rdirs_out_slice_one;
+  delete[] expected_bifurcations_rdirs_out_slice_two;
+  delete[] expected_bifurcations_rdirs_out_other_slices;
+  delete grid_params_in;
+}
+
 }
