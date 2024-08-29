@@ -68,8 +68,8 @@ python_config_filepath=${working_directory}/python_script.cfg
 binary_lsmask_filepath=${working_directory}/binary_lsmask.nc
 orography_filepath=${working_directory}/orography.nc
 max_land_binary_lsmask_filepath=${working_directory}/maxl_binary_lsmask.nc
-if [[ icon_atmo_grid_res == "r2b3" ]] || [[ icon_atmo_grid_res == "r2b4" ]] ||
-   [[ icon_atmo_grid_res == "r2b5" ]] || [[ icon_atmo_grid_res == "r2b6" ]]; then
+if [[ ${icon_atmo_grid_res} == "r2b3" ]] || [[ ${icon_atmo_grid_res} == "r2b4" ]] ||
+   [[ ${icon_atmo_grid_res} == "r2b5" ]] || [[ ${icon_atmo_grid_res} == "r2b6" ]]; then
    binary_conversion_method_default=hfrac
 else
    binary_conversion_method_default=maxl
@@ -88,7 +88,7 @@ fi
 if [[ -z ${use_true_sinks} ]]; then
   use_true_sinks=false
 fi
-true_sinks_filepath_default=/work/mh1421/m300468/data/true_sinks_version_41.nc
+true_sinks_filepath_default=/work/mh1421/m300468/data/true_sinks_field_version_41.nc
 if ${use_true_sinks}; then
   true_sinks_filepath=${true_sinks_filepath:-${true_sinks_filepath_default}}
 else
@@ -202,7 +202,7 @@ fi
 #Run bifurcated hdpara file generation
 cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_filepath} z cell_sea_land_mask true_sinks ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} ${icon_atmo_grid_res} False True ${river_mouth_position_filepath}"
 {% else %}
-cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath} ${config_filepath} ${working_directory} ${icon_grid_filepath} ${repository_path}/Dynamic_HD_Resources/cotat_plus_standard_params.nl ${icon_atmo_grid_res} False ${use_hfrac} ${maxl_binary_lsmask_filepath} ${true_sinks_filepath}"
+cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath} ${config_filepath} ${working_directory} ${icon_grid_filepath} ${repository_path}/Dynamic_HD_Resources/cotat_plus_standard_params.nl ${icon_atmo_grid_res} False ${use_hfrac} ${max_land_binary_lsmask_filepath} ${true_sinks_filepath}"
 {% endif %}
 echo "Running:"
 echo ${cmd}
