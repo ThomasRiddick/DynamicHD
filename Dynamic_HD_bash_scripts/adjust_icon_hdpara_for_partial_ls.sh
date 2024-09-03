@@ -15,6 +15,8 @@ elif [[ ${resolution} == 'r2b4' ]]; then
   average_alfk=45.3
 elif [[ ${resolution} == 'r2b5' ]]; then
   average_alfk=25.0
+elif [[ ${resolution} == 'r2b6' ]]; then
+  average_alfk=19.0
 elif [[ ${resolution} == 'r2b7' ]]; then
   average_alfk=10.12
 elif [[ ${resolution} == 'r2b10' ]]; then
