@@ -12,168 +12,118 @@ class Lake:
         self.is_leaf = is_leaf
         self.primary_lake = primary_lake
         self.secondary_lakes  = secondary_lakes
-        self.sill_point = None
-
-    def set_sill_point(self,coords):
-        self.sill_point = coords
 
     def set_primary_lake(self,primary_lake)
         self.primary_lake = primary_lake
 
 class BasinCell:
 
-    self __init__(cell_coords,cell_height_type,cell_height):
+    def __init__(cell_coords,cell_height_type,cell_height):
         self.cell_coords = center_coords
         self.cell_height_type = cell_height_type
         self.cell_height = cell_height
 
-class
+class DisjointSet:
 
-class disjoint_set {
-  protected:
-    int label;
-    int size;
-    disjoint_set* root = nullptr;
-    vector<disjoint_set*>* nodes = nullptr;
-  public:
-    disjoint_set(int label_in) : label(label_in), size(1)
-      { root = this; nodes = new vector<disjoint_set*>(); }
-    ~disjoint_set() { delete nodes; }
-    disjoint_set* get_root(){ return root;}
-    void set_root(disjoint_set* x){ root = x; }
-    void add_node(disjoint_set* x) { nodes->push_back(x); }
-    void add_nodes(vector<disjoint_set*>* extra_nodes)
-      { nodes->insert(nodes->end(),extra_nodes->begin(),
-                      extra_nodes->end());}
-    vector<disjoint_set*>* get_nodes() { return nodes; }
-    void increase_size(int size_increment_in) {size += size_increment_in;}
-    int get_size() { return size;}
-    int get_label() { return label;}
-    friend ostream& operator<<(ostream& out, disjoint_set& set_object)
-    { return out << set_object.get_label(); }
-};
+    def __init__(self,label_in):
+        self.label = label_in
+        self.size = 1
+        self.root = self
+        nodes = []
 
-class disjoint_set_forest{
-  protected:
-    vector<disjoint_set*> sets;
-  public:
-    disjoint_set_forest() {}
-    ~disjoint_set_forest();
-    disjoint_set* find_root(disjoint_set* x);
-    int find_root(int label_in);
-    bool link(disjoint_set* x,disjoint_set* y);
-    bool make_new_link(int label_x, int label_y);
-    void add_set(int label_in);
-    disjoint_set* get_set(int label_in);
-    void for_elements_in_set(disjoint_set* root,function<void(int)> func);
-    void for_elements_in_set(int root_label,function<void(int)> func);
-    bool check_subset_has_elements(int label_of_element,vector<int> element_labels);
-    friend ostream& operator<<(ostream& out, disjoint_set_forest& sets_object);
-};
+    def get_root(self):
+        return self.root
 
-#include "base/disjoint_set.hpp"
+    def set_root(self,x):
+        self.root = x
 
-using namespace std;
+    def add_node(self,x):
+        self.nodes.append(x)
 
-disjoint_set* disjoint_set_forest::find_root(disjoint_set* x){
-  disjoint_set* root = x;
-  disjoint_set* working_ptr;
-  while (root->get_root() != root){
-    working_ptr = root->get_root();
-    working_ptr->set_root(root->get_root()->get_root());
-    root = working_ptr;
-  }
-  return root;
-}
+    def add_nodes(self,extra_nodes):
+        self.nodes.extend(extra_nodes)
 
-bool disjoint_set_forest::link(disjoint_set* x, disjoint_set* y){
-  disjoint_set* root_x = find_root(x);
-  disjoint_set* root_y = find_root(y);
-  if (root_x == root_y) return false;
-  root_y->set_root(root_x);
-  root_x->increase_size(root_y->get_size());
-  root_x->add_node(root_y);
-  root_x->add_nodes(root_y->get_nodes());
-  return true;
-}
+    def get_nodes(self):
+        return self.nodes
 
-void disjoint_set_forest::add_set(int label_in){
-  if (get_set(label_in)) return;
-  disjoint_set* new_set = new disjoint_set(label_in);
-  sets.push_back(new_set);
-}
+    def increase_size(self,size_increment_in):
+        self.size += size_increment_in
 
-disjoint_set* disjoint_set_forest::get_set(int label_in){
-  for (vector<disjoint_set*>::iterator i = sets.begin();i != sets.end(); ++i){
-    if ((*i)->get_label() == label_in) return *i;
-  }
-  return nullptr;
-}
+    def get_size(self):
+        return self.size
 
-bool disjoint_set_forest::make_new_link(int label_x, int label_y){
-  disjoint_set* x = get_set(label_x);
-  disjoint_set* y = get_set(label_y);
-  return link(x,y);
-}
+    def get_label(self):
+        return self.label
 
-int disjoint_set_forest::find_root(int label_in){
-  disjoint_set* x = get_set(label_in);
-  disjoint_set* root_x = find_root(x);
-  return root_x->get_label();
-}
+class DisjointSetForest:
 
-void disjoint_set_forest::for_elements_in_set(disjoint_set* root,function<void(int)> func){
-  if (root->get_root() != root)
-    throw runtime_error("Given set is not label of a root set");
-  func(root->get_label());
-  for (vector<disjoint_set*>::iterator i = root->get_nodes()->begin();
-       i != root->get_nodes()->end(); ++i){
-    func((*i)->get_label());
-  }
-}
+    def __init__(self):
+        self.sets = []
 
-void disjoint_set_forest::for_elements_in_set(int root_label,function<void(int)> func){
-  disjoint_set* root = get_set(root_label);
-  for_elements_in_set(root,func);
-}
+    def find_root(self,x):
+      root = x
+      while root.get_root() != root:
+        working_ptr = root.get_root()
+        working_ptr.set_root(root.get_root().get_root())
+        root = working_ptr
+      return root
 
-bool disjoint_set_forest::check_subset_has_elements(int label_of_element,
-                                              vector<int> element_labels){
-  bool check_passed = true;
-  disjoint_set* root = find_root(get_set(label_of_element));
-  if (root->get_nodes()->size() + 1 != element_labels.size()) return false;
-  if (element_labels[0] != root->get_label()) return false;
-  int j = 1;
-  for (vector<disjoint_set*>::iterator i = root->get_nodes()->begin();
-       i != root->get_nodes()->end(); ++i){
-    if (element_labels[j] != (*i)->get_label()) check_passed = false;
-    j++;
-  }
-  return check_passed;
-}
+    def link(self,x,y):
+      root_x = self.find_root(x)
+      root_y = self.find_root(y)
+      if (root_x == root_y):
+        return False
+      root_y->set_root(root_x)
+      root_x->increase_size(root_y->get_size())
+      root_x->add_node(root_y)
+      root_x->add_nodes(root_y->get_nodes())
+      return True
 
-disjoint_set_forest::~disjoint_set_forest(){
-  for (vector<disjoint_set*>::iterator i = sets.begin();
-       i != sets.end(); ++i){
-       delete (*i);
-  }
-}
+    def add_set(self,label_in):
+      if self.get_set(label_in):
+        return
+      new_set = DisjointSet(label_in)
+      sets.append(new_set)
 
-ostream& operator<<(ostream& out, disjoint_set_forest& sets_object){
-  for (vector<disjoint_set*>::iterator i = sets_object.sets.begin();
-       i != sets_object.sets.end(); ++i){
-      int label = (*i)->get_label();
-      if (label == sets_object.find_root(label)){
-        out << label << ":";
-        sets_object.for_elements_in_set(label,[&](int subset_label){
-          out << subset_label << ", ";
-        });
-        out << endl;
-      }
-  }
-  return out;
-}
+    def get_set(self,label_in):
+      for node in sets:
+        if node.get_label() == label_in:
+            return node
+      return None
 
+    def make_new_link(self,label_x,label_y):
+      x = self.get_set(label_x)
+      y = self.get_set(label_y)
+      return self.link(x,y)
+
+    def find_root(self,label_in):
+      x = self.get_set(label_in)
+      root_x = self.find_root(x)
+      return root_x.get_label()
+
+    def for_elements_in_set(self,root,func):
+      if root.get_root() != root:
+        raise RuntimeError("Given set is not label of a root set")
+      func(root.get_label())
+      for node in root.get_nodes():
+        func(node.get_label())
+
+    def for_elements_in_set(self,root_label,func):
+      root = self.get_set(root_label)
+      self.for_elements_in_set(root,func)
+
+    def check_subset_has_elements(self,label_of_element,element_labels):
+        check_passed = True
+        root = self.find_root(self.get_set(label_of_element))
+        if root.get_nodes().size() + 1 != element_labels.size():
+            return False
+        if element_labels[0] != root.get_label():
+            return False
+        for i,node in enumerate(root.get_nodes()):
+            i += 1
+            if element_labels[i] != node.get_label():
+                check_passed = False
+        return check_passed
 
 class BasinEvaluationAlgorithm:
 
@@ -204,20 +154,16 @@ class BasinEvaluationAlgorithm:
                 #Exit to basin or level area found
                 if (new_center_cell_height <= self.center_cell_height and
                     searched_level_height != self.center_cell_height):
-                        outflow_coords_list = self.search_for_outflows_on_level(self.q
-                                                                                self.center_coords,
-                                                                                self.center_cell_height)
-                        if len(outflow_coords_list) > 0:
+                        outflow_lake_numbers = \
+                            self.search_for_outflows_on_level(self.q
+                                                              self.center_coords,
+                                                              self.center_cell_height)
+                        if len(outflow_lake_numbers) > 0:
                             #Exit(s) found
-                            for outflow_coords in outflow_coords_list
-                                other_lake_number = lake_numbers[outflow_coords]
+                            for other_lake_number in outflow_lake_numbers:
                                 if other_lake_number != -1
                                     self.lake_connections.make_new_link(lake_number,other_basin_number)
                                     merging_lakes.append(lake_number)
-                                    #The unusual case of two outflows on seperate disconnected
-                                    #plateaus will not be handled correctly but this will not
-                                    #cause an error
-                                    self.lake.set_sill_point(self.center_coords)
                             self.fill_lake_orography(self.lake)
                             break
                         else:
@@ -240,13 +186,17 @@ class BasinEvaluationAlgorithm:
                                         if sublake.primary_lake is None ]
                     new_lake_number = len(lakes)
                     new_lake = Lake(new_lake_number,
-                                    lakes[sublakes_in_lake[0]].sill_point,
+                                    lakes[sublakes_in_lake[0]].center_coords,
                                     is_leaf=False,
                                     primary_lake=None,
                                     secondary_lakes=sublakes_in_lake)
                     #Note the new lake isn't necessarily the root of the disjointed set
                     lake_connections.make_new_link(new_lake_number)
                     lakes.append(new_lake)
+                    for sublake in sublakes_in_lake:
+                        for other_sublake in sublakes_in_lakes
+                            if sublake != other_sublake:
+                                self.find_spill_point(sublake,other_sublake)
                     for sublake in sublakes_in_lake:
                         lake_numbers[lake_numbers == sublake] = new_lake.lake_number
                         lakes[sublake].set_primary_lake(new_lake.lake_number)
@@ -296,6 +246,7 @@ class BasinEvaluationAlgorithm:
     def search_for_outflows_on_level(self,q
                                      center_cell,
                                      center_cell_height):
+        self.outflow_lake_number = []
         level_q.push_back(center_cell)
         while self.q[0].get_height() == center_cell_height:
             level_q.push_back(self.q.heappop())
@@ -304,7 +255,7 @@ class BasinEvaluationAlgorithm:
         while not level_q.empty():
             level_center_cell = level_q.pop()
             self.process_level_neighbors(level_center_cell.get_coords())
-        return self.outflows_on_level
+        return self.outflow_lake_numbers
 
     def process_level_neighbors(self,level_coords):
         neighbors_coords = raw_orography.get_neighbors_coords(level_coords,1)
@@ -325,9 +276,12 @@ class BasinEvaluationAlgorithm:
                 if nbr_height == self.center_cell_height:
                     level_q.push(BasinCell(nbr_height,nbr_height_type,
                                            nbr_coords))
-                else if nbr_height < self.center_cell_height:
-                    self.outflows_on_level.push_back(nbr_coords)
-
+                else if (nbr_height < self.center_cell_height and
+                         lake_numbers[nbr_coords] != -1):
+                    self.outflow_lake_numbers.push_back(-1)
+                else if (nbr_height < self.center_cell_height or
+                         lake_numbers[nbr_coords] != -1):
+                    self.outflow_lake_numbers.push_back(lake_numbers[nbr_coords])
 
     def process_center_cell():
         if (basin_numbers[previous_filled_cell_coords] == null_catchment):
