@@ -281,7 +281,7 @@ if ! $no_conda && ! $no_env_gen ; then
   fi
 fi
 if ! $no_conda ; then
-  source activate dyhdenv3
+  source activate dyhdenv_mamba
 fi
 
 #Load a new version of gcc that doesn't have the polymorphic variable bug
