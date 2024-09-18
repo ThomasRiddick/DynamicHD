@@ -1,7 +1,5 @@
 module IdentifyBifurcatedRiverMouths
 
-using TOML
-
 struct Cells
 	cell_indices::Array{CartesianIndex}
 	cell_neighbors::Array{CartesianIndex}
@@ -83,24 +81,6 @@ struct RiverDelta
 		end
 		new(lines)
 	end
-end
-
-
-function load_river_deltas_from_file(filename::String)
-	river_deltas_raw::Dict{String,Any} = TOML.parsefile(filename)
-	river_deltas::Array{RiverDelta} = RiverDelta[]
-	for river_delta_raw in values(river_deltas_raw)
-		push!(river_deltas,RiverDelta(river_delta_raw))
-	end
-end
-
-function load_river_deltas_from_string(river_deltas_input_string::String)
-	river_deltas_raw::Dict{String,Any} = TOML.parse(river_deltas_input_string)
-	river_deltas::Array{RiverDelta} = RiverDelta[]
-	for river_delta_raw in values(river_deltas_raw)
-		push!(river_deltas,RiverDelta(river_delta_raw))
-	end
-	return river_deltas
 end
 
 function find_cells_on_line_section(line_section::@NamedTuple{start_point::
