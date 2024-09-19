@@ -34,6 +34,7 @@ void icon_single_index_bifurcate_rivers_basic(map<int,vector<int>> river_mouths_
                                               int minimum_cells_from_split_to_main_mouth_in,
                                               int maximum_cells_from_split_to_main_mouth_in,
                                               int ncells_in,
-                                              int* neighboring_cell_indices_in);
+                                              int* neighboring_cell_indices_in,
+                                              bool remove_main_channel_in = false);
 
 #endif /* INCLUDE_BIFURCATE_RIVERS_BASIC_HPP_ */
