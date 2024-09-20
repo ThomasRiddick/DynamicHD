@@ -68,8 +68,10 @@ const Line = @NamedTuple{start_point::@NamedTuple{lat::Float64,
 								     															lon::Float64}}
 
 struct RiverDelta
+	name::String
 	lines::Vector{Vector{Line}}
-	function RiverDelta(lines_in::Vector{Vector{Vector{Float64}}})
+	function RiverDelta(name::String,
+										  lines_in::Vector{Vector{Vector{Float64}}})
 		lines::Vector{Vector{Line}} = Vector{Line}[]
 		for line in lines_in
 			line_sections::Vector{Line} = Line[]
@@ -79,7 +81,7 @@ struct RiverDelta
 			end
 			push!(lines,line_sections)
 		end
-		new(lines)
+		new(name,lines)
 	end
 end
 
@@ -306,8 +308,8 @@ end
 function identify_bifurcated_river_mouths(river_deltas::Array{RiverDelta},
 																					cells::Cells,
 																					lsmask::Array{Bool})
-	river_mouth_indices_for_all_rivers::Array{Array{CartesianIndex}} =
-																			Array{Array{CartesianIndex}}[]
+	river_mouth_indices_for_all_rivers::Dict{String,Array{CartesianIndex}} =
+																			Dict{String,Array{CartesianIndex}}()
 	for delta in river_deltas
 		river_mouth_indices::Array{CartesianIndex} = Array{CartesianIndex}[]
 		for line in delta.lines
@@ -320,8 +322,7 @@ function identify_bifurcated_river_mouths(river_deltas::Array{RiverDelta},
 				end
 			end
 		end
-		push!(river_mouth_indices_for_all_rivers,
-		      river_mouth_indices)
+		river_mouth_indices_for_all_rivers[delta.name] = river_mouth_indices
 	end
 	return river_mouth_indices_for_all_rivers
 end

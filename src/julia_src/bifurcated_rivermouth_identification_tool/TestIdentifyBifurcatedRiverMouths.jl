@@ -7,7 +7,8 @@ using IdentifyBifurcatedRiverMouths: find_cells_on_line_section
 using IdentifyBifurcatedRiverMouths: search_for_river_mouth_location_on_line_section
 using IdentifyBifurcatedRiverMouths: identify_bifurcated_river_mouths
 using IdentifyBifurcatedRiverMouths: Cells
-using IdentifyBifurcatedRiverMouths: RiverDelta, load_river_deltas_from_string
+using IdentifyBifurcatedRiverMouths: RiverDelta
+using IdentifyBifurcatedRiverMouthsInput: load_river_deltas_from_string
 
 @testset "River mouth identification tests" begin
 	@test check_if_line_intersects_cell((start_point=(lat=2.0,lon=0.0),
@@ -415,11 +416,14 @@ using IdentifyBifurcatedRiverMouths: RiverDelta, load_river_deltas_from_string
 	@test identify_bifurcated_river_mouths(river_deltas,
 																	 			 cells,
 																	 			 lsmask) ==
-    Array{CartesianIndex}[CartesianIndex[CartesianIndex(49,),CartesianIndex(46,),
-    																		 CartesianIndex(46,),CartesianIndex(64,)],
-    											CartesianIndex[CartesianIndex(71,),],
-    											CartesianIndex[CartesianIndex(35,),CartesianIndex(36,),
-    																		 CartesianIndex(57,)]]
+    Dict{String,Array{CartesianIndex}}("River_A"=>
+                                       CartesianIndex[CartesianIndex(49,),CartesianIndex(46,),
+    														 											CartesianIndex(46,),CartesianIndex(64,)],
+    	 																 "River_C"=>
+    	 																 CartesianIndex[CartesianIndex(71,),],
+    	 																 "River_B"=>
+    	 																 CartesianIndex[CartesianIndex(35,),CartesianIndex(36,),
+    														 			 								CartesianIndex(57,)])
 end
 
 end
