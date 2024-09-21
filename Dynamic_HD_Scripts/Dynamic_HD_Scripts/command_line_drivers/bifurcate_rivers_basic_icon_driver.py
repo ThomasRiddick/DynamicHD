@@ -50,7 +50,8 @@ class BifurcateRiversBasicIconDriver:
                                         self.args["mouth_positions_filepath"],
                                         self.args["minimum_cells_from_split_to_main_mouth"],
                                         self.args["maximum_cells_from_split_to_main_mouth"],
-                                        self.args["cumulative_flow_threshold_fraction"])
+                                        self.args["cumulative_flow_threshold_fraction"],
+                                        self.args["remove_main_channel"])
         number_of_outflows_out_ds = \
             xr.Dataset(data_vars={"num_outflows":(["cell"],number_of_outflows_out)},
                        coords={"clat":next_cell_index_in_ds["clat"],
@@ -164,6 +165,10 @@ def parse_arguments():
                         help="Protect any tributary from being broken if their accumulated "
                              "flow as a fraction of the flow of the main channel is above this "
                              "threshold")
+    parser.add_argument("-r","--remove-main-channel",
+                        action="store_true",
+                        default=False,
+                        help="Remove original main channel when adding bifurcations")
     parser.parse_args(namespace=args)
     return args
 

@@ -20,7 +20,7 @@
 			],
 			"folder_exclude_patterns":
 			[
-				"build",
+				"build",".cache",
 				"Dynamic_HD_Cpp_Code/Release",
 				"Dynamic_HD_Cpp_Code/docs",
 				"Dynamic_HD_Fortran_Code/Release",
@@ -45,7 +45,7 @@
 				"Dynamic_HD_Fortran_Code/docs",
 				"Dynamic_HD_Fortran_Code/mods"
 			],
-			"path": "."
+			"path": ".",
 		}
 	]
 }

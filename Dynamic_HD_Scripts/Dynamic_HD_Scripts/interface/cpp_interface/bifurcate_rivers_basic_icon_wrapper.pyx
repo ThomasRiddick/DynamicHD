@@ -2,6 +2,7 @@ import cython
 cimport numpy as np
 import numpy as np
 from libcpp.string cimport string
+from Cython.Shadow import bint
 
 cdef extern from 'drivers/bifurcate_rivers_basic_icon_interface.cpp':
     void bifurcate_rivers_basic_icon_cython_interface(int ncells,
@@ -14,7 +15,8 @@ cdef extern from 'drivers/bifurcate_rivers_basic_icon_interface.cpp':
                                                       string mouth_positions_filepath,
                                                       int minimum_cells_from_split_to_main_mouth_in,
                                                       int maximum_cells_from_split_to_main_mouth_in,
-                                                      double cumulative_flow_threshold_fraction_in)
+                                                      double cumulative_flow_threshold_fraction_in,
+                                                      int remove_main_channel_in)
 
 def bifurcate_rivers_basic_icon_cpp(np.ndarray[int,ndim=1,mode='c'] neighboring_cell_indices_in,
                                     np.ndarray[int,ndim=1,mode='c'] next_cell_index_in,
@@ -26,7 +28,8 @@ def bifurcate_rivers_basic_icon_cpp(np.ndarray[int,ndim=1,mode='c'] neighboring_
                                     str mouth_positions_filepath,
                                     int minimum_cells_from_split_to_main_mouth_in,
                                     int maximum_cells_from_split_to_main_mouth_in,
-                                    double cumulative_flow_threshold_fraction_in):
+                                    double cumulative_flow_threshold_fraction_in,
+                                    bint remove_main_channel_in):
     cdef int ncells
     ncells = len(next_cell_index_in)
     cdef string mouth_positions_filepath_c = \
@@ -41,4 +44,5 @@ def bifurcate_rivers_basic_icon_cpp(np.ndarray[int,ndim=1,mode='c'] neighboring_
                                                  mouth_positions_filepath_c,
                                                  minimum_cells_from_split_to_main_mouth_in,
                                                  maximum_cells_from_split_to_main_mouth_in,
-                                                 cumulative_flow_threshold_fraction_in)
+                                                 cumulative_flow_threshold_fraction_in,
+                                                 remove_main_channel_in)
