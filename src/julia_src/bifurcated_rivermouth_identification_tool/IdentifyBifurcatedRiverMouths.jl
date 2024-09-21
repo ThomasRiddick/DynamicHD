@@ -106,21 +106,22 @@ function find_cells_on_line_section(line_section::@NamedTuple{start_point::
 			is_wrapped_line = false
 	end
 	filtered_cell_indices::Array{CartesianIndex} =
-		filter(i -> check_if_line_section_passes_within_cell_extremes(
-		              cells.cell_extremes.min_lats[i],
-		             	cells.cell_extremes.max_lats[i],
-						      cells.cell_extremes.min_lons[i],
-						      cells.cell_extremes.max_lons[i],
-						      cells.is_wrapped_cell[i],
-						      min_lat,max_lat,min_lon,max_lon,
-						      is_wrapped_line),
+		filter(i::CartesianIndex ->
+		       check_if_line_section_passes_within_cell_extremes(
+		       		cells.cell_extremes.min_lats[i],
+		        	cells.cell_extremes.max_lats[i],
+							cells.cell_extremes.min_lons[i],
+							cells.cell_extremes.max_lons[i],
+							cells.is_wrapped_cell[i],
+							min_lat,max_lat,min_lon,max_lon,
+							is_wrapped_line),
 					 cells.cell_indices)
 	cells_on_line_section::Array{CartesianIndex} = CartesianIndex[]
 	for i in filtered_cell_indices
 		#Note the map is over the set of vertices of a given triangle
 		if check_if_line_section_intersects_cell(line_section,
 																						 is_wrapped_line,
-																						 map(cell_vertex_coords ->
+																						 map(cell_vertex_coords::CartesianIndex ->
 									  												 	   (lat=cell_vertex_coords.lats[i],
 									   															lon=cell_vertex_coords.lons[i]),
 									  												     cells.cell_vertices),
@@ -251,7 +252,8 @@ function check_if_line_intersects_cell(line::@NamedTuple{start_point::
 		push!(norm_dets,(i,norm_det))
 	end
 	if abs(norm_det_sum) == 1
-		return true, filter(nd -> nd[2] != sign(norm_det_sum),norm_dets)[1][1]
+		return true, filter(nd::Tuple{Int64,Int64} ->
+		                    nd[2] != sign(norm_det_sum),norm_dets)[1][1]
 	else
 		return false,-1
 	end
