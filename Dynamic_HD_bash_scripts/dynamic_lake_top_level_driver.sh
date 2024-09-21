@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 
-echo "Running Version 3.11 of the Dynamic Lake and HD Parameters Generation Code"
+version=$(git describe --match 'release_version_*')
+echo "Running Version ${version} of the Dynamic Lake and HD Parameters Generation Code"
 
 #Define module loading function
 function load_module

@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 
-echo "Running Version 1.2 of the HD Command Line Operator Code"
+version=$(git describe --match 'latlon_hd_tools_version_*')
+echo "Running Version ${version} of the HD Command Line Operator Code"
 
 #Define module loading function
 function load_module

@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 
-echo "Running Version 1.4 of the ICON HD Parameters Generation Code"
+version=$(git describe --match 'icon_hd_tools_version_*')
+echo "Running Version ${version} of the ICON HD Parameters Generation Code"
 
 #Define module loading function
 function load_module

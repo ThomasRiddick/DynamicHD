@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 
-echo "Running Version 3.12 of the Dynamic HD Parameters Generation Code"
+version=$(git describe --match 'release_version_*')
+echo "Running Version ${version} of the Dynamic HD Parameters Generation Code"
 start_time=$(date +%s%N)
 
 #Define module loading function
