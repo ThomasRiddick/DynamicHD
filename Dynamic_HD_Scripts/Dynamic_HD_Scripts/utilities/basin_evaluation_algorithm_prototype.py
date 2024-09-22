@@ -12,9 +12,15 @@ class Lake:
         self.is_leaf = is_leaf
         self.primary_lake = primary_lake
         self.secondary_lakes  = secondary_lakes
+        self.spill_points = {}
+        self.potential_exit_points = []
+        self.outflow_points = {}
 
     def set_primary_lake(self,primary_lake)
         self.primary_lake = primary_lake
+
+    def set_potential_exit_points(self,potential_exit_points)
+        self.potential_exit_points = potential_exit_points
 
 class BasinCell:
 
@@ -73,10 +79,10 @@ class DisjointSetForest:
       root_y = self.find_root(y)
       if (root_x == root_y):
         return False
-      root_y->set_root(root_x)
-      root_x->increase_size(root_y->get_size())
-      root_x->add_node(root_y)
-      root_x->add_nodes(root_y->get_nodes())
+      root_y.set_root(root_x)
+      root_x.increase_size(root_y.get_size())
+      root_x.add_node(root_y)
+      root_x.add_nodes(root_y.get_nodes())
       return True
 
     def add_set(self,label_in):
@@ -125,6 +131,40 @@ class DisjointSetForest:
                 check_passed = False
         return check_passed
 
+
+
+class SimpleSearch:
+
+    def __init__(self):
+        self.search_completed_cells =
+
+    def __call__(self,
+                 target_found_func,
+                 ignore_nbr_func,
+                 start_point):
+        self.search_q =
+        self.search_q.push(landsea_cell(start_point))
+        self.search_completed_cells[:,:] = False
+        self.ignore_nbr_func = ignore_nbr_func
+        while not self.search_q.empty():
+            search_cell = self.search_q.front()
+            self.search_q.pop()
+            search_coords = search_cell.get_cell_coords()
+            if target_found_func(search_coords)
+                return search_coords
+            self.search_process_neighbors(search_coords)
+
+    def search_process_neighbors(self,search_coords):
+        search_neighbors_coords = \
+            self.search_completed_cells.get_neighbors_coords(search_coords)
+        while not search_neighbors_coords.empty():
+            search_nbr_coords = search_neighbors_coords.back()
+            search_neighbors_coords.pop_back()
+            if not (self.search_completed_cells[search_nbr_coords] or
+                    self.ignore_nbr_func(search_nbr_coords)):
+                self.search_q.push(landsea_cell(search_nbr_coords))
+                self.search_completed_cells[search_nbr_coords] = True
+
 class BasinEvaluationAlgorithm:
 
     def evaluate_basins(self):
@@ -154,7 +194,7 @@ class BasinEvaluationAlgorithm:
                 #Exit to basin or level area found
                 if (new_center_cell_height <= self.center_cell_height and
                     searched_level_height != self.center_cell_height):
-                        outflow_lake_numbers = \
+                        outflow_lake_numbers,potential_exit_points = \
                             self.search_for_outflows_on_level(self.q
                                                               self.center_coords,
                                                               self.center_cell_height)
@@ -164,6 +204,7 @@ class BasinEvaluationAlgorithm:
                                 if other_lake_number != -1
                                     self.lake_connections.make_new_link(lake_number,other_basin_number)
                                     merging_lakes.append(lake_number)
+                            self.lake.set_potential_exit_points(potential_exit_points)
                             self.fill_lake_orography(self.lake)
                             break
                         else:
@@ -182,8 +223,8 @@ class BasinEvaluationAlgorithm:
                 unique_lake_groups = {g for g in [self.lake_connections.find_root(l)
                                                   for l in merging_lakes]}
                 for lake_group in unique_lake_groups:
-                    sublakes_in_lake = [sublake for sublake in self.lake_connections.get_set(lake_group)
-                                        if sublake.primary_lake is None ]
+                    sublakes_in_lake = {sublake for sublake in self.lake_connections.get_set(lake_group)
+                                        if sublake.primary_lake is None }
                     new_lake_number = len(lakes)
                     new_lake = Lake(new_lake_number,
                                     lakes[sublakes_in_lake[0]].center_coords,
@@ -196,7 +237,8 @@ class BasinEvaluationAlgorithm:
                     for sublake in sublakes_in_lake:
                         for other_sublake in sublakes_in_lakes
                             if sublake != other_sublake:
-                                self.find_spill_point(sublake,other_sublake)
+                                lakes[sublake].spill_points[other_sublake] = \
+                                    self.find_spill_point(sublake,other_sublake)
                     for sublake in sublakes_in_lake:
                         lake_numbers[lake_numbers == sublake] = new_lake.lake_number
                         lakes[sublake].set_primary_lake(new_lake.lake_number)
@@ -246,7 +288,8 @@ class BasinEvaluationAlgorithm:
     def search_for_outflows_on_level(self,q
                                      center_cell,
                                      center_cell_height):
-        self.outflow_lake_number = []
+        self.outflow_lake_numbers = []
+        self.potential_exit_points = []
         level_q.push_back(center_cell)
         while self.q[0].get_height() == center_cell_height:
             level_q.push_back(self.q.heappop())
@@ -255,7 +298,7 @@ class BasinEvaluationAlgorithm:
         while not level_q.empty():
             level_center_cell = level_q.pop()
             self.process_level_neighbors(level_center_cell.get_coords())
-        return self.outflow_lake_numbers
+        return self.outflow_lake_numbers,self.potential_exit_points
 
     def process_level_neighbors(self,level_coords):
         neighbors_coords = raw_orography.get_neighbors_coords(level_coords,1)
@@ -279,11 +322,13 @@ class BasinEvaluationAlgorithm:
                 else if (nbr_height < self.center_cell_height and
                          lake_numbers[nbr_coords] != -1):
                     self.outflow_lake_numbers.push_back(-1)
+                    self.potential_exit_points = nbr_coords
                 else if (nbr_height < self.center_cell_height or
                          lake_numbers[nbr_coords] != -1):
                     self.outflow_lake_numbers.push_back(lake_numbers[nbr_coords])
+                    self.potential_exit_points = nbr_coords
 
-    def process_center_cell():
+    def process_center_cell(self):
         if (basin_numbers[previous_filled_cell_coords] == null_catchment):
             basin_numbers[previous_filled_cell_coords] = basin_number
         center_cell_volume_threshold +=
@@ -325,3 +370,124 @@ class BasinEvaluationAlgorithm:
                 self.q.heappush(BasinCell(nbr_height,nbr_height_type,
                                           nbr_coords))
                 self.completed_cells[nbr_coords] = True
+
+    def find_spill_point(self,sublake,other_sublake):
+        return self.search_alg(lamba coords :
+                               self.lake_numbers[coords] == other_sublake,
+                               lambda coords :
+                               self.corrected_height[coords] !=
+                               self.corrected_height[self.lakes[sublake].center_coords],
+                               self.lakes[sublake].center_coords)
+
+    def set_outflows(self):
+        for lake in self.lakes
+            if lake.primary_lake:
+                for potential_exit_point in potential_exit_points:
+                    if self.lake_numbers[potential_exit_points] != -1:
+                        raise RuntimeError("Lake on top of heirarchy trying"
+                                           "to spill into another lake")
+                first_cell_beyond_rim_coords = potential_exit_points[0]
+                fine_catchment_num = self.fine_catchments[first_cell_beyond_rim_coords]
+                lake.outflow_points[-1] = (self.find_non_local_outflow_point(first_cell_beyond_rim_coords),False)
+            else:
+                for other_lake,spill_point in lake.spill_points.items()
+                    spill_point_coarse_coords = _coarse_grid.convert_fine_coords(spill_point,
+                                                                                 _grid_params)
+                    lake_center_coarse_coords = _coarse_grid.convert_fine_coords(other_lake.center_coords,
+                                                                                 _grid_params)
+                    if spill_point_coarse_coords == lake_center_coarse_coords:
+                        lake.outflow_points[other_lake] = (None,True)
+                    else:
+                        lake.outflow_points[other_lake] = (self.find_non_local_outflow_point(spill_point),False)
+
+    def find_non_local_outflow_point(self,first_cell_beyond_rim_coords)
+        if check_if_fine_cell_is_sink(first_cell_beyond_rim_coords):
+                outflow_coords = \
+                    _coarse_grid.convert_fine_coords(first_cell_beyond_rim_coords,
+                                                     _grid_params)
+        else:
+            prior_fine_catchment_num = prior_fine_catchment_numbers[first_cell_beyond_rim_coords]
+            if sink_points[prior_fine_catchment_num - 1] is not None:
+                catchment_outlet_coarse_coords = sink_points[prior_fine_catchment_num - 1]
+            else:
+                catchment_outlet_coarse_coords = None
+                current_coords = first_cell_beyond_rim_coords.clone()
+                while(True):
+                    if self.check_for_sinks_and_get_downstream_coords(current_coords):
+                        catchment_outlet_coarse_coords,downstream_coords = \
+                            _coarse_grid.convert_fine_coords(current_coords,
+                                                              _grid_params)
+                        break
+                    current_coords = downstream_coords
+                if not catchment_outlet_coarse_coords:
+                    raise RuntimeError("Sink point for non local secondary redirect not found")
+                sink_points[prior_fine_catchment_num - 1] = catchment_outlet_coarse_coords
+            coarse_catchment_number = \
+                coarse_catchment_nums[catchment_outlet_coarse_coords]
+            outflow_coords = self.search_alg(lamba coords :
+                                             coarse_catchment_nums[coords] == coarse_catchment_number,
+                                             lamba coords : False,
+                                             first_cell_beyond_rim_coords.clone())
+        return outflow_coords
+
+
+    def check_for_sinks_and_get_downstream_coords(self,coords_in):
+        rdir = prior_fine_rdirs[coords_in]
+        downstream_coords = _grid.calculate_downstream_coords_from_dir_based_rdir(coords_in,rdir)
+        next_rdir = prior_fine_rdirs[downstream_coords]
+        return rdir == 5.0 or next_rdir == 0.0,downstream_coords
+
+    def coarse_cell_is_sink(self,coords_in):
+        return prior_coarse_rdirs[coords_in] == 5.0
+
+    def set_previous_cells_flood_next_cell_index(self,coords_in):
+        latlon_coords_in = coords_in
+        flood_next_cell_lat_index[previous_filled_cell_coords] = latlon_coords_in.get_lat()
+        flood_next_cell_lon_index[previous_filled_cell_coords] = latlon_coords_in.get_lon()
+
+    def set_previous_cells_connect_next_cell_index(self,coords_in):
+        latlon_coords_in = coords_in
+        connect_next_cell_lat_index[previous_filled_cell_coords] = latlon_coords_in.get_lat()
+        connect_next_cell_lon_index[previous_filled_cell_coords] = latlon_coords_in.get_lon()
+
+    def get_cells_next_cell_index_as_coords(self,coords_in,
+                                            height_type_in):
+
+        latlon_coords_in = coords_in
+        if height_type_in == flood_height:
+            return latlon_coords(flood_next_cell_lat_index[latlon_coords_in],
+                                 flood_next_cell_lon_index[latlon_coords_in])
+        else if height_type_in == connection_height:
+            return latlon_coords(connect_next_cell_lat_index[latlon_coords_in],
+                                 connect_next_cell_lon_index[latlon_coords_in])
+        else:
+            raise RuntimeError("Height type not recognized")
+
+    def check_for_sinks_and_set_downstream_coords(self,coords_in):
+        rdir = prior_fine_rdirs[coords_in]
+        downstream_coords = _grid.calculate_downstream_coords_from_index_based_rdir(coords_in,rdir)
+        next_rdir = prior_fine_rdirs[downstream_coords]
+        return rdir == true_sink_value || next_rdir == outflow_value
+
+    def coarse_cell_is_sink(self,coords_in):
+        rdir = prior_coarse_rdirs[coords_in]
+        return rdir == true_sink_value
+
+    def set_previous_cells_flood_next_cell_index(self,coords_in):
+        generic_1d_coords_in = coords_in
+        flood_next_cell_index[previous_filled_cell_coords] = generic_1d_coords_in.get_index()
+
+    def set_previous_cells_connect_next_cell_index(self,coords_in):
+        generic_1d_coords_in = coords_in
+        connect_next_cell_index[previous_filled_cell_coords] = generic_1d_coords_in.get_index()
+
+    def get_cells_next_cell_index_as_coords(self,coords_in,
+                                            height_type_in):
+
+        generic_1d_coords_in = coords_in
+        if height_type_in == flood_height:
+            return generic_1d_coords(flood_next_cell_index[generic_1d_coords_in])
+        else if height_type_in == connection_height:
+            return generic_1d_coords(connect_next_cell_index[generic_1d_coords_in])
+        else:
+            raise RuntimeError("Height type not recognized")
