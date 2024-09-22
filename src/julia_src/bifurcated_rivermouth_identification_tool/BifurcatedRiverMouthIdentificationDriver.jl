@@ -25,6 +25,12 @@ function pass_arguments()
   "--output-river-mouths-filepath","-o"
     help = "Target filepath for output river mouth indices file"
     required = true
+  "--accumulated-flow-filepath","-a"
+    help = "Accumulated flow filepath"
+  "--accumulated-flow-fieldname","-f"
+    help = "Accumulated flow fieldname"
+  "--search-areas-filepath","-s"
+    help = "Search areas filepath"
   end
   args = parse_args(settings)
   if args["accumulated-flow-filepath"] &&

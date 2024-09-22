@@ -31,6 +31,16 @@ relative_path=$1
 perl -MCwd -e 'print Cwd::abs_path($ARGV[0]),qq<\n>' $relative_path
 }
 
+rdirs_only=false
+case ${1} in
+  -r | --rdirs-only)
+    rdirs_only=true
+    shift
+    ;;
+  *)
+    ;;
+esac
+
 #Process command line arguments
 input_orography_filepath=${1}
 input_ls_mask_filepath=${2}
@@ -301,37 +311,41 @@ ${source_directory}/Dynamic_HD_bash_scripts/generate_fine_icon_rdirs.sh ${source
 mv accumulated_flow.nc ${output_accumulated_flow_filepath}
 cp ${grid_file} grid_in_temp.nc
 cp ${input_ls_mask_filepath} mask_in_temp.nc
-rm -f paragen/area_dlat_dlon.txt
-rm -f paragen/ddir.inp
-rm -f paragen/hd_partab.txt
-rm -f paragen/hd_up
-rm -f paragen/hdpara_icon.nc
-rm -f paragen/mo_read_icon_trafo.mod
-rm -f paragen/paragen.inp
-rm -f paragen/paragen_icon.mod
-rm -f paragen/paragen_icon_driver
-rmdir paragen || true
-mkdir paragen
-${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/generate_icon_hd_file_driver.sh ${working_directory}/paragen ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran ${working_directory} grid_in_temp.nc mask_in_temp.nc ${next_cell_index_filepath} orography_filled.nc ${bifurcate_rivers} ${next_cell_index_bifurcated_filepath} ${number_of_outflows_filepath}
-${source_directory}/Dynamic_HD_bash_scripts/adjust_icon_k_parameters.sh  ${working_directory}/paragen/hdpara_icon.nc ${output_hdpara_filepath} ${atmos_resolution}
+if $rdirs_only ; then
+  cp ${next_cell_index_filepath} ${output_hdpara_filepath}.nc
+else
+  rm -f paragen/area_dlat_dlon.txt
+  rm -f paragen/ddir.inp
+  rm -f paragen/hd_partab.txt
+  rm -f paragen/hd_up
+  rm -f paragen/hdpara_icon.nc
+  rm -f paragen/mo_read_icon_trafo.mod
+  rm -f paragen/paragen.inp
+  rm -f paragen/paragen_icon.mod
+  rm -f paragen/paragen_icon_driver
+  rmdir paragen || true
+  mkdir paragen
+  ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/generate_icon_hd_file_driver.sh ${working_directory}/paragen ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran ${working_directory} grid_in_temp.nc mask_in_temp.nc ${next_cell_index_filepath} orography_filled.nc ${bifurcate_rivers} ${next_cell_index_bifurcated_filepath} ${number_of_outflows_filepath}
+  ${source_directory}/Dynamic_HD_bash_scripts/adjust_icon_k_parameters.sh  ${working_directory}/paragen/hdpara_icon.nc ${output_hdpara_filepath} ${atmos_resolution}
 
-#Clean up temporary files
-rm -f paragen/area_dlat_dlon.txt
-rm -f paragen/ddir.inp
-rm -f paragen/hd_partab.txt
-rm -f paragen/hd_up
-rm -f paragen/hdpara_icon.nc
-rm -f paragen/mo_read_icon_trafo.mod
-rm -f paragen/paragen.inp
-rm -f paragen/paragen_icon.mod
-rm -f paragen/paragen_icon_driver
-unlink paragen/bifurcated_next_cell_index_for_upstream_cell.nc || true
-rmdir paragen || true
-rm -f orography_filled.nc
-rm -f grid_in_temp.nc
-rm -f mask_in_temp.nc
-rm -f next_cell_index.nc
-rm -f next_cell_index_temp.nc
-rm -f number_of_outflows.nc
-rm -f bifurcated_next_cell_index.nc
-rm -f accumulated_flow_temp.nc
+  #Clean up temporary files
+  rm -f paragen/area_dlat_dlon.txt
+  rm -f paragen/ddir.inp
+  rm -f paragen/hd_partab.txt
+  rm -f paragen/hd_up
+  rm -f paragen/hdpara_icon.nc
+  rm -f paragen/mo_read_icon_trafo.mod
+  rm -f paragen/paragen.inp
+  rm -f paragen/paragen_icon.mod
+  rm -f paragen/paragen_icon_driver
+  unlink paragen/bifurcated_next_cell_index_for_upstream_cell.nc || true
+  rmdir paragen || true
+  rm -f orography_filled.nc
+  rm -f grid_in_temp.nc
+  rm -f mask_in_temp.nc
+  rm -f next_cell_index.nc
+  rm -f next_cell_index_temp.nc
+  rm -f number_of_outflows.nc
+  rm -f bifurcated_next_cell_index.nc
+  rm -f accumulated_flow_temp.nc
+fi

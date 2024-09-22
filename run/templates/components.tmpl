@@ -105,6 +105,14 @@ if ! ${use_existing_river_mouth_position_file} ; then
     echo "Warning - file ${river_mouth_position_filepath} not used" 1>&2
     echo "as use_existing_river_mouth_position_file is set to False" 1>&2
   fi
+  search_areas_filepath=/work/mh1421/m300468/data/search_areas.txt
+  river_deltas_filepath=/work/mh1421/m300468/data/river_deltas_${icon_atmo_grid_res}.txt
+  if [[ ${icon_atmo_grid_res} == "r2b8" ]] || [[ ${icon_atmo_grid_res} == "r2b9" ]] ||
+   [[ ${icon_atmo_grid_res} == "r2b10" ]] || [[ ${icon_atmo_grid_res} == "r2b11" ]]; then
+    river_deltas_filepath=/work/mh1421/m300468/data/river_deltas_${icon_atmo_grid_res}.txt
+  else
+    river_deltas_filepath=/work/mh1421/m300468/data/river_deltas_default.txt
+  fi
 else
   if [[ -z ${river_mouth_position_filepath} ]]; then
     echo "Error - river_mouth_position_filepath not set" 1>&2
@@ -194,10 +202,16 @@ cdo remapbil,${icon_grid_filepath} ${etop01_filepath} ${orography_filepath}
 {% if input.high_res %}
 if ! ${use_existing_river_mouth_position_file} ; then
   #Determine non-bifurcated river direction and cumulative flow
-  echo "Not yet implemented" 1>&2
-  exit 1
+  cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh --rdirs-only ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_filepath} z cell_sea_land_mask true_sinks ${output_hdpara_filepath%%.nc}_non_bifurcated_rdirs_only.nc ${output_catchments_filepath%%.nc}_non_bifurcated.nc ${output_accumulated_flow_filepath%%.nc}_non_bifurcated.nc  ${config_filepath} ${working_directory} ${icon_grid_filepath} ${icon_atmo_grid_res} False"
+  echo "Running (for non-bifurcated river directions - initial step):"
+  echo ${cmd}
+  eval ${cmd}
   #Determine bifurcated river mouth positions
-  river_mouth_position_filepath=
+  river_mouth_position_filepath=${working_directory}/rivermouths.txt
+  cmd="julia ${repository_path}/src/julia_src/bifurcated_rivermouth_identification_tool/BifurcatedRiverMouthIdentificationDriver.jl -g ${icon_grid_filepath} -m ${binary_lsmask_filepath} -n cell_sea_land_mask -r ${river_deltas_filepath} -o ${river_mouth_position_filepath} -a ${output_accumulated_flow_filepath%%.nc}_non_bifurcated.nc -f acc -s ${search_areas_filepath}"
+  echo "Running:"
+  echo ${cmd}
+  eval ${cmd}
 fi
 #Run bifurcated hdpara file generation
 cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_filepath} z cell_sea_land_mask true_sinks ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} ${icon_atmo_grid_res} False True ${river_mouth_position_filepath}"
