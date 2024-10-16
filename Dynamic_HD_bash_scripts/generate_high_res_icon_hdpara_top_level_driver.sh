@@ -196,13 +196,13 @@ if ! [[ -d $source_directory ]]; then
 fi
 
 shopt -s nocasematch
-no_conda=${no_conda:-"false"}
-if [[ ${no_conda} == "true" ]] || [[ $no_conda == "t" ]]; then
-  no_conda=true
-elif [[ $no_conda == "false" ]] || [[ $no_conda == "f" ]]; then
-  no_conda=false
+no_mamba=${no_mamba:-"false"}
+if [[ ${no_mamba} == "true" ]] || [[ $no_mamba == "t" ]]; then
+  no_mamba=true
+elif [[ $no_mamba == "false" ]] || [[ $no_mamba == "f" ]]; then
+  no_mamba=false
 else
-  echo "Format of no_conda flag (${no_conda}) is unknown, please use True/False or T/F" 1>&2
+  echo "Format of no_mamba flag (${no_mamba}) is unknown, please use True/False or T/F" 1>&2
   exit 1
 fi
 
@@ -226,7 +226,7 @@ else
         exit 1
 fi
 
-if ${no_conda} ; then
+if ${no_mamba} ; then
 no_env_gen=false
 fi
 
@@ -244,7 +244,7 @@ cd ${working_directory}
 #   compilation_required=false
 # fi
 
-#Setup conda environment
+#Setup mamba environment
 echo "Setting up environment"
 if ! $no_modules ; then
   if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
@@ -260,24 +260,22 @@ fi
 
 export DYLD_LIBRARY_PATH=$LD_LIBRARY_PATH:$DYLD_LIBRARY_PATH
 
-if ! $no_modules && ! $no_conda ; then
+if ! $no_modules && ! $no_mamba ; then
   if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
     load_module python3
-  else
-    load_module anaconda3
   fi
 fi
 
-if ! $no_conda && ! $no_env_gen ; then
-  if $compilation_required && conda info -e | grep -q "dyhdenv3"; then
-    conda env remove --yes --name dyhdenv3
+if ! $no_mamba && ! $no_env_gen ; then
+  if $compilation_required && mamba info -e | grep -q "dyhdenv_mamba"; then
+    mamba env remove --yes --name dyhdenv_mamba
   fi
-  if ! conda info -e | grep -q "dyhdenv3"; then
-    ${source_directory}/Dynamic_HD_bash_scripts/regenerate_conda_environment.sh $no_modules
+  if ! mamba info -e | grep -q "dyhdenv_mamba"; then
+    ${source_directory}/Dynamic_HD_bash_scripts/regenerate_mamba_environment.sh $no_modules
   fi
 fi
-if ! $no_conda ; then
-  source activate dyhdenv3
+if ! $no_mamba ; then
+  source activate dyhdenv_mamba
 fi
 
 #Load a new version of gcc that doesn't have the polymorphic variable bug
