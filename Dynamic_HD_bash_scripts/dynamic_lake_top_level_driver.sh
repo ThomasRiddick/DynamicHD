@@ -1,7 +1,9 @@
 #!/bin/bash
 set -e
 
+cd $(dirname ${0})
 version=$(git describe --match 'release_version_*')
+cd -
 echo "Running Version ${version} of the Dynamic Lake and HD Parameters Generation Code"
 
 #Define module loading function

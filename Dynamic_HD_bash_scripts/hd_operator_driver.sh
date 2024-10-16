@@ -1,7 +1,9 @@
 #!/bin/bash
 set -e
 
+cd $(dirname ${0})
 version=$(git describe --match 'latlon_hd_tools_version_*')
+cd -
 echo "Running Version ${version} of the HD Command Line Operator Code"
 
 #Define module loading function
