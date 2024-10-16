@@ -87,17 +87,18 @@ def run_cotat_plus(fine_rdirs_field,fine_total_cumulative_flow_field,cotat_plus_
     Compiles and runs the COTAT plus algorithm in Fortran using f2py for a lat-lon field
     """
 
-    additional_fortran_filenames = ["base/area_mod.o",
-                                    "base/coords_mod.o",
-                                    "algorithms/cotat_parameters_mod.o",
-                                    "algorithms/cotat_plus.o",
-                                    "base/doubly_linked_list_mod.o",
-                                    "base/doubly_linked_list_link_mod.o",
-                                    "base/field_section_mod.o",
-                                    "base/precision_mod.o",
-                                    "base/subfield_mod.o",
-                                    "algorithms/map_non_coincident_grids_mod.o",
-                                    "base/unstructured_grid_mod.o"]
+    additional_fortran_filenames = \
+        ["Dynamic_HD_Fortran_Code_src_base_area_mod.f90.o",
+         "Dynamic_HD_Fortran_Code_src_base_coords_mod.f90.o",
+         "Dynamic_HD_Fortran_Code_src_algorithms_cotat_parameters_mod.f90.o",
+         "Dynamic_HD_Fortran_Code_src_algorithms_cotat_plus.f90.o",
+         "Dynamic_HD_Fortran_Code_src_base_doubly_linked_list_mod.f90.o",
+         "Dynamic_HD_Fortran_Code_src_base_doubly_linked_list_link_mod.f90.o",
+         "Dynamic_HD_Fortran_Code_src_base_field_section_mod.f90.o",
+         "Dynamic_HD_Fortran_Code_src_base_precision_mod.f90.o",
+         "Dynamic_HD_Fortran_Code_src_base_subfield_mod.f90.o",
+         "Dynamic_HD_Fortran_Code_src_algorithms_map_non_coincident_grids_mod.f90.o",
+         "Dynamic_HD_Fortran_Code_src_base_unstructured_grid_mod.f90.o"]
     additional_fortran_filepaths = [path.join(fortran_project_object_path,filename) for filename in\
                                     additional_fortran_filenames]
     f2py_mngr = f2py_manager.f2py_manager(path.join(fortran_project_source_path,

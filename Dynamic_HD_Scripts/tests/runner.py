@@ -1,5 +1,6 @@
 from unittest import TestLoader, TextTestRunner
 import unittest
+import tests.test_bifurcate_rivers as test_bifurcate_rivers
 import tests.test_compute_catchments as test_compute_catchments
 import tests.test_connect_coarse_lake_catchments as test_connect_coarse_lake_catchments
 import tests.test_cotat_plus_driver as test_cotat_plus_driver
