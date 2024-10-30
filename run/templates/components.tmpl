@@ -174,13 +174,13 @@ ln -s ${icon_grid_filepath} $(basename ${icon_grid_filepath})
 icon_grid_filepath=$(basename ${icon_grid_filepath})
 # Pre-processing
 if [[ ${binary_conversion_method} == "hfrac" ]]; then
-  cdo expr,cell_sea_land_mask='(cell_sea_land_mask > 0.5)' ${fractional_lsmask_filepath} ${binary_lsmask_filepath}
-  cdo expr,cell_sea_land_mask='(cell_sea_land_mask > 0.0)' ${fractional_lsmask_filepath} ${max_land_binary_lsmask_filepath}
+  cdo expr,notsea='(notsea > 0.5)' ${fractional_lsmask_filepath} ${binary_lsmask_filepath}
+  cdo expr,notsea='(notsea > 0.0)' ${fractional_lsmask_filepath} ${max_land_binary_lsmask_filepath}
 elif [[ ${binary_conversion_method} == "minl" ]]; then
-  cdo expr,cell_sea_land_mask='(cell_sea_land_mask >= 1.0)' ${fractional_lsmask_filepath} ${binary_lsmask_filepath}
-  cdo expr,cell_sea_land_mask='(cell_sea_land_mask >  0.0)' ${fractional_lsmask_filepath} ${max_land_binary_lsmask_filepath}
+  cdo expr,notsea='(notsea >= 1.0)' ${fractional_lsmask_filepath} ${binary_lsmask_filepath}
+  cdo expr,notsea='(notsea >  0.0)' ${fractional_lsmask_filepath} ${max_land_binary_lsmask_filepath}
 elif [[ ${binary_conversion_method} == "maxl" ]]; then
-  cdo expr,cell_sea_land_mask='(cell_sea_land_mask >  0.0)' ${fractional_lsmask_filepath} ${binary_lsmask_filepath}
+  cdo expr,notsea='(notsea >  0.0)' ${fractional_lsmask_filepath} ${binary_lsmask_filepath}
 else
   echo "Unknown binary conversion method" 1>&2
   exit 1
@@ -200,7 +200,7 @@ if ! ${use_existing_river_mouth_position_file} ; then
   river_mouth_position_filepath=
 fi
 #Run bifurcated hdpara file generation
-cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_filepath} z cell_sea_land_mask true_sinks ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} ${icon_atmo_grid_res} False True ${river_mouth_position_filepath}"
+cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_filepath} z notsea true_sinks ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} ${icon_atmo_grid_res} False True ${river_mouth_position_filepath}"
 {% else %}
 cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath} ${config_filepath} ${working_directory} ${icon_grid_filepath} ${repository_path}/Dynamic_HD_Resources/cotat_plus_standard_params.nl ${icon_atmo_grid_res} False ${use_hfrac} ${max_land_binary_lsmask_filepath} ${true_sinks_filepath}"
 {% endif %}

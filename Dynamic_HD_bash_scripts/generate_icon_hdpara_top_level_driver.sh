@@ -336,7 +336,7 @@ cell_numbers_filepath="cell_numbers_temp.nc"
 drivers_path=${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/command_line_drivers
 python ${drivers_path}/cross_grid_mapper_latlon_to_icon_driver.py ${grid_file} ${ten_minute_orography_filepath} ${cell_numbers_filepath}
 echo "Downscaling Landsea Mask" 1>&2
-python ${drivers_path}/icon_to_latlon_landsea_downscaler_driver.py ${cell_numbers_filepath} ${input_ls_mask_filepath} downscaled_ls_mask_temp.nc "cell_numbers" "cell_sea_land_mask"
+python ${drivers_path}/icon_to_latlon_landsea_downscaler_driver.py ${cell_numbers_filepath} ${input_ls_mask_filepath} downscaled_ls_mask_temp.nc "cell_numbers" "notsea"
 cdo expr,'lsm=(!lsm)' downscaled_ls_mask_temp.nc downscaled_ls_mask_temp_inverted.nc
 echo "Generating Combined Hydrosheds and Corrected Data River Directions" 1>&2
 ten_minute_river_direction_filepath="ten_minute_river_direction_temp.nc"
@@ -381,7 +381,7 @@ python ${drivers_path}/accumulate_flow_icon_driver.py ${grid_file} ${icon_final_
   cp ${grid_file} grid_in_temp.nc
   cp ${input_ls_mask_filepath} mask_in_temp.nc
   cdo expr,"acc=(next_cell_index == -9999999)" ${icon_intermediate_rdirs_filepath} zeros_temp.nc
-  python ${drivers_path}/sink_filling_icon_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} zeros_temp.nc orography_filled.nc ${grid_file} "z" "cell_sea_land_mask" "acc"
+  python ${drivers_path}/sink_filling_icon_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} zeros_temp.nc orography_filled.nc ${grid_file} "z" "notsea" "acc"
   ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/generate_icon_hd_file_driver.sh ${working_directory}/paragen ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran ${working_directory} grid_in_temp.nc mask_in_temp.nc ${icon_final_filepath}  orography_filled.nc
 ${source_directory}/Dynamic_HD_bash_scripts/adjust_icon_k_parameters.sh  ${working_directory}/paragen/hdpara_icon.nc ${working_directory}/hdpara_adjusted_temp.nc ${atmos_resolution}
 if ! ${use_hfrac}; then
