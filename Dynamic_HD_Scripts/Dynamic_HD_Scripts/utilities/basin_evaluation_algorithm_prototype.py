@@ -4,6 +4,63 @@ from heapq import heappush,heappop
 from enum import auto, Enum
 from functools import total_ordering
 
+class StoreToArray:
+
+  def __init__(self):
+    self.objects = []
+    self.working_object = None
+
+  def add_object(self):
+    self.working_object = [0.0]
+    self.objects.append(self.working_object)
+
+  def complete_object(self):
+    self.working_object[0] = float(len(self.working_object) - 1)
+
+  def add_number(self,number_in):
+    self.working_object.append(float(number_in))
+
+  def add_coords(self,coords_in):
+    if type(coords_in) is int:
+        self.working_object.append(float(coords_in))
+    elif len(coords_in) == 2:
+        self.working_object.append(float(coords_in[0]))
+        self.working_object.append(float(coords_in[1]))
+
+  def add_field(self,field_in):
+    self.working_object.append(float(len(field_in)))
+    self.working_object.extend([float(val) for val in field_in])
+
+  def add_dict(self,dict_in):
+    dict_array = []
+    for key,val in dict_in.items():
+        if type(val) is int:
+            dict_array.extend([float(key),float(val)])
+        else:
+            entry_as_array = [float(key)]
+            entry_as_array.extend([float(x) for x in val])
+            dict_array.extend(entry_as_array)
+    self.working_object.append(float(len(dict_array)))
+    self.working_object.extend(float(len(dict_array)))
+
+  def add_filling_order(self,filling_order_in):
+    filling_order_array = []
+    for entry in filling_order_in:
+        if type(entry[0]) is int:
+            filling_order_array.append(float(entry[0]))
+        else:
+            filling_order_array.extend([float(x) for x in entry[0]])
+        filling_order_array.append(float(entry[1].value))
+        filling_order_array.append(float(entry[2]))
+        filling_order_array.append(float(entry[3]))
+    self.working_object.append(float(len(filling_order_array)))
+    self.working_object.extend(filling_order_array)
+
+  def complete_array(self):
+    array = [float(len(self.objects))]
+    for obj in self.objects:
+      array.extend(obj)
+    return array
 
 class Grid:
     pass
@@ -62,21 +119,20 @@ class Lake:
     def __init__(self,
                  lake_number,
                  center_coords,
-                 is_leaf=True,
                  primary_lake=None,
                  secondary_lakes=None):
         #Keep references to lakes as number not objects
         self.center_coords = center_coords
         self.lake_number = lake_number
-        self.is_leaf = is_leaf
         self.primary_lake = primary_lake
         self.secondary_lakes  = secondary_lakes
-        self.spill_points = {}
-        self.potential_exit_points = []
         self.outflow_points = {}
+        self.filling_order = []
+        #Working variables - don't need to exported
         self.center_cell_volume_threshold = 0.0
         self.lake_area = 0.0
-        self.filling_order = []
+        self.spill_points = {}
+        self.potential_exit_points = []
 
     def set_primary_lake(self,primary_lake):
         self.primary_lake = primary_lake
@@ -320,13 +376,8 @@ class BasinEvaluationAlgorithm:
                     self.new_center_cell_height_type = center_cell.get_height_type()
                     self.new_center_cell_height = center_cell.get_height()
                     #Exit to basin or level area found
-                    print(f"ncc {self.new_center_coords}")
-                    print(f"ch {self.center_cell_height}")
-                    print(f"nch {self.new_center_cell_height}")
-                    print(self.searched_level_height)
                     if (self.new_center_cell_height <= self.center_cell_height and
                         self.searched_level_height != self.center_cell_height):
-                            print("check")
                             outflow_lake_numbers,potential_exit_points = \
                                 self.search_for_outflows_on_level(lake_number)
                             if len(outflow_lake_numbers) > 0:
@@ -338,11 +389,6 @@ class BasinEvaluationAlgorithm:
                                             self.lake_connections.make_new_link(lake_number,other_lake_number)
                                             merging_lakes.append(lake_number)
                                 lake.set_potential_exit_points(potential_exit_points)
-                                print("ln")
-                                print(lake_number)
-                                print(self.center_cell_height)
-                                print(outflow_lake_numbers)
-                                print(potential_exit_points)
                                 self.raw_orography[
                                     np.logical_and(self.cells_in_lake,
                                                    self.raw_orography < self.center_cell_height)] = \
@@ -375,7 +421,6 @@ class BasinEvaluationAlgorithm:
                     new_lake_number = len(self.lakes)
                     new_lake = Lake(new_lake_number,
                                     self.lakes[list(sublakes_in_lake)[0]].center_coords,
-                                    is_leaf=False,
                                     primary_lake=None,
                                     secondary_lakes=sublakes_in_lake)
                     self.lake_connections.add_set(new_lake_number)
@@ -386,12 +431,6 @@ class BasinEvaluationAlgorithm:
                     for sublake in sublakes_in_lake:
                         for other_sublake in sublakes_in_lake:
                             if sublake != other_sublake:
-                                print(sublake)
-                                print(other_sublake)
-                                print(self.lakes[sublake].center_coords)
-                                print(self.lake_numbers)
-                                np.set_printoptions(linewidth=120)
-                                print(self.corrected_orography)
                                 self.lakes[sublake].spill_points[other_sublake] = \
                                     self.search_alg(lambda coords :
                                                     self.lake_numbers[coords] == other_sublake,
@@ -451,7 +490,6 @@ class BasinEvaluationAlgorithm:
         self.process_center_cell(lake)
 
     def search_for_outflows_on_level(self,lake_number):
-        print("search on level")
         self.level_completed_cells[:,:] = False
         self.outflow_lake_numbers = []
         self.potential_exit_points = []
@@ -476,7 +514,6 @@ class BasinEvaluationAlgorithm:
             level_center_cell = self.level_q.pop()
             self.level_coords = level_center_cell.get_cell_coords()
             self.level_completed_cells[self.level_coords] = True
-            print(self.level_coords)
             self.process_level_neighbors(lake_number)
         return self.outflow_lake_numbers,self.potential_exit_points
 
@@ -488,7 +525,6 @@ class BasinEvaluationAlgorithm:
             neighbors_coords.pop(-1)
             if (not self.level_completed_cells[nbr_coords] and
                 not self.cells_in_lake[nbr_coords]):
-                print(nbr_coords)
                 raw_height = float(self.raw_orography[nbr_coords])
                 corrected_height = float(self.corrected_orography[nbr_coords])
                 self.level_completed_cells[nbr_coords] = True
@@ -612,6 +648,25 @@ class BasinEvaluationAlgorithm:
                                                     lambda coords : False,
                                                     coarse_first_cell_beyond_rim_coords)
         return outflow_coords
+
+    def get_lakes_as_array(self):
+        store_to_array = StoreToArray()
+        for lake in self.lakes:
+            store_to_array.add_object()
+            store_to_array.add_number(lake.lake_number)
+            if lake.primary_lake is not None:
+                store_to_array.add_number(lake.primary_lake)
+            else:
+                store_to_array.add_number(-1)
+            if lake.secondary_lakes is not None:
+                store_to_array.add_field(lake.secondary_lakes)
+            else:
+                store_to_array.add_field([])
+            store_to_array.add_coords(lake.center_coords)
+            #store_to_array.add_dict(lake.outflow_points)
+            store_to_array.add_filling_order(lake.filling_order)
+            store_to_array.complete_object()
+        return store_to_array.complete_array()
 
 class LatLonBasinEvaluationAlgorithm(BasinEvaluationAlgorithm):
 
