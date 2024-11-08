@@ -18,6 +18,8 @@ import tests.test_utilities as test_utilities
 import tests.test_dynamic_hd_production_run_driver as test_dynamic_hd_production_run_driver
 import tests.test_dynamic_lake_production_run_driver as test_dynamic_lake_production_run_driver
 
+# test_basin_evaluation_algorithm_prototype not included in either set as it
+# is only a prototype
 short_test_modules = [test_compute_catchments,
                       test_connect_coarse_lake_catchments,
                       test_cotat_plus_driver,
