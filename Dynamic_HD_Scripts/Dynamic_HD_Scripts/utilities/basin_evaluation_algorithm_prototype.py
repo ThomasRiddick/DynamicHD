@@ -71,19 +71,21 @@ class LatLonGrid(Grid):
         self.shape = shape
 
     def get_neighbors_coords(self,coords_in):
-        x = coords_in[0]
-        y = coords_in[1]
+        y = coords_in[0]
+        x = coords_in[1]
         neighbors = []
         for i in range(-1,2):
             for j in range(-1,2):
-                if i == 0 and j == 0:
-                    continue
-                if x+i < 0 or y+j < 0:
-                    continue
-                if (x+i >= self.shape[0] or
-                    y+j >= self.shape[1]):
-                    continue
-                neighbors.append((x+i,y+j))
+                if ((i == 0 and j == 0) or
+                     y+j < 0 or
+                     y+j >= self.shape[0]):
+                    pass
+                elif x+i < 0:
+                    neighbors.append((y+j,self.shape[1]+i))
+                elif (x+i >= self.shape[1]):
+                    neighbors.append((y+j,-1+i))
+                else:
+                    neighbors.append((y+j,x+i))
         return neighbors
 
     def convert_fine_coords(self,coords_in,fine_grid_in):
@@ -92,23 +94,31 @@ class LatLonGrid(Grid):
         return (int(coords_in[0]//y_scale),int(coords_in[1]//x_scale))
 
     def calculate_downstream_coords_from_dir_based_rdir(self,coords_in,rdir):
-        x = coords_in[0]
-        y = coords_in[1]
+        y = coords_in[0]
+        x = coords_in[1]
         if rdir == 5 or rdir <= 0:
             return coords_in
         if rdir == 7 or rdir == 8 or rdir == 9:
-            i = -1
-        elif rdir == 4 or rdir == 6:
-            i = 0
-        elif rdir == 1 or rdir == 2 or rdir == 3:
-            i = 1
-        if rdir == 1 or rdir == 4 or rdir == 7:
             j = -1
-        elif rdir == 2 or rdir == 8:
+        elif rdir == 4 or rdir == 6:
             j = 0
-        elif rdir == 3 or rdir == 6 or rdir == 9:
+        elif rdir == 1 or rdir == 2 or rdir == 3:
             j = 1
-        return (x+i,y+j)
+        if rdir == 1 or rdir == 4 or rdir == 7:
+            i = -1
+        elif rdir == 2 or rdir == 8:
+            i = 0
+        elif rdir == 3 or rdir == 6 or rdir == 9:
+            i = 1
+        if(y+j < 0 or
+           y+j >= self.shape[0]):
+            return coords_in
+        elif x+i < 0:
+            return (y+j,self.shape[1]+i)
+        elif x+i >= self.shape[1]:
+            return (y+j,-1+i)
+        else:
+            return (y+j,x+i)
 
 class HeightType(Enum):
     flood_height = auto()
@@ -510,6 +520,10 @@ class BasinEvaluationAlgorithm:
         self.level_q.append(BasinCell(self.center_cell_height,
                                       self.center_cell_height_type,
                                       self.center_coords))
+        if self.center_cell_height == self.new_center_cell_height:
+            self.level_q.append(BasinCell(self.new_center_cell_height,
+                                          self.new_center_cell_height_type,
+                                          self.new_center_coords))
         while len(self.level_q) > 0:
             level_center_cell = self.level_q.pop()
             self.level_coords = level_center_cell.get_cell_coords()
@@ -598,7 +612,7 @@ class BasinEvaluationAlgorithm:
             if lake.primary_lake is None:
                 for potential_exit_point in lake.potential_exit_points:
                     if self.lake_numbers[potential_exit_point] != -1:
-                        raise RuntimeError("Lake on top of heirarchy trying"
+                        raise RuntimeError("Lake on top of heirarchy trying "
                                            "to spill into another lake")
                 first_cell_beyond_rim_coords = lake.potential_exit_points[0]
                 lake.outflow_points[-1] = (self.find_non_local_outflow_point(first_cell_beyond_rim_coords),False)
@@ -693,6 +707,7 @@ class LatLonBasinEvaluationAlgorithm(BasinEvaluationAlgorithm):
     def check_for_sinks_and_get_downstream_coords(self,coords_in):
         rdir = self.prior_fine_rdirs[coords_in]
         downstream_coords = self.grid.calculate_downstream_coords_from_dir_based_rdir(coords_in,rdir)
+        print(downstream_coords)
         next_rdir = self.prior_fine_rdirs[downstream_coords]
         return rdir == 5 or next_rdir == 0,downstream_coords
 
