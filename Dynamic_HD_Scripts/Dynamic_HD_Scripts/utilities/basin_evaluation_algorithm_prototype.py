@@ -41,7 +41,7 @@ class StoreToArray:
             entry_as_array.extend([float(x) for x in val])
             dict_array.extend(entry_as_array)
     self.working_object.append(float(len(dict_array)))
-    self.working_object.extend(float(len(dict_array)))
+    self.working_object.extend(dict_array)
 
   def add_filling_order(self,filling_order_in):
     filling_order_array = []
@@ -49,11 +49,11 @@ class StoreToArray:
         if type(entry[0]) is int:
             filling_order_array.append(float(entry[0]))
         else:
-            filling_order_array.extend([float(x) for x in entry[0]])
+            filling_order_array.extend([float(entry[0][0]),float(entry[0][1])])
         filling_order_array.append(float(entry[1].value))
         filling_order_array.append(float(entry[2]))
         filling_order_array.append(float(entry[3]))
-    self.working_object.append(float(len(filling_order_array)))
+    self.working_object.append(float(len(filling_order_in)))
     self.working_object.extend(filling_order_array)
 
   def complete_array(self):

@@ -10,7 +10,8 @@ using SharedArrays
 abstract type Grid end
 
 function for_all(function_on_point::Function,
-                 grid::Grid)
+                 grid::Grid;
+                 use_cartestian_index::Bool=false)
   throw(UserError())
 end
 
@@ -27,6 +28,12 @@ end
 function for_all_fine_cells_in_coarse_cell(function_on_point::Function,
                                            fine_grid::Grid,coarse_grid::Grid,
                                            coarse_cell_coords::Coords)
+  throw(UserError())
+end
+
+function for_all_fine_cells_in_coarse_cell(function_on_point::Function,
+                                           fine_grid::Grid,coarse_grid::Grid,
+                                           coarse_cell_coords::CartesianIndex)
   throw(UserError())
 end
 
@@ -109,11 +116,19 @@ UnstructuredGrid(ncells::Int64,
 LatLonGridOrUnstructuredGrid = Union{LatLonGrid,UnstructuredGrid}
 
 function for_all(function_on_point::Function,
-                 grid::LatLonGrid,
-                 parallelise::Bool=false)
-  for j = 1:grid.nlon
-    for i = 1:grid.nlat
-      function_on_point(LatLonCoords(i,j))
+                 grid::LatLonGrid;
+                 use_cartestian_index::Bool=false)
+  if use_cartestian_index
+    for j = 1:grid.nlon
+      for i = 1:grid.nlat
+        function_on_point(CartesianIndex(i,j))
+      end
+    end
+  else
+    for j = 1:grid.nlon
+      for i = 1:grid.nlat
+        function_on_point(LatLonCoords(i,j))
+      end
     end
   end
 end
@@ -137,9 +152,16 @@ function for_all_parallel_sum(function_on_point::Function,
 end
 
 function for_all(function_on_point::Function,
-                 grid::UnstructuredGrid)
-  for i = 1:grid.ncells
-    function_on_point(Generic1DCoords(i))
+                 grid::UnstructuredGrid,
+                 use_cartestian_index::Bool=false)
+  if use_cartestian_index
+    for i = 1:grid.ncells
+      function_on_point(CartesianIndex(i))
+    end
+  else
+    for i = 1:grid.ncells
+      function_on_point(Generic1DCoords(i))
+    end
   end
 end
 
@@ -229,12 +251,36 @@ function for_all_fine_cells_in_coarse_cell(function_on_point::Function,
 end
 
 function for_all_fine_cells_in_coarse_cell(function_on_point::Function,
+                                           fine_grid::LatLonGrid,
+                                           coarse_grid::LatLonGrid,
+                                           coarse_cell_coords::CartesianIndex)
+  nlat_scale_factor = fine_grid.nlat/coarse_grid.nlat
+  nlon_scale_factor = fine_grid.nlon/coarse_grid.nlon
+  for j = 1+(coarse_cell_coords[2] - 1)*nlon_scale_factor:coarse_cell_coords[2]*nlon_scale_factor
+    for i = 1+(coarse_cell_coords[1] - 1)*nlat_scale_factor:coarse_cell_coords[1]*nlat_scale_factor
+      function_on_point(CartesianIndex(i,j))
+    end
+  end
+end
+
+function for_all_fine_cells_in_coarse_cell(function_on_point::Function,
                                            fine_grid::UnstructuredGrid,
                                            coarse_grid::UnstructuredGrid,
                                            coarse_cell_coords::Generic1DCoords)
   for i = 1:fine_grid.ncells
     if (fine_grid.mapping_to_coarse_grid[i] == coarse_cell_coords.index)
       function_on_point(Generic1DCoords(i))
+    end
+  end
+end
+
+function for_all_fine_cells_in_coarse_cell(function_on_point::Function,
+                                           fine_grid::UnstructuredGrid,
+                                           coarse_grid::UnstructuredGrid,
+                                           coarse_cell_coords::CartesianIndex)
+  for i = 1:fine_grid.ncells
+    if (fine_grid.mapping_to_coarse_grid[i] == coarse_cell_coords[1])
+      function_on_point(CartesianIndex(i))
     end
   end
 end
