@@ -1,6 +1,6 @@
 {% macro slurm_headers() %}
 {% if input.slurm_headers -%}
-#SLURM HEADERS
+###SLURM HEADERS
 #SBATCH --job-name=create_icon_hdpara
 #SBATCH --partition=shared
 #SBATCH --account=YOUR_ACCOUNT
@@ -100,6 +100,10 @@ if [[ -z ${use_existing_river_mouth_position_file} ]]; then
   use_existing_river_mouth_position_file=false
 fi
 
+if [[ -z ${use_river_bifurcation} ]]; then
+  use_river_bifurcation=true
+fi
+
 if ! ${use_existing_river_mouth_position_file} ; then
   if [[ -n ${river_mouth_position_filepath} ]]; then
     echo "Warning - file ${river_mouth_position_filepath} not used" 1>&2
@@ -165,7 +169,11 @@ else
   true_sinks_flag_string=""
 fi
 {% if input.high_res %}
-number_of_channels_label_string="mc"
+if ${use_river_bifurcation}; then
+  number_of_channels_label_string="mc"
+else
+  number_of_channels_label_string="sc"
+fi
 {% else %}
 number_of_channels_label_string="sc"
 {% endif %}
@@ -214,7 +222,11 @@ if ! ${use_existing_river_mouth_position_file} ; then
   eval ${cmd}
 fi
 #Run bifurcated hdpara file generation
-cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_filepath} z cell_sea_land_mask true_sinks ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} ${icon_atmo_grid_res} False True ${river_mouth_position_filepath}"
+if ${use_river_bifurcation} ; then
+  cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_filepath} z cell_sea_land_mask true_sinks ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} ${icon_atmo_grid_res} False True ${river_mouth_position_filepath}"
+else
+  cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_filepath} z cell_sea_land_mask true_sinks ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} ${icon_atmo_grid_res} False"
+fi
 {% else %}
 cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath} ${config_filepath} ${working_directory} ${icon_grid_filepath} ${repository_path}/Dynamic_HD_Resources/cotat_plus_standard_params.nl ${icon_atmo_grid_res} False ${use_hfrac} ${max_land_binary_lsmask_filepath} ${true_sinks_filepath}"
 {% endif %}

@@ -1,5 +1,5 @@
 project('dynamic HD scripts',['c','cpp','fortran','cython'],
-        version: '3.12',
+        version: '3.13',
         default_options:['cpp_std=gnu++11','warning_level=0',
                          'optimization=0','default_library=static',
                          'cython_language=cpp'])

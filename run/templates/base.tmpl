@@ -108,6 +108,11 @@ use_existing_river_mouth_position_file={{ input.use_existing_river_mouth_positio
 #true
 river_mouth_position_filepath={{ input.river_mouth_position_filepath }}
 
+#Only used by the high resolution method - this is on by
+#default and should only be switched off if you have a specific reason
+#to run without river bifurcation
+use_river_bifurcation=true
+
 {%- endblock %}
 
 {% block end_of_user_input_header -%}
