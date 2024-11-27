@@ -121,11 +121,13 @@ function find_cells_on_line_section(line_section::@NamedTuple{start_point::
 		#Note the map is over the set of vertices of a given triangle
 		if check_if_line_section_intersects_cell(line_section,
 																						 is_wrapped_line,
-																						 map(cell_vertex_coords::CartesianIndex ->
-									  												 	   (lat=cell_vertex_coords.lats[i],
-									   															lon=cell_vertex_coords.lons[i]),
-									  												     cells.cell_vertices),
-									  												 cells.is_wrapped_cell[i])
+																						 map(cell_vertex_coords::
+																								 @NamedTuple{lats::Array{Float64},
+																									           lons::Array{Float64}} ->
+																								 (lat=cell_vertex_coords.lats[i],
+																									lon=cell_vertex_coords.lons[i]),
+																								 cells.cell_vertices),
+																						 cells.is_wrapped_cell[i])
 			push!(cells_on_line_section,i)
 		end
 	end
