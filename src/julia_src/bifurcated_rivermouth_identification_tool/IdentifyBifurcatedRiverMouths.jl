@@ -24,7 +24,9 @@ struct Cells
 							    	 max_lons = maximum(cell_vertices.lons,dims=2))
 		is_wrapped_cell::Array{Bool} = fill(false,size(cell_indices))
 		for i = 1:size(cell_vertices.lons,1)
-			if abs(cell_vertices.lons[i,3] - cell_vertices.lons[i,2]) > 180.0 ||
+                        if cell_vertices.lats[i,1] > 85.0 || cell_vertices.lats[i,1] < -80.0
+				is_wrapped_cell[i] = false
+			elseif abs(cell_vertices.lons[i,3] - cell_vertices.lons[i,2]) > 180.0 ||
 				 abs(cell_vertices.lons[i,3] - cell_vertices.lons[i,1]) > 180.0
 				is_wrapped_cell[i] = true
 				if abs(cell_vertices.lons[i,3] - cell_vertices.lons[i,2]) > 180.0 &&
@@ -52,8 +54,8 @@ struct Cells
 																		  max(cell_vertices.lons[i,3],cell_vertices.lons[i,2]) :
 																		  cell_vertices.lons[i,1]
 				else
-  				throw(UserError())
-  			end
+  					error()
+  				end
 			end
 		end
 		return new(cell_indices,cell_neighbors,cell_coords,

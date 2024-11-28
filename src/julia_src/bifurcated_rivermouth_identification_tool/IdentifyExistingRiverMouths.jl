@@ -9,10 +9,10 @@ struct Area
   max_lon::Float64
 end
 
-function check_if_cell_is_inside_area(cell_lat_min::Float64,
-                                      cell_lat_max::Float64,
-                                      cell_lon_min::Float64,
-                                      cell_lon_max::Float64,
+function check_if_cell_is_inside_area(cell_min_lat::Float64,
+                                      cell_max_lat::Float64,
+                                      cell_min_lon::Float64,
+                                      cell_max_lon::Float64,
                                       is_wrapped_cell::Bool,
                                       area::Area)
   wrapped_area::Bool = (area.min_lon > area.max_lon)
@@ -52,7 +52,7 @@ end
 function identify_existing_river_mouths(cells::Cells,
                                         accumulated_flow::Array{Int64},
                                         search_areas::Dict{String,Area})
-  existing_river_mouths::Dict{String,Area} = Dict{String,Area}()
+  existing_river_mouths::Dict{String,CartesianIndex} = Dict{String,CartesianIndex}()
   for (name,search_area) in search_areas
     existing_river_mouths[name] =
       identify_existing_river_mouth(cells,

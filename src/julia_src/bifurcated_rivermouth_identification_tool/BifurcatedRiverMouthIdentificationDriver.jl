@@ -4,7 +4,8 @@ using IdentifyBifurcatedRiverMouthsInput: load_river_deltas_from_file
 using IdentifyBifurcatedRiverMouthsInput: load_accumulated_flow
 using IdentifyBifurcatedRiverMouthsInput: load_search_areas_from_file
 using IdentifyBifurcatedRiverMouthsOutput: write_river_mouth_indices
-using IdentifyBifurcatedRiverMouths: identify_bifurcated_river_mouths
+using IdentifyBifurcatedRiverMouths: identify_bifurcated_river_mouths,Cells
+using IdentifyBifurcatedRiverMouths: RiverDelta
 using IdentifyExistingRiverMouths: Area, identify_existing_river_mouths
 
 function pass_arguments()
@@ -33,29 +34,30 @@ function pass_arguments()
     help = "Search areas filepath"
   end
   args = parse_args(settings)
-  if args["accumulated-flow-filepath"] &&
-     args["accumulated-flow-fieldname"] &&
-     args["search-areas-filepath"]
+  if args["accumulated-flow-filepath"] != nothing &&
+     args["accumulated-flow-fieldname"] != nothing &&
+     args["search-areas-filepath"] != nothing
     args["find-existing-river-mouths"] = true
-  elseif args["accumulated-flow-filepath"] ||
-         args["accumulated-flow-fieldname"] ||
-         args["search-areas-filepath"]
+  elseif args["accumulated-flow-filepath"] != nothing ||
+         args["accumulated-flow-fieldname"] != nothing ||
+         args["search-areas-filepath"] != nothing
     args["find-existing-river-mouths"] = false
     error("Must specify all of options for searching for existing filename or none")
   else
     args["find-existing-river-mouths"] = false
   end
+  return args
 end
 
 function bifurcated_river_mouth_identification_driver(args::Dict{String})
   cells::Cells = load_icosahedral_grid(args["grid-filepath"])
-  lsmask::Array{Bool} = load_landsea_mask(args["lsmask_filepath"],args["lsmask-fieldname"])
-  river_deltas::Array{RiverDelta} = load_river_deltas_from_file(args["river_deltas_filepath"])
+  lsmask::Array{Bool} = load_landsea_mask(args["lsmask-filepath"],args["lsmask-fieldname"])
+  river_deltas::Array{RiverDelta} = load_river_deltas_from_file(args["river-deltas-filepath"])
   local existing_river_mouths::Dict{String,CartesianIndex}
-  if args["find_existing_river_mouths"]
-    accumulated_flow::Array{Int64} = load_accumulated_flow(args["accumulated_flow_filepath"],
-                                                           args["accumulated_flow_fieldname"])
-    search_areas::Dict{String,Area} = load_search_areas_from_file(args["search_areas_filepath"])
+  if args["find-existing-river-mouths"]
+    accumulated_flow::Array{Int64} = load_accumulated_flow(args["accumulated-flow-filepath"],
+                                                           args["accumulated-flow-fieldname"])
+    search_areas::Dict{String,Area} = load_search_areas_from_file(args["search-areas-filepath"])
     existing_river_mouths = identify_existing_river_mouths(cells,
                                                            accumulated_flow,
                                                            search_areas)
@@ -67,9 +69,8 @@ function bifurcated_river_mouth_identification_driver(args::Dict{String})
                                      cells::Cells,
                                      lsmask::Array{Bool})
   write_river_mouth_indices(river_mouth_indices,existing_river_mouths,
-                            args["output_river_mouths_filepath"])
+                            args["output-river-mouths-filepath"])
 end
 
 args = pass_arguments()
 bifurcated_river_mouth_identification_driver(args)
-
