@@ -44,13 +44,6 @@ function show(io::IO,set::RootedTree)
   println()
 end
 
-struct RootedTreeForest
-  sets::Vector{RootedTree}
-  function RootedTreeForest()
-    new(RootedTree[])
-  end
-end
-
 function find_root(target_set::RootedTree)
   root::RootedTree = target_set
   while root.root != root
@@ -59,13 +52,6 @@ function find_root(target_set::RootedTree)
     root = working_ptr
   end
   return root
-end
-
-function find_root(target_forest::RootedTreeForest,
-                   label_in::Int64)
-  x::RootedTree = get_set(target_forest,label_in)
-  root_x::RootedTree = find_root(x)
-  return root_x.label::Int64
 end
 
 function link(x::RootedTree,y::RootedTree)
@@ -80,6 +66,20 @@ function link(x::RootedTree,y::RootedTree)
   add_direct_node(x,y)
   set_superior(y,x)
   return true
+end
+
+struct RootedTreeForest
+  sets::Vector{RootedTree}
+  function RootedTreeForest()
+    new(RootedTree[])
+  end
+end
+
+function find_root(target_forest::RootedTreeForest,
+                   label_in::Int64)
+  x::RootedTree = get_set(target_forest,label_in)
+  root_x::RootedTree = find_root(x)
+  return root_x.label::Int64
 end
 
 function make_new_link(target_forest::RootedTreeForest,
