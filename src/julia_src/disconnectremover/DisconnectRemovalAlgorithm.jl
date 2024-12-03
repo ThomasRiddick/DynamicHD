@@ -3,8 +3,8 @@ module DisconnectRemovalALgorithm
 struct ArrayOfObjects{T}
   list_index_array::Array{Int64}
   list_of_objects::Vector{T}
-  function ArrayOfObjects{T}(shape::??)
-    list_index_array = -1*np.ones(shape,dtype=np.int64)
+  function ArrayOfObjects{T}(dims::Tuple)
+    list_index_array = fill(-1,dims)
     list_of_objects = []
     new(list_index_array,list_of_objects)
   end
@@ -86,7 +86,7 @@ function add_path_through_vertex(vertex::Vertex,
       inner_path_index = vertex.paths_on_edges[edge_out].index(inner_path) ??
       outer_path_index = vertex.paths_on_edges[edge_out].index(outer_path) ??
       if outer_path_index + 1 != inner_path_index
-        raise RuntimeError("Inconsistent path indices") ??
+        error("Inconsistent path indices")
       end
       if ! calculate_index_only
         vertex.paths_on_edges[edge_out].insert(inner_path_index,path) ???
@@ -95,7 +95,7 @@ function add_path_through_vertex(vertex::Vertex,
     elseif outer_path in vertex.paths_on_edges[edge_out]
       outer_path_index = vertex.paths_on_edges[edge_out].index(outer_path) ???
       if outer_path_index != length(vertex.paths_on_edges[edge_out]) - 1
-        raise RuntimeError("Inconsistent path indices") ???
+        error("Inconsistent path indices")
       end
       if ! calculate_index_only
         vertex.paths_on_edges[edge_out].insert(outer_path_index+1,path)
@@ -104,7 +104,7 @@ function add_path_through_vertex(vertex::Vertex,
     elseif inner_path in vertex.paths_on_edges[edge_out]
       inner_path_index = vertex.paths_on_edges[edge_out].index(inner_path)
       if inner_path_index != 0
-        raise RuntimeError("Inconsistent path indices") ???
+        error("Inconsistent path indices")
       end
       if ! calculate_index_only
         vertex.paths_on_edges[edge_out].insert(0,path) ??? index offset
@@ -112,7 +112,7 @@ function add_path_through_vertex(vertex::Vertex,
       return 0
     else
       if length(vertex.paths_on_edges[edge_out]) > 0
-        raise RuntimeError("Inconsistent path indices") ???
+        error("Inconsistent path indices") ???
       end
       if ! calculate_index_only
         vertex.paths_on_edges[edge_out].insert(0,path) ??? index offset
@@ -152,7 +152,7 @@ function get_valid_exit_edges(vertex::Vertex,path,edge_in,edge_in_path_index)
         combined_edges.extend(valid_edges[inner_edge_index:])
         return combined_edges
       else
-        raise RuntimeError("Inconsistent path indices") ???
+        error("Inconsistent path indices")
       end
     else if outer_path in vertex.paths_on_edges[edge_in]
       for edge in other_edges:
@@ -170,7 +170,7 @@ function get_valid_exit_edges(vertex::Vertex,path,edge_in,edge_in_path_index)
         combined_edges.extend(valid_edges[outer_edge_index:])
         return combined_edges
       else
-        raise RuntimeError("Inconsistent path indices") ???
+        error("Inconsistent path indices")
       end
     else if inner_path in vertex.paths_on_edges[edge_in]
       for edge in other_edges:
@@ -187,7 +187,7 @@ function get_valid_exit_edges(vertex::Vertex,path,edge_in,edge_in_path_index)
         combined_edges.extend(valid_edges[outer_edge_index:])
         return combined_edges
       else
-        raise RuntimeError("Inconsistent path indices")
+        error("Inconsistent path indices")
       end
     else
       for edge in other_edges
@@ -207,10 +207,58 @@ function get_valid_exit_edges(vertex::Vertex,path,edge_in,edge_in_path_index)
         combined_edges.extend(valid_edges[outer_edge_index:])
         return combined_edges
       else
-        raise RuntimeError("Inconsistent path indices") ??
+        error("Inconsistent path indices")
       end
     end
   end
 end
+
+function process_neighbors(q::Vector{CartesianIndex},
+                           vertex::Vertex,
+                           visited_vertices)
+  valid_edges = get_valid_exit_edges(vertex::Vertex,path,
+                                     edge_in,
+                                     edge_in_path_index)
+  filter!(e->!visited_vertices[e],valid_edges)
+  append!(q,valid_edges)
+  for valid_edge in valid_edges
+    visited_vertices[valid_edge] = true
+  end
+end
+
+DO WE NEED EDGE OBJECTS??
+
+disconnect_source_coords::CartesianIndex
+disconnect_sink_coords::CartesianIndex
+visited_vertices::Array
+target_vertices::Array
+q = Vector{CartesianIndex}
+sizehint!(q,grid.ncells*vertices_per_cell)
+add_disconnect_source_corners_to_q(q,disconnect_source_coords)
+add_disconnect_sink_corners_to_target_verties(q,target_vertex)
+first_vertex = popfirst!(q)
+add_source_at_vertex(first_vertex,edge_in)
+visited_vertices[first_vertex] = true
+process_neighbors(q,first_vertex,visited_vertices)
+while ! q.size()
+  vertex = popfirst!(q)
+  edge_out = get_edge_out_from_old_vertex_to_vertex(edge_out)
+  add_path_through_vertex(old_vertex::Vertex,
+                          path_num,old_edge_in,
+                          old_edge_in_path_index,
+                          edge_out)
+  old_vertex = vertex
+  old_edge_in = edge_in
+  old_edge_in_path_index = edge_in_path_index
+end
+
+Expanding edges priority
+- in same catchment
+- has no inflows
+- other using same path finding on small scale for introducing reconnect for other
+  catchment
+
+for other
+  new disconnect from upstream to downstream
 
 end
