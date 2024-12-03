@@ -294,10 +294,26 @@ function find_coarse_cell_containing_fine_cell(fine_grid::LatLonGrid,coarse_grid
   return LatLonCoords(coarse_lat,coarse_lon);
 end
 
+function find_coarse_cell_containing_fine_cell(fine_grid::LatLonGrid,coarse_grid::LatLonGrid,
+                                               fine_cell_coords::CartesianIndex)
+  fine_lat,fine_lon = Tuple(fine_cell_coords)
+  fine_cells_per_coarse_cell_lat::Int64 = fine_grid.nlat/coarse_grid.nlat
+  fine_cells_per_coarse_cell_lon::Int64 = fine_grid.nlon/coarse_grid.nlon
+  coarse_lat::Int64 = ceil(fine_lat/fine_cells_per_coarse_cell_lat);
+  coarse_lon::Int64 = ceil(fine_lon/fine_cells_per_coarse_cell_lon);
+  return CartesianIndex(coarse_lat,coarse_lon);
+end
+
 function find_coarse_cell_containing_fine_cell(fine_grid::UnstructuredGrid,
-                                               coarse_grid::UnstructuredGrid,
+                                               ::UnstructuredGrid,
                                                fine_cell_coords::Generic1DCoords)
   return Generic1DCoords(fine_grid.mapping_to_coarse_grid[fine_cell_coords.index])
+end
+
+function find_coarse_cell_containing_fine_cell(fine_grid::UnstructuredGrid,
+                                               ::UnstructuredGrid,
+                                               fine_cell_coords::CartesianIndex)
+  return CartesianIndex(fine_grid.mapping_to_coarse_grid[fine_cell_coords])
 end
 
 function find_downstream_coords(grid::T,

@@ -31,16 +31,19 @@ class StoreToArray:
     self.working_object.append(float(len(field_in)))
     self.working_object.extend([float(val) for val in field_in])
 
-  def add_dict(self,dict_in):
+  def add_outflow_points_dict(self,outflow_points_in):
     dict_array = []
-    for key,val in dict_in.items():
-        if type(val) is int:
-            dict_array.extend([float(key),float(val)])
+    for key,val in outflow_points_in.items():
+        entry_as_array = [float(key)]
+        if val[0] is None:
+            entry_as_array.append(-1.0)
+        if val[0] is int:
+            entry_as_array.append(float(val[0]))
         else:
-            entry_as_array = [float(key)]
-            entry_as_array.extend([float(x) for x in val])
-            dict_array.extend(entry_as_array)
-    self.working_object.append(float(len(dict_array)))
+            entry_as_array.extend([float(val[0][0]),float(val[0][1])])
+        entry_as_array.append(float(val[1]))
+        dict_array.extend(entry_as_array)
+    self.working_object.append(float(len(dict.keys())))
     self.working_object.extend(dict_array)
 
   def add_filling_order(self,filling_order_in):
@@ -677,8 +680,8 @@ class BasinEvaluationAlgorithm:
             else:
                 store_to_array.add_field([])
             store_to_array.add_coords(lake.center_coords)
-            #store_to_array.add_dict(lake.outflow_points)
             store_to_array.add_filling_order(lake.filling_order)
+            store_to_array.add_outflow_points_dict(lake.outflow_points)
             store_to_array.complete_object()
         return store_to_array.complete_array()
 
