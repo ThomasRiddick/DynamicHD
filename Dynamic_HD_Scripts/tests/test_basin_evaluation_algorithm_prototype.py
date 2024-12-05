@@ -9,11 +9,8 @@ Created on Oct 31, 2024
 import unittest
 import numpy as np
 from Dynamic_HD_Scripts.utilities.basin_evaluation_algorithm_prototype \
-import LatLonBasinEvaluationAlgorithm,DisjointSetForest
-#Note - copied library files from the latest version of master
-#hence they don't match this version of the code (but can
-#still be used here)
-from fill_sinks_wrapper import fill_sinks_cpp_func
+import LatLonEvaluateBasin,DisjointSetForest
+
 
 class DisjointSetTests(unittest.TestCase):
 
@@ -95,36 +92,23 @@ class BasinEvaluationTests(unittest.TestCase):
     cell_areas_in = np.full((6,6),1.0)
     landsea_in = np.full((6,6),0,dtype=np.int32)
     landsea_in[5,5] = 1
-    catchments_from_sink_filling_in = np.zeros((6,6),dtype=np.int32)
-    fill_sinks_cpp_func(orography_array=
-                        corrected_orography_in,
-                        method = 4,
-                        use_ls_mask = True,
-                        landsea_in = landsea_in,
-                        set_ls_as_no_data_flag = False,
-                        use_true_sinks = False,
-                        true_sinks_in = np.zeros((6,6),dtype=np.int32),
-                        rdirs_in = np.zeros((6,6),dtype=np.float64),
-                        next_cell_lat_index_in = np.zeros((6,6),dtype=np.int32),
-                        next_cell_lon_index_in = np.zeros((6,6),dtype=np.int32),
-                        catchment_nums_in = catchments_from_sink_filling_in,
-                        prefer_non_diagonal_initial_dirs = False)
-    alg = LatLonBasinEvaluationAlgorithm(minima_in,
-                                         raw_orography_in,
-                                         corrected_orography_in,
-                                         cell_areas_in,
-                                         prior_fine_rdirs_in,
-                                         prior_fine_catchments_in,
-                                         coarse_catchment_nums_in,
-                                         catchments_from_sink_filling_in)
-    alg.evaluate_basins()
+    output,alg = \
+      LatLonEvaluateBasin.evaluate_basins(landsea_in,
+                                          minima_in,
+                                          raw_orography_in,
+                                          corrected_orography_in,
+                                          cell_areas_in,
+                                          prior_fine_rdirs_in,
+                                          prior_fine_catchments_in,
+                                          coarse_catchment_nums_in,
+                                          return_algorithm_object=True)
     print("---")
     print([lake.filling_order for lake in alg.lakes])
     print([lake.primary_lake for lake in alg.lakes])
     print([lake.spill_points for lake in alg.lakes])
     print([lake.potential_exit_points for lake in alg.lakes])
     print([lake.outflow_points for lake in alg.lakes])
-    print(alg.get_lakes_as_array())
+    print(output)
 
   def testBasinEvaluationTwoLakes(self):
     coarse_catchment_nums_in = np.array([[1, 1],
@@ -171,29 +155,16 @@ class BasinEvaluationTests(unittest.TestCase):
     cell_areas_in = np.full((6,6),1.0)
     landsea_in = np.full((6,6),0,dtype=np.int32)
     landsea_in[5,5] = 1
-    catchments_from_sink_filling_in = np.zeros((6,6),dtype=np.int32)
-    fill_sinks_cpp_func(orography_array=
-                        corrected_orography_in,
-                        method = 4,
-                        use_ls_mask = True,
-                        landsea_in = landsea_in,
-                        set_ls_as_no_data_flag = False,
-                        use_true_sinks = False,
-                        true_sinks_in = np.zeros((6,6),dtype=np.int32),
-                        rdirs_in = np.zeros((6,6),dtype=np.float64),
-                        next_cell_lat_index_in = np.zeros((6,6),dtype=np.int32),
-                        next_cell_lon_index_in = np.zeros((6,6),dtype=np.int32),
-                        catchment_nums_in = catchments_from_sink_filling_in,
-                        prefer_non_diagonal_initial_dirs = False)
-    alg = LatLonBasinEvaluationAlgorithm(minima_in,
-                                         raw_orography_in,
-                                         corrected_orography_in,
-                                         cell_areas_in,
-                                         prior_fine_rdirs_in,
-                                         prior_fine_catchments_in,
-                                         coarse_catchment_nums_in,
-                                         catchments_from_sink_filling_in)
-    alg.evaluate_basins()
+    _,alg = \
+      LatLonEvaluateBasin.evaluate_basins(landsea_in,
+                                          minima_in,
+                                          raw_orography_in,
+                                          corrected_orography_in,
+                                          cell_areas_in,
+                                          prior_fine_rdirs_in,
+                                          prior_fine_catchments_in,
+                                          coarse_catchment_nums_in,
+                                          return_algorithm_object=True)
     print("---")
     print([lake.filling_order for lake in alg.lakes])
     print([lake.primary_lake for lake in alg.lakes])
@@ -341,29 +312,16 @@ class BasinEvaluationTests(unittest.TestCase):
     landsea_in[:,:] = False
     landsea_in[19,15] = True
     cell_areas_in = np.full((20,20),1.0)
-    catchments_from_sink_filling_in = np.zeros((20,20),dtype=np.int32)
-    fill_sinks_cpp_func(orography_array=
-                        corrected_orography_in,
-                        method = 4,
-                        use_ls_mask = True,
-                        landsea_in = landsea_in,
-                        set_ls_as_no_data_flag = False,
-                        use_true_sinks = False,
-                        true_sinks_in = np.zeros((20,20),dtype=np.int32),
-                        rdirs_in = np.zeros((20,20),dtype=np.float64),
-                        next_cell_lat_index_in = np.zeros((20,20),dtype=np.int32),
-                        next_cell_lon_index_in = np.zeros((20,20),dtype=np.int32),
-                        catchment_nums_in = catchments_from_sink_filling_in,
-                        prefer_non_diagonal_initial_dirs = False)
-    alg = LatLonBasinEvaluationAlgorithm(minima_in,
-                                         raw_orography_in,
-                                         corrected_orography_in,
-                                         cell_areas_in,
-                                         prior_fine_rdirs_in,
-                                         prior_fine_catchments_in,
-                                         coarse_catchment_nums_in,
-                                         catchments_from_sink_filling_in)
-    alg.evaluate_basins()
+    _,alg = \
+      LatLonEvaluateBasin.evaluate_basins(landsea_in,
+                                          minima_in,
+                                          raw_orography_in,
+                                          corrected_orography_in,
+                                          cell_areas_in,
+                                          prior_fine_rdirs_in,
+                                          prior_fine_catchments_in,
+                                          coarse_catchment_nums_in,
+                                          return_algorithm_object=True)
     print("---")
     print([lake.filling_order for lake in alg.lakes])
     print([lake.primary_lake for lake in alg.lakes])
@@ -514,29 +472,16 @@ class BasinEvaluationTests(unittest.TestCase):
       [False,False,False,False,False,False,False,False, True,False,False,False,False,False,False,False,False,False,False,False]],
       dtype=np.int32)
     cell_areas_in = np.full((20,20),1.0)
-    catchments_from_sink_filling_in = np.zeros((20,20),dtype=np.int32)
-    fill_sinks_cpp_func(orography_array=
-                        corrected_orography_in,
-                        method = 4,
-                        use_ls_mask = True,
-                        landsea_in = landsea_in,
-                        set_ls_as_no_data_flag = False,
-                        use_true_sinks = False,
-                        true_sinks_in = np.zeros((20,20),dtype=np.int32),
-                        rdirs_in = np.zeros((20,20),dtype=np.float64),
-                        next_cell_lat_index_in = np.zeros((20,20),dtype=np.int32),
-                        next_cell_lon_index_in = np.zeros((20,20),dtype=np.int32),
-                        catchment_nums_in = catchments_from_sink_filling_in,
-                        prefer_non_diagonal_initial_dirs = False)
-    alg = LatLonBasinEvaluationAlgorithm(minima_in,
-                                         raw_orography_in,
-                                         corrected_orography_in,
-                                         cell_areas_in,
-                                         prior_fine_rdirs_in,
-                                         prior_fine_catchments_in,
-                                         coarse_catchment_nums_in,
-                                         catchments_from_sink_filling_in)
-    alg.evaluate_basins()
+    _,alg = \
+      LatLonEvaluateBasin.evaluate_basins(landsea_in,
+                                          minima_in,
+                                          raw_orography_in,
+                                          corrected_orography_in,
+                                          cell_areas_in,
+                                          prior_fine_rdirs_in,
+                                          prior_fine_catchments_in,
+                                          coarse_catchment_nums_in,
+                                          return_algorithm_object=True)
     print("---")
     print([lake.filling_order for lake in alg.lakes])
     print([lake.primary_lake for lake in alg.lakes])
@@ -708,29 +653,16 @@ class BasinEvaluationTests(unittest.TestCase):
       [False,False,False,False,False,False,False,False, True,False,False,False,False,False,False,False,False,False,False,False]],
       dtype=np.int32)
     cell_areas_in = np.full((20,20),1.0)
-    catchments_from_sink_filling_in = np.zeros((20,20),dtype=np.int32)
-    fill_sinks_cpp_func(orography_array=
-                        corrected_orography_in,
-                        method = 4,
-                        use_ls_mask = True,
-                        landsea_in = landsea_in,
-                        set_ls_as_no_data_flag = False,
-                        use_true_sinks = False,
-                        true_sinks_in = np.zeros((20,20),dtype=np.int32),
-                        rdirs_in = np.zeros((20,20),dtype=np.float64),
-                        next_cell_lat_index_in = np.zeros((20,20),dtype=np.int32),
-                        next_cell_lon_index_in = np.zeros((20,20),dtype=np.int32),
-                        catchment_nums_in = catchments_from_sink_filling_in,
-                        prefer_non_diagonal_initial_dirs = False)
-    alg = LatLonBasinEvaluationAlgorithm(minima_in,
-                                         raw_orography_in,
-                                         corrected_orography_in,
-                                         cell_areas_in,
-                                         prior_fine_rdirs_in,
-                                         prior_fine_catchments_in,
-                                         coarse_catchment_nums_in,
-                                         catchments_from_sink_filling_in)
-    alg.evaluate_basins()
+    _,alg = \
+      LatLonEvaluateBasin.evaluate_basins(landsea_in,
+                                          minima_in,
+                                          raw_orography_in,
+                                          corrected_orography_in,
+                                          cell_areas_in,
+                                          prior_fine_rdirs_in,
+                                          prior_fine_catchments_in,
+                                          coarse_catchment_nums_in,
+                                          return_algorithm_object=True)
     print("---")
     print([lake.filling_order for lake in alg.lakes])
     print([lake.primary_lake for lake in alg.lakes])
@@ -1276,29 +1208,16 @@ class BasinEvaluationTests(unittest.TestCase):
       [False,False,False,False,False, False,False,False,False,False, False,False,False,False,False, False,False,False,False,False],
       [False,False,False,False,False, False,False,False,False,False, False,False,False,False,False, False,False,False,False,True]],
       dtype=np.int32)
-    catchments_from_sink_filling_in = np.zeros((20,20),dtype=np.int32)
-    fill_sinks_cpp_func(orography_array=
-                        corrected_orography_in,
-                        method = 4,
-                        use_ls_mask = True,
-                        landsea_in = landsea_in,
-                        set_ls_as_no_data_flag = False,
-                        use_true_sinks = False,
-                        true_sinks_in = np.zeros((20,20),dtype=np.int32),
-                        rdirs_in = np.zeros((20,20),dtype=np.float64),
-                        next_cell_lat_index_in = np.zeros((20,20),dtype=np.int32),
-                        next_cell_lon_index_in = np.zeros((20,20),dtype=np.int32),
-                        catchment_nums_in = catchments_from_sink_filling_in,
-                        prefer_non_diagonal_initial_dirs = False)
-    alg = LatLonBasinEvaluationAlgorithm(minima_in,
-                                         raw_orography_in,
-                                         corrected_orography_in,
-                                         cell_areas_in,
-                                         prior_fine_rdirs_in,
-                                         prior_fine_catchments_in,
-                                         coarse_catchment_nums_in,
-                                         catchments_from_sink_filling_in)
-    alg.evaluate_basins()
+    _,alg = \
+      LatLonEvaluateBasin.evaluate_basins(landsea_in,
+                                          minima_in,
+                                          raw_orography_in,
+                                          corrected_orography_in,
+                                          cell_areas_in,
+                                          prior_fine_rdirs_in,
+                                          prior_fine_catchments_in,
+                                          coarse_catchment_nums_in,
+                                          return_algorithm_object=True)
     print("---")
     print([lake.filling_order for lake in alg.lakes])
     print([lake.primary_lake for lake in alg.lakes])

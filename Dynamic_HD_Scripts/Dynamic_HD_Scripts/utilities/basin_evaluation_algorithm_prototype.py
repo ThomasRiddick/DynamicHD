@@ -3,6 +3,10 @@ from copy import copy
 from heapq import heappush,heappop
 from enum import auto, Enum
 from functools import total_ordering
+#Note - copied library files from the latest version of master
+#hence they don't match this version of the code (but can
+#still be used here)
+from fill_sinks_wrapper import fill_sinks_cpp_func
 
 class StoreToArray:
 
@@ -31,28 +35,31 @@ class StoreToArray:
     self.working_object.append(float(len(field_in)))
     self.working_object.extend([float(val) for val in field_in])
 
-  def add_outflow_points_dict(self,outflow_points_in):
+  def add_outflow_points_dict(self,outflow_points_in,
+                              array_offset=0):
     dict_array = []
     for key,val in outflow_points_in.items():
-        entry_as_array = [float(key)]
+        entry_as_array = [float((key+array_offset) if key >= 0 else key)]
         if val[0] is None:
             entry_as_array.append(-1.0)
-        if val[0] is int:
-            entry_as_array.append(float(val[0]))
+        elif val[0] is int:
+            entry_as_array.append(float(val[0]+array_offset))
         else:
-            entry_as_array.extend([float(val[0][0]),float(val[0][1])])
+            entry_as_array.extend([float(val[0][0]+array_offset),
+                                   float(val[0][1]+array_offset)])
         entry_as_array.append(float(val[1]))
         dict_array.extend(entry_as_array)
-    self.working_object.append(float(len(dict.keys())))
+    self.working_object.append(float(len(outflow_points_in.keys())))
     self.working_object.extend(dict_array)
 
-  def add_filling_order(self,filling_order_in):
+  def add_filling_order(self,filling_order_in,array_offset=0):
     filling_order_array = []
     for entry in filling_order_in:
         if type(entry[0]) is int:
-            filling_order_array.append(float(entry[0]))
+            filling_order_array.append(float(entry[0]+array_offset))
         else:
-            filling_order_array.extend([float(entry[0][0]),float(entry[0][1])])
+            filling_order_array.extend([float(entry[0][0]+array_offset),
+                                        float(entry[0][1]+array_offset)])
         filling_order_array.append(float(entry[1].value))
         filling_order_array.append(float(entry[2]))
         filling_order_array.append(float(entry[3]))
@@ -667,23 +674,37 @@ class BasinEvaluationAlgorithm:
         return outflow_coords
 
     def get_lakes_as_array(self):
+        array_offset = 1
         store_to_array = StoreToArray()
         for lake in self.lakes:
             store_to_array.add_object()
-            store_to_array.add_number(lake.lake_number)
+            store_to_array.add_number(lake.lake_number+array_offset)
             if lake.primary_lake is not None:
-                store_to_array.add_number(lake.primary_lake)
+                store_to_array.add_number(lake.primary_lake+array_offset)
             else:
                 store_to_array.add_number(-1)
             if lake.secondary_lakes is not None:
-                store_to_array.add_field(lake.secondary_lakes)
+                store_to_array.add_field([x+array_offset
+                                         for x in lake.secondary_lakes])
             else:
                 store_to_array.add_field([])
-            store_to_array.add_coords(lake.center_coords)
-            store_to_array.add_filling_order(lake.filling_order)
-            store_to_array.add_outflow_points_dict(lake.outflow_points)
+            store_to_array.add_coords([x+array_offset for x in lake.center_coords])
+            store_to_array.add_filling_order(lake.filling_order,
+                                             array_offset=array_offset)
+            store_to_array.add_outflow_points_dict(lake.outflow_points,
+                                                   array_offset=array_offset)
             store_to_array.complete_object()
         return store_to_array.complete_array()
+
+    def get_lake_centers(self):
+        lake_centers = np.full(self.minima.shape,False,
+                               dtype=np.int32)
+        for lake in self.lakes:
+            lake_centers[lake.center_coords] = True
+        return lake_centers
+
+    def get_lake_mask(self):
+        return self.lake_numbers != self.null_lake_number
 
 class LatLonBasinEvaluationAlgorithm(BasinEvaluationAlgorithm):
 
@@ -710,7 +731,6 @@ class LatLonBasinEvaluationAlgorithm(BasinEvaluationAlgorithm):
     def check_for_sinks_and_get_downstream_coords(self,coords_in):
         rdir = self.prior_fine_rdirs[coords_in]
         downstream_coords = self.grid.calculate_downstream_coords_from_dir_based_rdir(coords_in,rdir)
-        print(downstream_coords)
         next_rdir = self.prior_fine_rdirs[downstream_coords]
         return rdir == 5 or next_rdir == 0,downstream_coords
 
@@ -748,3 +768,53 @@ class SingleIndexBasinEvaluationAlgorithm(BasinEvaluationAlgorithm):
     def check_if_fine_cell_is_sink(self,coords_in):
         next_cell_index = self.prior_next_cell_indices[coords_in]
         return (next_cell_index == self.true_sink_value)
+
+class LatLonEvaluateBasin:
+
+    @staticmethod
+    def evaluate_basins(landsea_in,
+                        minima_in,
+                        raw_orography_in,
+                        corrected_orography_in,
+                        cell_areas_in,
+                        prior_fine_rdirs_in,
+                        prior_fine_catchments_in,
+                        coarse_catchment_nums_in,
+                        return_algorithm_object=False):
+        catchments_from_sink_filling_in = \
+            np.full(minima_in.shape,False,dtype=np.int32)
+        fill_sinks_cpp_func(orography_array=
+                            corrected_orography_in,
+                            method = 4,
+                            use_ls_mask = True,
+                            landsea_in = landsea_in,
+                            set_ls_as_no_data_flag = False,
+                            use_true_sinks = False,
+                            true_sinks_in =
+                            np.full(minima_in.shape,False,dtype=np.int32),
+                            rdirs_in =
+                            np.zeros(minima_in.shape,dtype=np.float64),
+                            next_cell_lat_index_in =
+                            np.zeros(minima_in.shape,dtype=np.int32),
+                            next_cell_lon_index_in =
+                            np.zeros(minima_in.shape,dtype=np.int32),
+                            catchment_nums_in =
+                            catchments_from_sink_filling_in,
+                            prefer_non_diagonal_initial_dirs = False)
+        alg = LatLonBasinEvaluationAlgorithm(minima_in,
+                                             raw_orography_in,
+                                             corrected_orography_in,
+                                             cell_areas_in,
+                                             prior_fine_rdirs_in,
+                                             prior_fine_catchments_in,
+                                             coarse_catchment_nums_in,
+                                             catchments_from_sink_filling_in)
+        alg.evaluate_basins()
+        output = {"lakes_as_array":alg.get_lakes_as_array(),
+                "lake_centers":alg.get_lake_centers(),
+                "lake_mask":alg.get_lake_mask()}
+        if return_algorithm_object:
+            return output,alg
+        else:
+            return output
+
