@@ -254,8 +254,8 @@ function for_all_fine_cells_in_coarse_cell(function_on_point::Function,
                                            fine_grid::LatLonGrid,
                                            coarse_grid::LatLonGrid,
                                            coarse_cell_coords::CartesianIndex)
-  nlat_scale_factor = fine_grid.nlat/coarse_grid.nlat
-  nlon_scale_factor = fine_grid.nlon/coarse_grid.nlon
+  nlat_scale_factor = Int64(fine_grid.nlat/coarse_grid.nlat)
+  nlon_scale_factor = Int64(fine_grid.nlon/coarse_grid.nlon)
   for j = 1+(coarse_cell_coords[2] - 1)*nlon_scale_factor:coarse_cell_coords[2]*nlon_scale_factor
     for i = 1+(coarse_cell_coords[1] - 1)*nlat_scale_factor:coarse_cell_coords[1]*nlat_scale_factor
       function_on_point(CartesianIndex(i,j))

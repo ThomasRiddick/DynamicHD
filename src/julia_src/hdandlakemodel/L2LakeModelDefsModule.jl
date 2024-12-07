@@ -1,8 +1,8 @@
 module L2LakeModelDefsModule
 
 using HierarchicalStateMachineModule: State
-using FieldModule: Field
-using GridModule: Grid
+using FieldModule: Field,set!
+using GridModule: Grid,for_all,for_all_fine_cells_in_coarse_cell
 using SplittableRootedTree: RootedTreeForest
 
 abstract type Lake <: State end
@@ -32,6 +32,7 @@ end
 struct LakeModelParameters
   grid_specific_lake_model_parameters::GridSpecificLakeModelParameters
   lake_model_grid::Grid
+  hd_model_grid::Grid
   surface_model_grid::Grid
   lake_model_settings::LakeModelSettings
   basins::Vector{Vector{CartesianIndex}}
@@ -39,29 +40,31 @@ struct LakeModelParameters
   cell_areas_on_surface_model_grid::Field{Float64}
   lake_centers::Field{Bool}
   number_fine_grid_cells::Field{Int64}
-  surface_cell_to_fine_cell_map::Vector{CartesianIndex}
+  surface_cell_to_fine_cell_maps::Vector{Vector{CartesianIndex}}
   surface_cell_to_fine_cell_map_numbers::Field{Int64}
   function LakeModelParameters(grid_specific_lake_model_parameters::GridSpecificLakeModelParameters,
                                lake_model_grid::Grid,
                                hd_model_grid::Grid,
                                surface_model_grid::Grid,
+                               cell_areas_on_surface_model_grid::Field{Float64},
                                lake_model_settings::LakeModelSettings,
                                lake_centers::Field{Bool},
                                is_lake::Field{Bool})
     number_fine_grid_cells::Field{Int64} =
-      Field{Int64}(lake_parameters.lake_model_grid,0)
+      Field{Int64}(lake_model_grid,0)
+    surface_cell_to_fine_cell_maps::Vector{Vector{CartesianIndex}} = CartesianIndex[]
+    surface_cell_to_fine_cell_map_numbers = Field{Int64}(surface_model_grid,0)
     for_all(lake_model_grid;use_cartestian_index=true) do coords::CartesianIndex
       surface_model_coords::CartesianIndex =
-        get_corresponding_surface_model_grid_cell(coords,grid_specific_lake_parameters)
+        get_corresponding_surface_model_grid_cell(coords,grid_specific_lake_model_parameters)
       set!(number_fine_grid_cells,
            surface_model_coords,
            number_fine_grid_cells(surface_model_coords) + 1)
       if is_lake(coords)
-        surface_cell_to_fine_cell_map::Vector{CartesianIndex} = CartesianIndex[]
         surface_cell_to_fine_cell_map_number::Int64 =
           surface_cell_to_fine_cell_map_numbers(surface_model_coords)
         if  surface_cell_to_fine_cell_map_number == 0
-          surface_cell_to_fine_cell_map = CartesianIndex(coords)
+          surface_cell_to_fine_cell_map::Vector{CartesianIndex} = CartesianIndex[coords]
           push!(surface_cell_to_fine_cell_maps,surface_cell_to_fine_cell_map)
           set!(surface_cell_to_fine_cell_map_numbers,surface_model_coords,
                length(surface_cell_to_fine_cell_maps))
@@ -79,7 +82,7 @@ struct LakeModelParameters
             use_cartestian_index=true) do coords::CartesianIndex
       basins_in_coarse_cell::Vector{CartesianIndex} = CartesianIndex[]
       basins_found::Bool = false
-      for_all_fine_cells_in_coarse_cell(grid,hd_model_grid,
+      for_all_fine_cells_in_coarse_cell(lake_model_grid,hd_model_grid,
                                         coords) do fine_coords::CartesianIndex
         if lake_centers(fine_coords)
           push!(basins_in_coarse_cell,fine_coords)
@@ -93,15 +96,16 @@ struct LakeModelParameters
       end
     end
     new(grid_specific_lake_model_parameters,
-        surface_model_grid,
         lake_model_grid,
+        hd_model_grid,
+        surface_model_grid,
         lake_model_settings,
         basins,
         basin_numbers,
         cell_areas_on_surface_model_grid,
         lake_centers,
         number_fine_grid_cells,
-        surface_cell_to_fine_cell_map,
+        surface_cell_to_fine_cell_maps,
         surface_cell_to_fine_cell_map_numbers)
   end
 end
@@ -127,9 +131,9 @@ struct LakeModelPrognostics
       Field{Bool}(lake_model_parameters.lake_model_grid,false)
     lake_numbers = Field{Int64}(lake_model_parameters.lake_model_grid,0)
     effective_volume_per_cell_on_surface_grid::Field{Float64} =
-      Field{Float64}(lake_parameters.surface_model_grid,0.0)
+      Field{Float64}(lake_model_parameters.surface_model_grid,0.0)
     effective_lake_height_on_surface_grid_to_lakes::Field{Float64} =
-      Field{Float64}(lake_parameters.surface_model_grid,0.0)
+      Field{Float64}(lake_model_parameters.surface_model_grid,0.0)
     water_to_lakes::Field{Float64} =
       Field{Float64}(lake_model_parameters.hd_model_grid,0.0)
     water_to_hd::Field{Float64} =
@@ -137,7 +141,7 @@ struct LakeModelPrognostics
     lake_water_from_ocean::Field{Float64} =
       Field{Float64}(lake_model_parameters.hd_model_grid,0.0)
     lake_cell_count::Field{Int64} =
-      Field{Int64}(lake_parameters.surface_model_grid,0)
+      Field{Int64}(lake_model_parameters.surface_model_grid,0)
     cells_with_lakes::Vector{CartesianIndex} = CartesianIndex[]
     for_all(lake_model_parameters.hd_model_grid;
             use_cartestian_index=true) do coords::CartesianIndex
@@ -145,7 +149,7 @@ struct LakeModelPrognostics
       for_all_fine_cells_in_coarse_cell(lake_model_parameters.lake_model_grid,
                                         lake_model_parameters.hd_model_grid,
                                         coords) do fine_coords::CartesianIndex
-        if lake_parameters.lake_centers(fine_coords)
+        if lake_model_parameters.lake_centers(fine_coords)
           contains_lake = true
         end
       end
@@ -154,8 +158,8 @@ struct LakeModelPrognostics
       end
     end
     evaporation_from_lakes::Array{Float64,1} =
-      zeros(Float64,count(lake_parameters.lake_centers))
-    evaporation_applied = falses(count(lake_parameters.lake_centers))
+      zeros(Float64,count(lake_model_parameters.lake_centers))
+    evaporation_applied = falses(count(lake_model_parameters.lake_centers))
     set_forest::RootedTreeForest = RootedTreeForest()
     new(lakes,lake_numbers,lake_cell_count,flooded_lake_cells,
         effective_volume_per_cell_on_surface_grid,
@@ -166,8 +170,26 @@ struct LakeModelPrognostics
   end
 end
 
-struct LakeModelDiagnostics
+mutable struct LakeModelDiagnostics
   total_lake_volume::Float64
+end
+
+LakeModelDiagnostics() = LakeModelDiagnostics(0.0)
+
+function get_corresponding_surface_model_grid_cell(::CartesianIndex,
+                                                   ::GridSpecificLakeModelParameters)
+ error()
+end
+
+function get_corresponding_surface_model_grid_cell(coords::CartesianIndex,
+                                                   grid_specific_lake_model_parameters::LatLonLakeModelParameters)
+  return CartesianIndex(grid_specific_lake_model_parameters.corresponding_surface_cell_lat_index(coords),
+                        grid_specific_lake_model_parameters.corresponding_surface_cell_lon_index(coords))
+end
+
+function get_corresponding_surface_model_grid_cell(coords::CartesianIndex,
+                                                   grid_specific_lake_model_parameters::UnstructuredLakeModelParameters)
+  return CartesianIndex(grid_specific_lake_model_parameters.corresponding_surface_cell_index(coords))
 end
 
 end

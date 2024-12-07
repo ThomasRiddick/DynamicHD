@@ -33,7 +33,7 @@ function get(field::Field{T},coords::Coords) where {T}
   throw(UserError())
 end
 
-function set!(field::Field,coords::Coords)
+function set!(field::Field{T},coords::Coords,value::T) where{T}
   throw(UserError())
 end
 
@@ -41,8 +41,8 @@ function get(field::Field{T},coords::CartesianIndex) where {T}
   throw(UserError())
 end
 
-function set!(field::Field,coords::CartesianIndex)
-  throw(UserError())
+function set!(field::Field,coords::CartesianIndex,value::T) where {T}
+  field.data[coords] = value
 end
 
 for operator in (:fill!,:maximum,:sum,:count,:invert,:length,:broadcastable)
@@ -213,10 +213,6 @@ end
 
 function get(field::Field{T},coords::CartesianIndex) where {T}
   return latlon_field(coords)::T
-end
-
-function set!(field::Field,coords::CartesianIndex)
-  latlon_field.data[coords] = value
 end
 
 function repeat_init(grid::LatLonGrid,value::T,count::Integer) where {T}

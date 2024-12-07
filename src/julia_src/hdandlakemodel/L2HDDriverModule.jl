@@ -1,4 +1,4 @@
-module HDDriverModule
+module L2HDDriverModule
 
 using Profile
 using HierarchicalStateMachineModule: HierarchicalStateMachine
@@ -7,12 +7,15 @@ using HDModule: SetDrainage,SetRunoff,PrintResults,PrognosticFields,WriteRiverIn
 using HDModule: WriteRiverFlow,AccumulateRiverFlow,ResetCumulativeRiverFlow,WriteMeanRiverFlow
 using HDModule: PrintGlobalValues, water_to_lakes,water_from_lakes,get_river_parameters
 using FieldModule: Field,elementwise_multiple
-using LakeModule: LakeParameters,LakePrognostics,LakeFields,RiverAndLakePrognosticFields,RunLakes
-using LakeModule: PrintSection,WriteLakeNumbers,WriteLakeVolumes,SetupLakes,DistributeSpillover
-using LakeModule: WriteDiagnosticLakeVolumes,CheckWaterBudget,SetLakeEvaporation,Lake
-using LakeModule: SetRealisticLakeEvaporation,PrintSelectedLakes,CalculateTrueLakeDepths
-using LakeModule: water_to_lakes,handle_event,water_from_lakes
-using LakeModule: calculate_lake_fraction_on_surface_grid
+using L2LakeModelDefsModule: LakeModelParameters,LakeModelPrognostics
+using L2LakeModelModule: RiverAndLakePrognosticFields,RunLakes,PrintSection
+using L2LakeModelModule: WriteLakeNumbers,WriteLakeVolumes,SetupLakes,DistributeSpillover
+using L2LakeModelModule: WriteDiagnosticLakeVolumes,CheckWaterBudget,SetLakeEvaporation
+using L2LakeModelModule: SetRealisticLakeEvaporation,PrintSelectedLakes#,CalculateTrueLakeDepths
+using L2LakeModelModule: water_to_lakes,handle_event,water_from_lakes
+using L2LakeModelModule: calculate_lake_fraction_on_surface_grid
+using L2LakeModelModule: create_lakes
+using L2LakeModule: Lake,get_lake_volume
 using GridModule: get_number_of_cells
 
 FloatFieldOrNothing = Union{Field{Float64},Nothing}
@@ -154,10 +157,10 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
       end
     end
   end
-  if run_lakes_flag
-    calculate_true_lake_depths::CalculateTrueLakeDepths = CalculateTrueLakeDepths()
-    handle_event(hsm,calculate_true_lake_depths)
-  end
+  #if run_lakes_flag
+  #  calculate_true_lake_depths::CalculateTrueLakeDepths = CalculateTrueLakeDepths()
+  #  handle_event(hsm,calculate_true_lake_depths)
+  #end
   if write_output
     write_river_initial_values::WriteRiverInitialValues =
       WriteRiverInitialValues("hdstart_new.nc")

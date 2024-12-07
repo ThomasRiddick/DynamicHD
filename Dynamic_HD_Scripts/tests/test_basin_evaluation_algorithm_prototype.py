@@ -48,10 +48,12 @@ class DisjointSetTests(unittest.TestCase):
 class BasinEvaluationTests(unittest.TestCase):
 
   def testBasinEvaluationSingleLake(self):
-    coarse_catchment_nums_in = np.array([[1, 1],
-                                         [1, 1]])
-    prior_coarse_rdirs_in = np.array([[5, 5],
-                                      [5, 5]])
+    coarse_catchment_nums_in = np.array([[1, 1, 1],
+                                         [1, 1, 1],
+                                         [1, 1, 1]])
+    prior_coarse_rdirs_in = np.array([[6, 6,  2],
+                                      [6, -2, 2],
+                                      [6,  6, 0]])
     corrected_orography_in = np.array([
       [10., 10., 10., 10., 10., 10.],
       [10., 10.,  8.,  8.,  5., 10.],
