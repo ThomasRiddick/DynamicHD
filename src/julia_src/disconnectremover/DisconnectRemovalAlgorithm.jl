@@ -42,6 +42,15 @@ struct Vertex(coords,edges)
   end
 end
 
+struct VertexInPath
+  vertex::Vertex
+  edge_in
+  edge_in_path_index
+  previous_vertex_coords::CartesianIndex
+end
+
+
+#Calculate the paths bounding an incoming path entering via a particular edge
 function calculate_outer_and_inner_paths(vertex::Vertex,edge_in,edge_in_path_index)
   if edge_in_path_index != 1 &&
      edge_in_path_index != length(vertex.paths_on_edges[edge_in])
@@ -65,6 +74,9 @@ function calculate_outer_and_inner_paths(vertex::Vertex,edge_in,edge_in_path_ind
   return outer_path,inner_path
 end
 
+#Add a path to a vertex given a specific edge in, index on that edge in and
+#edge out. Can also just calculate the index on the edge out without adding the
+#change to the vertex
 function add_path_through_vertex(vertex::Vertex,
                                  path,edge_in,edge_in_path_index,edge_out;
                                  calculate_index_only=False)
@@ -121,7 +133,8 @@ function add_path_through_vertex(vertex::Vertex,
     end
 end
 
-function get_valid_exit_edges(vertex::Vertex,path,edge_in,edge_in_path_index)
+#Get a list of valid possible exit edges for a given input edge and path index
+function get_valid_exit_edges(vertex::Vertex,edge_in,edge_in_path_index)
   other_edges = [edge for edge in vertex.valid_edges if ! edge != edge_in] ??
   if vertex.total_paths == 0
     return other_edges
@@ -215,41 +228,51 @@ end
 
 function process_neighbors(q::Vector{CartesianIndex},
                            vertex::Vertex,
-                           visited_vertices)
+                           visited_vertices,
+                           edge_in,
+                           edge_in_path_index)
   valid_edges = get_valid_exit_edges(vertex::Vertex,path,
                                      edge_in,
                                      edge_in_path_index)
-  filter!(e->!visited_vertices[e],valid_edges)
-  append!(q,valid_edges)
-  for valid_edge in valid_edges
-    visited_vertices[valid_edge] = true
+  filter!(e->!visited_vertices[get_other_vertex(vertex,e).coords],
+          valid_edges)
+  for edge_out in  valid_edges
+    edge_out_path_index =
+      add_path_through_vertex(vertex,path=NULL,edge_in,
+                              edge_in_path_index,edge_out;
+                              calculate_index_only=true)
+    push!(get_other_vertex(vertex,edge_out),
+          get_other_vertex_edge_in(vertex,edge_out),
+          invert_path_index(vertex,edge_out_path_index),
+          vertex.coords)
+    visited_vertices[coords] = true
   end
 end
 
-DO WE NEED EDGE OBJECTS??
+function SetupVertices
 
-disconnect_source_coords::CartesianIndex
-disconnect_sink_coords::CartesianIndex
-visited_vertices::Array
-target_vertices::Array
-q = Vector{CartesianIndex}
-sizehint!(q,grid.ncells*vertices_per_cell)
-add_disconnect_source_corners_to_q(q,disconnect_source_coords)
-add_disconnect_sink_corners_to_target_verties(q,target_vertex)
-first_vertex = popfirst!(q)
-add_source_at_vertex(first_vertex,edge_in)
-visited_vertices[first_vertex] = true
-process_neighbors(q,first_vertex,visited_vertices)
-while ! q.size()
-  vertex = popfirst!(q)
-  edge_out = get_edge_out_from_old_vertex_to_vertex(edge_out)
-  add_path_through_vertex(old_vertex::Vertex,
-                          path_num,old_edge_in,
-                          old_edge_in_path_index,
-                          edge_out)
-  old_vertex = vertex
-  old_edge_in = edge_in
-  old_edge_in_path_index = edge_in_path_index
+end
+
+function FindPath
+  disconnect_source_coords::CartesianIndex
+  disconnect_sink_coords::CartesianIndex
+  visited_vertices::Array
+  target_vertices::Array
+  q = Vector{CartesianIndex}
+  sizehint!(q,grid.ncells*vertices_per_cell)
+  add_disconnect_source_corners_to_q(q,disconnect_source_coords)
+  add_disconnect_sink_corners_to_target_vertices(q,target_vertex)
+  while ! q.size()
+    vertex,edge_in,edge_in_path_index = popfirst!(q)
+    CHECK IF SINK FOUND
+    process_neighbors(q,
+                      vertex,
+                      visited_vertices,
+                      edge_in,
+                      edge_in_path_index)
+  end
+  FOLLOW PREVIOUS VERTEX COORDS BACK MAKING LIST OF VERTICES
+  REVERSE LIST AND ADD THE PATH ALSO PUT LIST IN A QUEUE
 end
 
 Expanding edges priority
