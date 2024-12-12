@@ -50,7 +50,7 @@ struct LakeModelParameters
                                surface_model_grid::Grid,
                                cell_areas_on_surface_model_grid::Field{Float64},
                                lake_model_settings::LakeModelSettings,
-                               lake_centers_list::Vector{CartesianIndex},
+                               number_of_lakes::Int64,
                                is_lake::Field{Bool})
     number_fine_grid_cells::Field{Int64} =
       Field{Int64}(lake_model_grid,0)
@@ -78,27 +78,9 @@ struct LakeModelParameters
       end
     end
     lake_centers::Field{Bool} = Field{Bool}(lake_model_grid,false)
-    for lake_center::CartesianIndex in lake_centers_list
-      set!(lake_centers,lake_center,true)
-    end
-    number_of_lakes::Int64 = length(lake_centers_list)
     basins::Vector{Vector{Int64}} = Vector{Int64}[]
     basin_numbers::Field{Int64} = Field{Int64}(hd_model_grid,0)
     cells_with_lakes::Vector{CartesianIndex} = CartesianIndex[]
-    for_all(hd_model_grid;
-            use_cartesian_index=true) do coords::CartesianIndex
-      contains_lake::Bool = false
-      for_all_fine_cells_in_coarse_cell(lake_model_grid,
-                                        hd_model_grid,
-                                        coords) do fine_coords::CartesianIndex
-        if lake_centers(fine_coords)
-          contains_lake = true
-        end
-      end
-      if contains_lake
-        push!(cells_with_lakes,coords)
-      end
-    end
     new(grid_specific_lake_model_parameters,
         lake_model_grid,
         hd_model_grid,

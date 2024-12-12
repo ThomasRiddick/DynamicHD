@@ -711,6 +711,9 @@ class BasinEvaluationAlgorithm:
     def get_lake_mask(self):
         return self.lake_numbers != self.null_lake_number
 
+    def get_number_of_lakes(self):
+        return len(self.lakes)
+
 class LatLonBasinEvaluationAlgorithm(BasinEvaluationAlgorithm):
 
     def __init__(self,
@@ -743,14 +746,6 @@ class LatLonBasinEvaluationAlgorithm(BasinEvaluationAlgorithm):
         rdir = self.prior_fine_rdirs[coords_in]
         return rdir == 5
 
-    def get_lake_centers(self):
-        lake_center_lat_coords = []
-        lake_center_lon_coords = []
-        for lake in self.lakes:
-            lake_center_lat_coords.append(lake.center_coords[0])
-            lake_center_lon_coords.append(lake.center_coords[1])
-        return lake_center_lat_coords,lake_center_lon_coords
-
 class SingleIndexBasinEvaluationAlgorithm(BasinEvaluationAlgorithm):
 
     def __init__(self,
@@ -781,12 +776,6 @@ class SingleIndexBasinEvaluationAlgorithm(BasinEvaluationAlgorithm):
     def check_if_fine_cell_is_sink(self,coords_in):
         next_cell_index = self.prior_next_cell_indices[coords_in]
         return (next_cell_index == self.true_sink_value)
-
-    def get_lake_centers(self):
-        lake_center_indices = []
-        for lake in self.lakes:
-            lake_center_indices.append(lake.center_coords)
-        return lake_center_indices
 
 class LatLonEvaluateBasin:
 
@@ -830,7 +819,7 @@ class LatLonEvaluateBasin:
                                              catchments_from_sink_filling_in)
         alg.evaluate_basins()
         output = {"lakes_as_array":alg.get_lakes_as_array(),
-                "lake_centers":alg.get_lake_centers(),
+                "number_of_lakes":alg.get_number_of_lakes(),
                 "lake_mask":alg.get_lake_mask()}
         if return_algorithm_object:
             return output,alg

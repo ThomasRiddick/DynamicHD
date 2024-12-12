@@ -115,6 +115,23 @@ function create_lakes(lake_model_parameters::LakeModelParameters,
            lake.parameters.lake_number)
     end
   end
+  for lake::Lake in lake_model_prognostics.lakes
+      set!(lake_model_parameters.lake_centers,lake.parameters.center_coords,true)
+  end
+  for_all(lake_model_parameters.hd_model_grid;
+          use_cartesian_index=true) do coords::CartesianIndex
+    contains_lake::Bool = false
+    for_all_fine_cells_in_coarse_cell(lake_model_parameters.lake_model_grid,
+                                      lake_model_parameters.hd_model_grid,
+                                      coords) do fine_coords::CartesianIndex
+      if lake_model_parameters.lake_centers(fine_coords)
+        contains_lake = true
+      end
+    end
+    if contains_lake
+      push!(lake_model_parameters.cells_with_lakes,coords)
+    end
+  end
   basin_number::Int64 = 1
   for_all(lake_model_parameters.hd_model_grid;
           use_cartesian_index=true) do coords::CartesianIndex
