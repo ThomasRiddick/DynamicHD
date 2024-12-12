@@ -105,6 +105,7 @@ class BasinEvaluationTests(unittest.TestCase):
                                           coarse_catchment_nums_in,
                                           return_algorithm_object=True)
     print("---")
+    print("one lake")
     print([lake.filling_order for lake in alg.lakes])
     print([lake.primary_lake for lake in alg.lakes])
     print([lake.spill_points for lake in alg.lakes])
@@ -113,10 +114,12 @@ class BasinEvaluationTests(unittest.TestCase):
     print(output)
 
   def testBasinEvaluationTwoLakes(self):
-    coarse_catchment_nums_in = np.array([[1, 1],
-                                         [1, 1]])
-    prior_coarse_rdirs_in = np.array([[5, 5],
-                                      [5, 5]])
+    coarse_catchment_nums_in = np.array([[2, 2, 1],
+                                         [2, 2, 1],
+                                         [2, 2, 1]])
+    prior_coarse_rdirs_in = np.array([[2, 2,  2],
+                                      [-2, 4, -2],
+                                      [6,  6, 0]])
     corrected_orography_in = np.array([
       [10., 10., 10., 10., 10., 10.],
       [10., 10., 10., 10., 10., 10.],
@@ -157,7 +160,7 @@ class BasinEvaluationTests(unittest.TestCase):
     cell_areas_in = np.full((6,6),1.0)
     landsea_in = np.full((6,6),0,dtype=np.int32)
     landsea_in[5,5] = 1
-    _,alg = \
+    output,alg = \
       LatLonEvaluateBasin.evaluate_basins(landsea_in,
                                           minima_in,
                                           raw_orography_in,
@@ -168,11 +171,13 @@ class BasinEvaluationTests(unittest.TestCase):
                                           coarse_catchment_nums_in,
                                           return_algorithm_object=True)
     print("---")
+    print("two lakes")
     print([lake.filling_order for lake in alg.lakes])
     print([lake.primary_lake for lake in alg.lakes])
     print([lake.spill_points for lake in alg.lakes])
     print([lake.potential_exit_points for lake in alg.lakes])
     print([lake.outflow_points for lake in alg.lakes])
+    print(output)
 
   def testBasinEvaluationOne(self):
     coarse_catchment_nums_in = np.array([[3,3,2,2],

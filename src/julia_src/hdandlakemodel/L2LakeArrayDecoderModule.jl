@@ -34,8 +34,6 @@ end
 
 function finish_array(decoder::ArrayDecoder)
   if decoder.object_count != decoder.expected_total_objects
-    println(decoder.object_count)
-    println(decoder.expected_total_objects)
     error("Array read incorrectly - number of object doesn't match expectation")
   end
   if length(decoder.array) != decoder.current_index - 1
@@ -120,7 +118,7 @@ function read_filling_order(decoder::ArrayDecoder;single_index=false)
                            Int64[Int64(entry[1])] :
                            [Int64(x) for x in entry[1:2]]
     height_type_int::Int64 = Int64(entry[2+offset])
-    height_type::HeightType = height_type_int == 1 ? connect_height : flood_height
+    height_type::HeightType = height_type_int == 0 ? connect_height : flood_height
     threshold::Float64 = entry[3+offset]
     height::Float64 = entry[4+offset]
     push!(filling_order,Cell(CartesianIndex(coords...),height_type,threshold,height))
@@ -132,7 +130,7 @@ function get_lake_parameters_from_array(array::Array{Float64},fine_grid::Grid,
                                         coarse_grid::Grid;single_index=false)
   decoder = ArrayDecoder(array)
   lake_parameters::Array{LakeParameters} = LakeParameters[]
-  for ___ in decoder.expected_total_objects
+  for ___ in 1:decoder.expected_total_objects
     start_next_object(decoder)
     lake_number::Int64 = read_integer(decoder)
     primary_lake::Int64 = read_integer(decoder)

@@ -11,7 +11,7 @@ abstract type Grid end
 
 function for_all(function_on_point::Function,
                  grid::Grid;
-                 use_cartestian_index::Bool=false)
+                 use_cartesian_index::Bool=false)
   throw(UserError())
 end
 
@@ -117,8 +117,8 @@ LatLonGridOrUnstructuredGrid = Union{LatLonGrid,UnstructuredGrid}
 
 function for_all(function_on_point::Function,
                  grid::LatLonGrid;
-                 use_cartestian_index::Bool=false)
-  if use_cartestian_index
+                 use_cartesian_index::Bool=false)
+  if use_cartesian_index
     for j = 1:grid.nlon
       for i = 1:grid.nlat
         function_on_point(CartesianIndex(i,j))
@@ -153,8 +153,8 @@ end
 
 function for_all(function_on_point::Function,
                  grid::UnstructuredGrid,
-                 use_cartestian_index::Bool=false)
-  if use_cartestian_index
+                 use_cartesian_index::Bool=false)
+  if use_cartesian_index
     for i = 1:grid.ncells
       function_on_point(CartesianIndex(i))
     end

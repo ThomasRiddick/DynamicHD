@@ -6,6 +6,7 @@ using L2LakeModelDefsModule: LatLonLakeModelParameters
 using L2LakeModelDefsModule: UnstructuredLakeModelParameters
 using L2LakeModelDefsModule: get_corresponding_surface_model_grid_cell
 using SplittableRootedTree: find_root,for_elements_in_set,get_label
+using SplittableRootedTree: make_new_link,split_set
 using FieldModule: set!
 using HierarchicalStateMachineModule: Event
 using GridModule: Grid,find_coarse_cell_containing_fine_cell
@@ -18,15 +19,20 @@ const debug = true
 
 struct AddWater <: Event
  inflow::Float64
+ store_water::Bool
 end
 
 struct RemoveWater <: Event
   outflow::Float64
+  store_water::Bool
 end
+
+struct ProcessWater <: Event end
 
 struct DrainExcessWater <: Event end
 
 struct ReleaseNegativeWater <: Event end
+
 
 struct Cell
   coords::CartesianIndex
@@ -107,8 +113,6 @@ mutable struct FillingLake <: Lake
     else
       current_cell_to_fill =
         lake_parameters.filling_order[1].coords
-      set!(lake_model_prognostics.lake_numbers,current_cell_to_fill,
-           lake_parameters.lake_number)
       current_height_type =
         lake_parameters.filling_order[1].height_type
       current_filling_cell_index = 1
@@ -156,17 +160,26 @@ function handle_event(lake::FillingLake,add_water::AddWater)
   lake_parameters::LakeParameters,lake_variables::LakeVariables,
     lake_model_parameters::LakeModelParameters,
     lake_model_prognostics::LakeModelPrognostics = get_lake_data(lake)
-  inflow::Float64 = add_water.inflow + lake_variables.unprocessed_water
-  lake_variables.unprocessed_water = 0.0
+  if ! lake_variables.active_lake
+    error("Water added to inactive lake")
+  end
+  if add_water.store_water
+    lake_variables.unprocessed_water += add_water.inflow
+    return lake
+  end
+  inflow::Float64 = add_water.inflow
   while inflow > 0.0
     local surface_model_coords::CartesianIndex
-    if lake.lake_volume <= 0 && lake.current_filling_cell_index == 1
+    if lake.lake_volume >= 0 && lake.current_filling_cell_index == 1 &&
+       lake_model_prognostics.lake_numbers(lake.current_cell_to_fill) == 0 &&
+       ! lake_parameters.is_leaf
       surface_model_coords =
         get_corresponding_surface_model_grid_cell(lake.current_cell_to_fill,
                                                   lake_model_parameters.grid_specific_lake_model_parameters)
       set!(lake_model_prognostics.lake_cell_count,surface_model_coords,
            lake_model_prognostics.lake_cell_count(surface_model_coords) + 1)
-      set!(lake_model_prognostics.flooded_lake_cells,lake.current_cell_to_fill,true)
+      set!(lake_model_prognostics.lake_numbers,lake.current_cell_to_fill,
+             lake.parameters.lake_number)
     end
     new_lake_volume::Float64 = inflow + lake.lake_volume
     if new_lake_volume <= lake.next_cell_volume_threshold
@@ -177,7 +190,7 @@ function handle_event(lake::FillingLake,add_water::AddWater)
       lake.lake_volume = lake.next_cell_volume_threshold
       if lake.current_filling_cell_index == length(lake.parameters.filling_order)
         if check_if_merge_is_possible(lake_parameters,lake_model_prognostics)
-          subsumed_lake::SubsumedLake = merge_lakes(lake,inflow,lake_model_parameters,
+          subsumed_lake::SubsumedLake = merge_lakes(lake,inflow,lake_parameters,
                                                     lake_model_prognostics)
           return subsumed_lake
         else
@@ -191,17 +204,15 @@ function handle_event(lake::FillingLake,add_water::AddWater)
         lake.parameters.filling_order[lake.current_filling_cell_index].fill_threshold
       lake.current_cell_to_fill =
         lake.parameters.filling_order[lake.current_filling_cell_index].coords
-      if lake_model_prognostics.lake_numbers(lake.current_cell_to_fill) == 0
-        set!(lake_model_prognostics.lake_numbers,lake.current_cell_to_fill,
-             lake.parameters.lake_number)
-      end
-      if lake.current_height_type == flood_height
+      if lake.current_height_type == flood_height &&
+         lake_model_prognostics.lake_numbers(lake.current_cell_to_fill) == 0
         surface_model_coords =
           get_corresponding_surface_model_grid_cell(lake.current_cell_to_fill,
-                                                    lake_model_parameter.grid_specific_lake_model_parameters)
+                                                    lake_model_parameters.grid_specific_lake_model_parameters)
         set!(lake_model_prognostics.lake_cell_count,surface_model_coords,
              lake_model_prognostics.lake_cell_count(surface_model_coords) + 1)
-        set!(lake_model_prognostics.flooded_lake_cells,lake.current_cell_to_fill,true)
+        set!(lake_model_prognostics.lake_numbers,lake.current_cell_to_fill,
+             lake.parameters.lake_number)
       end
     end
   end
@@ -211,15 +222,20 @@ end
 function handle_event(lake::OverflowingLake,add_water::AddWater)
   lake_parameters::LakeParameters,lake_variables::LakeVariables,
     _,lake_model_prognostics::LakeModelPrognostics = get_lake_data(lake)
-  inflow::Float64 = add_water.inflow +
-                    lake_variables.unprocessed_water
-  lake_variables.unprocessed_water = 0.0
+  if ! lake_variables.active_lake
+    error("Water added to inactive lake")
+  end
+  if add_water.store_water
+    lake_variables.unprocessed_water += add_water.inflow
+    return lake
+  end
+  inflow::Float64 = add_water.inflow
   if lake.current_redirect.use_local_redirect
     other_lake_number::Int64 = lake.current_redirect.local_redirect_target_lake_number
     other_lake::Lake =
       lake_model_prognostics[other_lake_number]
-    lake_model_prognostics[other_lake_number] = handle_event(other_lake,
-                                                                  AddWater(inflow))
+    lake_model_prognostics[other_lake_number] =
+      handle_event(other_lake,AddWater(inflow,false))
   else
     lake.excess_water += inflow
   end
@@ -232,15 +248,16 @@ function handle_event(lake::SubsumedLake,add_water::AddWater)
   lake_parameters::LakeParameters,lake_variables::LakeVariables,
     _,lake_model_prognostics::LakeModelPrognostics =
     get_lake_data(lake)
-  inflow::Float64 = add_water.inflow + lake_variables.unprocessed_water
-  lake_variables.unprocessed_water = 0.0
+  if ! lake_variables.active_lake
+    error("Water added to inactive lake")
+  end
   if lake.redirect_target == -1
     lake.redirect_target = find_root(lake.lake_model_prognostics.set_forest,
                                      lake_parameters.lake_number)
   end
-  lake_model_prognostics[lake.redirect_target] =
-    handle_event(lake_model_prognostics[lake.redirect_target],
-                 AddWater(inflow))
+  lake_model_prognostics.lakes[lake.redirect_target] =
+    handle_event(lake_model_prognostics.lakes[lake.redirect_target],
+                 add_water)
   return lake
 end
 
@@ -248,12 +265,14 @@ function handle_event(lake::FillingLake,remove_water::RemoveWater)
   lake_parameters::LakeParameters,lake_variables::LakeVariables,
     lake_model_parameters::LakeModelParameters,
     lake_model_prognostics::LakeModelPrognostics = get_lake_data(lake)
-  if remove_water.outflow <= lake.variables.unprocessed_water
-    lake.variables.unprocessed_water -= remove_water.outflow
+  if ! lake_variables.active_lake
+    error("Water removed from inactive lake")
+  end
+  if remove_water.store_water
+    lake_variables.unprocessed_water -= remove_water.outflow
     return lake
   end
-  outflow::Float64 = remove_water.outflow - lake.variables.unprocessed_water
-  lake.variables.unprocessed_water = 0.0
+  outflow::Float64 = remove_water.outflow
   local surface_model_coords::CartesianIndex
   while outflow > 0.0
     new_lake_volume::Float64 = lake.lake_volume - outflow
@@ -264,15 +283,17 @@ function handle_event(lake::FillingLake,remove_water::RemoveWater)
         lake.lake_volume = new_lake_volume
       else
         lake.lake_volume = 0.0
-        split_lake(lake,-new_lake_volume,lake_parameters,lake_variables)
+        split_lake(lake,-new_lake_volume,lake_parameters,lake_variables,
+                   lake_model_prognostics)
       end
-      if lake.current_height_type == flood_height
+      if lake_model_prognostics.lake_numbers(lake.current_cell_to_fill) == lake.parameters.lake_number &&
+          ! lake_parameters.is_leaf
         surface_model_coords =
           get_corresponding_surface_model_grid_cell(lake.current_cell_to_fill,
                                                     lake_model_parameters.grid_specific_lake_model_parameters)
         set!(lake_model_prognostics.lake_cell_count,surface_model_coords,
              lake_model_prognostics.lake_cell_count(surface_model_coords) - 1)
-        set!(lake_model_prognostics.flooded_lake_cells,lake.current_cell_to_fill,false)
+        set!(lake_model_prognostics.lake_numbers,lake.current_cell_to_fill,0)
       end
     elseif new_lake_volume <=
         lake_model_parameters.lake_model_settings.minimum_lake_volume_threshold &&
@@ -289,15 +310,13 @@ function handle_event(lake::FillingLake,remove_water::RemoveWater)
     else
       outflow = minimum_new_lake_volume - new_lake_volume
       lake.lake_volume = minimum_new_lake_volume
-      if lake.current_height_type == flood_height
+      if lake.current_height_type == flood_height &&
+         lake_model_prognostics.lake_numbers(lake.current_cell_to_fill) == lake.parameters.lake_number
         surface_model_coords =
           get_corresponding_surface_model_grid_cell(lake.current_cell_to_fill,
                                                     lake_model_parameters.grid_specific_lake_model_parameters)
         set!(lake_model_prognostics.lake_cell_count,surface_model_coords,
              lake_model_prognostics.lake_cell_count(surface_model_coords) - 1)
-        set!(lake_model_prognostics.flooded_lake_cells,lake.current_cell_to_fill,false)
-      end
-      if lake_model_prognostics.lake_numbers(lake.current_cell_to_fill) == lake.parameters.lake_number
         set!(lake_model_prognostics.lake_numbers,lake.current_cell_to_fill,0)
       end
       lake.current_filling_cell_index -= 1
@@ -312,12 +331,14 @@ end
 
 function handle_event(lake::OverflowingLake,remove_water::RemoveWater)
   _,lake_variables::LakeVariables,_,_= get_lake_data(lake)
-  if remove_water.outflow <= lake_variables.unprocessed_water
+  if ! lake_variables.active_lake
+    error("Water removed from inactive lake")
+  end
+  if remove_water.store_water
     lake_variables.unprocessed_water -= remove_water.outflow
     return lake
   end
-  outflow::Float64 = remove_water.outflow - lake_variables.unprocessed_water
-  lake_variables.unprocessed_water = 0.0
+  outflow::Float64 = remove_water.outflow
   if outflow <= lake.excess_water
     lake.excess_water -= outflow
     return lake
@@ -325,38 +346,50 @@ function handle_event(lake::OverflowingLake,remove_water::RemoveWater)
   outflow -= lake.excess_water
   lake.excess_water = 0.0
   lake_as_filling_lake::FillingLake = change_to_filling_lake(lake)
-  return handle_event(lake_as_filling_lake,RemoveWater(outflow))
+  return handle_event(lake_as_filling_lake,RemoveWater(outflow,false))
 end
 
 function handle_event(lake::SubsumedLake,remove_water::RemoveWater)
   #Redirect to primary
   lake_parameters::LakeParameters,lake_variables::LakeVariables,
     _,lake_model_prognostics::LakeModelPrognostics = get_lake_data(lake)
-  if remove_water.outflow <= lake_variables.unprocessed_water
-    lake_variables.unprocessed_water -= remove_water.outflow
-    return lake
+  if ! lake_variables.active_lake
+    error("Water removed from inactive lake")
   end
-  outflow::Float64 = remove_water.outflow - lake_variables.unprocessed_water
-  lake_variables.unprocessed_water = 0.0
   if lake.redirect_target == -1
     lake.redirect_target = find_root(lake_model_prognostics.set_forest,
                                      lake_parameters.lake_number)
   end
-  lake_model_prognostics.lakes[lake.redirect_target] =
-    handle_event(lake_model_prognostics.lakes[lake.redirect_target],
-                 RemoveWater(outflow))
+  #Copy this variables from the lake object as the lake object will
+  #have its redirect set to -1 if the redirect target splits
+  redirect_target::Int64 = lake.redirect_target
+  lake_model_prognostics.lakes[redirect_target] =
+    handle_event(lake_model_prognostics.lakes[redirect_target],
+                 remove_water)
   #Return this lake via a pointer in case it has changed type
   return lake_model_prognostics.lakes[lake_parameters.lake_number]::Lake
+end
+
+function handle_event(lake::Lake,::ProcessWater)
+  _,lake_variables::LakeVariables,_,_ = get_lake_data(lake)
+  unprocessed_water::Float64 = lake_variables.unprocessed_water
+  lake_variables.unprocessed_water = 0.0
+  if unprocessed_water > 0.0
+      return handle_event(lake,AddWater(unprocessed_water,false))
+  elseif unprocessed_water < 0.0
+      return handle_event(lake,RemoveWater(-unprocessed_water,false))
+  end
 end
 
 function check_if_merge_is_possible(lake_parameters::LakeParameters,
                                     lake_model_prognostics::LakeModelPrognostics)
   if ! lake_parameters.is_primary
     all_secondary_lakes_filled::Bool = false
-    for secondary_lake in lakes[lake.parameters.primary_lake].lake_parameters.secondary_lakes
-      all_secondary_lakes_filled |= isa(lake_model_prognostics.lakes[secondary_lake.lake_number],OverflowingLake)
-      #Check this is type stable
-      println(typeof(all_secondary_lake_filled))
+    for secondary_lake in lake_model_prognostics.lakes[lake_parameters.primary_lake].
+                          parameters.secondary_lakes
+      if secondary_lake != lake_parameters.lake_number
+        all_secondary_lakes_filled |= isa(lake_model_prognostics.lakes[secondary_lake],OverflowingLake)
+      end
     end
     return all_secondary_lakes_filled
   else
@@ -367,31 +400,37 @@ end
 function merge_lakes(::FillingLake,inflow::Float64,
                      lake_parameters::LakeParameters,
                      lake_model_prognostics::LakeModelPrognostics)
-  total_excess_water:Float64 = 0.0
-  primary_lake::FillingLake = lakes[lake_parameters.primary_lake]
+  total_excess_water::Float64 = 0.0
+  primary_lake::FillingLake = lake_model_prognostics.lakes[lake_parameters.primary_lake]
   primary_lake.variables.active_lake = true
   for secondary_lake in primary_lake.parameters.secondary_lakes
-    overflowing_lake::OverflowingLake = lake_model_prognostics.lakes[secondary_lake.lake_number]
-    subsumed_lake::SubsumedLake,excess_water::Float64 = change_to_subsumed_lake(overflowing_lake)
-    lake_model_prognostics.lakes[secondary_lake.lake_number] = subsumed_lake
+    other_lake::Lake = lake_model_prognostics.lakes[secondary_lake]
+    if (isa(other_lake,FillingLake) &&
+        lake_parameters.lake_number != secondary_lake) ||
+        isa(other_lake,SubsumedLake)
+      error("wrong lake type when merging")
+    end
+    subsumed_lake::SubsumedLake,excess_water::Float64 = change_to_subsumed_lake(other_lake)
+    lake_model_prognostics.lakes[secondary_lake] = subsumed_lake
     total_excess_water += excess_water
   end
   handle_event(lake_model_prognostics.lakes[primary_lake.parameters.lake_number],
-               AddWater(inflow+total_excess_water))
+               AddWater(inflow+total_excess_water,false))
   return lake_model_prognostics.lakes[lake_parameters.lake_number]
 end
 
 function split_lake(lake::FillingLake,water_deficit::Float64,
                     lake_parameters::LakeParameters,
-                    lake_variables::LakeVariables)
+                    lake_variables::LakeVariables,
+                    lake_model_prognostics::LakeModelPrognostics)
   lake_variables.active_lake = false
   water_deficit_per_lake::Float64 = water_deficit/length(lake_parameters.secondary_lakes)
-  for secondary_lake in lake.parameters.secondary_lakes
-    filling_lake::FillingLake = \
+  for secondary_lake::Int64 in lake.parameters.secondary_lakes
+    filling_lake::FillingLake =
       change_to_filling_lake(lake_model_prognostics.lakes[secondary_lake],
                              lake_parameters.lake_number)
-    lake_model_prognostics.lakes[secondary_lake.lake_number] = filling_lake
-    handle_event(filling_lake,RemoveWater(water_deficit_per_lake))
+    lake_model_prognostics.lakes[secondary_lake] = filling_lake
+    handle_event(filling_lake,RemoveWater(water_deficit_per_lake,false))
   end
 end
 
@@ -403,10 +442,12 @@ function change_to_overflowing_lake(lake::FillingLake,inflow::Float64)
     println("Lake $(lake_parameters.lake_number) changing from filling to overflowing lake ")
   end
   local redirect::Redirect
+  local redirect_target_found::Bool
   if ! lake_parameters.is_primary
     for secondary_lake in
-        lake_model_prognostics.lakes[lake_parameters.primary_lake].lake_parameters.secondary_lakes
-      redirect_target_found::Bool = false
+        lake_model_prognostics.lakes[lake_parameters.primary_lake].
+        parameters.secondary_lakes
+      redirect_target_found = false
       if isa(lake_model_prognostics.lakes[secondary_lake],FillingLake) &&
          secondary_lake != lake.parameters.lake_number
         redirect =
@@ -457,6 +498,9 @@ function change_to_filling_lake(lake::OverflowingLake)
   if lake.excess_water != 0.0
     error("Can't change lake with excess water back to filling lake")
   end
+  if debug
+    println("Lake $(lake_parameters.lake_number) changing from overflowing to filling lake ")
+  end
   filling_lake::FillingLake = FillingLake(lake_parameters,
                                           lake_variables,
                                           lake_model_parameters,
@@ -489,9 +533,6 @@ function handle_event(lake::OverflowingLake,::DrainExcessWater)
   lake_model_parameters::LakeModelParameters,
   lake_model_prognostics::LakeModelPrognostics = get_lake_data(lake)
   if lake.excess_water > 0.0
-    lake.excess_water +=
-      lake_variables.unprocessed_water
-    lake_variables.unprocessed_water = 0.0
     total_lake_volume::Float64 = 0.0
     for_elements_in_set(lake_model_prognostics.set_forest,
                         find_root(lake_model_prognostics.set_forest,
@@ -538,6 +579,7 @@ function show(io::IO,lake::Lake)
   println(io,"Lake number: "*string(lake_parameters.lake_number))
   println(io,"Center cell: "*string(lake_parameters.center_coords))
   println(io,"Unprocessed water: "*string(lake_variables.unprocessed_water))
+  println(io,"Active Lake: "*string(lake_variables.active_lake))
   println(io,"Center cell coarse coords: "*string(lake_parameters.center_cell_coarse_coords))
   if isa(lake,OverflowingLake)
     println(io,"O")
@@ -550,7 +592,7 @@ function show(io::IO,lake::Lake)
     println(io,"Current height type: "*string(lake.current_height_type))
     println(io,"Current filling cell index: "*string(lake.current_filling_cell_index))
     println(io,"Next cell volume threshold: "*string(lake.next_cell_volume_threshold))
-    println(io,"Prevoius cell volume threshold: "*string(lake.previous_cell_volume_threshold))
+    println(io,"Previous cell volume threshold: "*string(lake.previous_cell_volume_threshold))
   elseif isa(lake,SubsumedLake)
     println(io,"S")
     println(io,"Redirect target : "*string(lake.redirect_target))

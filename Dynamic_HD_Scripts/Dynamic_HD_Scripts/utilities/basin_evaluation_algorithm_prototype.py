@@ -36,15 +36,25 @@ class StoreToArray:
     self.working_object.extend([float(val) for val in field_in])
 
   def add_outflow_points_dict(self,outflow_points_in,
+                              single_index=False,
                               array_offset=0):
     dict_array = []
     for key,val in outflow_points_in.items():
         entry_as_array = [float((key+array_offset) if key >= 0 else key)]
         if val[0] is None:
-            entry_as_array.append(-1.0)
+            if single_index:
+                entry_as_array.append(-1.0)
+            else:
+                entry_as_array.extend([-1.0,-1.0])
         elif val[0] is int:
+            if not single_index:
+                raise RuntimeError("Wrong numbers of coordinates in "
+                                   "outflows points")
             entry_as_array.append(float(val[0]+array_offset))
         else:
+            if single_index:
+                raise RuntimeError("Wrong numbers of coordinates in "
+                                   "outflows points")
             entry_as_array.extend([float(val[0][0]+array_offset),
                                    float(val[0][1]+array_offset)])
         entry_as_array.append(float(val[1]))
@@ -696,12 +706,7 @@ class BasinEvaluationAlgorithm:
             store_to_array.complete_object()
         return store_to_array.complete_array()
 
-    def get_lake_centers(self):
-        lake_centers = np.full(self.minima.shape,False,
-                               dtype=np.int32)
-        for lake in self.lakes:
-            lake_centers[lake.center_coords] = True
-        return lake_centers
+
 
     def get_lake_mask(self):
         return self.lake_numbers != self.null_lake_number
@@ -738,6 +743,14 @@ class LatLonBasinEvaluationAlgorithm(BasinEvaluationAlgorithm):
         rdir = self.prior_fine_rdirs[coords_in]
         return rdir == 5
 
+    def get_lake_centers(self):
+        lake_center_lat_coords = []
+        lake_center_lon_coords = []
+        for lake in self.lakes:
+            lake_center_lat_coords.append(lake.center_coords[0])
+            lake_center_lon_coords.append(lake.center_coords[1])
+        return lake_center_lat_coords,lake_center_lon_coords
+
 class SingleIndexBasinEvaluationAlgorithm(BasinEvaluationAlgorithm):
 
     def __init__(self,
@@ -768,6 +781,12 @@ class SingleIndexBasinEvaluationAlgorithm(BasinEvaluationAlgorithm):
     def check_if_fine_cell_is_sink(self,coords_in):
         next_cell_index = self.prior_next_cell_indices[coords_in]
         return (next_cell_index == self.true_sink_value)
+
+    def get_lake_centers(self):
+        lake_center_indices = []
+        for lake in self.lakes:
+            lake_center_indices.append(lake.center_coords)
+        return lake_center_indices
 
 class LatLonEvaluateBasin:
 

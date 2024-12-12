@@ -4,11 +4,14 @@ using HierarchicalStateMachineModule: Event
 using L2LakeModelDefsModule: Lake, LakeModelParameters, LakeModelPrognostics
 using L2LakeModelDefsModule: LakeModelDiagnostics
 using L2LakeModule: LakeParameters, LakeVariables, FillingLake, OverflowingLake
-using L2LakeModule: DrainExcessWater, AddWater, RemoveWater, ReleaseNegativeWater
+using L2LakeModule: DrainExcessWater, AddWater, RemoveWater, ProcessWater
+using L2LakeModule: ReleaseNegativeWater
 using L2LakeModule: handle_event, get_lake_volume
+using L2LakeModule: get_corresponding_surface_model_grid_cell
 using L2LakeArrayDecoderModule: get_lake_parameters_from_array
 using CoordsModule: Coords,is_lake
 using GridModule: LatLonGrid,UnstructuredGrid,for_all
+using GridModule: for_all_fine_cells_in_coarse_cell
 using HDModule: RiverParameters, PrognosticFields, RiverPrognosticFields, RiverDiagnosticFields
 using HDModule: RiverDiagnosticOutputFields, PrintResults, PrintSection
 using FieldModule: Field,set!,elementwise_divide,elementwise_multiple
@@ -96,12 +99,44 @@ function create_lakes(lake_model_parameters::LakeModelParameters,
       error("Lake number doesn't match position when creating lakes")
     end
     add_set(lake_model_prognostics.set_forest,lake_parameters.lake_number)
-    push!(lake_model_prognostics.lakes,
-          FillingLake(lake_parameters,
-                      LakeVariables(lake_parameters.is_leaf),
-                      lake_model_parameters,
-                      lake_model_prognostics,
-                      false))
+    lake::FillingLake = FillingLake(lake_parameters,
+                                    LakeVariables(lake_parameters.is_leaf),
+                                    lake_model_parameters,
+                                    lake_model_prognostics,
+                                    false)
+    push!(lake_model_prognostics.lakes,lake)
+    if lake_parameters.is_leaf
+      surface_model_coords =
+        get_corresponding_surface_model_grid_cell(lake.current_cell_to_fill,
+                                                  lake_model_parameters.grid_specific_lake_model_parameters)
+      set!(lake_model_prognostics.lake_cell_count,surface_model_coords,
+           lake_model_prognostics.lake_cell_count(surface_model_coords) + 1)
+      set!(lake_model_prognostics.lake_numbers,lake.current_cell_to_fill,
+           lake.parameters.lake_number)
+    end
+  end
+  basin_number::Int64 = 1
+  for_all(lake_model_parameters.hd_model_grid;
+          use_cartesian_index=true) do coords::CartesianIndex
+    basins_in_coarse_cell::Vector{Int64} = CartesianIndex[]
+    basins_found::Bool = false
+    for_all_fine_cells_in_coarse_cell(lake_model_parameters.lake_model_grid,
+                                      lake_model_parameters.hd_model_grid,
+                                      coords) do fine_coords::CartesianIndex
+      if lake_model_parameters.lake_centers(fine_coords)
+        for lake::Lake in lake_model_prognostics.lakes
+          if lake.parameters.center_coords == fine_coords
+            push!(basins_in_coarse_cell,lake.parameters.lake_number)
+            basins_found = true
+          end
+        end
+      end
+    end
+    if basins_found
+      push!(lake_model_parameters.basins,basins_in_coarse_cell)
+      set!(lake_model_parameters.basin_numbers,coords,basin_number)
+      basin_number += 1
+    end
   end
 end
 
@@ -130,12 +165,12 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,setup_lake
   lake_model_parameters::LakeModelParameters = get_lake_model_parameters(prognostic_fields)
   lake_model_prognostics::LakeModelPrognostics = get_lake_model_prognostics(prognostic_fields)
   for_all(lake_model_parameters.lake_model_grid;
-          use_cartestian_index=true) do coords::CartesianIndex
+          use_cartesian_index=true) do coords::CartesianIndex
     if lake_model_parameters.lake_centers(coords)
       initial_water_to_lake_center::Float64 =
         setup_lakes.initial_water_to_lake_centers(coords)
       if  initial_water_to_lake_center > 0.0
-        add_water::AddWater = AddWater(initial_water_to_lake_center)
+        add_water::AddWater = AddWater(initial_water_to_lake_center,false)
         lake_index::Int64 = lake_model_prognostics.lake_numbers(coords)
         lake::Lake = lake_prognostics.lakes[lake_index]
         lake_model_prognostics.lakes[lake_index] = handle_event(lake,add_water)
@@ -150,7 +185,7 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
   lake_model_prognostics::LakeModelPrognostics = get_lake_model_prognostics(prognostic_fields)
   lake_model_parameters::LakeParameters = get_lake_model_parameters(prognostic_fields)
   for_all(lake_model_parameters.hd_model_grid;
-          use_cartestian_index=true) do coords::CartesianIndex
+          use_cartesian_index=true) do coords::CartesianIndex
     initial_spillover::Float64 = distribute_spillover.initial_spillover_to_rivers(coords)
     if initial_spillover > 0.0
       set!(lake_model_prognostics.water_to_hd,coords,
@@ -173,7 +208,7 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,::RunLakes
   evaporation_on_surface_grid::Field{Float64} = lake_model_prognostics.effective_volume_per_cell_on_surface_grid -
                                                 new_effective_volume_per_cell_on_surface_grid
   fill!(lake_model_prognostics.effective_volume_per_cell_on_surface_grid,0.0)
-  for_all(lake_model_parameters.surface_model_grid;use_cartestian_index=true) do coords::CartesianIndex
+  for_all(lake_model_parameters.surface_model_grid;use_cartesian_index=true) do coords::CartesianIndex
     lake_cell_count::Int64 = lake_model_prognostics.lake_cell_count(coords)
     if evaporation_on_surface_grid(coords) != 0.0 && lake_cell_count > 0
       cell_count_check::Int64 = 0
@@ -184,10 +219,8 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,::RunLakes
           target_lake_index::Int64 = lake_model_prognostics.lake_numbers(fine_coords)
           if target_lake_index != 0
             lake::Lake = lake_model_prognostics.lakes[target_lake_index]
-            if lake_model_prognostics.flooded_lake_cells(fine_coords)
-              lake_model_prognostics.evaporation_from_lakes[target_lake_index] += evaporation_per_lake_cell
-              cell_count_check += 1
-            end
+            lake_model_prognostics.evaporation_from_lakes[target_lake_index] += evaporation_per_lake_cell
+            cell_count_check += 1
           end
         end
       end
@@ -197,27 +230,26 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,::RunLakes
     end
   end
   fill!(lake_model_prognostics.evaporation_applied,false)
-  for coords::CartesianIndex in lake_model_prognostics.cells_with_lakes
+  for coords::CartesianIndex in lake_model_parameters.cells_with_lakes
     if lake_model_prognostics.water_to_lakes(coords) > 0.0
       lakes_in_cell =
         lake_model_parameters.basins[lake_model_parameters.basin_numbers(coords)]
-      filter!(lake_center_coords::CartesianIndex->
-              lake_model_prognostics.lakes[
-                lake_model_prognostics.lake_numbers(lake_center_coords)].variables.active_lake,
+      filter!(lake_index::Int64->
+              lake_model_prognostics.lakes[lake_index].variables.active_lake,
               lakes_in_cell)
       share_to_each_lake::Float64 = lake_model_prognostics.water_to_lakes(coords)/length(lakes_in_cell)
-      add_water::AddWater = AddWater(share_to_each_lake)
-      for center_coords::CartesianIndex in lakes_in_cell
-        lake::Lake = lake_model_prognostics.lakes[lake_model_prognostics.lake_numbers(center_coords)]
-        lake_index::Int64 = lake.parameters.lake_number
+      add_water::AddWater = AddWater(share_to_each_lake,true)
+      for lake_index::Int64 in lakes_in_cell
+        lake::Lake = lake_model_prognostics.lakes[lake_index]
         if ! lake_model_prognostics.evaporation_applied[lake_index]
           inflow_minus_evaporation::Float64 = share_to_each_lake -
                                               lake_model_prognostics.evaporation_from_lakes[lake_index]
           if inflow_minus_evaporation >= 0.0
-            add_water_modified::AddWater = AddWater(inflow_minus_evaporation)
+            add_water_modified::AddWater = AddWater(inflow_minus_evaporation,true)
             lake_model_prognostics.lakes[lake_index] = handle_event(lake,add_water_modified)
           else
-            remove_water_modified::RemoveWater = RemoveWater(-1.0*inflow_minus_evaporation)
+            remove_water_modified::RemoveWater =
+              RemoveWater(-1.0*inflow_minus_evaporation,true)
             lake_model_prognostics.lakes[lake_index] = handle_event(lake,remove_water_modified)
           end
           lake_model_prognostics.evaporation_applied[lake_index] = true
@@ -228,8 +260,11 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,::RunLakes
     elseif lake_model_prognostics.water_to_lakes(coords) < 0.0
       lakes_in_cell =
         lake_model_parameters.basins[lake_model_parameters.basin_numbers(coords)]
+      filter!(lake_index::Int64->
+              lake_model_prognostics.lakes[lake_index].variables.active_lake,
+              lakes_in_cell)
       share_to_each_lake = -1.0*lake_model_prognostics.water_to_lakes(coords)/length(lakes_in_cell)
-      remove_water::RemoveWater = RemoveWater(share_to_each_lake)
+      remove_water::RemoveWater = RemoveWater(share_to_each_lake,true)
       for lake_index::Int64 in lakes_in_cell
         lake::Lake = lake_model_prognostics.lakes[lake_index]
         lake_model_prognostics.lakes[lake_index] = handle_event(lake,remove_water)
@@ -238,20 +273,22 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,::RunLakes
   end
   for lake::Lake in lake_model_prognostics.lakes
     lake_index::Int64 = lake.parameters.lake_number
-    if lake.variables.unprocessed_water > 0.0
-      lake_model_prognostics.lakes[lake_index] = handle_event(lake,AddWater(0.0))
+    if ! lake_model_prognostics.evaporation_applied[lake_index]
+      evaporation::Float64 = lake_model_prognostics.evaporation_from_lakes[lake_index]
+      if evaporation > 0
+        lake_model_prognostics.lakes[lake_index] =
+          handle_event(lake,RemoveWater(evaporation,true))
+      elseif evaporation < 0
+        lake_model_prognostics.lakes[lake_index] =
+          handle_event(lake,AddWater(-1.0*evaporation,true))
+      end
+      lake_model_prognostics.evaporation_applied[lake_index] = true
     end
   end
   for lake::Lake in lake_model_prognostics.lakes
     lake_index::Int64 = lake.parameters.lake_number
-    if ! lake_model_prognostics.evaporation_applied[lake_index]
-      evaporation::Float64 = lake_model_prognostics.evaporation_from_lakes[lake_index]
-      if evaporation > 0
-        lake_model_prognostics.lakes[lake_index] = handle_event(lake,RemoveWater(evaporation))
-      elseif evaporation < 0
-        lake_model_prognostics.lakes[lake_index] = handle_event(lake,AddWater(-1.0*evaporation))
-      end
-      lake_model_prognostics.evaporation_applied[lake_index] = true
+    if lake.variables.unprocessed_water != 0.0
+      lake_model_prognostics.lakes[lake_index] = handle_event(lake,ProcessWater())
     end
   end
   for lake::Lake in lake_model_prognostics.lakes
@@ -277,7 +314,7 @@ end
 function set_effective_lake_height_on_surface_grid_to_lakes(lake_model_parameters::LakeModelParameters,
                                                             lake_model_prognostics::LakeModelPrognostics,
                                                             effective_lake_height_on_surface_grid::Field{Float64})
-  for_all(lake_model_parameters.surface_model_grid;use_cartestian_index=true) do coords::CartesianIndex
+  for_all(lake_model_parameters.surface_model_grid;use_cartesian_index=true) do coords::CartesianIndex
     set!(lake_model_prognostics.effective_lake_height_on_surface_grid_to_lakes,coords,
          effective_lake_height_on_surface_grid(coords))
   end
@@ -433,7 +470,7 @@ function calculate_diagnostic_lake_volumes_field(lake_model_parameters::LakeMode
     end
   end
   for_all(lake_model_parameters.lake_model_grid;
-          use_cartestian_index=true) do coords::CartesianIndex
+          use_cartesian_index=true) do coords::CartesianIndex
     lake_number = lake_fields.lake_numbers(coords)
     if (lake_number > 0)
       set!(diagnostic_lake_volumes,coords,lake_volumes_by_lake_number[lake_number])
@@ -465,7 +502,7 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
     calculate_effective_lake_height_on_surface_grid(lake_model_parameters,lake_fields)
   effective_lake_height_on_surface_grid::Field{Float64} = old_effective_lake_height_on_surface_grid
   for_all(lake_model_parameters.surface_model_grid,
-          use_cartestian_index=true) do coords::CartesianIndex
+          use_cartesian_index=true) do coords::CartesianIndex
     if old_effective_lake_height_on_surface_grid(coords) > 0.0
       working_effective_lake_height_on_surface_grid::Float64 =
         old_effective_lake_height_on_surface_grid(coords) -
