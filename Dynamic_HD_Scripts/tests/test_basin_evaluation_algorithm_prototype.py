@@ -179,6 +179,87 @@ class BasinEvaluationTests(unittest.TestCase):
     print([lake.outflow_points for lake in alg.lakes])
     print(output)
 
+  def testBasinEvaluationSingleLakeTwo(self):
+    coarse_catchment_nums_in = np.array([[2, 1, 1],
+                                         [2, 2, 1],
+                                         [2, 2, 1]])
+    prior_coarse_rdirs_in = np.array([[-2,6,2],
+                                      [8,7,2 ],
+                                      [8,7,0 ]])
+    corrected_orography_in = np.array([
+      [10.0,10.0,10.0, 3.0,10.0,10.0,10.0,10.0,10.0],
+      [10.0,10.0,10.0, 3.0,10.0,10.0,10.0,10.0,10.0],
+      [10.0,10.0, 1.0, 3.0,10.0,10.0,10.0,10.0,10.0],
+      [10.0,10.0, 2.0, 2.0,10.0,10.0,10.0,10.0,10.0],
+      [10.0,10.0, 2.0, 2.0,10.0,10.0,10.0,10.0,10.0],
+      [10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0],
+      [10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0],
+      [10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0],
+      [10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0, 0.0]])
+
+    raw_orography_in = np.array([
+      [10.0,10.0,10.0, 3.0,10.0,10.0,10.0,10.0,10.0],
+      [10.0,10.0,10.0, 3.0,10.0,10.0,10.0,10.0,10.0],
+      [10.0,10.0, 1.0, 3.0,10.0,10.0,10.0,10.0,10.0],
+      [10.0,10.0, 2.0, 2.0,10.0,10.0,10.0,10.0,10.0],
+      [10.0,10.0, 2.0, 2.0,10.0,10.0,10.0,10.0,10.0],
+      [10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0],
+      [10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0],
+      [10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0],
+      [10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0, 0.0]])
+
+    minima_in = np.array([
+      [False,False,False,False,False,False,False,False,False],
+      [False,False,False,False,False,False,False,False,False],
+      [False,False, True,False,False,False,False,False,False],
+      [False,False,False,False,False,False,False,False,False],
+      [False,False,False,False,False,False,False,False,False],
+      [False,False,False,False,False,False,False,False,False],
+      [False,False,False,False,False,False,False,False,False],
+      [False,False,False,False,False,False,False,False,False],
+      [False,False,False,False,False,False,False,False,False]])
+    prior_fine_rdirs_in = np.array([
+      [3, 2, 6, 6, 6, 6, 6, 6, 2],
+      [3, 3, 8, 6, 6, 6, 6, 6, 2],
+      [4, 4, 5, 4, 4, 4, 2, 2, 2],
+      [8, 7, 8, 4, 4, 4, 2, 2, 2],
+      [8, 7, 8, 4, 4, 4, 2, 2, 2],
+      [8, 7, 8, 4, 4, 4, 2, 2, 2],
+      [8, 8, 8, 4, 4, 4, 2, 2, 2],
+      [8, 8, 8, 4, 4, 4, 2, 2, 2],
+      [8, 8, 8, 4, 4, 4, 2, 6, 0]])
+    prior_fine_catchments_in = np.array([
+      [1, 1, 2, 2, 2, 2, 2, 2, 2],
+      [1, 1, 2, 2, 2, 2, 2, 2, 2],
+      [1, 1, 1, 1, 1, 1, 2, 2, 2],
+      [1, 1, 1, 1, 1, 1, 2, 2, 2],
+      [1, 1, 1, 1, 1, 1, 2, 2, 2],
+      [1, 1, 1, 1, 1, 1, 2, 2, 2],
+      [1, 1, 1, 1, 1, 1, 2, 2, 2],
+      [1, 1, 1, 1, 1, 1, 2, 2, 2],
+      [1, 1, 1, 1, 1, 1, 2, 6, 0]])
+    cell_areas_in = np.full((9,9),1.0)
+    landsea_in = np.full((9,9),0,dtype=np.int32)
+    landsea_in[8,8] = 1
+    output,alg = \
+      LatLonEvaluateBasin.evaluate_basins(landsea_in,
+                                          minima_in,
+                                          raw_orography_in,
+                                          corrected_orography_in,
+                                          cell_areas_in,
+                                          prior_fine_rdirs_in,
+                                          prior_fine_catchments_in,
+                                          coarse_catchment_nums_in,
+                                          return_algorithm_object=True)
+    print("---")
+    print("single lake 2")
+    print([lake.filling_order for lake in alg.lakes])
+    print([lake.primary_lake for lake in alg.lakes])
+    print([lake.spill_points for lake in alg.lakes])
+    print([lake.potential_exit_points for lake in alg.lakes])
+    print([lake.outflow_points for lake in alg.lakes])
+    print(output)
+
   def testBasinEvaluationOne(self):
     coarse_catchment_nums_in = np.array([[3,3,2,2],
                                          [3,3,2,2],
@@ -319,7 +400,7 @@ class BasinEvaluationTests(unittest.TestCase):
     landsea_in[:,:] = False
     landsea_in[19,15] = True
     cell_areas_in = np.full((20,20),1.0)
-    _,alg = \
+    output,alg = \
       LatLonEvaluateBasin.evaluate_basins(landsea_in,
                                           minima_in,
                                           raw_orography_in,
@@ -330,10 +411,12 @@ class BasinEvaluationTests(unittest.TestCase):
                                           coarse_catchment_nums_in,
                                           return_algorithm_object=True)
     print("---")
+    print("Evaluation One")
     print([lake.filling_order for lake in alg.lakes])
     print([lake.primary_lake for lake in alg.lakes])
     print([lake.spill_points for lake in alg.lakes])
     print([lake.outflow_points for lake in alg.lakes])
+    print(output)
 
   def testBasinEvaluationTwo(self):
     coarse_catchment_nums_in = np.array([[3,3,2,2],

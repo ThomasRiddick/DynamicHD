@@ -233,8 +233,8 @@ function handle_event(lake::OverflowingLake,add_water::AddWater)
   if lake.current_redirect.use_local_redirect
     other_lake_number::Int64 = lake.current_redirect.local_redirect_target_lake_number
     other_lake::Lake =
-      lake_model_prognostics[other_lake_number]
-    lake_model_prognostics[other_lake_number] =
+      lake_model_prognostics.lakes[other_lake_number]
+    lake_model_prognostics.lakes[other_lake_number] =
       handle_event(other_lake,AddWater(inflow,false))
   else
     lake.excess_water += inflow
@@ -533,20 +533,29 @@ function handle_event(lake::OverflowingLake,::DrainExcessWater)
   lake_model_parameters::LakeModelParameters,
   lake_model_prognostics::LakeModelPrognostics = get_lake_data(lake)
   if lake.excess_water > 0.0
-    total_lake_volume::Float64 = 0.0
-    for_elements_in_set(lake_model_prognostics.set_forest,
-                        find_root(lake_model_prognostics.set_forest,
-                                  lake_parameters.lake_number),
-                        x -> total_lake_volume +=
-                        get_lake_volume(lake_model_prognostics.lakes[get_label(x)]))
-    flow = (total_lake_volume)/
-           (lake_model_parameters.lake_model_settings.lake_retention_constant + 1.0)
-    flow = min(flow,lake.excess_water)
-    set!(lake_model_prognostics.water_to_hd,
-         lake.current_redirect.non_local_redirect_target,
-         lake_model_prognostics.water_to_hd(lake.current_redirect.
-                                            non_local_redirect_target)+flow)
-    lake.excess_water -= flow
+    if lake.current_redirect.use_local_redirect
+      other_lake_number::Int64 = lake.current_redirect.local_redirect_target_lake_number
+      other_lake::Lake =
+        lake_model_prognostics.lakes[other_lake_number]
+      lake_model_prognostics.lakes[other_lake_number] =
+        handle_event(other_lake,AddWater(lake.excess_water,false))
+      lake.excess_water = 0.0
+    else
+      total_lake_volume::Float64 = 0.0
+      for_elements_in_set(lake_model_prognostics.set_forest,
+                          find_root(lake_model_prognostics.set_forest,
+                                    lake_parameters.lake_number),
+                          x -> total_lake_volume +=
+                          get_lake_volume(lake_model_prognostics.lakes[get_label(x)]))
+      flow = (total_lake_volume)/
+             (lake_model_parameters.lake_model_settings.lake_retention_constant + 1.0)
+      flow = min(flow,lake.excess_water)
+      set!(lake_model_prognostics.water_to_hd,
+           lake.current_redirect.non_local_redirect_target,
+           lake_model_prognostics.water_to_hd(lake.current_redirect.
+                                              non_local_redirect_target)+flow)
+      lake.excess_water -= flow
+    end
   end
   return lake
 end
