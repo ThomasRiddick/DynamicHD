@@ -118,7 +118,7 @@ function read_filling_order(decoder::ArrayDecoder;single_index=false)
                            Int64[Int64(entry[1])] :
                            [Int64(x) for x in entry[1:2]]
     height_type_int::Int64 = Int64(entry[2+offset])
-    height_type::HeightType = height_type_int == 0 ? connect_height : flood_height
+    height_type::HeightType = height_type_int == 1 ? flood_height : connect_height
     threshold::Float64 = entry[3+offset]
     height::Float64 = entry[4+offset]
     push!(filling_order,Cell(CartesianIndex(coords...),height_type,threshold,height))

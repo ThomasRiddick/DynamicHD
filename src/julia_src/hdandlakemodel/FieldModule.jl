@@ -60,7 +60,8 @@ end
 # This could be done by overloading broadcast but this is overcomplicated
 # Assumes result is fractional and hence returns a field of floating point numbers
 function elementwise_divide(lfield::Field{T},rfield::Field{T}) where {T}
-  return Field{Float64}(lfield.grid,lfield.data./rfield.data)::Field{Float64}
+  return Field{Float64}(lfield.grid,
+                        Float64.(lfield.data)./Float64.(rfield.data))::Field{Float64}
 end
 
 # This could be done by overloading broadcast but this is overcomplicated

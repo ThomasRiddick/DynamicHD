@@ -53,7 +53,7 @@ struct LakeModelParameters
                                number_of_lakes::Int64,
                                is_lake::Field{Bool})
     number_fine_grid_cells::Field{Int64} =
-      Field{Int64}(lake_model_grid,0)
+      Field{Int64}(surface_model_grid,0)
     surface_cell_to_fine_cell_maps::Vector{Vector{CartesianIndex}} = CartesianIndex[]
     surface_cell_to_fine_cell_map_numbers = Field{Int64}(surface_model_grid,0)
     for_all(lake_model_grid;use_cartesian_index=true) do coords::CartesianIndex

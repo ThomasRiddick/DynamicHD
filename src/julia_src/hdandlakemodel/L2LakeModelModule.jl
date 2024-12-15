@@ -8,6 +8,7 @@ using L2LakeModule: DrainExcessWater, AddWater, RemoveWater, ProcessWater
 using L2LakeModule: ReleaseNegativeWater
 using L2LakeModule: handle_event, get_lake_volume
 using L2LakeModule: get_corresponding_surface_model_grid_cell
+using L2LakeModule: flood_height
 using L2LakeArrayDecoderModule: get_lake_parameters_from_array
 using CoordsModule: Coords,is_lake
 using GridModule: LatLonGrid,UnstructuredGrid,for_all
@@ -15,7 +16,7 @@ using GridModule: for_all_fine_cells_in_coarse_cell
 using HDModule: RiverParameters, PrognosticFields, RiverPrognosticFields, RiverDiagnosticFields
 using HDModule: RiverDiagnosticOutputFields, PrintResults, PrintSection
 using FieldModule: Field,set!,elementwise_divide,elementwise_multiple
-using SplittableRootedTree: add_set
+using SplittableRootedTree: add_set,find_root,for_elements_in_set,get_label
 import HierarchicalStateMachineModule: handle_event
 import L2LakeModule: handle_event
 import HDModule: water_to_lakes,water_from_lakes
@@ -105,7 +106,8 @@ function create_lakes(lake_model_parameters::LakeModelParameters,
                                     lake_model_prognostics,
                                     false)
     push!(lake_model_prognostics.lakes,lake)
-    if lake_parameters.is_leaf
+    if lake_parameters.is_leaf && (lake.current_height_type == flood_height
+                                   || length(lake_parameters.filling_order) == 1)
       surface_model_coords =
         get_corresponding_surface_model_grid_cell(lake.current_cell_to_fill,
                                                   lake_model_parameters.grid_specific_lake_model_parameters)
@@ -339,7 +341,7 @@ end
 
 function calculate_lake_fraction_on_surface_grid(lake_model_parameters::LakeModelParameters,
                                                  lake_model_prognostics::LakeModelPrognostics)
-  return elementwise_divide(lake_model_prognostics.number_lake_cells,
+  return elementwise_divide(lake_model_prognostics.lake_cell_count,
                             lake_model_parameters.number_fine_grid_cells)::Field{Float64}
 end
 
@@ -471,24 +473,25 @@ end
 
 function calculate_diagnostic_lake_volumes_field(lake_model_parameters::LakeModelParameters,
                                                  lake_model_prognostics::LakeModelPrognostics)
-  lake_volumes_by_lake_number::Vector{Float64} = zeros(Float64,length(lake_prognostics.lakes))
+  lake_volumes_by_lake_number::Vector{Float64} =
+    zeros(Float64,length(lake_model_prognostics.lakes))
   diagnostic_lake_volumes::Field{Float64} =
     Field{Float64}(lake_model_parameters.lake_model_grid,0.0)
-  for i::CartesianIndex in eachindex(lake_prognostics.lakes)
+  for i::Int64 in eachindex(lake_model_prognostics.lakes)
     lake::Lake = lake_model_prognostics.lakes[i]
     if lake.variables.active_lake
       total_lake_volume::Float64 = 0.0
       for_elements_in_set(lake_model_prognostics.set_forest,
                           find_root(lake_model_prognostics.set_forest,
                                     lake.parameters.lake_number),
-                          x -> total_lake_volume =
+                          x -> total_lake_volume +=
                           get_lake_volume(lake_model_prognostics.lakes[get_label(x)]))
       lake_volumes_by_lake_number[i] = total_lake_volume
     end
   end
   for_all(lake_model_parameters.lake_model_grid;
           use_cartesian_index=true) do coords::CartesianIndex
-    lake_number = lake_fields.lake_numbers(coords)
+    lake_number = lake_model_prognostics.lake_numbers(coords)
     if (lake_number > 0)
       set!(diagnostic_lake_volumes,coords,lake_volumes_by_lake_number[lake_number])
     end

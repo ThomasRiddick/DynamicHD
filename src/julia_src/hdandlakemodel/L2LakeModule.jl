@@ -172,7 +172,7 @@ function handle_event(lake::FillingLake,add_water::AddWater)
     local surface_model_coords::CartesianIndex
     if lake.lake_volume >= 0 && lake.current_filling_cell_index == 1 &&
        lake_model_prognostics.lake_numbers(lake.current_cell_to_fill) == 0 &&
-       ! lake_parameters.is_leaf
+       ! lake_parameters.is_leaf && lake.current_height_type == flood_height
       surface_model_coords =
         get_corresponding_surface_model_grid_cell(lake.current_cell_to_fill,
                                                   lake_model_parameters.grid_specific_lake_model_parameters)
@@ -204,6 +204,8 @@ function handle_event(lake::FillingLake,add_water::AddWater)
         lake.parameters.filling_order[lake.current_filling_cell_index].fill_threshold
       lake.current_cell_to_fill =
         lake.parameters.filling_order[lake.current_filling_cell_index].coords
+      lake.current_height_type =
+        lake.parameters.filling_order[lake.current_filling_cell_index].height_type
       if lake.current_height_type == flood_height &&
          lake_model_prognostics.lake_numbers(lake.current_cell_to_fill) == 0
         surface_model_coords =
@@ -287,7 +289,7 @@ function handle_event(lake::FillingLake,remove_water::RemoveWater)
                    lake_model_prognostics)
       end
       if lake_model_prognostics.lake_numbers(lake.current_cell_to_fill) == lake.parameters.lake_number &&
-          ! lake_parameters.is_leaf
+          ! lake_parameters.is_leaf && lake.current_height_type == flood_height
         surface_model_coords =
           get_corresponding_surface_model_grid_cell(lake.current_cell_to_fill,
                                                     lake_model_parameters.grid_specific_lake_model_parameters)
@@ -324,6 +326,8 @@ function handle_event(lake::FillingLake,remove_water::RemoveWater)
       lake.previous_cell_volume_threshold =
         lake.parameters.filling_order[lake.current_filling_cell_index].fill_threshold
       lake.current_cell_to_fill = lake.parameters.filling_order[lake.current_filling_cell_index].coords
+      lake.current_height_type =
+        lake.parameters.filling_order[lake.current_filling_cell_index].height_type
     end
   end
   return lake
