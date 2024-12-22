@@ -8,6 +8,7 @@ using HDModule: WriteRiverFlow,AccumulateRiverFlow,ResetCumulativeRiverFlow,Writ
 using HDModule: PrintGlobalValues, water_to_lakes,water_from_lakes,get_river_parameters
 using FieldModule: Field,elementwise_multiple
 using L2LakeModelDefsModule: LakeModelParameters,LakeModelPrognostics
+using L2LakeModelDefsModule: LakeModelDiagnostics
 using L2LakeModelModule: RiverAndLakePrognosticFields,RunLakes,PrintSection
 using L2LakeModelModule: WriteLakeNumbers,WriteLakeVolumes,SetupLakes,DistributeSpillover
 using L2LakeModelModule: WriteDiagnosticLakeVolumes,CheckWaterBudget,SetLakeEvaporation
@@ -38,13 +39,14 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
                                               return_lake_volumes::Bool=false,
                                               diagnostic_lake_volumes::VectorOfVectorOfFloatsOrNothing=
                                               nothing,
-                                              input_data_is_monthly_mean::Bool=true)
+                                              input_data_is_monthly_mean::Bool=true,
+                                              forcing_timesteps_to_skip::Int64=0)
   ncells::Int64 = get_number_of_cells(get_river_parameters(prognostic_fields).grid)
   hsm::HierarchicalStateMachine = HierarchicalStateMachine(prognostic_fields)
   runHD::RunHD = RunHD()
   if run_lakes_flag
     run_lakes::RunLakes = RunLakes()
-    if process_initial_lake_water
+    if process_initial_lake_water && forcing_timesteps_to_skip == 0
       setup_lakes::SetupLakes = SetupLakes(initial_water_to_lake_centers)
       distribute_spillover::DistributeSpillover =
         DistributeSpillover(initial_spillover_to_rivers)
@@ -60,6 +62,7 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
     end
   end
   for i in 1:timesteps
+    if i <= forcing_timesteps_to_skip continue end
     if ! input_data_is_monthly_mean
       set_drainage = SetDrainage(drainages[i])
     elseif size(drainages) == (1,)
@@ -238,10 +241,14 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,
                                  return_lake_volumes::Bool=false,
                                  diagnostic_lake_volumes::VectorOfVectorOfFloatsOrNothing=
                                  nothing,
-                                 input_data_is_monthly_mean::Bool=true)
+                                 input_data_is_monthly_mean::Bool=true,
+                                 forcing_timesteps_to_skip::Int64=0,
+                                 lake_model_diagnostics::LakeModelDiagnostics =
+                                 LakeModelDiagnostics())
   prognostic_fields::PrognosticFields = RiverAndLakePrognosticFields(river_parameters,river_fields,
                                                                      lake_model_parameters,
-                                                                     lake_model_prognostics)
+                                                                     lake_model_prognostics,
+                                                                     lake_model_diagnostics)
   drive_hd_model_with_or_without_lakes(prognostic_fields,drainages,runoffs,
                                        lake_evaporations,timesteps,
                                        true,process_initial_lake_water,
@@ -256,10 +263,12 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,
                                        return_lake_volumes,
                                        diagnostic_lake_volumes=
                                        diagnostic_lake_volumes,
+                                       forcing_timesteps_to_skip=
+                                       forcing_timesteps_to_skip,
                                        input_data_is_monthly_mean=
                                        input_data_is_monthly_mean)
   if return_output
-    return river_fields,lake_model_prognostics
+    return river_fields,lake_model_prognostics,lake_model_diagnostics
   end
 end
 
@@ -282,7 +291,10 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,
                                  return_lake_volumes::Bool=false,
                                  diagnostic_lake_volumes::VectorOfVectorOfFloatsOrNothing=
                                  nothing,
-                                 input_data_is_monthly_mean::Bool=true)
+                                 input_data_is_monthly_mean::Bool=true,
+                                 forcing_timesteps_to_skip::Int64=0,
+                                 lake_model_diagnostics::LakeModelDiagnostics =
+                                 LakeModelDiagnostics())
   lake_model_prognostics::LakeModelPrognostics =
     LakeModelPrognostics(lake_model_parameters)
   create_lakes(lake_model_parameters,
@@ -304,9 +316,13 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,
                           diagnostic_lake_volumes=
                           diagnostic_lake_volumes,
                           input_data_is_monthly_mean=
-                          input_data_is_monthly_mean)
+                          input_data_is_monthly_mean,
+                          forcing_timesteps_to_skip=
+                          forcing_timesteps_to_skip,
+                          lake_model_diagnostics=
+                          lake_model_diagnostics)
   if return_output
-    return river_fields,lake_model_prognostics
+    return river_fields,lake_model_prognostics,lake_model_diagnostics
   end
 end
 
@@ -327,7 +343,10 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,
                                  return_lake_volumes::Bool=false,
                                  diagnostic_lake_volumes::VectorOfVectorOfFloatsOrNothing=
                                  nothing,
-                                 input_data_is_monthly_mean::Bool=true)
+                                 input_data_is_monthly_mean::Bool=true,
+                                 forcing_timesteps_to_skip::Int64=0,
+                                 lake_model_diagnostics::LakeModelDiagnostics =
+                                 LakeModelDiagnostics())
   river_fields::RiverPrognosticFields = RiverPrognosticFields(river_parameters)
   drive_hd_and_lake_model(river_parameters,river_fields,lake_model_parameters,
                           lake_model_prognostics,drainages,
@@ -345,9 +364,13 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,
                           diagnostic_lake_volumes=
                           diagnostic_lake_volumes,
                           input_data_is_monthly_mean=
-                          input_data_is_monthly_mean)
+                          input_data_is_monthly_mean,
+                          forcing_timesteps_to_skip=
+                          forcing_timesteps_to_skip,
+                          lake_model_diagnostics=
+                          lake_model_diagnostics)
   if return_output
-    return river_fields,lake_model_prognostics
+    return river_fields,lake_model_prognostics,lake_model_diagnostics
   end
 end
 
@@ -367,7 +390,10 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,
                                  return_lake_volumes::Bool=false,
                                  diagnostic_lake_volumes::VectorOfVectorOfFloatsOrNothing=
                                  nothing,
-                                 input_data_is_monthly_mean::Bool=true)
+                                 input_data_is_monthly_mean::Bool=true,
+                                 forcing_timesteps_to_skip::Int64=0,
+                                 lake_model_diagnostics::LakeModelDiagnostics =
+                                 LakeModelDiagnostics())
   river_fields::RiverPrognosticFields = RiverPrognosticFields(river_parameters)
   lake_model_prognostics::LakeModelPrognostics =
     LakeModelPrognostics(lake_model_parameters)
@@ -390,9 +416,13 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,
                           diagnostic_lake_volumes=
                           diagnostic_lake_volumes,
                           input_data_is_monthly_mean=
-                          input_data_is_monthly_mean)
+                          input_data_is_monthly_mean,
+                          forcing_timesteps_to_skip=
+                          forcing_timesteps_to_skip,
+                          lake_model_diagnostics=
+                          lake_model_diagnostics)
   if return_output
-    return river_fields,lake_model_prognostics
+    return river_fields,lake_model_prognostics,lake_model_diagnostics
   end
 end
 

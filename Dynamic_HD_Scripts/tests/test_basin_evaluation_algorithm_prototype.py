@@ -260,9 +260,90 @@ class BasinEvaluationTests(unittest.TestCase):
     print([lake.outflow_points for lake in alg.lakes])
     print(output)
 
+  def testBasinEvaluationSingleLakeThree(self):
+    coarse_catchment_nums_in = np.array([[2, 1, 1],
+                                         [2, 1, 1],
+                                         [2, 1, 1]])
+    prior_coarse_rdirs_in = np.array([[-2,6,2],
+                                      [ 8,8,2],
+                                      [ 8,8,0]])
+    corrected_orography_in = np.array([
+      [10.0,10.0,10.0, 5.0,8.375,8.0, 8.0, 8.0,8.0],
+      [10.0,10.0,10.0, 5.0,10.0,10.0,10.0,10.0,8.0],
+      [10.0,10.0, 2.0, 2.0,10.0,10.0,10.0,10.0,8.0],
+      [10.0,10.0, 2.0, 2.0,10.0,10.0,10.0,10.0,8.0],
+      [10.0,10.0, 2.0, 2.0,10.0,10.0,10.0,10.0,8.0],
+      [10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,8.0],
+      [10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,8.0],
+      [10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,8.0],
+      [10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,0.0]])
+
+    raw_orography_in = np.array([
+      [10.0,10.0,10.0, 5.0,8.375,8.0, 8.0, 8.0,8.0],
+      [10.0,10.0,10.0, 5.0,10.0,10.0,10.0,10.0,8.0],
+      [10.0,10.0, 2.0, 2.0,10.0,10.0,10.0,10.0,8.0],
+      [10.0,10.0, 2.0, 2.0,10.0,10.0,10.0,10.0,8.0],
+      [10.0,10.0, 2.0, 2.0,10.0,10.0,10.0,10.0,8.0],
+      [10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,8.0],
+      [10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,8.0],
+      [10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,8.0],
+      [10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,0.0]])
+
+    minima_in = np.array([
+      [False,False,False,False,False,False,False,False,False],
+      [False,False,False,False,False,False,False,False,False],
+      [False,False, True,False,False,False,False,False,False],
+      [False,False,False,False,False,False,False,False,False],
+      [False,False,False,False,False,False,False,False,False],
+      [False,False,False,False,False,False,False,False,False],
+      [False,False,False,False,False,False,False,False,False],
+      [False,False,False,False,False,False,False,False,False],
+      [False,False,False,False,False,False,False,False,False]])
+    prior_fine_rdirs_in = np.array([
+      [2, 2, 2, 6, 6, 6, 6, 6, 2],
+      [6, 3, 2, 6, 6, 6, 6, 6, 2],
+      [6, 6, 5, 8, 8, 8, 2, 2, 2],
+      [8, 8, 8, 8, 8, 8, 2, 2, 2],
+      [8, 8, 8, 8, 8, 8, 2, 2, 2],
+      [8, 8, 8, 8, 8, 8, 2, 2, 2],
+      [8, 8, 8, 8, 8, 8, 2, 2, 2],
+      [8, 8, 8, 8, 8, 8, 2, 2, 2],
+      [8, 8, 8, 8, 8, 8, 6, 6, 0]])
+    prior_fine_catchments_in = np.array([
+      [1, 1, 2, 2, 2, 2, 2, 2, 2],
+      [1, 1, 2, 2, 2, 2, 2, 2, 2],
+      [1, 1, 1, 1, 2, 2, 2, 2, 2],
+      [1, 1, 1, 1, 2, 2, 2, 2, 2],
+      [1, 1, 1, 1, 2, 2, 2, 2, 2],
+      [1, 1, 1, 1, 2, 2, 2, 2, 2],
+      [1, 1, 1, 1, 2, 2, 2, 2, 2],
+      [1, 1, 1, 1, 2, 2, 2, 2, 2],
+      [1, 1, 1, 1, 2, 2, 2, 2, 0]])
+    cell_areas_in = np.full((9,9),86400.0/9.0)
+    landsea_in = np.full((9,9),0,dtype=np.int32)
+    landsea_in[8,8] = 1
+    output,alg = \
+      LatLonEvaluateBasin.evaluate_basins(landsea_in,
+                                          minima_in,
+                                          raw_orography_in,
+                                          corrected_orography_in,
+                                          cell_areas_in,
+                                          prior_fine_rdirs_in,
+                                          prior_fine_catchments_in,
+                                          coarse_catchment_nums_in,
+                                          return_algorithm_object=True)
+    print("---")
+    print("single lake 3")
+    print([lake.filling_order for lake in alg.lakes])
+    print([lake.primary_lake for lake in alg.lakes])
+    print([lake.spill_points for lake in alg.lakes])
+    print([lake.potential_exit_points for lake in alg.lakes])
+    print([lake.outflow_points for lake in alg.lakes])
+    print(output)
+
   def testBasinEvaluationOne(self):
-    coarse_catchment_nums_in = np.array([[3,3,2,2],
-                                         [3,3,2,2],
+    coarse_catchment_nums_in = np.array([[3,3,7,2],
+                                         [3,6,7,2],
                                          [5,4,1,2],
                                          [5,4,1,1]])
     prior_coarse_rdirs_in = np.array([[5.0,5.0,5.0,5.0],

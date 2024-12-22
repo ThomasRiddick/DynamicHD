@@ -65,7 +65,7 @@ function read_coords(decoder::ArrayDecoder;single_index=false)
   end
 end
 
-function read_field(decoder::ArrayDecoder;integer_field=false)
+function read_field(decoder::ArrayDecoder;integer_field::Bool=false)
   field_length::Int64 = Int64(decoder.array[decoder.current_index])
   decoder.current_index += 1
   field::Array{Float64} =
