@@ -33,6 +33,7 @@ struct DrainExcessWater <: Event end
 
 struct ReleaseNegativeWater <: Event end
 
+struct CalculateEffectiveLakeVolumePerCell <: Event end
 
 struct Cell
   coords::CartesianIndex
@@ -595,8 +596,6 @@ function handle_event(lake::FillingLake,::ReleaseNegativeWater)
   return lake
 end
 
-
-
 get_lake_volume(lake::FillingLake) = lake.lake_volume + lake.variables.unprocessed_water
 
 get_lake_volume(lake::OverflowingLake) = lake.parameters.filling_order[end].fill_threshold +
@@ -605,6 +604,53 @@ get_lake_volume(lake::OverflowingLake) = lake.parameters.filling_order[end].fill
 
 get_lake_volume(lake::SubsumedLake) = lake.parameters.filling_order[end].fill_threshold +
                                       lake.variables.unprocessed_water
+
+get_lake_filled_cells(lake::FillingLake) =
+  map(f->f.coords,lake.parameters.
+                  filling_order[1:lake.current_filling_cell_index])
+
+get_lake_filled_cells(lake::Union{OverflowingLake,SubsumedLake}) =
+  map(f->f.coords,lake.parameters.filling_order)
+
+function handle_event(lake::Union{OverflowingLake,FillingLake},
+    calculate_effective_lake_volume_per_cell::CalculateEffectiveLakeVolumePerCell)
+  lake_parameters::LakeParameters,lake_variables::LakeVariables,
+  lake_model_parameters::LakeModelParameters,
+  lake_model_prognostics::LakeModelPrognostics = get_lake_data(lake)
+  total_number_of_flooded_cells::Int64 = 0
+  total_lake_volume::Float64 = 0.0
+  working_cell_list::Vector{CartesianIndex} = CartesianIndex[]
+  for_elements_in_set(lake_model_prognostics.set_forest,
+                      find_root(lake_model_prognostics.set_forest,
+                                lake.parameters.lake_number),
+                      function (x)
+                        other_lake::Lake = lake_model_prognostics.lakes[get_label(x)]
+                        total_lake_volume += get_lake_volume(other_lake)
+                        other_lake_working_cells::Vector{CartesianIndex} =
+                          get_lake_filled_cells(other_lake)
+                        total_number_of_flooded_cells +=
+                          length(other_lake_working_cells)
+                        append!(working_cell_list,
+                                other_lake_working_cells)
+                      end)
+  effective_volume_per_cell::Float64 =
+    total_lake_volume / total_number_of_flooded_cells
+  for coords::CartesianIndex in working_cell_list
+    surface_model_coords = get_corresponding_surface_model_grid_cell(coords,
+                              lake_model_parameters.grid_specific_lake_model_parameters)
+    set!(lake_model_prognostics.
+         effective_volume_per_cell_on_surface_grid,surface_model_coords,
+         lake_model_prognostics.
+         effective_volume_per_cell_on_surface_grid(surface_model_coords) +
+         effective_volume_per_cell)
+  end
+  return lake
+end
+
+function handle_event(lake::SubsumedLake,
+    calculate_effective_lake_volume_per_cell::CalculateEffectiveLakeVolumePerCell)
+  return lake
+end
 
 function show(io::IO,lake::Lake)
   lake_parameters::LakeParameters,lake_variables::LakeVariables,_,_ = get_lake_data(lake)

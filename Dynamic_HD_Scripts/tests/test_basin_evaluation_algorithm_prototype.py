@@ -341,6 +341,162 @@ class BasinEvaluationTests(unittest.TestCase):
     print([lake.outflow_points for lake in alg.lakes])
     print(output)
 
+  def testBasinEvaluationSingleLakeFour(self):
+    coarse_catchment_nums_in = np.array([[2,2,2,2],
+                                         [2,2,2,2],
+                                         [2,2,2,1],
+                                         [2,2,2,0]])
+    prior_coarse_rdirs_in = np.array([[3,2, 2,1],
+                                      [6,6,-2,4],
+                                      [6,8, 8,2],
+                                      [9,8, 8,0]])
+    corrected_orography_in = np.array([
+      [3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0],
+      [3.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,3.0],
+      [3.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,3.0,3.0,3.0,3.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,3.0,3.0,3.0,3.0,3.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,3.0,3.0,3.0,3.0,3.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,3.0,3.0,3.0,3.0,3.0,3.0],
+      [3.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,3.0,3.0,3.0,3.0,3.0,3.0],
+      [3.0,3.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,3.0,2.0,3.0,3.0,3.0,3.0],
+      [3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,1.0,1.0,1.0,0.0]])
+    raw_orography_in = np.array([
+      [3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0],
+      [3.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,3.0],
+      [3.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,3.0,3.0,3.0,3.0,2.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,3.0,3.0,3.0,3.0,3.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,3.0,3.0,3.0,3.0,3.0,3.0],
+      [3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,3.0,3.0,3.0,3.0,3.0,3.0],
+      [3.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,3.0,3.0,3.0,3.0,3.0,3.0],
+      [3.0,3.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,3.0,2.0,3.0,3.0,3.0,3.0],
+      [3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,1.0,1.0,1.0,0.0]])
+    minima_in = np.array([
+        [False,False,False,False,False,False,False,False,False,False,
+               False,False,False,False,False,False,False,False,False,False],
+        [False,False,False,False,False,False,False,False,False,False,
+               False,False,False,False,False,False,False,False,False,False],
+        [False,False,False,False,False,False,False,False,False,False,
+               False,False,False,False,False,False,False,False,False,False],
+        [False,False,False,False,False,False,False,False,False,False,
+               False,False,False,False,False,False,False,False,False,False],
+        [False,False,False,False,False,False,False,False,False,False,
+               False,False,False,False,False,False,False,False,False,False],
+        [False,False,False,False,False,False,False,False,False,False,
+               False,False,False,False,False,False,False,False,False,False],
+        [False,False,False,False,False,False,False,False,False,False,
+               False,False,False,False,False,False,False,False,False,False],
+        [False,False,False,False,False,False,False,False,False,False,
+               False,False,False,False,False,False,False,False,False,False],
+        [False,False,False,False,False,False,False,False,False,False,
+               False,False,False,False,False,False,False,False,False,False],
+        [False,False,False,False,False,False,False,False,False,False,
+               True ,False,False,False,False,False,False,False,False,False],
+        [False,False,False,False,False,False,False,False,False,False,
+               False,False,False,False,False,False,False,False,False,False],
+        [False,False,False,False,False,False,False,False,False,False,
+               False,False,False,False,False,False,False,False,False,False],
+        [False,False,False,False,False,False,False,False,False,False,
+               False,False,False,False,False,False,False,False,False,False],
+        [False,False,False,False,False,False,False,False,False,False,
+               False,False,False,False,False,False,False,False,False,False],
+        [False,False,False,False,False,False,False,False,False,False,
+               False,False,False,False,False,False,False,False,False,False],
+        [False,False,False,False,False,False,False,False,False,False,
+               False,False,False,False,False,False,False,False,False,False],
+        [False,False,False,False,False,False,False,False,False,False,
+               False,False,False,False,False,False,False,False,False,False],
+        [False,False,False,False,False,False,False,False,False,False,
+               False,False,False,False,False,False,False,False,False,False],
+        [False,False,False,False,False,False,False,False,False,False,
+               False,False,False,False,False,False,False,False,False,False],
+        [False,False,False,False,False,False,False,False,False,False,
+               False,False,False,False,False,False,False,False,False,False]])
+    prior_fine_rdirs_in = np.array([
+      [7,7,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1],
+      [3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,4],
+      [6,6,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3],
+      [6,6,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,4],
+      [6,6,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,4],
+      [6,6,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,4],
+      [6,6,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,4],
+      [6,6,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,4],
+      [6,6,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,4],
+      [6,6,6,6,6,6,6,6,6,6,5,4,4,4,4,4,4,4,4,4],
+      [6,6,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4],
+      [6,6,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4],
+      [6,6,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4],
+      [6,6,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4],
+      [6,6,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4],
+      [6,6,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4],
+      [6,6,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4],
+      [6,9,8,8,8,8,8,8,8,8,8,8,8,7,3,7,2,2,2,2],
+      [8,8,8,8,8,8,8,8,8,8,8,8,8,8,7,3,2,2,2,2],
+      [8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,7,6,6,6,0]])
+    prior_fine_catchments_in = np.array([
+      [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+      [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+      [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+      [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+      [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+      [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+      [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+      [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+      [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+      [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+      [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+      [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+      [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+      [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+      [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+      [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+      [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+      [2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,2,1,1,1,1],
+      [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1],
+      [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,0]])
+    cell_areas_in = np.full((20,20),1.0)
+    landsea_in = np.full((20,20),0,dtype=np.int32)
+    landsea_in[19,19] = 1
+    output,alg = \
+      LatLonEvaluateBasin.evaluate_basins(landsea_in,
+                                          minima_in,
+                                          raw_orography_in,
+                                          corrected_orography_in,
+                                          cell_areas_in,
+                                          prior_fine_rdirs_in,
+                                          prior_fine_catchments_in,
+                                          coarse_catchment_nums_in,
+                                          return_algorithm_object=True)
+    print("---")
+    print("single lake 4")
+    print([lake.filling_order for lake in alg.lakes])
+    print([lake.primary_lake for lake in alg.lakes])
+    print([lake.spill_points for lake in alg.lakes])
+    print([lake.potential_exit_points for lake in alg.lakes])
+    print([lake.outflow_points for lake in alg.lakes])
+    print(output)
+
   def testBasinEvaluationOne(self):
     coarse_catchment_nums_in = np.array([[3,3,7,2],
                                          [3,6,7,2],

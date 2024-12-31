@@ -6,6 +6,7 @@ using L2LakeModelDefsModule: LakeModelDiagnostics
 using L2LakeModule: LakeParameters, LakeVariables, FillingLake, OverflowingLake
 using L2LakeModule: DrainExcessWater, AddWater, RemoveWater, ProcessWater
 using L2LakeModule: ReleaseNegativeWater
+using L2LakeModule: CalculateEffectiveLakeVolumePerCell
 using L2LakeModule: handle_event, get_lake_volume
 using L2LakeModule: get_corresponding_surface_model_grid_cell
 using L2LakeModule: flood_height
@@ -325,10 +326,9 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,::RunLakes
       handle_event(lake,drain_excess_water)
     end
   end
-  # for lake::Lake in lake_model_prognostics.lakes
-  #   lake_model_prognostics.lakes[lake.parameters.lake_number] =
-  #     handle_event(lake,CalculateEffectiveLakeVolumePerCell())
-  # end
+  for lake::Lake in lake_model_prognostics.lakes
+    handle_event(lake,CalculateEffectiveLakeVolumePerCell())
+  end
   return prognostic_fields
 end
 
@@ -523,9 +523,10 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
   lake_model_parameters::LakeModelParameters = get_lake_model_parameters(prognostic_fields)
   lake_model_prognostics::LakeModelPrognostics = get_lake_model_prognostics(prognostic_fields)
   old_effective_lake_height_on_surface_grid::Field{Float64} =
-    calculate_effective_lake_height_on_surface_grid(lake_model_parameters,lake_fields)
+    calculate_effective_lake_height_on_surface_grid(lake_model_parameters,
+                                                    lake_model_prognostics)
   effective_lake_height_on_surface_grid::Field{Float64} = old_effective_lake_height_on_surface_grid
-  for_all(lake_model_parameters.surface_model_grid,
+  for_all(lake_model_parameters.surface_model_grid;
           use_cartesian_index=true) do coords::CartesianIndex
     if old_effective_lake_height_on_surface_grid(coords) > 0.0
       working_effective_lake_height_on_surface_grid::Float64 =
