@@ -290,6 +290,15 @@ function handle_event(lake::FillingLake,remove_water::RemoveWater)
   while outflow > 0.0 || repeat_loop
     repeat_loop = false
     new_lake_volume::Float64 = lake.lake_volume - outflow
+    if new_lake_volume > 0 && new_lake_volume <=
+       lake_model_parameters.lake_model_settings.minimum_lake_volume_threshold &&
+       lake_parameters.is_leaf
+      set!(lake_model_prognostics.lake_water_from_ocean,
+           lake_parameters.center_cell_coarse_coords,
+           lake_model_prognostics.lake_water_from_ocean(lake_parameters.center_cell_coarse_coords)
+           - new_lake_volume)
+      new_lake_volume = 0
+    end
     minimum_new_lake_volume::Float64 = lake.previous_cell_volume_threshold
     if new_lake_volume <= 0.0 && lake.current_filling_cell_index == 1
       outflow = 0.0
@@ -309,15 +318,6 @@ function handle_event(lake::FillingLake,remove_water::RemoveWater)
              lake_model_prognostics.lake_cell_count(surface_model_coords) - 1)
         set!(lake_model_prognostics.lake_numbers,lake.current_cell_to_fill,0)
       end
-    elseif new_lake_volume <=
-        lake_model_parameters.lake_model_settings.minimum_lake_volume_threshold &&
-        lake.current_filling_cell_index == 1 && lake.parameters.is_leaf
-      outflow = 0.0
-      lake.lake_volume = 0.0
-      set!(lake_model_prognostics.lake_water_from_ocean,
-           lake_parameters.center_cell_coarse_coords,
-           lake_model_prognostics.lake_water_from_ocean(lake_parameters.center_cell_coarse_coords) -
-           new_lake_volume)
     elseif new_lake_volume >= minimum_new_lake_volume &&
            new_lake_volume > 0
       outflow = 0.0
