@@ -630,12 +630,22 @@ class BasinEvaluationAlgorithm:
     def set_outflows(self):
         for lake in self.lakes:
             if lake.primary_lake is None:
-                for potential_exit_point in lake.potential_exit_points:
-                    if self.lake_numbers[potential_exit_point] != -1:
-                        raise RuntimeError("Lake on top of heirarchy trying "
-                                           "to spill into another lake")
-                first_cell_beyond_rim_coords = lake.potential_exit_points[0]
-                lake.outflow_points[-1] = (self.find_non_local_outflow_point(first_cell_beyond_rim_coords),False)
+                #Arbitrarily choose the first exit point
+                first_potential_exit_point = lake.potential_exit_points[0]
+                first_potential_exit_point_lake_number = \
+                    self.lake_numbers[first_potential_exit_point]
+                if first_potential_exit_point_lake_number != -1:
+                    #This means the lake is spilling into an
+                    #unconnected neighboring lake at a lower level
+                    #It is possible though very rare that a will spill
+                    #to two unconnected downstreams lakes in the same
+                    #overall catchment both at a lower level - in this
+                    #case arbitrarily use the first
+                    lake.outflow_points[first_potential_exit_point_lake_number] = \
+                        (None,True)
+                else:
+                    first_cell_beyond_rim_coords = first_potential_exit_point
+                    lake.outflow_points[-1] = (self.find_non_local_outflow_point(first_cell_beyond_rim_coords),False)
             else:
                 for other_lake,spill_point in lake.spill_points.items():
                     spill_point_coarse_coords = self.coarse_grid.convert_fine_coords(spill_point,

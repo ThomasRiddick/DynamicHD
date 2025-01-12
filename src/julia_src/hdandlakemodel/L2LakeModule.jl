@@ -69,6 +69,9 @@ struct LakeParameters
     find_coarse_cell_containing_fine_cell(fine_grid,coarse_grid,
                                           center_coords)
   is_primary::Bool = primary_lake == -1
+  if is_primary && length(outflow_points) > 1
+    error("Primary lake has more than one outflow point")
+  end
   is_leaf::Bool = length(secondary_lakes) == 0
   new(center_coords,center_cell_coarse_coords,
       lake_number,is_primary,is_leaf,
@@ -94,8 +97,8 @@ mutable struct FillingLake <: Lake
   current_cell_to_fill::CartesianIndex
   current_height_type::HeightType
   current_filling_cell_index::Int64
-  next_cell_volume_threshold::Int64
-  previous_cell_volume_threshold::Int64
+  next_cell_volume_threshold::Float64
+  previous_cell_volume_threshold::Float64
   lake_volume::Float64
   function FillingLake(lake_parameters::LakeParameters,
                        lake_variables::LakeVariables,
@@ -112,8 +115,7 @@ mutable struct FillingLake <: Lake
         previous_cell_volume_threshold =
           lake_parameters.filling_order[end-1].fill_threshold
       else
-        previous_cell_volume_threshold =
-          lake_parameters.filling_order[1].fill_threshold
+        previous_cell_volume_threshold = 0.0
       end
       lake_volume = lake_parameters.filling_order[end].fill_threshold
     else
@@ -339,6 +341,14 @@ function handle_event(lake::FillingLake,remove_water::RemoveWater)
       if lake.current_filling_cell_index > 1
         lake.previous_cell_volume_threshold =
           lake.parameters.filling_order[lake.current_filling_cell_index-1].fill_threshold
+      else
+        lake.previous_cell_volume_threshold = 0.0
+      end
+      if lake.current_filling_cell_index == 0
+        println(lake.parameters.filling_order)
+        println(minimum_new_lake_volume)
+        println(outflow)
+        println(lake.lake_volume)
       end
       lake.current_cell_to_fill = lake.parameters.filling_order[lake.current_filling_cell_index].coords
       lake.current_height_type =
@@ -406,11 +416,11 @@ end
 function check_if_merge_is_possible(lake_parameters::LakeParameters,
                                     lake_model_prognostics::LakeModelPrognostics)
   if ! lake_parameters.is_primary
-    all_secondary_lakes_filled::Bool = false
+    all_secondary_lakes_filled::Bool = true
     for secondary_lake in lake_model_prognostics.lakes[lake_parameters.primary_lake].
                           parameters.secondary_lakes
       if secondary_lake != lake_parameters.lake_number
-        all_secondary_lakes_filled |= isa(lake_model_prognostics.lakes[secondary_lake],OverflowingLake)
+        all_secondary_lakes_filled &= isa(lake_model_prognostics.lakes[secondary_lake],OverflowingLake)
       end
     end
     return all_secondary_lakes_filled
@@ -484,7 +494,13 @@ function change_to_overflowing_lake(lake::FillingLake,inflow::Float64)
       error("Non primary lake has no valid outflows")
     end
   else
-    redirect = lake_parameters.outflow_points[-1]
+    if haskey(lake_parameters.outflow_points,-1)
+      redirect = lake_parameters.outflow_points[-1]
+    else
+      for key in keys(lake_parameters.outflow_points)
+        redirect = lake_parameters.outflow_points[key]
+      end
+    end
   end
   return OverflowingLake(lake_parameters,
                          lake_variables,

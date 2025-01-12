@@ -563,7 +563,7 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
                                         sum(lake_model_prognostics.water_to_hd) -
                                         sum(lake_model_prognostics.evaporation_from_lakes)
   difference::Float64 = change_in_total_lake_volume - total_inflow_minus_outflow
-  tolerance::Float64 = 10e-15*max(new_total_lake_volume, total_water_to_lakes)
+  tolerance::Float64 = 10e-14*max(new_total_lake_volume, total_water_to_lakes)
   if ! isapprox(difference,0,atol=tolerance)
     println("*** Lake Water Budget ***")
     println("Total lake volume: $(new_total_lake_volume)")
