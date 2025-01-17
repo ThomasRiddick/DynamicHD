@@ -26,9 +26,9 @@ end type coordslist
 
 type :: lakemodelparameters
   INDICES_corresponding_surface_cell (_lat_index,_lon_index)??
-  NPOINTS_lake
-  NPOINTS_hd
-  NPOINTS_surface
+  _DEF_NPOINTS_LAKE_
+  _DEF_NPOINTS_HD_
+  _DEF_NPOINTS_SURFACE_
   real(dp) :: lake_retention_constant
   real(dp) :: minimum_lake_volume_threshold
   integer :: number_of_lakes
@@ -48,7 +48,7 @@ end interface lakemodelparameters
 
 type :: lakemodelprognostics
   type(lakepointer), pointer, dimension(:) :: lakes
-  integer, pointer, dimension(_DIMS_) ::lake_numbers
+  integer, pointer, dimension(_DIMS_) :: lake_numbers
   integer, pointer, dimension(_DIMS_) :: lake_cell_count
   real(dp) :: total_lake_volume
   real(dp), pointer, dimension(_DIMS_) :: effective_volume_per_cell_on_surface_grid
@@ -116,7 +116,7 @@ type :: lakeprognostics
   integer :: current_filling_cell_index
   real(dp) :: next_cell_volume_threshold
   real(dp) :: previous_cell_volume_threshold
-  real(dp) ::lake_volume
+  real(dp) :: lake_volume
   ! Overflowing lake variables
   type(redirect),pointer :: current_redirect
   real(dp) :: excess_water
@@ -163,19 +163,17 @@ function lakemodelparametersconstructor(grid_specific_lake_model_parameters::Gri
     surface_cell_to_fine_cell_maps::Vector{Vector{CartesianIndex}} = CartesianIndex[]
     surface_cell_to_fine_cell_map_numbers(_DIMS_) = 0
     _LOOP_OVER_LAKE_GRID_ _COORDS_LAKE_
-     coords::CartesianIndex
-      surface_model_coords::CartesianIndex = &
-        get_corresponding_surface_model_grid_cell(_COORDS_LAKE_,grid_specific_lake_model_parameters)
+      _GET_COORDS_ _SURFACE_MODEL_COORDS_ _FROM_ INDICES_corresponding_surface_cell _COORDS_LAKE_
       number_fine_grid_cells(
-           surface_model_coords) = &
-           number_fine_grid_cells(surface_model_coords) + 1
+           _SURFACE_MODEL_COORDS_) = &
+           number_fine_grid_cells(_SURFACE_MODEL_COORDS_) + 1
       if (is_lake(_COORDS_LAKE_)) then
         surface_cell_to_fine_cell_map_number = &
-          surface_cell_to_fine_cell_map_numbers(surface_model_coords)
+          surface_cell_to_fine_cell_map_numbers(_SURFACE_MODEL_COORDS_)
         if (surface_cell_to_fine_cell_map_number == 0) then
           surface_cell_to_fine_cell_map::Vector{CartesianIndex} = CartesianIndex(_COORDS_LAKE_)
           push!(surface_cell_to_fine_cell_maps,surface_cell_to_fine_cell_map)
-          surface_cell_to_fine_cell_map_numbers(surface_model_coords) = &
+          surface_cell_to_fine_cell_map_numbers(_SURFACE_MODEL_COORDS_) = &
                size(surface_cell_to_fine_cell_maps)
         else
           surface_cell_to_fine_cell_map = &
@@ -223,8 +221,19 @@ function lakemodelprognosticsconstructor(lake_model_parameters::LakeModelParamet
       constructor%set_forest => rooted_tree_forest()
 end function lakemodelprognosticsconstructor
 
-function cellconstructor()
-
+function cellconstructor(use_local_redirect, &
+                         local_redirect_target_lake_number, &
+                         _COORDS_non_local_redirect_target_) &
+                        result(constructor)
+  logical, intent(in) :: use_local_redirect
+  integer, intent(in) :: local_redirect_target_lake_number
+  _DEF_COORDS_non_local_redirect_target_
+  type(constructor), pointer :: constructor
+    allocate(cell)
+    constructor%use_local_redirect = use_local_redirect
+    constructor%local_redirect_target_lake_number = &
+      local_redirect_target_lake_number
+    constructor COORDS = COORDS ???
 end function cellconstructor
 
 function redirectconstructor()
@@ -350,7 +359,7 @@ recursive subroutine add_water(lake,inflow,store_water)
   type(lakemodelprognostics), pointer :: lake_model_prognostics
   type(lakeprognostics), pointer :: sublake
   type(lakeprognostics), pointer :: other_lake
-  COORDS_surface_model_coords
+  _DEFINE_SURFACE_MODEL_COORDS_
   real(dp) :: new_lake_volume
   integer :: other_lake_number
     lake_parameters => lake%parameters
@@ -452,7 +461,7 @@ recursive subroutine remove_water(lake,outflow,store_water)
   type(lakeparameters), pointer :: lake_parameters
   type(lakemodelparameters), pointer :: lake_model_parameters
   type(lakemodelprognostics), pointer :: lake_model_prognostics
-  COORDS_surface_model_coords
+  _DEFINE_SURFACE_MODEL_COORDS_
   real(dp) :: new_lake_volume
   real(dp) :: minimum_new_lake_volume
   integer :: redirect_target
@@ -546,8 +555,8 @@ recursive subroutine remove_water(lake,outflow,store_water)
       end if
       outflow = outflow - lake%excess_water
       lake%excess_water = 0.0_dp
-      lake_as_filling_lake::FillingLake = change_to_filling_lake(lake)
-      call remove_water(lake_as_filling_lake,outflow,.false.)
+      call change_overflowing_lake_to_filling_lake(lake)
+      call remove_water(lake,outflow,.false.)
     else if (lake%lake_type == subsumed_lake_type) then
       !Redirect to primary
       if (.not. lake%active_lake) then
@@ -609,6 +618,7 @@ subroutine merge_lakes(inflow,
   type(lake_model_parameters), intent(in) :: lake_model_parameters
   type(lake_model_prognostics), intent(inout) :: lake_model_prognostics
   real(dp), intent(in) :: inflow
+  type(lakeprognostics), pointer, intent(inout) :: other_lake
   real(dp) :: excess_water
   real(dp) :: total_excess_water
   integer :: secondary_lake
@@ -617,7 +627,7 @@ subroutine merge_lakes(inflow,
     primary_lake%variables%active_lake = .true.
     do i = 1,size(primary_lake%parameters%secondary_lakes)
       secondary_lake = primary_lake%parameters%secondary_lakes(i)
-      other_lake::Lake = lake_model_prognostics%lakes(secondary_lake)
+      other_lake = lake_model_prognostics%lakes(secondary_lake)
       if (((other_lake%lake_type == filling_lake_type) .and. &
             lake_parameters%lake_number /= secondary_lake) .or. &
            (other_lake%lake_type == subsumed_lake_type)) then
@@ -909,18 +919,6 @@ subroutine show(lake)
     end if
 end subroutine show
 
-function get_corresponding_surface_model_grid_cell(coords::CartesianIndex,
-                                                   grid_specific_lake_model_parameters::LatLonLakeModelParameters)
-  return CartesianIndex(grid_specific_lake_model_parameters%corresponding_surface_cell_lat_index(coords),
-                        grid_specific_lake_model_parameters%corresponding_surface_cell_lon_index(coords))
-end
-
-MERGE WITH ABOVE
-! function get_corresponding_surface_model_grid_cell(coords::CartesianIndex,
-!                                                    grid_specific_lake_model_parameters::UnstructuredLakeModelParameters)
-!   return CartesianIndex(grid_specific_lake_model_parameters%corresponding_surface_cell_index(coords))
-! end
-
 CheckWaterBudget() = CheckWaterBudget(0.0_dp)
 
 ! Section 3: Subprograms on the full ensemble of lakes
@@ -1182,14 +1180,14 @@ subroutine calculate_lake_fraction_on_surface_grid(lake_model_parameters,
                                          /real(lake_model_parameters%number_fine_grid_cells(_DIMS_))
 end subroutine calculate_lake_fraction_on_surface_grid
 
-function calculate_effective_lake_height_on_surface_grid(lake_model_parameters,
-                                                         lake_model_prognostics) result(lake_height)
+subroutine calculate_effective_lake_height_on_surface_grid(lake_model_parameters,
+                                                         lake_model_prognostics)
   type(lake_model_parameters), intent(in) :: lake_model_parameters
   type(lake_model_prognostics), intent(inout) :: lake_model_prognostics
-    :: lake_height
-    lake_height =  elementwise_divide(lake_model_prognostics%effective_volume_per_cell_on_surface_grid,
-                                      lake_model_parameters%cell_areas_on_surface_model_grid)
-end function calculate_effective_lake_height_on_surface_grid
+    lake_model_prognostics%effective_lake_height_on_surface_grid_from_lakes(_DIMS_) = &
+      lake_model_prognostics%effective_volume_per_cell_on_surface_grid(_DIMS_) / &
+      lake_model_parameters%cell_areas_on_surface_model_grid(_DIMS_)
+end subroutine calculate_effective_lake_height_on_surface_grid
 
 subroutine print_results(lake_model_parameters,lake_model_prognostics, &
                          timestep)
@@ -1344,7 +1342,7 @@ function calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
     return diagnostic_lake_volumes
 end function calculate_diagnostic_lake_volumes_field
 
-subroutine set_lake_evaporation(lake_model_parameters,lake_model_prognostics, &
+subroutine set_lake_evaporation_for_testing(lake_model_parameters,lake_model_prognostics, &
                                 lake_evaporation)
   type(lakemodelparameters), pointer :: lake_model_parameters
   type(lakemodelprognostics), pointer :: lake_model_prognostics
@@ -1356,13 +1354,14 @@ subroutine set_lake_evaporation(lake_model_parameters,lake_model_prognostics, &
                          lake_model_parameters%cell_areas_on_surface_model_grid)
     call set_effective_lake_height_on_surface_grid_to_lakes(lake_model_parameters,lake_model_prognostics, &
                                                             effective_lake_height_on_surface_grid)
-end subroutine set_lake_evaporation
+end subroutine set_lake_evaporation_for_testing
 
-subroutine set_realistic_lake_evaporation(lake_model_parameters,lake_model_prognostics, &
-                                          height_of_water_evaporated)
+subroutine set_lake_evaporation(lake_model_parameters,lake_model_prognostics, &
+                                height_of_water_evaporated)
   type(lakemodelparameters), pointer :: lake_model_parameters
   type(lakemodelprognostics), pointer :: lake_model_prognostics
   real(dp) :: working_effective_lake_height_on_surface_grid
+  _DEF_LOOP_OVER_SURFACE_GRID_INDEX_VARIABLES_
     old_effective_lake_height_on_surface_grid(_DIMS_) = &
       calculate_effective_lake_height_on_surface_grid(lake_model_parameters, &
                                                       lake_model_prognostics)
@@ -1385,7 +1384,7 @@ subroutine set_realistic_lake_evaporation(lake_model_parameters,lake_model_progn
     call set_effective_lake_height_on_surface_grid_to_lakes(&
               lake_model_parameters,lake_model_prognostics, &
               effective_lake_height_on_surface_grid)
-end subroutine set_realistic_lake_evaporation
+end subroutine set_lake_evaporation
 
 subroutine check_water_budget(lake_model_prognostics,
                               lake_model_diagnostics,

@@ -344,12 +344,6 @@ function handle_event(lake::FillingLake,remove_water::RemoveWater)
       else
         lake.previous_cell_volume_threshold = 0.0
       end
-      if lake.current_filling_cell_index == 0
-        println(lake.parameters.filling_order)
-        println(minimum_new_lake_volume)
-        println(outflow)
-        println(lake.lake_volume)
-      end
       lake.current_cell_to_fill = lake.parameters.filling_order[lake.current_filling_cell_index].coords
       lake.current_height_type =
         lake.parameters.filling_order[lake.current_filling_cell_index].height_type
@@ -452,13 +446,13 @@ function merge_lakes(::FillingLake,inflow::Float64,
   return lake_model_prognostics.lakes[lake_parameters.lake_number]
 end
 
-function split_lake(lake::FillingLake,water_deficit::Float64,
+function split_lake(::FillingLake,water_deficit::Float64,
                     lake_parameters::LakeParameters,
                     lake_variables::LakeVariables,
                     lake_model_prognostics::LakeModelPrognostics)
   lake_variables.active_lake = false
   water_deficit_per_lake::Float64 = water_deficit/length(lake_parameters.secondary_lakes)
-  for secondary_lake::Int64 in lake.parameters.secondary_lakes
+  for secondary_lake::Int64 in lake_parameters.secondary_lakes
     filling_lake::FillingLake =
       change_to_filling_lake(lake_model_prognostics.lakes[secondary_lake],
                              lake_parameters.lake_number)

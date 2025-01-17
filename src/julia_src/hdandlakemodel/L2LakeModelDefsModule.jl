@@ -112,7 +112,6 @@ struct LakeModelPrognostics
   set_forest::RootedTreeForest
   function LakeModelPrognostics(lake_model_parameters::LakeModelParameters)
     lakes::Vector{Lake} = Lake[]
-      Field{Bool}(lake_model_parameters.lake_model_grid,false)
     lake_numbers = Field{Int64}(lake_model_parameters.lake_model_grid,0)
     effective_volume_per_cell_on_surface_grid::Field{Float64} =
       Field{Float64}(lake_model_parameters.surface_model_grid,0.0)

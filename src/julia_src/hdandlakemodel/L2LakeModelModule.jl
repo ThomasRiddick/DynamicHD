@@ -297,10 +297,10 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,::RunLakes
     lake_index::Int64 = lake.parameters.lake_number
     if ! lake_model_prognostics.evaporation_applied[lake_index]
       evaporation::Float64 = lake_model_prognostics.evaporation_from_lakes[lake_index]
-      if evaporation > 0
+      if evaporation > 0.0
         lake_model_prognostics.lakes[lake_index] =
           handle_event(lake,RemoveWater(evaporation,true))
-      elseif evaporation < 0
+      elseif evaporation < 0.0
         lake_model_prognostics.lakes[lake_index] =
           handle_event(lake,AddWater(-1.0*evaporation,true))
       end
