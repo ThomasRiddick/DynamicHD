@@ -8,16 +8,12 @@ Created on Oct 18, 2016
 
 import os.path as path
 import numpy as np
-from mpi4py import MPI
 from Dynamic_HD_Scripts.interface.fortran_interface import f2py_manager
 from Dynamic_HD_Scripts.context import fortran_project_source_path,fortran_project_object_path,fortran_project_include_path
 from Dynamic_HD_Scripts.base import field
 from Dynamic_HD_Scripts.base import grid
 from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.utilities import coordinate_scaling_utilities
-from Dynamic_HD_Scripts.utilities.process_manager import ProcessManager
-from Dynamic_HD_Scripts.utilities.process_manager import using_mpi
-from Dynamic_HD_Scripts.utilities.process_manager import MPICommands
 
 def cotat_plus_icon_icosohedral_cell_latlon_pixel(input_fine_river_directions,
                                                   input_fine_total_cumulative_flow,
@@ -108,9 +104,6 @@ def run_cotat_plus(fine_rdirs_field,fine_total_cumulative_flow_field,cotat_plus_
                                           additional_fortran_files=additional_fortran_filepaths,
                                           include_path=fortran_project_include_path)
     coarse_grid = grid.makeGrid(coarse_grid_type,**coarse_grid_kwargs)
-    if using_mpi():
-        comm = MPI.COMM_WORLD
-        comm.bcast(MPICommands.RUNCOTATPLUS, root=0)
     coarse_rdirs_field_raw = f2py_mngr.\
         run_current_function_or_subroutine(fine_rdirs_field.get_data().astype(np.int64,order='F'),
                                            fine_total_cumulative_flow_field.get_data().astype(np.int64,order='F'),

@@ -16,7 +16,6 @@ import re
 import shutil
 from distutils import core as distutils_core
 from subprocess import CalledProcessError
-from Dynamic_HD_Scripts.utilities.process_manager import using_mpi
 from Dynamic_HD_Scripts.context import shared_object_path, bin_path,build_path
 from sys import platform
 
@@ -208,8 +207,6 @@ class f2py_manager:
                       "--sources={0}".format(str(self.sources)),
                       "--include-path={0}".format(str(self.include_path)),
                       "--objects={0}".format(str(self.additional_fortran_files))]
-        if using_mpi():
-            setup_args.append("--use-mpi")
         distutils_core.run_setup(self.wrapper_path,setup_args,
                                  stop_after="run")
         self.load_module()

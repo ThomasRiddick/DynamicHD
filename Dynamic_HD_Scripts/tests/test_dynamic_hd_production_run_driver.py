@@ -8,12 +8,8 @@ Created on Mar 24, 2017
 import cdo
 import unittest
 import os
-from mpi4py import MPI
 from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers.dynamic_hd_production_run_driver \
     import Dynamic_HD_Production_Run_Drivers
-from Dynamic_HD_Scripts.utilities.process_manager import ProcessManager
-from Dynamic_HD_Scripts.utilities.process_manager import using_mpi
-from Dynamic_HD_Scripts.utilities.process_manager import MPICommands
 from tests.context import data_dir
 
 
@@ -256,15 +252,4 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
                         " hdstart file for ICE6G 21k")
 						
 if __name__ == "__main__":
-    if using_mpi():
-        comm = MPI.COMM_WORLD
-        rank = comm.Get_rank()
-        if rank == 0:
-            unittest.main(exit=False)
-            command = MPICommands.EXIT
-            comm.bcast(command, root=0)
-        else:
-            process_manager = ProcessManager(comm)
-            process_manager.wait_for_commands()
-    else:
-        unittest.main()
+    unittest.main()

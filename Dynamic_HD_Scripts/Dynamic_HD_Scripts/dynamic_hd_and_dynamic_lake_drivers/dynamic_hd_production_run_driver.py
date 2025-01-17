@@ -13,7 +13,6 @@ import numpy as np
 import configparser
 import shutil
 import contextlib
-from mpi4py import MPI
 from timeit import default_timer as timer
 from Dynamic_HD_Scripts.base import field
 from Dynamic_HD_Scripts.base.field import Field, RiverDirections
@@ -23,9 +22,6 @@ from Dynamic_HD_Scripts.tools.flow_to_grid_cell import create_hypothetical_river
 from Dynamic_HD_Scripts.tools.cotat_plus_driver import run_cotat_plus
 from Dynamic_HD_Scripts.tools.loop_breaker_driver import run_loop_breaker
 from Dynamic_HD_Scripts.utilities import utilities
-from Dynamic_HD_Scripts.utilities.process_manager import ProcessManager
-from Dynamic_HD_Scripts.utilities.process_manager import using_mpi
-from Dynamic_HD_Scripts.utilities.process_manager import MPICommands
 import fill_sinks_wrapper
 from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers import dynamic_hd_driver as dyn_hd_dr
 
@@ -1146,20 +1142,6 @@ def parse_arguments():
     return args
 
 if __name__ == '__main__':
-    if using_mpi():
-        comm = MPI.COMM_WORLD
-        rank = comm.Get_rank()
-        if rank == 0:
-            #Parse arguments and then run
-            args = parse_arguments()
-            setup_and_run_dynamic_hd_para_gen_from_command_line_arguments(args)
-            #Tell other processes to exit
-            command = MPICommands.EXIT
-            comm.bcast(command, root=0)
-        else:
-            process_manager = ProcessManager(comm)
-            process_manager.wait_for_commands()
-    else:
-        #Parse arguments and then run
-        args = parse_arguments()
-        setup_and_run_dynamic_hd_para_gen_from_command_line_arguments(args)
+    #Parse arguments and then run
+    args = parse_arguments()
+    setup_and_run_dynamic_hd_para_gen_from_command_line_arguments(args)
