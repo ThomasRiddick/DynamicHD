@@ -289,11 +289,13 @@ function search_for_river_mouth_location_on_line_section(
 																lsmask::Array{Bool},
 							 									river_mouth_indices::Array{CartesianIndex})
 	cells_on_line_section_indices::Array{CartesianIndex} = find_cells_on_line_section(line_section,cells)
-	append!(cells_on_line_section_indices,
+	expanded_cells_on_line_section_indices::Array{CartesianIndex} =
+		deepcopy(cells_on_line_section_indices)
+	append!(expanded_cells_on_line_section_indices,
 	        Set(CartesianIndex[cells.cell_neighbors[i,j] for i in cells_on_line_section_indices,j=1:3
 	            if !(cells.cell_neighbors[i,j] in cells_on_line_section_indices) ]))
-	sort!(cells_on_line_section_indices,by=x->calculate_separation_measure(x,cells,line_section.start_point))
-	for cell_indices in cells_on_line_section_indices
+	sort!(expanded_cells_on_line_section_indices,by=x->calculate_separation_measure(x,cells,line_section.start_point))
+	for cell_indices in expanded_cells_on_line_section_indices
 		if lsmask[cell_indices]
 			is_coastal_cell::Bool = false
 			for neighbor in [cells.cell_neighbors[cell_indices,i] for i=1:3]
@@ -303,8 +305,14 @@ function search_for_river_mouth_location_on_line_section(
 				push!(river_mouth_indices,cell_indices)
 				return true
 			else
-				error("Have reached the ocean without passing a coastal cell!")
-				return false
+				#It is possible for an ocean cell in the expanded line section
+				#to be ocean without having past a coastal cell - but not
+				#for a cell directly on the line section itself (assuming it does not
+				#exactly pass through a vertex)
+				if cell_indices in cells_on_line_section_indices
+					error("Have reached the ocean without passing a coastal cell!")
+					return false
+				end
 			end
 		end 
 	end
