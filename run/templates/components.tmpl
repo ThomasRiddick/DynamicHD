@@ -208,7 +208,7 @@ cdo remapbil,${icon_grid_filepath} ${etop01_filepath} ${orography_filepath}
 {% macro run() %}
 #Run
 {% if input.high_res %}
-if ! ${use_existing_river_mouth_position_file} ; then
+if ! ${use_existing_river_mouth_position_file} && ${use_river_bifurcation} ; then
   #Determine non-bifurcated river direction and cumulative flow
   cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh --rdirs-only ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_filepath} z cell_sea_land_mask true_sinks ${output_hdpara_filepath%%.nc}_non_bifurcated_rdirs_only.nc ${output_catchments_filepath%%.nc}_non_bifurcated.nc ${output_accumulated_flow_filepath%%.nc}_non_bifurcated.nc  ${config_filepath} ${working_directory} ${icon_grid_filepath} ${icon_atmo_grid_res} False"
   echo "Running (for non-bifurcated river directions - initial step):"
