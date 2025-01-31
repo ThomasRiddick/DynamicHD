@@ -1,6 +1,6 @@
 module IdentifyBifurcatedRiverMouthsOutput
 
-function write_river_mouth_indices(river_mouth_indices::Dict{Array{CartesianIndex}},
+function write_river_mouth_indices(river_mouth_indices::Dict{String,Array{CartesianIndex}},
                                    existing_river_mouths::Dict{String,CartesianIndex},
                                    output_river_mouths_filepath::String)
   f = open(output_river_mouths_filepath,"w")

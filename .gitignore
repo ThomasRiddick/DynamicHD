@@ -37,6 +37,8 @@ bin
 lib
 run/examples
 run/*.cfg
+run/create_icon_hdpara.o*
+run/create_icon_hdpara.e*
 !run/configs_for_examples.cfg
 run/*.run
 gtest-internal-inl.h
