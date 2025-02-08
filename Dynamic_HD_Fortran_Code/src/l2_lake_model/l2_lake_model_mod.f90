@@ -1,5 +1,7 @@
 module l2_lake_model_mod
 
+use latlon_lake_model_tree_mod
+
 ! TO DO
 ! coords
 ! loops
@@ -65,7 +67,7 @@ type :: lakemodelparameters
   integer :: number_of_lakes
   type(integerlist), pointer, dimension(_DIMS_) :: basins
   integer, pointer, dimension(_DIMS_) :: basin_numbers
-  _DEF_INDICES_cells_with_lakes
+  _DEF_INDICES_cells_with_lakes_INDEX_NAME
   real(dp), pointer, dimension(_DIMS_) :: cell_areas_on_surface_model_grid
   logical, pointer, dimension(_DIMS_) :: lake_centers
   integer, pointer, dimension(_DIMS_) :: number_fine_grid_cells
@@ -201,7 +203,7 @@ contains
 !   type(lakemodelparameters) :: constructor
 !   type(integerlist), pointer, dimension(_DIMS_) :: basins
 !   integer, pointer, dimension(_DIMS_) :: basin_numbers
-!   _DEF_INDICES_cells_with_lakes
+!   _DEF_INDICES_cells_with_lakes_INDEX_NAME
 !   integer, pointer, dimension(_DIMS_) :: number_of_lake_cells_temp
 !   logical, pointer, dimension(:,:) :: needs_map
 !   type(coordslist), pointer, dimension(:) :: surface_cell_to_fine_cell_maps
@@ -276,7 +278,7 @@ contains
 !     constructor%number_of_lakes = number_of_lakes
 !     constructor%basins = basins
 !     constructor%basin_numbers(_DIMS_) = 0
-!     constructor%cells_with_lakes = cells_with_lakes
+!     ASSIGN_constructor%cells_with_lakes = cells_with_lakes
 !     constructor%cell_areas_on_surface_model_grid = cell_areas_on_surface_model_grid
 !     constructor%lake_centers(_DIMS_) = .false.
 !     constructor%number_fine_grid_cells(_DIMS_) = 0
@@ -1157,19 +1159,6 @@ contains
 !       lake => lake_model_prognostics%lakes(i)
 !       lake_model_parameters%lake_centers(lake%parameters%center_coords) = .true.
 !     end do
-!     _LOOP_OVER_HD_GRID_ _COORDS_HD_
-!       contains_lake = .false.
-!       do for_all_fine_cells_in_coarse_cell(lake_model_parameters%lake_model_grid,
-!                                         lake_model_parameters%hd_model_grid,
-!                                         _COORDS_HD_) do fine_coords::CartesianIndex
-!         if (lake_model_parameters%lake_centers(fine_coords)) then
-!           contains_lake = .true.
-!         end if
-!       end do
-!       if (contains_lake) then
-!         push!(lake_model_parameters%cells_with_lakes,coords)
-!       end if
-!     _LOOP_OVER_HD_GRID_END_
 !     allocate(basins_in_coarse_cell_temp((this%nlat*this%nlon)&
 !                                         /(this%nlat_coarse*this%nlon_coarse)))
 !     allocate(this%basin_numbers(this%nlat_coarse,this%nlon_coarse))
@@ -1178,14 +1167,17 @@ contains
 !     basin_number = 1
 !     lat_scale_factor = nlat_in/nlat_coarse_in
 !     lon_scale_factor = nlon_in/nlon_coarse_in
+!     lake_center_count
 !     _LOOP_OVER_HD_GRID_ _COORDS_HD_
 !       number_of_basins_in_coarse_cell = 0
+!       contains_lake = .false.
 !       do l = 1+(j-1)*lon_scale_factor,j*lon_scale_factor
 !           do k = 1+(i-1)*lat_scale_factor,i*lat_scale_factor
 !       do for_all_fine_cells_in_coarse_cell(lake_model_parameters%lake_model_grid,
 !                                         lake_model_parameters%hd_model_grid,
 !                                         _COORDS_HD_) do fine_coords::CartesianIndex
 !         if (lake_model_parameters%lake_centers(fine_coords)) then
+!           contains_lake = .true.
 !           do i=1,size(lake_model_prognostics%lakes)
 !             lake => lake_model_prognostics%lakes(i)
 !             if (lake%parameters%center_coords == fine_coords) then
@@ -1195,6 +1187,8 @@ contains
 !           end do
 !         end if
 !       end do
+!       if (contains_lake ) then
+!         INDICES_cells_with_lakes_temp_INDEX_NAME(basin_number) = _COORDS_HD_
 !       end do
 !       end do
 !       if (basins_found) then
@@ -1213,6 +1207,9 @@ contains
 !         this%basin_numbers(i,j) = basin_number
 !       end if
 !     _LOOP_OVER_HD_GRID_END_
+!     while
+!       TRANSFER cells_with_lakes to shortened array
+!     end do
 !     deallocate(basins_temp)
 !     deallocate(basins_in_coarse_cell_temp)
 !     NEEDS CLEAN UP AND MAKING GENERIC RIGHT UP TO HERE
