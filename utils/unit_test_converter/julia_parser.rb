@@ -28,21 +28,26 @@ class JuliaParser
   @@julia_open_construct=Regexp.union(@@test_pattern,@@open_block_pattern,
                                       @@single_line_if_pattern,@@if_pattern,
                                       @@julia_loop_construct,@@julia_numeric_loop_construct)
-  @@julia_comment_line=/\s*#.*$/
+  @@julia_comment_line=/\s*#(.*)$/
   @@julia_double_field_definition=
-    /\s*(\w+)(?:::(?:LatLon)?Field\{Float64\})?\s*=\s*LatLonField\{\s*Float64\s*\}\(.*,(.*)\).*$/
+    /\s*(\w+)(?:::(?:LatLon)?Field\{Float64\})?\s*=\s*LatLonField\{\s*Float64\s*\}\(\s*(\w+)(?:_|\.)grid\s*,(.*)\).*$/
   @@julia_int_field_definition=
-    /\s*(\w+)(?:::(?:LatLon)?Field\{Int64\})?\s*=\s*LatLonField\{\s*Int64\s*\}\(.*,(.*)\).*$/
+    /\s*(\w+)(?:::(?:LatLon)?Field\{Int64\})?\s*=\s*LatLonField\{\s*Int64\s*\}\(\s*(\w+)(?:_|\.)grid\s*,(.*)\).*$/
   @@julia_bool_field_definition=
-    /\s*(\w+)(?:::(?:LatLon)?Field\{Bool\})?\s*=\s*LatLonField\{\s*Bool\s*\}\(.*,(.*)\).*$/
+    /\s*(\w+)(?:::(?:LatLon)?Field\{Bool\})?\s*=\s*LatLonField\{\s*Bool\s*\}\(\s*(\w+)(?:_|\.)grid\s*,(.*)\).*$/
   @@julia_initialised_double_field_definition=
-    /\s*(\w+)(?:::(?:LatLon)?Field\{Float64\})?\s*=\s*LatLonField\{\s*Float64\s*\}\([^)&]*($|&)/
+    /\s*(\w+)(?:::(?:LatLon)?Field\{Float64\})?\s*=\s*LatLonField\{\s*Float64\s*\}\(\s*(\w+)(?:_|\.)grid\s*,([^)&]*)($|&)/
   @@julia_initialised_int_field_definition=
-    /\s*(\w+)(?:::(?:LatLon)?Field\{Int64\})?\s*=\s*LatLonField\{\s*Int64\s*\}\([^)&]*($|&)/
+    /\s*(\w+)(?:::(?:LatLon)?Field\{Int64\})?\s*=\s*LatLonField\{\s*Int64\s*\}\(\s*(\w+)(?:_|\.)grid\s*,([^)&]*)($|&)/
   @@julia_initialised_bool_field_definition=
-    /\s*(\w+)(?:::(?:LatLon)?Field\{Bool\})?\s*=\s*LatLonField\{\s*Bool\s*\}\([^)&]*($|&)/
+    /\s*(\w+)(?:::(?:LatLon)?Field\{Bool\})?\s*=\s*LatLonField\{\s*Bool\s*\}\(\s*(\w+)(?:_|\.)grid\s*,([^)&]*)($|&)/
   @@julia_initialised_user_defined_type_field_definition=
-    /\s*(\w+)(?:::(?:LatLon)?Field\{\s*(?!(Bool|Int64|Float64)).*\})?\s*=\s*LatLonField\{\s*(?!(Bool|Int64|Float64)).*\s*\}\([^)&]*($|&)/
+    /\s*(\w+)(?:::(?:LatLon)?Field\{\s*(?!(Bool|Int64|Float64)).*\})?\s*=\s*LatLonField\{\s*(?!(Bool|Int64|Float64)).*\s*\}\(\s*(\w+)(?:_|\.)grid\s*,([^)&])*($|&)/
+  @@julia_initialised_direction_indicators_field_definition=
+    /\s*(\w+)(?:::(?:LatLon)?DirectionIndicators)?\s*=\s*LatLonDirectionIndicators\(LatLonField\{Int64\}\(\s*(\w+)_grid\s*,\s*/
+    #
+  @@julia_vector_definition=/\s*(\w+)::(?:Array|Vector)\{\s*(\w+)\s*\}\s*=\s*\2\[((?:\s*[\w.-]+\s*,)*\s*[\w.-]+\s*)\]/
+  @@julia_grid_definition=/\s*(\w+)_grid(?:::(?:LatLon)Grid)?\s*=\s*(?:(?:LatLon)Grid)?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(?:true|false)\)/
   @@julia_double_definition=/\s*\w+::Float64\s*=\s*(\d+\.d*)/
   @@julia_int_definition=/\s*\w+::Int64\s*=\s*(\d+)/
   @@julia_bool_definition=/\s*\w+::Bool\s*=\s*(true|false)/
@@ -109,8 +114,7 @@ class JuliaParser
       sanitized_text.gsub!(@@julia_loop_construct,"PROCESS BY HAND=>do\\1 in \\2 #\n")
       sanitized_text.gsub!(@@julia_numeric_loop_construct,
                                 "PROCESS BY HAND=>do \\1 = \\2,\\3 #\n")
-      sanitized_text.gsub!(@@julia_comment_line,'')
-      content = ""
+      contents = ""
       while endline_match = sanitized_text.match(/\n/)
         sanitized_text=endline_match.post_match
         type =  case endline_match.pre_match.strip
@@ -119,9 +123,13 @@ class JuliaParser
                   when @@julia_initialised_bool_field_definition then :bool_initialised_array_definition
                   when @@julia_initialised_user_defined_type_field_definition \
                     then :user_defined_type_initialised_array_definition
+                  when @@julia_initialised_direction_indicators_field_definition \
+                    then :direction_indicators_initialised_array_definition
                   when @@julia_double_field_definition then :double_array_definition
                   when @@julia_int_field_definition then :int_array_definition
                   when @@julia_bool_field_definition then :bool_array_definition
+                  when @@julia_vector_definition then :vector_definition
+                  when @@julia_grid_definition then :grid_definition
                   when @@julia_double_definition then :double_definition
                   when @@julia_int_definition then :int_definition
                   when @@julia_bool_definition then :bool_definition
@@ -131,13 +139,15 @@ class JuliaParser
                   when @@julia_assignment then :assignment
                   when @@multi_line_julia_assignment then :multi_line_assignment
                   when @@julia_array_assignment then :array_assignment
+                  when @@julia_comment_line then :comment_line
                   else :unknown_statement_type
                 end
         contents = endline_match.pre_match.strip
         case type
           when :double_initialised_array_definition,:int_initialised_array_definition,
                :bool_initialised_array_definition, :multi_line_julia_function_call,
-               :multi_line_assignment, :user_defined_type_initialised_array_definition
+               :multi_line_assignment, :user_defined_type_initialised_array_definition,
+               :direction_indicators_initialised_array_definition
             contents += " &\n"
             while endline_match = sanitized_text.match(/\n/)
               sanitized_text=endline_match.post_match
@@ -188,6 +198,10 @@ class JuliaToFortranConverter < JuliaParser
         when :user_defined_type_initialised_array_definition
           fortran_definitions+=generate_array_definition(statement.content,type=:user_defined)
           fortran_statements +=convert_initialised_array(statement.content,type=:user_defined)
+        when :direction_indicators_initialised_array_definition
+          statement.content = reformat_direction_indicator_initialisation_statement(statement.content)
+          fortran_definitions+=generate_array_definition(statement.content,type=:integer)
+          fortran_statements +=convert_initialised_array(statement.content,type=:integer)
         when :double_array_definition
           fortran_definitions+=generate_array_definition(statement.content,type=:real)
           fortran_statements +=convert_uninitialised_array(statement.content,type=:real)
@@ -197,6 +211,12 @@ class JuliaToFortranConverter < JuliaParser
         when :bool_array_definition
           fortran_definitions+=generate_array_definition(statement.content,type=:logical)
           fortran_statements +=convert_uninitialised_array(statement.content,type=:logical)
+        when :vector_definition
+          fortran_definitions+= ""
+          fortran_statements += statement.content.gsub(@@julia_vector_definition,"\\1 = (\\ \\3 \\)")
+        when :grid_definition
+          fortran_definitions+=generate_grid_definitions(statement.content)
+          fortran_statements +=generate_grid_assignments(statement.content)
         when :double_definition
           fortran_definitions+=generate_definition(statement.content,type=:real)
           fortran_statements +=statement.content.gsub(/::Float64/,"").squeeze(" ").strip
@@ -222,6 +242,8 @@ class JuliaToFortranConverter < JuliaParser
         when :array_assignment
           fortran_statements +=statement.content.gsub(/true/,".True.").gsub(/false/,"False.").
                                squeeze(" ").strip.sub(@@julia_array_assignment,"\\1(\\2,\\3) = \\4")
+        when :comment_line
+          fortran_statements += statement.content.gsub("#","!")
         when :unknown_statement_type
           fortran_statements +="PROCESS BY HAND=>"+statement.content.strip
         else raise "Incorrectly labelled statement"
@@ -246,15 +268,20 @@ class JuliaToFortranConverter < JuliaParser
       when :integer then array_statement.sub!("Int64[","")
       when :logical then array_statement.sub!("Bool[","")
     end
-    array_statement.sub!(start_pattern,"allocate(\\1(x,y))\n      \\1 = transpose(reshape((/ &")
+    #Protect the variable name from having a comma added
+    nlat="nlat_" + array_statement[start_pattern,2]
+    nlon="nlon_" + array_statement[start_pattern,2]
+    array_statement.sub!(start_pattern,"allocate(\\1(nlat_\\2,nlon_\\2))\n      \\1_= transpose(reshape((/ \\3 &")
     array_statement.gsub!(/([\d.]+) /,"\\1, ")
     array_statement.gsub!(/([\w.]+) /,"\\1, ")
+    array_statement.sub!(/_=/," =")
     array_statement.gsub!(/true,/,".True.,")
     array_statement.gsub!(/false,/,".False.,")
-    array_statement.sub!(/\]\)/,"/), &\n         (/y,x/)))")
+    array_statement.sub!(/\]\)/,"/), &\n         (/#{nlon},#{nlat}/)))")
     if type == :real
       array_statement.gsub!(/ 0,/,"0.0,")
     end
+    array_statement.gsub!("river_parameters","hd")
     return array_statement
   end
 
@@ -264,7 +291,8 @@ class JuliaToFortranConverter < JuliaParser
                   when :integer then @@julia_int_field_definition
                   when :logical then @@julia_bool_field_definition
               end
-    array_statement.sub!(pattern,"allocate(\\1(x,y))\n      \\1(:,:) = \\2")
+    array_statement.sub!(pattern,"allocate(\\1(nlat_\\2,nlon_\\2))\n      \\1(:,:) = \\3")
+    array_statement.sub!(/fill\((\w+),\d+,\d+\)/,"\\1")
     return array_statement
   end
 
@@ -276,5 +304,19 @@ class JuliaToFortranConverter < JuliaParser
   def generate_array_definition(array_statement,type)
     name = array_statement[/^\s*(\w+)(?:::(?:LatLon)?Field\{[\w\d]*\})?\s*=.*/,1]
     return "   " + type.to_s + ",dimension(:,:), allocatable :: #{name} \n"
+  end
+
+  def reformat_direction_indicator_initialisation_statement(array_statement)
+    return array_statement.sub(/LatLonDirectionIndicators\(/,"")
+  end
+
+  def generate_grid_definitions(array_statement)
+    name = array_statement[/\s*(\w+)_grid\s*=/,1]
+    return "   integer :: nlat_#{name}, nlon_#{name} \n"
+  end
+
+  def generate_grid_assignments(array_statement)
+    array_statement.sub!(@@julia_grid_definition,"nlat_\\1 = \\2 \n      nlon_\\1 = \\3")
+    return array_statement
   end
 end
