@@ -497,6 +497,7 @@ class Dynamic_Lake_Analysis_Run_Framework:
             self.dyn_lake_driver.current_date = slice_time
             os.mkdir(join(self.lakes_directory,
                           "results","diag_{}".format(slice_label)))
+            self.dyn_lake_driver.clean_work_dir()
             self.dyn_lake_driver.no_intermediaries_dynamic_lake_driver()
             self.dyn_lake_driver.clean_work_dir()
             self.dyn_lake_driver.store_diagnostics(join(self.lakes_directory,
@@ -516,6 +517,7 @@ class Dynamic_Lake_Analysis_Run_Framework:
                  self.corrections_file_for_current_version)
             os.mkdir(join(self.rivers_directory,
                           "results","diag_{}".format(slice_label)))
+            self.dyn_hd_driver.clean_work_dir()
             self.dyn_hd_driver.\
             no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
             self.dyn_hd_driver.clean_work_dir()
@@ -542,6 +544,7 @@ class Dynamic_Lake_Analysis_Run_Framework:
             self.dyn_hd_driver.non_standard_orog_correction_filename=None
             os.mkdir(join(self.rivers_directory,
                               "results","default_orog_corrs","diag_{}".format(slice_label)))
+            self.dyn_hd_driver.clean_work_dir()
             self.dyn_hd_driver.\
             no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
             self.dyn_hd_driver.clean_work_dir()
@@ -809,11 +812,11 @@ def parse_arguments():
                         action="store_true")
     parser.add_argument('-t','--apply-orography-tweaks',action="store_true")
     parser.add_argument('-y','--change-date-based-corrections',action="store_true")
-    parser.add_argument('-r','--make_analysis_run',action="store_true")
+    parser.add_argument('-r','--make-analysis-run',action="store_true")
     parser.add_argument('-S','--skip-dynamic-river-production',action="store_true")
     parser.add_argument('-K','--skip-dynamic-lake-production',action="store_true")
     parser.add_argument('-I','--skip-current-day-time-slice',action="store_true")
-    parser.add_argument('-D','--run_hd_scripting_default_orography_corrections',
+    parser.add_argument('-D','--run-hd-scripting-default-orography-corrections',
                         action="store_true")
     parser.add_argument('-d','--start-date',type=int,default=0)
     parser.add_argument('-e','--end-date',type=int,default=0)

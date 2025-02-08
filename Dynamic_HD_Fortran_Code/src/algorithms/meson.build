@@ -1,0 +1,10 @@
+fortran_src += files('accumulate_flow_mod.f90',
+                     'break_loops_mod.f90',
+                     'cotat_parameters_mod.f90',
+                     'cotat_plus.f90',
+                     'cross_grid_mapper.f90',
+                     'flow.f90',
+                     'flow_accumulation_algorithm_mod.f90',
+                     'icon_to_latlon_landsea_downscaler.f90',
+                     'loop_breaker_mod.f90',
+                     'map_non_coincident_grids_mod.f90')

@@ -10,10 +10,8 @@ import numpy as np
 from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.base import field
 from Dynamic_HD_Scripts.base import grid
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import lake_operators_wrapper
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import evaluate_basins_wrapper
+import lake_operators_wrapper
+import evaluate_basins_wrapper
 
 def advanced_local_minima_finding_driver(input_orography_file,
                                          input_orography_fieldname,

@@ -11,6 +11,7 @@ import numpy as np
 import cdo
 import argparse
 import shutil
+import contextlib
 from timeit import default_timer as timer
 from Dynamic_HD_Scripts.base import field
 from Dynamic_HD_Scripts.base import grid
@@ -27,12 +28,9 @@ from Dynamic_HD_Scripts.tools import river_mouth_marking_driver
 from Dynamic_HD_Scripts.utilities import utilities
 from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers \
     import dynamic_hd_driver as dyn_hd_dr
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import fill_sinks_wrapper
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import lake_operators_wrapper
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import evaluate_basins_wrapper
+import fill_sinks_wrapper
+import lake_operators_wrapper
+import evaluate_basins_wrapper
 
 class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
     """A class with methods used for running a production run of the dynamic HD and Lake generation code"""
@@ -143,41 +141,42 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                     path.join(dest,"30min_rdirs_jump_next_cell_indices.nc"))
 
     def clean_work_dir(self):
-        os.remove(path.join(self.working_directory_path,"30minute_river_dirs_temp.nc"))
-        os.remove(path.join(self.working_directory_path,"30minute_filled_orog_temp.nc"))
-        os.remove(path.join(self.working_directory_path,"30minute_river_dirs_temp.dat"))
-        os.remove(path.join(self.working_directory_path,"30minute_ls_mask_temp.nc"))
-        os.remove(path.join(self.working_directory_path,"30minute_ls_mask_temp.dat"))
-        os.remove(path.join(self.working_directory_path,"30minute_filled_orog_temp.dat"))
-        os.remove(path.join(self.working_directory_path,"loops_10min.log"))
-        os.remove(path.join(self.working_directory_path,"loops_30min.log"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "soil_partab.txt"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "slope.dat"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "riv_vel.dat"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "riv_n.dat"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "riv_k.dat"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "paragen.inp"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "over_vel.dat"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "over_n.dat"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "over_k.dat"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "hdpara.srv"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "global.inp"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "ddir.inp"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "bas_k.dat"))
-        os.rmdir(path.join(self.working_directory_path,"paragen"))
+        with contextlib.suppress(FileNotFoundError):
+            os.remove(path.join(self.working_directory_path,"30minute_river_dirs_temp.nc"))
+            os.remove(path.join(self.working_directory_path,"30minute_filled_orog_temp.nc"))
+            os.remove(path.join(self.working_directory_path,"30minute_river_dirs_temp.dat"))
+            os.remove(path.join(self.working_directory_path,"30minute_ls_mask_temp.nc"))
+            os.remove(path.join(self.working_directory_path,"30minute_ls_mask_temp.dat"))
+            os.remove(path.join(self.working_directory_path,"30minute_filled_orog_temp.dat"))
+            os.remove(path.join(self.working_directory_path,"loops_10min.log"))
+            os.remove(path.join(self.working_directory_path,"loops_30min.log"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "soil_partab.txt"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "slope.dat"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "riv_vel.dat"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "riv_n.dat"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "riv_k.dat"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "paragen.inp"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "over_vel.dat"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "over_n.dat"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "over_k.dat"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "hdpara.srv"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "global.inp"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "ddir.inp"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "bas_k.dat"))
+            os.rmdir(path.join(self.working_directory_path,"paragen"))
 
     def _check_config_section_is_valid(self,config,section_name):
         if not config.has_section(section_name):

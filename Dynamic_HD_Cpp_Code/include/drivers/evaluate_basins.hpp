@@ -30,7 +30,10 @@ void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                                            int* flood_merge_and_redirect_indices_index_in,
                                            int nlat_fine, int nlon_fine,
                                            int nlat_coarse,int nlon_coarse,
-                                           string merges_filepath,
+                                           int* flood_merges_and_redirects_in,
+                                           int* connect_merges_and_redirects_in,
+                                           int* flood_merges_and_redirects_dims_in,
+                                           int* connect_merges_and_redirects_dims_in,
                                            int* basin_catchment_numbers_in=nullptr,
                                            int* sinkless_rdirs_in=nullptr);
 
@@ -54,7 +57,10 @@ void latlon_evaluate_basins(bool* minima_in,
                             int* flood_merge_and_redirect_indices_index_in,
                             int nlat_fine, int nlon_fine,
                             int nlat_coarse,int nlon_coarse,
-                            string merges_filepath,
+                            int* flood_merges_and_redirects_in,
+                            int* connect_merges_and_redirects_in,
+                            int* flood_merges_and_redirects_dims_in,
+                            int* connect_merges_and_redirects_dims_in,
                             int* basin_catchment_numbers_in=nullptr,
                             int* sinkless_rdirs_in=nullptr);
 

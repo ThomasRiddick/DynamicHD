@@ -6,8 +6,7 @@ Created on Apr 13, 2017
 
 import unittest
 import numpy as np
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import upscale_orography_wrapper
+import upscale_orography_wrapper
 
 class Test(unittest.TestCase):
 

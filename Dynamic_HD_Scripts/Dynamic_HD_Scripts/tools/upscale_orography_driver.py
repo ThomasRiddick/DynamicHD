@@ -11,8 +11,7 @@ from Dynamic_HD_Scripts.base.iodriver import get_file_extension
 from Dynamic_HD_Scripts.base import field
 from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.utilities import coordinate_scaling_utilities
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import upscale_orography_wrapper
+import upscale_orography_wrapper
 
 def drive_orography_upscaling(input_fine_orography_file,output_coarse_orography_file,
                               landsea_file=None,true_sinks_file=None,

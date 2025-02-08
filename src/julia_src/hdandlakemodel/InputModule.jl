@@ -53,7 +53,7 @@ function load_field(file_handle::NcFile,grid::Grid,variable_name::AbstractString
 end
 
 function load_3d_field(file_handle::NcFile,grid::Grid,variable_name::AbstractString,
-                       field_type::DataType,layer=Int64,;timestep::Int64=-1)
+                       field_type::DataType,layer::Int64;timestep::Int64=-1)
   variable::NcVar = file_handle[variable_name]
   values::Array{field_type,(timestep == -1) ?
                             get_number_of_dimensions(grid)+1 :

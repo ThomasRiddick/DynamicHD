@@ -79,6 +79,11 @@ contains
 #endif
             if (present(cotat_parameters_filepath)) then
                 call read_cotat_parameters_namelist(cotat_parameters_filepath)
+            else
+                !Use defaults
+                MUFP = 1.5
+                area_threshold = 9
+                run_check_for_sinks = .True.
             end if
             nlat_coarse = size(output_coarse_river_directions,1)
             nlon_coarse = size(output_coarse_river_directions,2)
@@ -348,6 +353,11 @@ contains
             allocate(cell_primary_and_secondary_neighbors(size(cell_vertices_lats,1),12))
             if (present(cotat_parameters_filepath)) then
                 call read_cotat_parameters_namelist(cotat_parameters_filepath)
+            else
+                !Use defaults
+                MUFP = 1.5
+                area_threshold = 9
+                run_check_for_sinks = .True.
             end if
             do i = 1,size(pixel_center_lons)
                 select type (pixel_center_lats_ptr_2d)

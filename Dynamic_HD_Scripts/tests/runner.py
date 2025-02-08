@@ -1,5 +1,6 @@
 from unittest import TestLoader, TextTestRunner
 import unittest
+import tests.test_bifurcate_rivers as test_bifurcate_rivers
 import tests.test_compute_catchments as test_compute_catchments
 import tests.test_connect_coarse_lake_catchments as test_connect_coarse_lake_catchments
 import tests.test_cotat_plus_driver as test_cotat_plus_driver
@@ -20,7 +21,8 @@ import tests.test_dynamic_lake_production_run_driver as test_dynamic_lake_produc
 
 # test_basin_evaluation_algorithm_prototype not included in either set as it
 # is only a prototype
-short_test_modules = [test_compute_catchments,
+short_test_modules = [test_bifurcate_rivers,
+                      test_compute_catchments,
                       test_connect_coarse_lake_catchments,
                       test_cotat_plus_driver,
                       test_create_connected_lsmask_wrapper,

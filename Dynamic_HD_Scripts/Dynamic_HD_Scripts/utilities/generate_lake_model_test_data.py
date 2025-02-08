@@ -10,8 +10,7 @@ from Dynamic_HD_Scripts.base import field
 from Dynamic_HD_Scripts.base import grid
 from Dynamic_HD_Scripts.tools.determine_river_directions import determine_river_directions
 from Dynamic_HD_Scripts.tools.compute_catchments import compute_catchments_cpp
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import evaluate_basins_wrapper
+import evaluate_basins_wrapper
 
 class LakeModelTestDataGenerator:
 
