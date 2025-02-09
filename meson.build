@@ -66,9 +66,10 @@ if get_option('build_cython')
 endif
 l2_lake_gen = generator(py,
                         output: '@BASENAME@.f90',
-                        arguments: ['''@SOURCE_DIR@/utils/preprocessor_'
-                                    'utilities/l2_lake_model_preprocessor.py''',
-                                    '@INPUT@','@OUTPUT#'])
+                        arguments: ['@SOURCE_DIR@/utils/preprocessor_' +
+                                    'utilities/l2_lake_model_preprocessor.py',
+                                    '@INPUT@','@OUTPUT@'])
+fortran_src += l2_lake_gen.process(fortran_l2_lake_model_src)
 lib_fortran = library('dyhd_fortran',fortran_src,
                       include_directories: fortran_inc,
                       dependencies: netcdf_fortran_lib)

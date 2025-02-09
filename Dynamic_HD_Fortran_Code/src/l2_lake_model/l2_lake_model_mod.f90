@@ -2,14 +2,11 @@ module l2_lake_model_mod
 
 use latlon_lake_model_tree_mod
 
+implicit none
+
 ! TO DO
-! coords
-! loops
-! dict --> sort using selection sort then
-!          navigate by division if large
 ! debug printout etc
 ! basins
-! finish constructors --> cell,redirect
 ! lake pointers func
 ! lake pointers alloc
 ! clean up excess brackets in if statements
@@ -20,7 +17,16 @@ use latlon_lake_model_tree_mod
 !   use latlon_lake_logger_mod
 ! #endif
 
+!##############################################################################
+!##############################################################################
+!                Section 0: Parameter definitions
+!##############################################################################
+!##############################################################################
+
 integer,parameter :: dp = selected_real_kind(12)
+integer, parameter :: filling_lake_type = 1
+integer, parameter :: overflowing_lake_type = 2
+integer, parameter :: subsumed_lake_type = 3
 
 !##############################################################################
 !##############################################################################
@@ -42,11 +48,11 @@ interface redirectdictionary
 end interface
 
 type :: coordslist
-  INDICES_coords
+  _DEF_INDICES_LIST_INDEX_NAME_coords_
 end type coordslist
 
 interface coordslist
-  procedure :: cooordslistconstructor
+  procedure :: coordslistconstructor
 end interface
 
 type :: integerlist
@@ -58,7 +64,7 @@ interface integerlist
 end interface
 
 type :: lakemodelparameters
-  _DEF_INDICES_corresponding_surface_cell_INDEX_NAME_index
+  _DEF_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_
   _DEF_NPOINTS_LAKE_
   _DEF_NPOINTS_HD_
   _DEF_NPOINTS_SURFACE_
@@ -67,7 +73,7 @@ type :: lakemodelparameters
   integer :: number_of_lakes
   type(integerlist), pointer, dimension(_DIMS_) :: basins
   integer, pointer, dimension(_DIMS_) :: basin_numbers
-  _DEF_INDICES_cells_with_lakes_INDEX_NAME
+  _DEF_INDICES_LIST_cells_with_lakes_INDEX_NAME_
   real(dp), pointer, dimension(_DIMS_) :: cell_areas_on_surface_model_grid
   logical, pointer, dimension(_DIMS_) :: lake_centers
   integer, pointer, dimension(_DIMS_) :: number_fine_grid_cells
@@ -99,20 +105,20 @@ interface lakemodelprognostics
 end interface lakemodelprognostics
 
 type :: cell
-  COORDS_coords
+  _DEF_COORDS_coords_
   integer :: height_type
   real(dp) :: fill_threshold
   real(dp) :: height
 end type cell
 
 interface cell
-  procedure :: cellconstructors
+  procedure :: cellconstructor
 end interface cell
 
 type :: redirect
   logical :: use_local_redirect
   integer :: local_redirect_target_lake_number
-  DEF_COORDS_non_local_redirect_target
+  _DEF_COORDS_non_local_redirect_target_
 end type redirect
 
 interface redirect
@@ -120,8 +126,8 @@ interface redirect
 end interface redirect
 
 type :: lakeparameters
-  COORDS_center_coords
-  COORDS_center_cell_coarse_coords
+  _DEF_COORDS_center_coords_
+  _DEF_COORDS_center_cell_coarse_coords_
   integer :: lake_number
   logical :: is_primary
   logical :: is_leaf
@@ -144,7 +150,7 @@ type :: lakeprognostics
   type(lakemodelparameters), pointer :: lake_model_parameters
   type(lakemodelprognostics), pointer :: lake_model_prognostics
   ! Filling lake variables
-  COORDS_current_cell_to_fill
+  _DEF_COORDS_current_cell_to_fill_
   integer :: current_height_type
   integer :: current_filling_cell_index
   real(dp) :: next_cell_volume_threshold
@@ -173,353 +179,387 @@ contains
 !##############################################################################
 !##############################################################################
 
-! function redirectdictionaryconstructor(number_of_entries) result(constructor)
-!   integer, intent(in) :: number_of_entries
-!   type(redirectdictionary) :: constructor
-!     allocate(constructor%keys(number_of_entries))
-!     allocate(constructor%values(number_of_entries))
-!     constructor%initialisation_complete = .false.
-!     constructor%next_entry_index = 1
-! end function redirectdictionaryconstructor
+function redirectdictionaryconstructor(number_of_entries) result(constructor)
+  integer, intent(in) :: number_of_entries
+  type(redirectdictionary) :: constructor
+    allocate(constructor%keys(number_of_entries))
+    allocate(constructor%values(number_of_entries))
+    constructor%initialisation_complete = .false.
+    constructor%next_entry_index = 1
+end function redirectdictionaryconstructor
 
-! function lakemodelparametersconstructor(
-!                              INDICES_corresponding_surface_cell_INDEX_NAME_index,
-!                              cell_areas_on_surface_model_grid,
-!                              number_of_lakes,
-!                              is_lake,
-!                              NPOINTS_hd,
-!                              NPOINTS_lake,
-!                              NPOINTS_surface,
-!                              lake_retention_constant,
-!                              minimum_lake_volume_threshold) result(constructor)
-!   integer, intent(in) :: number_of_lakes
-!   _DEF_NPOINTS_hd IN
-!   _DEF_NPOINTS_lake IN
-!   _DEF_NPOINTS_surface IN
-!   _DEF_INDICES_corresponding_surface_cell_INDEX_NAME_index IN
-!   real(dp), pointer, dimension(_DIMS_), intent(in) :: cell_areas_on_surface_model_grid
-!   real(dp), intent(in), optional :: lake_retention_constant
-!   real(dp), intent(in), optional :: minimum_lake_volume_threshold
-!   type(lakemodelparameters) :: constructor
-!   type(integerlist), pointer, dimension(_DIMS_) :: basins
-!   integer, pointer, dimension(_DIMS_) :: basin_numbers
-!   _DEF_INDICES_cells_with_lakes_INDEX_NAME
-!   integer, pointer, dimension(_DIMS_) :: number_of_lake_cells_temp
-!   logical, pointer, dimension(:,:) :: needs_map
-!   type(coordslist), pointer, dimension(:) :: surface_cell_to_fine_cell_maps
-!   integer, pointer, dimension(_DIMS_) :: surface_cell_to_fine_cell_map_numbers
-!   integer :: k
-!     if (.not. present(lake_retention_constant)) then
-!       lake_retention_constant = 0.1_dp
-!     end if
-!     if (.not. present(minimum_lake_volume_threshold)) then
-!       minimum_lake_volume_threshold = 0.0000001_dp
-!     end if
-!     allocate(this%number_fine_grid_cells(NPOINTS_surface))
-!     this%number_fine_grid_cells(_DIMS_) = 0
-!     allocate(needs_map(NPOINTS_surface))
-!     needs_map(_DIMS_) = .false.
-!     allocate(number_of_lake_cells_temp(NPOINTS_SURFACE))
-!     number_of_lake_cells_temp(_DIMS_) = 0
-!     _LOOP_OVER_LAKE_GRID_ _COORDS_LAKE_
-!       _GET_COORDS_ _SURFACE_MODEL_COORDS_ _FROM_ INDICES_corresponding_surface_cell_INDEX_NAME_index _COORDS_LAKE_
-!       number_fine_grid_cells(
-!            _SURFACE_MODEL_COORDS_) = &
-!            number_fine_grid_cells(_SURFACE_MODEL_COORDS_) + 1
-!       if (is_lake(_COORDS_LAKE_)) then
-!           needs_map(lat_surface_model,lon_surface_model) = .true.
-!           number_of_lake_cells_temp(lat_surface_model,lon_surface_model) = &
-!             number_of_lake_cells_temp(lat_surface_model,lon_surface_model) + 1
-!       end if
-!     _LOOP_OVER_LAKE_GRID_END_
-!     allocate(this%surface_cell_to_fine_cell_map_numbers(NPOINTS_surface))
-!     this%surface_cell_to_fine_cell_map_numbers(_DIMS_) = 0
-!     map_number = 0
-!     _LOOP_OVER_SURFACE_GRID_ _COORDS_SURFACE_
-!       if (needs_map(_COORDS_SURFACE)) then
-!         map_number = map_number + 1
-!       end if
-!     _LOOP_OVER_SURFACE_GRID_END_
-!     allocate(this%surface_cell_to_fine_cell_maps(map_number))
-!     map_number = 0
-!     _LOOP_OVER_SURFACE_GRID_ _COORDS_SURFACE_
-!       if (needs_map(_COORDS_SURFACE_)) then
-!         map_number = map_number + 1
-!         number_of_lake_cells = number_of_lake_cells_temp(_COORDS_SURFACE_)
-!         allocate(INDICES_surface_cell_to_fine_cell_map_INDEX_NAME_PLURAL_temp(number_of_lake_cells))
-!         INDICES_surface_cell_to_fine_cell_map_INDEX_NAME_PLURAL_temp(:) = -1
-!         ASSIGN_this%surface_cell_to_fine_cell_maps(map_number) = &
-!           coordslist(INDICES_surface_cell_to_fine_cell_map_INDEX_NAME_PLURAL_temp)
-!         ASSIGN_this%surface_cell_to_fine_cell_map_numbers(_COORDS_SURFACE_) = map_number
-!       end if
-!     _LOOP_OVER_SURFACE_GRID_END_
-!     deallocate(number_of_lake_cells_temp)
-!     _LOOP_OVER_LAKE_GRID_ _COORDS_LAKE_
-!       if (is_lake(_COORDS_LAKE_)) then
-!         _COORDS_SURFACE_ = this%INDICES_corresponding_surface_cell_INDEX_NAME_index(_COORDS_LAKE)
-!         ASSIGN_surface_cell_to_fine_cell_map_number = &
-!           surface_cell_to_fine_cell_map_numbers(_COORDS_SURFACE_)
-!         k = 1
-!         do while (this%surface_cell_to_fine_cell_maps(&
-!                   surface_cell_to_fine_cell_map_number)%INDICES_coords_FIRST_DIM(k) /= -1)
-!           k = k + 1
-!         end do
-!         ASSIGN_this%surface_cell_to_fine_cell_maps(&
-!                       surface_cell_to_fine_cell_map_number)%INDICES_coords(k) = _COORDS_SURFACE
-!       end if
-!     _LOOP_OVER_LAKE_GRID_END_
-!     deallocate(needs_map)
-!     constructor%lake_retention_constant = lake_retention_constant
-!     constructor%minimum_lake_volume_threshold = minimum_lake_volume_threshold
-!     constructor%lake_model_grid = lake_model_grid
-!     constructor%hd_model_grid = hd_model_grid
-!     constructor%surface_model_grid = surface_model_grid
-!     constructor%lake_model_settings = lake_model_settings
-!     constructor%number_of_lakes = number_of_lakes
-!     constructor%basins = basins
-!     constructor%basin_numbers(_DIMS_) = 0
-!     ASSIGN_constructor%cells_with_lakes = cells_with_lakes
-!     constructor%cell_areas_on_surface_model_grid = cell_areas_on_surface_model_grid
-!     constructor%lake_centers(_DIMS_) = .false.
-!     constructor%number_fine_grid_cells(_DIMS_) = 0
-!     constructor%surface_cell_to_fine_cell_maps = surface_cell_to_fine_cell_maps
-!     constructor%surface_cell_to_fine_cell_map_numbers = surface_cell_to_fine_cell_map_numbers
-! end function lakemodelparametersconstructor
+function coordslistconstructor(_INDICES_LIST_INDEX_NAME_coords_) &
+    result(constructor)
+  _DEF_INDICES_LIST_INDEX_NAME_coords_
+  type(coordslist) :: constructor
+    _ASSIGN_constructor%_INDICES_LIST_INDEX_NAME_coords_ = &
+      _INDICES_LIST_INDEX_NAME_coords_
+end function coordslistconstructor
 
-! function lakemodelprognosticsconstructor(lake_model_parameters::LakeModelParameters) result(constructor)
-!     type(lakemodelparameters), intent(in) :: lake_model_parameters
-!     type(lakemodelprognostics), intent(out) :: constructor
-!       allocate(constructor%lakes(lake_model_parameters%number_of_lakes))
-!       constructor%lake_numbers(_DIMS_) = 0
-!       constructor%lake_cell_count(_DIMS_) = 0
-!       constructor%effective_volume_per_cell_on_surface_grid(_DIMS_) = 0.0_dp
-!       constructor%effective_lake_height_on_surface_grid_to_lakes(_DIMS_) = 0.0_dp
-!       constructor%water_to_lakes(_DIMS_)= 0.0_dp
-!       constructor%water_to_hd(_DIMS_) = 0.0_dp
-!       constructor%lake_water_from_ocean(_DIMS_) = 0.0_dp
-!       constructor%evaporation_from_lakes = evaporation_from_lakes
-!       allocate(constructor%evaporation_from_lakes(lake_model_parameters%number_of_lakes)
-!       constructor%evaporation_from_lakes(:) = 0.0_dp
-!       allocate(constructor%evaporation_applied(lake_model_parameters%number_of_lakes))
-!       constructor%evaporation_applied(_DIMS_) = .false.
-!       constructor%set_forest => rooted_tree_forest()
-! end function lakemodelprognosticsconstructor
+function integerlistconstructor(list) result(constructor)
+  integer, dimension(:), intent(in) :: list
+  type(integerlist) :: constructor
+    constructor%list = list
+end function integerlistconstructor
 
-! function cellconstructor(height_type,
-!                          fill_threshold,
-!                          height) result(constructor)
-!   integer  :: height_type
-!   real(dp) :: fill_threshold
-!   real(dp) :: height
-!   type(constructor), pointer :: constructor
-!     allocate(constructor)
-!     constructor%height_type = height_type
-!     constructor%fill_threshold = fill_threshold
-!     constructor%height = height
-! end function cellconstructor
+function lakemodelparametersconstructor( &
+    _INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_, &
+    cell_areas_on_surface_model_grid, &
+    number_of_lakes, &
+    is_lake, &
+    _NPOINTS_HD_, &
+    _NPOINTS_LAKE_, &
+    _NPOINTS_SURFACE_, &
+    lake_retention_constant, &
+    minimum_lake_volume_threshold) result(constructor)
+  integer, intent(in) :: number_of_lakes
+  logical, allocatable, dimension(_DIMS_), intent(in) :: is_lake
+  _DEF_NPOINTS_HD_ _INTENT_in_
+  _DEF_NPOINTS_LAKE_ _INTENT_in_
+  _DEF_NPOINTS_SURFACE_ _INTENT_in_
+  _DEF_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ _INTENT_in_
+  real(dp), pointer, dimension(_DIMS_), intent(in) :: cell_areas_on_surface_model_grid
+  real(dp), intent(inout), optional :: lake_retention_constant
+  real(dp), intent(inout), optional :: minimum_lake_volume_threshold
+  type(lakemodelparameters) :: constructor
+  type(integerlist), pointer, dimension(_DIMS_) :: basins
+  integer, pointer, dimension(_DIMS_) :: basin_numbers
+  integer, allocatable, dimension(_DIMS_) :: number_fine_grid_cells
+  _DEF_INDICES_LIST_cells_with_lakes_INDEX_NAME_
+  _DEF_INDICES_LIST_surface_cell_to_fine_cell_map_INDEX_NAMEs_temp_
+  integer, pointer, dimension(_DIMS_) :: number_of_lake_cells_temp
+  logical, pointer, dimension(_DIMS_) :: needs_map
+  type(coordslist), pointer, dimension(:) :: surface_cell_to_fine_cell_maps
+  integer, pointer, dimension(_DIMS_) :: surface_cell_to_fine_cell_map_numbers
+  _DEF_COORDS_surface_model_
+  integer :: number_of_lake_cells
+  integer :: surface_cell_to_fine_cell_map_number
+  integer :: map_number
+  integer :: k
+  _DEF_LOOP_INDEX_LAKE_
+  _DEF_LOOP_INDEX_SURFACE_
+    if (.not. present(lake_retention_constant)) then
+      lake_retention_constant = 0.1_dp
+    end if
+    if (.not. present(minimum_lake_volume_threshold)) then
+      minimum_lake_volume_threshold = 0.0000001_dp
+    end if
+    allocate(number_fine_grid_cells(_NPOINTS_SURFACE_))
+    number_fine_grid_cells(_DIMS_) = 0
+    allocate(needs_map(_NPOINTS_SURFACE_))
+    needs_map(_DIMS_) = .false.
+    allocate(number_of_lake_cells_temp(_NPOINTS_SURFACE_))
+    number_of_lake_cells_temp(_DIMS_) = 0
+    _LOOP_OVER_LAKE_GRID_ _COORDS_LAKE_
+      _GET_COORDS_ _COORDS_surface_model_ _FROM_ _INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ _COORDS_LAKE_
+      number_fine_grid_cells(_COORDS_ARG_surface_model_) = &
+           number_fine_grid_cells(_COORDS_ARG_surface_model_) + 1
+      if (is_lake(_COORDS_LAKE_)) then
+          needs_map(_COORDS_ARG_surface_model_) = .true.
+          number_of_lake_cells_temp(_COORDS_ARG_surface_model_) = &
+            number_of_lake_cells_temp(_COORDS_ARG_surface_model_) + 1
+      end if
+    _LOOP_OVER_LAKE_GRID_END_
+    allocate(surface_cell_to_fine_cell_map_numbers(_NPOINTS_SURFACE_))
+    surface_cell_to_fine_cell_map_numbers(_DIMS_) = 0
+    map_number = 0
+    _LOOP_OVER_SURFACE_GRID_ _COORDS_SURFACE_
+      if (needs_map(_COORDS_SURFACE_)) then
+        map_number = map_number + 1
+      end if
+    _LOOP_OVER_SURFACE_GRID_END_
+    allocate(surface_cell_to_fine_cell_maps(map_number))
+    map_number = 0
+    _LOOP_OVER_SURFACE_GRID_ _COORDS_SURFACE_
+      if (needs_map(_COORDS_SURFACE_)) then
+        map_number = map_number + 1
+        number_of_lake_cells = number_of_lake_cells_temp(_COORDS_SURFACE_)
+        allocate(_INDICES_LIST_surface_cell_to_fine_cell_map_INDEX_NAMEs_temp(number_of_lake_cells)_)
+        _ASSIGN_INDICES_LIST_surface_cell_to_fine_cell_map_INDEX_NAMEs_temp(:)_ = -1
+        surface_cell_to_fine_cell_maps(map_number) = &
+          coordslist(_INDICES_LIST_surface_cell_to_fine_cell_map_INDEX_NAMEs_temp_)
+        surface_cell_to_fine_cell_map_numbers(_COORDS_SURFACE_) = map_number
+      end if
+    _LOOP_OVER_SURFACE_GRID_END_
+    deallocate(number_of_lake_cells_temp)
+    _LOOP_OVER_LAKE_GRID_ _COORDS_LAKE_
+      if (is_lake(_COORDS_LAKE_)) then
+        _GET_COORDS_ _COORDS_surface_model_ _FROM_ _INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ _COORDS_LAKE_
+        surface_cell_to_fine_cell_map_number = &
+          surface_cell_to_fine_cell_map_numbers(_COORDS_ARG_surface_model_)
+        k = 1
+        do while (surface_cell_to_fine_cell_maps(&
+                  surface_cell_to_fine_cell_map_number)%_INDICES_LIST_coords_FIRST_DIM_(k) /= -1)
+          k = k + 1
+        end do
+        _ASSIGN_surface_cell_to_fine_cell_maps(&
+                      surface_cell_to_fine_cell_map_number)%_INDICES_LIST_INDEX_NAME_coords(k)_ = _COORDS_surface_model_
+      end if
+    _LOOP_OVER_LAKE_GRID_END_
+    deallocate(needs_map)
+    constructor%lake_retention_constant = lake_retention_constant
+    constructor%minimum_lake_volume_threshold = minimum_lake_volume_threshold
+    _ASSIGN_constructor%_NPOINTS_LAKE_ = _NPOINTS_LAKE_
+    _ASSIGN_constructor%_NPOINTS_HD_ = _NPOINTS_HD_
+    _ASSIGN_constructor%_NPOINTS_SURFACE_ = _NPOINTS_SURFACE_
+    constructor%lake_retention_constant = lake_retention_constant
+    constructor%minimum_lake_volume_threshold = minimum_lake_volume_threshold
+    constructor%number_of_lakes = number_of_lakes
+    constructor%basins = basins
+    constructor%basin_numbers(_DIMS_) = 0
+    _ASSIGN_constructor%_INDICES_LIST_cells_with_lakes_INDEX_NAME_ = _INDICES_LIST_cells_with_lakes_INDEX_NAME_
+    constructor%cell_areas_on_surface_model_grid = cell_areas_on_surface_model_grid
+    constructor%lake_centers(_DIMS_) = .false.
+    constructor%number_fine_grid_cells(_DIMS_) = number_fine_grid_cells
+    constructor%surface_cell_to_fine_cell_maps = surface_cell_to_fine_cell_maps
+    constructor%surface_cell_to_fine_cell_map_numbers = surface_cell_to_fine_cell_map_numbers
+end function lakemodelparametersconstructor
 
-! function redirectconstructor(use_local_redirect, &
-!                          local_redirect_target_lake_number, &
-!                          _COORDS_non_local_redirect_target_) &
-!                         result(constructor)
-!   logical, intent(in) :: use_local_redirect
-!   integer, intent(in) :: local_redirect_target_lake_number
-!   _DEF_COORDS_non_local_redirect_target
-!   type(constructor), pointer :: constructor
-!     allocate(constructor)
-!     constructor%use_local_redirect = use_local_redirect
-!     constructor%local_redirect_target_lake_number = &
-!       local_redirect_target_lake_number
-!     ASSIGN_constructor%COORDS_non_local_redirect_target = &
-!       COORDS_non_local_redirect_target
-! end function redirectconstructor
+function lakemodelprognosticsconstructor(lake_model_parameters) result(constructor)
+    type(lakemodelparameters), intent(in) :: lake_model_parameters
+    type(lakemodelprognostics) :: constructor
+      allocate(constructor%lakes(lake_model_parameters%number_of_lakes))
+      constructor%lake_numbers(_DIMS_) = 0
+      constructor%lake_cell_count(_DIMS_) = 0
+      constructor%effective_volume_per_cell_on_surface_grid(_DIMS_) = 0.0_dp
+      constructor%effective_lake_height_on_surface_grid_to_lakes(_DIMS_) = 0.0_dp
+      constructor%water_to_lakes(_DIMS_)= 0.0_dp
+      constructor%water_to_hd(_DIMS_) = 0.0_dp
+      constructor%lake_water_from_ocean(_DIMS_) = 0.0_dp
+      allocate(constructor%evaporation_from_lakes(lake_model_parameters%number_of_lakes))
+      constructor%evaporation_from_lakes(:) = 0.0_dp
+      allocate(constructor%evaporation_applied(lake_model_parameters%number_of_lakes))
+      constructor%evaporation_applied(:) = .false.
+      constructor%set_forest => rooted_tree_forest()
+end function lakemodelprognosticsconstructor
 
-! function lakeparametersconstructor(lake_number,
-!                                    primary_lake,
-!                                    secondary_lakes,
-!                                    COORDS_center_coords,
-!                                    filling_order::Vector{Cell},
-!                                    outflow_points::Dict{Int64,Redirect},
-!                                    NPOINTS_LAKE_
-!                                    NPOINTS_SURFACE_) &
-!                                    result(constructor)
-!   integer, intent(in) :: lake_number
-!   integer, intent(in) :: primary_lake
-!   integer, dimension(:), allocatable, intent(in) :: secondary_lakes
-!   _DEF_COORDS_center_coords IN
-!   type(cell), allocatable, dimension(:), intent(in) :: filling_order
-!   type(redirectdictionary), allocatable, intent(in) :: outflow_points
-!   _DEF_NPOINTS_lake IN
-!   _DEF_NPOINTS_surface IN
-!   type(lake_parameters), target :: constructor
-!   logical :: is_primary
-!   logical :: is_leaf
-!     allocate(constructor)
-!     ASSIGN_constructor%COORDS_center_coords = COORDS_center_coords
-!     constructor%center_cell_coarse_coords = &
-!       find_coarse_cell_containing_fine_cell(NPOINTS_LAKE_
-!                                             NPOINTS_SURFACE_,
-!                                             center_coords)
-!     constructor%lake_number = lake_number
-!     constructor%is_primary = (primary_lake == -1)
-!     if (is_primary .and. size(outflow_points) > 1) then
-!       write(*,*) "Primary lake has more than one outflow point"
-!       stop
-!     end if
-!     constructor%is_leaf = (size(secondary_lakes) == 0)
-!     constructor%primary_lake = primary_lake
-!     constructor%secondary_lakes = secondary_lakes
-!     constructor%filling_order = filling_order
-!     constructor%outflow_points = outflow_points
-! end function lake_parameters_constructor
+function cellconstructor(height_type, &
+                         fill_threshold, &
+                         height) result(constructor)
+  integer  :: height_type
+  real(dp) :: fill_threshold
+  real(dp) :: height
+  type(cell), pointer :: constructor
+    constructor%height_type = height_type
+    constructor%fill_threshold = fill_threshold
+    constructor%height = height
+end function cellconstructor
 
-! !Construct an empty filling lake by default
-! function lakeprognosticsconstructor(lake_parameters,
-!                                     lake_model_parameters,
-!                                     lake_model_prognostics) result(constructor)
-!   type(lakeparameters), intent(in) :: lake_parameters
-!   type(lakemodelparameters), intent(in) :: lake_model_parameters
-!   type(lakemodelprognostics), intent(in) :: lake_model_prognostics
-!   type(lakeprognostics), pointer :: constructor
-!     allocate(constructor)
-!     constructor%lake_type = filling_lake_type
-!     constructor%active_lake = lake_parameters%is_leaf
-!     constructor%unprocessed_water = 0.0_dp
-!     constructor%parameters = lake_parameters
-!     constructor%lake_model_parameters = lake_model_parameters
-!     constructor%lake_model_prognostics = lake_model_prognostics
-!     call initialise_filling_lake(lake,.false.)
-! end function lakeprognosticsconstructor
+function redirectconstructor(use_local_redirect, &
+                             local_redirect_target_lake_number, &
+                             _COORDS_ARG_non_local_redirect_target_) &
+                             result(constructor)
+  logical, intent(in) :: use_local_redirect
+  integer, intent(in) :: local_redirect_target_lake_number
+  _DEF_COORDS_non_local_redirect_target_ _INTENT_in_
+  type(redirect), pointer :: constructor
+    constructor%use_local_redirect = use_local_redirect
+    constructor%local_redirect_target_lake_number = &
+      local_redirect_target_lake_number
+    _ASSIGN_constructor%_COORDS_non_local_redirect_target_ = &
+      _COORDS_non_local_redirect_target_
+end function redirectconstructor
 
-! subroutine initialise_filling_lake(lake,initialise_filled)
-!   type(lakeprognostics), pointer, intent(inout) :: lake
-!   logical, intent(in) :: initialise_filled
-!     call set_overflowing_lake_parameter_to_null_values(lake)
-!     call set_subsumed_lake_parameter_to_null_values(lake)
-!     if (initialise_filled) then
-!       lake%current_cell_to_fill = lake_parameters%filling_order(end)%coords
-!       lake%current_height_type = lake_parameters%filling_order(end)%height_type
-!       lake%current_filling_cell_index = size(lake_parameters%filling_order)
-!       lake%next_cell_volume_threshold = &
-!         lake_parameters%filling_order(end)%fill_threshold
-!       if (size(lake_parameters%filling_order) > 1) then
-!         lake%previous_cell_volume_threshold = &
-!           lake_parameters%filling_order(end-1)%fill_threshold
-!       else
-!         lake%previous_cell_volume_threshold = 0.0_dp
-!       end if
-!       lake%lake_volume = lake_parameters%filling_order(end)%fill_threshold
-!     else
-!       lake%current_cell_to_fill = &
-!         lake_parameters%filling_order(1)%coords
-!       lake%current_height_type = &
-!         lake_parameters%filling_order(1)%height_type
-!       lake%current_filling_cell_index = 1
-!       lake%next_cell_volume_threshold = &
-!         lake_parameters%filling_order(1)%fill_threshold
-!       lake%previous_cell_volume_threshold = 0.0_dp
-!       lake%lake_volume = 0.0_dp
-!     end if
-! end subroutine initialise_filling_lake
+function lakeparametersconstructor(lake_number, &
+                                   primary_lake, &
+                                   secondary_lakes, &
+                                   _COORDS_ARG_center_coords_, &
+                                   filling_order, &
+                                   outflow_points, &
+                                   _NPOINTS_LAKE_, &
+                                   _NPOINTS_HD_) &
+                                   result(constructor)
+  integer, intent(in) :: lake_number
+  integer, intent(in) :: primary_lake
+  integer, dimension(:), allocatable, intent(in) :: secondary_lakes
+  _DEF_COORDS_center_coords_ _INTENT_in_
+  type(cell), allocatable, dimension(:), intent(in) :: filling_order
+  type(redirectdictionary), allocatable, intent(in) :: outflow_points
+  _DEF_NPOINTS_LAKE_ _INTENT_in_
+  _DEF_NPOINTS_HD_ _INTENT_in_
+  _DEF_COORDS_fine_cells_per_coarse_cell_
+  type(lakeparameters) :: constructor
+  logical :: is_primary
+  logical :: is_leaf
+    _ASSIGN_constructor%_COORDS_center_coords_ = _COORDS_center_coords_
+    _GET_COARSE_COORDS_FROM_FINE_COORDS_ constructor%_COORDS_center_cell_coarse_coords_ _NPOINTS_LAKE_ _NPOINTS_HD_ _COORDS_center_coords_
+    constructor%lake_number = lake_number
+    constructor%is_primary = (primary_lake == -1)
+    if (is_primary .and. get_dictionary_size(outflow_points) > 1) then
+      write(*,*) "Primary lake has more than one outflow point"
+      stop
+    end if
+    constructor%is_leaf = (size(secondary_lakes) == 0)
+    constructor%primary_lake = primary_lake
+    constructor%secondary_lakes = secondary_lakes
+    constructor%filling_order = filling_order
+    constructor%outflow_points = outflow_points
+end function lakeparametersconstructor
 
-! subroutine initialise_overflowing_lake(lake,
-!                                        current_redirect,
-!                                        excess_water)
-!   type(redirect), pointer, intent(in) :: current_redirect
-!   real(dp), intent(in) :: excess_water
-!   type(lakeprognostics), pointer, intent(inout) :: lake
-!     call set_filling_lake_parameter_to_null_values(lake)
-!     call set_subsumed_lake_parameter_to_null_values(lake)
-!     lake%current_redirect = current_redirect
-!     lake%excess_water = excess_water
-! end subroutine initialise_overflowing_lake
+!Construct an empty filling lake by default
+function lakeprognosticsconstructor(lake_parameters, &
+                                    lake_model_parameters, &
+                                    lake_model_prognostics) result(constructor)
+  type(lakeparameters), intent(in) :: lake_parameters
+  type(lakemodelparameters), intent(in) :: lake_model_parameters
+  type(lakemodelprognostics), intent(in) :: lake_model_prognostics
+  type(lakeprognostics), pointer :: constructor
+    allocate(constructor)
+    constructor%lake_type = filling_lake_type
+    constructor%active_lake = lake_parameters%is_leaf
+    constructor%unprocessed_water = 0.0_dp
+    constructor%parameters = lake_parameters
+    constructor%lake_model_parameters = lake_model_parameters
+    constructor%lake_model_prognostics = lake_model_prognostics
+    call initialise_filling_lake(constructor,.false.)
+end function lakeprognosticsconstructor
 
-! subroutine initialise_subsumed_lake(lake)
-!   type(lakeprognostics), pointer, intent(inout) :: lake
-!     call set_filling_lake_parameter_to_null_values(lake)
-!     call set_overflowing_lake_parameter_to_null_values(lake)
-!     lake%redirect_target = -1
-! end subroutine initialise_subsumed_lake
+subroutine initialise_filling_lake(lake,initialise_filled)
+  type(lakeprognostics), pointer, intent(inout) :: lake
+  logical, intent(in) :: initialise_filled
+  type(lakeparameters), pointer :: lake_parameters
+  integer :: filling_order_length
+    lake_parameters => lake%parameters
+    call set_overflowing_lake_parameter_to_null_values(lake)
+    call set_subsumed_lake_parameter_to_null_values(lake)
+    if (initialise_filled) then
+      filling_order_length = size(lake_parameters%filling_order)
+      _ASSIGN_lake%_COORDS_current_cell_to_fill_ = &
+        lake_parameters%filling_order(filling_order_length)%_COORDS_coords_
+      lake%current_height_type = lake_parameters%filling_order(filling_order_length)%height_type
+      lake%current_filling_cell_index = filling_order_length
+      lake%next_cell_volume_threshold = &
+        lake_parameters%filling_order(filling_order_length)%fill_threshold
+      if (size(lake_parameters%filling_order) > 1) then
+        lake%previous_cell_volume_threshold = &
+          lake_parameters%filling_order(filling_order_length-1)%fill_threshold
+      else
+        lake%previous_cell_volume_threshold = 0.0_dp
+      end if
+      lake%lake_volume = lake_parameters%filling_order(filling_order_length)%fill_threshold
+    else
+      _ASSIGN_lake%_COORDS_current_cell_to_fill_ = &
+        lake_parameters%filling_order(1)%_COORDS_coords_
+      lake%current_height_type = &
+        lake_parameters%filling_order(1)%height_type
+      lake%current_filling_cell_index = 1
+      lake%next_cell_volume_threshold = &
+        lake_parameters%filling_order(1)%fill_threshold
+      lake%previous_cell_volume_threshold = 0.0_dp
+      lake%lake_volume = 0.0_dp
+    end if
+end subroutine initialise_filling_lake
 
-! !##############################################################################
-! !##############################################################################
-! !                  Section 3: Utility subprograms
-! !##############################################################################
-! !##############################################################################
+subroutine initialise_overflowing_lake(lake, &
+                                       current_redirect, &
+                                       excess_water)
+  type(redirect), pointer, intent(in) :: current_redirect
+  real(dp), intent(in) :: excess_water
+  type(lakeprognostics), pointer, intent(inout) :: lake
+    call set_filling_lake_parameter_to_null_values(lake)
+    call set_subsumed_lake_parameter_to_null_values(lake)
+    lake%current_redirect = current_redirect
+    lake%excess_water = excess_water
+end subroutine initialise_overflowing_lake
 
-! subroutine add_entry_to_dictionary(dict,key,value)
-!   type(redirectdictionary) :: dict
-!   integer :: key
-!   type(redirect) :: value
-!     if (dict%initialisation_complete) then
-!       write(*,*) "Error - trying to write to finished dictionary"
-!       stop
-!     end if
-!     dict%keys(dict%next_entry_index)
-!     dict%values(dict%next_entry_index)
-!     dict%next_entry_index = dict%next_entry_index + 1
-! end subroutine add_entry_to_dictionary
+subroutine initialise_subsumed_lake(lake)
+  type(lakeprognostics), pointer, intent(inout) :: lake
+    call set_filling_lake_parameter_to_null_values(lake)
+    call set_overflowing_lake_parameter_to_null_values(lake)
+    lake%redirect_target = -1
+end subroutine initialise_subsumed_lake
 
-! subroutine finish_dictionary(dict)
-!   type(redirectdictionary), intent(in) :: dict
-!   integer, dimension(:), allocatable :: sorted_keys
-!   type(redirect), dimension(:), allocatable :: sorted_values
-!   integer :: minimum_location
-!   integer :: number_of_entries
-!   integer :: i
-!     dict%number_of_entries = size(dict%keys)
-!     max_key_value = max(dict%keys)
-!     allocate(sorted_keys(dict%number_of_entries)
-!     allocate(sorted_values(dict%number_of_entries)
-!     do i = 1,number_of_entries
-!       minimum_location = minloc(dict%keys)
-!       sorted_keys(i) = dict%keys(minimum_location)
-!       sorted_values(i) = dict%values(minimum_location)
-!       dict%keys(i) = max_key_value + 1
-!     end do
-!     dict%keys(:) = sorted_keys(:)
-!     dict%values(:) = sorted_values(:)
-!     dict%initialisation_complete = .true.
-! end subroutine finish_dictionary
+!##############################################################################
+!##############################################################################
+!                  Section 3: Utility subprograms
+!##############################################################################
+!##############################################################################
 
-! function get_dictionary_entry(dict,key) result(value)
-!   type(redirectdictionary), intent(in) :: dict
-!   integer :: section_start_index
-!   integer :: section_end_index
-!   integer :: section_length
-!   integer :: midpoint_index
-!   integer :: midpoint_key_value
-!     if (.not. dict%initialisation_complete) then
-!       write(*,*) "Error - trying to read from unfinished dictionary"
-!       stop
-!     end if
-!     section_start_index = 1
-!     section_end_index = dict%number_of_entries
-!     section_length  = dict%number_of_entries
-!     do
-!       if (section_length > 4) then
-!         midpoint_index = section_length/2 + section_start_index
-!         midpoint_key_value = dict%keys(midpoint_index)
-!         if (midpoint_key_value == key)
-!             value = dict%values(midpoint_index)
-!             return
-!         else if (midpoint_key_value > key)
-!           section_end_index = midpoint_index - 1
-!           section_length  = section_end_index + 1 - section_start_index
-!         else
-!           section_start_index = midpoint_index + 1
-!           section_length  = section_end_index + 1 - section_start_index
-!         end if
-!       else
-!         do i = section_start_index,section_end_index
-!           if (dict%keys(i) == key) then
-!             value = dict%values(i)
-!             return
-!           end if
-!         end do
-!       end if
-!     end do
-! end function get_dictionary_entry
+subroutine add_entry_to_dictionary(dict,key,value)
+  type(redirectdictionary) :: dict
+  integer :: key
+  type(redirect) :: value
+    if (dict%initialisation_complete) then
+      write(*,*) "Error - trying to write to finished dictionary"
+      stop
+    end if
+    dict%keys(dict%next_entry_index) = key
+    dict%values(dict%next_entry_index) = value
+    dict%next_entry_index = dict%next_entry_index + 1
+end subroutine add_entry_to_dictionary
+
+subroutine finish_dictionary(dict)
+  type(redirectdictionary), intent(inout) :: dict
+  integer, dimension(:), allocatable :: sorted_keys
+  type(redirect), dimension(:), allocatable :: sorted_values
+  integer :: max_key_value
+  integer, dimension(1) :: minimum_location_array
+  integer :: minimum_location
+  integer :: number_of_entries
+  integer :: i
+    dict%number_of_entries = size(dict%keys)
+    max_key_value = maxval(dict%keys)
+    allocate(sorted_keys(dict%number_of_entries))
+    allocate(sorted_values(dict%number_of_entries))
+    do i = 1,number_of_entries
+      minimum_location_array = minloc(dict%keys)
+      minimum_location = minimum_location_array(1)
+      sorted_keys(i) = dict%keys(minimum_location)
+      sorted_values(i) = dict%values(minimum_location)
+      dict%keys(i) = max_key_value + 1
+    end do
+    dict%keys(:) = sorted_keys(:)
+    dict%values(:) = sorted_values(:)
+    dict%initialisation_complete = .true.
+end subroutine finish_dictionary
+
+function get_dictionary_entry(dict,key) result(value)
+  type(redirectdictionary), intent(in) :: dict
+  integer, intent(in) :: key
+  type(redirect) :: value
+  integer :: section_start_index
+  integer :: section_end_index
+  integer :: section_length
+  integer :: midpoint_index
+  integer :: midpoint_key_value
+  integer :: i
+    if (.not. dict%initialisation_complete) then
+      write(*,*) "Error - trying to read from unfinished dictionary"
+      stop
+    end if
+    section_start_index = 1
+    section_end_index = dict%number_of_entries
+    section_length  = dict%number_of_entries
+    do
+      if (section_length > 4) then
+        midpoint_index = section_length/2 + section_start_index
+        midpoint_key_value = dict%keys(midpoint_index)
+        if (midpoint_key_value == key) then
+            value = dict%values(midpoint_index)
+            return
+        else if (midpoint_key_value > key) then
+          section_end_index = midpoint_index - 1
+          section_length  = section_end_index + 1 - section_start_index
+        else
+          section_start_index = midpoint_index + 1
+          section_length  = section_end_index + 1 - section_start_index
+        end if
+      else
+        do i = section_start_index,section_end_index
+          if (dict%keys(i) == key) then
+            value = dict%values(i)
+            return
+          end if
+        end do
+      end if
+    end do
+end function get_dictionary_entry
+
+function get_dictionary_size(dict) result(number_of_entries)
+  type(redirectdictionary), intent(in) :: dict
+  integer :: number_of_entries
+    number_of_entries = dict%number_of_entries
+end function get_dictionary_size
 
 ! !##############################################################################
 ! !##############################################################################

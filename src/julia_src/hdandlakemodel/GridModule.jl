@@ -289,9 +289,9 @@ function find_coarse_cell_containing_fine_cell(fine_grid::LatLonGrid,coarse_grid
                                                fine_cell_coords::LatLonCoords)
   fine_cells_per_coarse_cell_lat::Int64 = fine_grid.nlat/coarse_grid.nlat
   fine_cells_per_coarse_cell_lon::Int64 = fine_grid.nlon/coarse_grid.nlon
-  coarse_lat::Int64 = ceil(fine_cell_coords.lat/fine_cells_per_coarse_cell_lat);
-  coarse_lon::Int64 = ceil(fine_cell_coords.lon/fine_cells_per_coarse_cell_lon);
-  return LatLonCoords(coarse_lat,coarse_lon);
+  coarse_lat::Int64 = ceil(fine_cell_coords.lat/fine_cells_per_coarse_cell_lat)
+  coarse_lon::Int64 = ceil(fine_cell_coords.lon/fine_cells_per_coarse_cell_lon)
+  return LatLonCoords(coarse_lat,coarse_lon)
 end
 
 function find_coarse_cell_containing_fine_cell(fine_grid::LatLonGrid,coarse_grid::LatLonGrid,
@@ -299,9 +299,9 @@ function find_coarse_cell_containing_fine_cell(fine_grid::LatLonGrid,coarse_grid
   fine_lat,fine_lon = Tuple(fine_cell_coords)
   fine_cells_per_coarse_cell_lat::Int64 = fine_grid.nlat/coarse_grid.nlat
   fine_cells_per_coarse_cell_lon::Int64 = fine_grid.nlon/coarse_grid.nlon
-  coarse_lat::Int64 = ceil(fine_lat/fine_cells_per_coarse_cell_lat);
-  coarse_lon::Int64 = ceil(fine_lon/fine_cells_per_coarse_cell_lon);
-  return CartesianIndex(coarse_lat,coarse_lon);
+  coarse_lat::Int64 = ceil(fine_lat/fine_cells_per_coarse_cell_lat)
+  coarse_lon::Int64 = ceil(fine_lon/fine_cells_per_coarse_cell_lon)
+  return CartesianIndex(coarse_lat,coarse_lon)
 end
 
 function find_coarse_cell_containing_fine_cell(fine_grid::UnstructuredGrid,
