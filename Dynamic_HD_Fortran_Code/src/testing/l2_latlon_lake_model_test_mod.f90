@@ -294,13 +294,12 @@ subroutine testLakeModel1
          !                  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
          !                  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, /), &
          (/nlon_lake,nlat_lake/)))
-      PROCESS BY HAND=>river_fields::RiverPrognosticFields,
-      PROCESS BY HAND=>lake_model_prognostics::LakeModelPrognostics,
-      PROCESS BY HAND=>lake_model_diagnostics::LakeModelDiagnostics =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_parameters_as_array,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>800,print_timestep_results=false,
-      PROCESS BY HAND=> write_output=False,return_output=True)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(800,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -343,13 +342,12 @@ subroutine testLakeModel1
       call assert_equals( intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,_ =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>1100,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=800)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(1100,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -933,13 +931,12 @@ subroutine testLakeModel2
       !                   0    0    0    0    0    0    0    0    0
       !                   0    0    0    0    0    0    0    0    0
       !                   0    0    0    0    0    0    0    0    0 ])
-      PROCESS BY HAND=>river_fields::RiverPrognosticFields,
-      PROCESS BY HAND=>lake_model_prognostics::LakeModelPrognostics,
-      PROCESS BY HAND=>lake_model_diagnostics::LakeModelDiagnostics =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_parameters_as_array,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>0,print_timestep_results=false,
-      PROCESS BY HAND=> write_output=False,return_output=True)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(0,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -982,13 +979,12 @@ subroutine testLakeModel2
       call assert_equals( first_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( first_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test first_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>1,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=-1)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(1,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -1033,13 +1029,12 @@ subroutine testLakeModel2
       call assert_equals( second_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( second_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test second_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>4,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=1)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(4,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -1084,13 +1079,12 @@ subroutine testLakeModel2
       call assert_equals( third_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( third_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test third_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>900,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=4)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(900,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -1134,13 +1128,12 @@ subroutine testLakeModel2
       call assert_equals( fourth_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( fourth_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test fourth_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>903,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=900)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(903,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -1401,12 +1394,12 @@ subroutine testLakeModel3
          !                  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
          !                  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, /), &
          (/nlon_lake,nlat_lake/)))
-      PROCESS BY HAND=>river_fields::RiverPrognosticFields,
-      PROCESS BY HAND=>lake_model_prognostics::LakeModelPrognostics,_ =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_parameters_as_array,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>1000,print_timestep_results=false,
-      PROCESS BY HAND=> write_output=False,return_output=True)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(1000,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -1754,12 +1747,7 @@ subroutine testLakeModel4
          !                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          !                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, /), &
          (/nlon_lake,nlat_lake/)))
-      PROCESS BY HAND=>river_fields::RiverPrognosticFields,
-      PROCESS BY HAND=>lake_model_prognostics::LakeModelPrognostics,_ =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_parameters_as_array,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>10000,print_timestep_results=false,
-      PROCESS BY HAND=> write_output=False,return_output=True)
+      call run_hd_model(10000,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -2255,13 +2243,7 @@ subroutine testLakeModel5
          15, 7,  1,  /), &
          (/nlon_surface_model,nlat_surface_model/)))
       expected_intermediate_lake_volumes = (\ 1.0, 10.0, 1.0, 38.0, 6.0, 46.0, 55.0, 55.0, 229.0 \)
-      PROCESS BY HAND=>river_fields::RiverPrognosticFields,
-      PROCESS BY HAND=>lake_model_prognostics::LakeModelPrognostics,
-      PROCESS BY HAND=>lake_model_diagnostics::LakeModelDiagnostics =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_parameters_as_array,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>5000,print_timestep_results=false,
-      PROCESS BY HAND=> write_output=False,return_output=True)
+      call run_hd_model(5000,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -2306,14 +2288,7 @@ subroutine testLakeModel5
       call assert_equals( expected_intermediate_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( expected_intermediate_number_fine_grid_cells,          lake_model_parameters.number_fine_grid_cells)
       !@test expected_intermediate_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,_ =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>10000,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=5000)
+      call run_hd_model(10000,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -2958,13 +2933,7 @@ subroutine testLakeModel6
          !                  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
          !                  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,    0/), &
          (/nlon_lake,nlat_lake/)))
-      PROCESS BY HAND=>river_fields::RiverPrognosticFields,
-      PROCESS BY HAND=>lake_model_prognostics::LakeModelPrognostics,
-      PROCESS BY HAND=>lake_model_diagnostics::LakeModelDiagnostics =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_parameters_as_array,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>2,print_timestep_results=false,
-      PROCESS BY HAND=> write_output=False,return_output=True)
+      call run_hd_model(2,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -3008,14 +2977,7 @@ subroutine testLakeModel6
       call assert_equals( first_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( first_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test first_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>3,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=2)
+      call run_hd_model(3,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -3059,14 +3021,7 @@ subroutine testLakeModel6
       call assert_equals( second_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( second_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test second_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>5,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=3)
+      call run_hd_model(5,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -3110,14 +3065,7 @@ subroutine testLakeModel6
       call assert_equals( third_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( third_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test third_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>6,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=5)
+      call run_hd_model(6,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -3161,14 +3109,7 @@ subroutine testLakeModel6
       call assert_equals( fourth_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( fourth_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test fourth_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>7,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=6)
+      call run_hd_model(7,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -3212,14 +3153,7 @@ subroutine testLakeModel6
       call assert_equals( fifth_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( fifth_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test fifth_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,_ =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>9,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=7)
+      call run_hd_model(9,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -3864,13 +3798,12 @@ subroutine testLakeModel7
          !              0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
          !              0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,    0/), &
          (/nlon_lake,nlat_lake/)))
-      PROCESS BY HAND=>river_fields::RiverPrognosticFields,
-      PROCESS BY HAND=>lake_model_prognostics::LakeModelPrognostics,
-      PROCESS BY HAND=>lake_model_diagnostics::LakeModelDiagnostics =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_parameters_as_array,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>2,print_timestep_results=false,
-      PROCESS BY HAND=> write_output=False,return_output=True)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(2,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -3914,14 +3847,7 @@ subroutine testLakeModel7
       call assert_equals( first_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( first_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test first_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>3,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=2)
+      call run_hd_model(3,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -3965,14 +3891,7 @@ subroutine testLakeModel7
       call assert_equals( second_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( second_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test second_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>5,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=3)
+      call run_hd_model(5,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -4016,14 +3935,7 @@ subroutine testLakeModel7
       call assert_equals( third_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( third_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test third_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>6,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=5)
+      call run_hd_model(6,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -4067,14 +3979,7 @@ subroutine testLakeModel7
       call assert_equals( fourth_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( fourth_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test fourth_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>7,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=6)
+      call run_hd_model(7,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -4118,14 +4023,7 @@ subroutine testLakeModel7
       call assert_equals( fifth_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( fifth_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test fifth_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>8,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=7)
+      call run_hd_model(8,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -5416,13 +5314,12 @@ subroutine testLakeModel8
           ! 0 0 0 0 0 0 0 0 0 &
           ! 0 0 0 0 0 0 0 0 0 &
           ! 0 0 0 0 0 0 0 0 0])
-      PROCESS BY HAND=>river_fields::RiverPrognosticFields,
-      PROCESS BY HAND=>lake_model_prognostics::LakeModelPrognostics,
-      PROCESS BY HAND=>lake_model_diagnostics::LakeModelDiagnostics =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_parameters_as_array,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>2,print_timestep_results=false,
-      PROCESS BY HAND=> write_output=False,return_output=True)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(2,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -5466,14 +5363,7 @@ subroutine testLakeModel8
       call assert_equals( first_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( first_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test first_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>3,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=2)
+      call run_hd_model(3,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -5517,14 +5407,7 @@ subroutine testLakeModel8
       call assert_equals( second_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( second_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test second_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>5,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=3)
+      call run_hd_model(5,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -5568,14 +5451,7 @@ subroutine testLakeModel8
       call assert_equals( third_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( third_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test third_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>6,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=5)
+      call run_hd_model(6,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -5619,14 +5495,7 @@ subroutine testLakeModel8
       call assert_equals( fourth_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( fourth_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test fourth_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>7,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=6)
+      call run_hd_model(7,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -5670,14 +5539,7 @@ subroutine testLakeModel8
       call assert_equals( fifth_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( fifth_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test fifth_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>8,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=7)
+      call run_hd_model(8,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -5721,14 +5583,7 @@ subroutine testLakeModel8
       call assert_equals( sixth_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( sixth_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test sixth_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>30,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=8)
+      call run_hd_model(30,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -5772,14 +5627,7 @@ subroutine testLakeModel8
       call assert_equals( sixth_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( sixth_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test sixth_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>31,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=30)
+      call run_hd_model(31,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -5823,14 +5671,7 @@ subroutine testLakeModel8
       call assert_equals( seven_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( seven_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test seven_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>32,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=31)
+      call run_hd_model(32,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -5874,14 +5715,7 @@ subroutine testLakeModel8
       call assert_equals( eight_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( eight_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test eight_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>33,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=32)
+      call run_hd_model(33,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -5925,14 +5759,7 @@ subroutine testLakeModel8
       call assert_equals( nine_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( nine_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test nine_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>34,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=33)
+      call run_hd_model(34,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -5976,14 +5803,7 @@ subroutine testLakeModel8
       call assert_equals( ten_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( ten_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test ten_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>35,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=34)
+      call run_hd_model(35,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -6027,14 +5847,7 @@ subroutine testLakeModel8
       call assert_equals( eleven_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( eleven_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test eleven_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>36,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=35)
+      call run_hd_model(36,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -6078,14 +5891,7 @@ subroutine testLakeModel8
       call assert_equals( twelve_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( twelve_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test twelve_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,_ =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>37,print_timestep_results=false,
-      PROCESS BY HAND=>write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=36)
+      call run_hd_model(37,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -6561,16 +6367,12 @@ subroutine testLakeModel9
          !              0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
          !              0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,    0/), &
          (/nlon_lake,nlat_lake/)))
-      PROCESS BY HAND=>river_fields::RiverPrognosticFields,
-      PROCESS BY HAND=>lake_model_prognostics::LakeModelPrognostics,
-      PROCESS BY HAND=>lake_model_diagnostics::LakeModelDiagnostics =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_parameters_as_array,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>0,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(0,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -6614,18 +6416,7 @@ subroutine testLakeModel9
       call assert_equals( first_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( first_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test first_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>1,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          !-1 means skip no timesteps but do skip setup &
-          forcing_timesteps_to_skip=-1)
+      call run_hd_model(1,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -6669,17 +6460,7 @@ subroutine testLakeModel9
       call assert_equals( second_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( second_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test second_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,_ =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>2,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=1)
+      call run_hd_model(2,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -7483,16 +7264,12 @@ subroutine testLakeModel10
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0/), &
          (/nlon_lake,nlat_lake/)))
-      PROCESS BY HAND=>river_fields::RiverPrognosticFields,
-      PROCESS BY HAND=>lake_model_prognostics::LakeModelPrognostics,
-      PROCESS BY HAND=>lake_model_diagnostics::LakeModelDiagnostics =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_parameters_as_array,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>0,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(0,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -7537,17 +7314,7 @@ subroutine testLakeModel10
       call assert_equals( first_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( first_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test first_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>1,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=-1)
+      call run_hd_model(1,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -7592,17 +7359,7 @@ subroutine testLakeModel10
       call assert_equals( second_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( second_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test second_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>2,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=1)
+      call run_hd_model(2,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -7646,17 +7403,7 @@ subroutine testLakeModel10
       call assert_equals( third_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( third_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test third_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,_ =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>3,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=2)
+      call run_hd_model(3,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -8033,14 +7780,12 @@ subroutine testLakeModel11
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0/), &
          (/nlon_lake,nlat_lake/)))
-      PROCESS BY HAND=>river_fields::RiverPrognosticFields,
-      PROCESS BY HAND=>lake_model_prognostics::LakeModelPrognostics,_ =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_parameters_as_array,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>5,true,initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(5,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -8417,14 +8162,12 @@ subroutine testLakeModel12
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0/), &
          (/nlon_lake,nlat_lake/)))
-      PROCESS BY HAND=>river_fields::RiverPrognosticFields,
-      PROCESS BY HAND=>lake_model_prognostics::LakeModelPrognostics,_ =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_parameters_as_array,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>5,true,initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(5,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -9088,16 +8831,12 @@ subroutine testLakeModel13
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0/), &
          (/nlon_lake,nlat_lake/)))
-      PROCESS BY HAND=>river_fields::RiverPrognosticFields,
-      PROCESS BY HAND=>lake_model_prognostics::LakeModelPrognostics,
-      PROCESS BY HAND=>lake_model_diagnostics::LakeModelDiagnostics =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_parameters_as_array,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>0,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(0,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -9141,17 +8880,7 @@ subroutine testLakeModel13
       call assert_equals( first_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( first_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test first_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>1,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=-1)
+      call run_hd_model(1,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -9195,17 +8924,7 @@ subroutine testLakeModel13
       call assert_equals( second_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( second_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test second_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,_ =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>2,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=1)
+      call run_hd_model(2,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -9583,14 +9302,12 @@ subroutine testLakeModel14
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0/), &
          (/nlon_lake,nlat_lake/)))
-      PROCESS BY HAND=>river_fields::RiverPrognosticFields,
-      PROCESS BY HAND=>lake_model_prognostics::LakeModelPrognostics,_ =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_parameters_as_array,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>4,true,initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(4,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -9967,14 +9684,12 @@ subroutine testLakeModel15
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0/), &
          (/nlon_lake,nlat_lake/)))
-      PROCESS BY HAND=>river_fields::RiverPrognosticFields,
-      PROCESS BY HAND=>lake_model_prognostics::LakeModelPrognostics,_ =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_parameters_as_array,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>5,true,initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(5,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -10636,16 +10351,12 @@ subroutine testLakeModel16
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0/), &
          (/nlon_lake,nlat_lake/)))
-      PROCESS BY HAND=>river_fields::RiverPrognosticFields,
-      PROCESS BY HAND=>lake_model_prognostics::LakeModelPrognostics,
-      PROCESS BY HAND=>lake_model_diagnostics::LakeModelDiagnostics =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_parameters_as_array,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>0,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(0,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -10689,17 +10400,7 @@ subroutine testLakeModel16
       call assert_equals( first_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( first_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test first_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>1,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=-1)
+      call run_hd_model(1,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -10743,17 +10444,7 @@ subroutine testLakeModel16
       call assert_equals( second_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( second_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test second_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,_ =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>2,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=1)
+      call run_hd_model(2,runoffs,drainages,lake_evaporations)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -11716,17 +11407,8 @@ subroutine testLakeModel17
       twelfth_intermediate_expected_lake_volumes = (\ 20.682507045717777 \)
       PROCESS BY HAND=>
       thirteenth_intermediate_expected_lake_volumes = (\ 2.446729115678684 \)
-      PROCESS BY HAND=>river_fields::RiverPrognosticFields,
-      PROCESS BY HAND=>lake_model_prognostics::LakeModelPrognostics,
-      PROCESS BY HAND=>lake_model_diagnostics::LakeModelDiagnostics =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_parameters_as_array,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>0,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(0,runoffs,drainages,lake_evaporations,
+                        use_realistic_surface_coupling=.true.)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -11770,18 +11452,8 @@ subroutine testLakeModel17
       call assert_equals( first_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( first_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test first_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>1,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=-1, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(1,runoffs,drainages,lake_evaporations,
+                        use_realistic_surface_coupling=.true.)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -11826,18 +11498,8 @@ subroutine testLakeModel17
       call assert_equals( second_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( second_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testsecond_intermediate_expected_true_lake_depths,lake_model_parameters.true_lake_depths,nlat_lake,nlon_lake,0.1)
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>45,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=1, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(45,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -11882,18 +11544,8 @@ subroutine testLakeModel17
       call assert_equals( third_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( third_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testthird_intermediate_expected_true_lake_depths,lake_model_parameters.true_lake_depths,nlat_lake,nlon_lake,0.1)
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>46,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=45, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(46,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -11938,180 +11590,80 @@ subroutine testLakeModel17
       call assert_equals( fourth_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( fourth_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testfourth_intermediate_expected_true_lake_depths,lake_model_parameters.true_lake_depths,nlat_lake,nlon_lake,0.1)
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>62,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=46, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(62,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       PROCESS BY HAND=>lake_volumes = Float64[] &
           PROCESS BY HAND=>dolake::Lake in lake_model_prognostics.lakes ! &
           &
           append!(lake_volumes,get_lake_volume(lake))
       PROCESS BY HAND=>end
       call assert_equals(fifth_intermediate_expected_lake_volumes,lake_volumes,nlat_lake,nlon_lake,0.00001))
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>63,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=62, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(63,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       PROCESS BY HAND=>lake_volumes = Float64[] &
           PROCESS BY HAND=>dolake::Lake in lake_model_prognostics.lakes ! &
           &
           append!(lake_volumes,get_lake_volume(lake))
       PROCESS BY HAND=>end
       call assert_equals(sixth_intermediate_expected_lake_volumes,lake_volumes,nlat_lake,nlon_lake,0.00001))
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>70,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=63, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(70,runoffs,drainages,lake_evaporations)
+                        use_realistic_surface_coupling=.true.)
       PROCESS BY HAND=>lake_volumes = Float64[] &
           PROCESS BY HAND=>dolake::Lake in lake_model_prognostics.lakes ! &
           &
           append!(lake_volumes,get_lake_volume(lake))
       PROCESS BY HAND=>end
       call assert_equals(seventh_intermediate_expected_lake_volumes,lake_volumes,nlat_lake,nlon_lake,0.00001))
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>71,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=70, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(71,runoffs,drainages,lake_evaporations, &
+          use_realistic_surface_coupling=.true.)
       PROCESS BY HAND=>lake_volumes = Float64[] &
           PROCESS BY HAND=>dolake::Lake in lake_model_prognostics.lakes ! &
           &
           append!(lake_volumes,get_lake_volume(lake))
       PROCESS BY HAND=>end
       call assert_equals(eighth_intermediate_expected_lake_volumes,lake_volumes,nlat_lake,nlon_lake,0.001))
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>80,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=71, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(80,runoffs,drainages,lake_evaporations,
+                        use_realistic_surface_coupling=.true.)
       PROCESS BY HAND=>lake_volumes = Float64[] &
           PROCESS BY HAND=>dolake::Lake in lake_model_prognostics.lakes ! &
           &
           append!(lake_volumes,get_lake_volume(lake))
       PROCESS BY HAND=>end
       call assert_equals(ninth_intermediate_expected_lake_volumes,lake_volumes,nlat_lake,nlon_lake,0.0001))
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>81,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=80, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(81,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       PROCESS BY HAND=>lake_volumes = Float64[] &
           PROCESS BY HAND=>dolake::Lake in lake_model_prognostics.lakes ! &
           &
           append!(lake_volumes,get_lake_volume(lake))
       PROCESS BY HAND=>end
       call assert_equals(tenth_intermediate_expected_lake_volumes,lake_volumes,nlat_lake,nlon_lake,0.00001))
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>85,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=81, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(85,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       PROCESS BY HAND=>lake_volumes = Float64[] &
           PROCESS BY HAND=>dolake::Lake in lake_model_prognostics.lakes ! &
           &
           append!(lake_volumes,get_lake_volume(lake))
       PROCESS BY HAND=>end
       call assert_equals(eleventh_intermediate_expected_lake_volumes,lake_volumes,nlat_lake,nlon_lake,0.00001))
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>86,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=85, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(86,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       PROCESS BY HAND=>lake_volumes = Float64[] &
           PROCESS BY HAND=>dolake::Lake in lake_model_prognostics.lakes ! &
           &
           append!(lake_volumes,get_lake_volume(lake))
       PROCESS BY HAND=>end
       call assert_equals(twelfth_intermediate_expected_lake_volumes,lake_volumes,nlat_lake,nlon_lake,0.00001))
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>90,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=86, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(90,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       PROCESS BY HAND=>lake_volumes = Float64[] &
           PROCESS BY HAND=>dolake::Lake in lake_model_prognostics.lakes ! &
           &
           append!(lake_volumes,get_lake_volume(lake))
       PROCESS BY HAND=>end
       call assert_equals(thirteenth_intermediate_expected_lake_volumes,lake_volumes,nlat_lake,nlon_lake,0.00001))
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,_ =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>91,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=90, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(91,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -12365,6 +11917,8 @@ subroutine testLakeModel18
           return_lake_volumes=True, &
           diagnostic_lake_volumes=lake_volumes, &
           use_realistic_surface_coupling=True)
+      call run_hd_model(500,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       PROCESS BY HAND=>do(lake_volumes_slice,expected_lake_volumes_slice) in zip(lake_volumes,expected_lake_volumes) !
       PROCESS BY HAND=>
       PROCESS BY HAND=>call assert_equals(lake_volumes_slice,expected_lake_volumes_slice,
@@ -13927,20 +13481,14 @@ subroutine testLakeModel19
          !                0.0, 0.00, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0, 0.0, 0.00, 0.00, 0.00, 0.0, &
          !                0.0, 0.00, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0, 0.0, 0.00, 0.00, 0.00, 0.0, /), &
          (/nlon_lake,nlat_lake/)))
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       PROCESS BY HAND=>lake_volumes_all_timesteps::Vector{Vector{Float64}} = []
-      PROCESS BY HAND=>river_fields::RiverPrognosticFields,
-      PROCESS BY HAND=>lake_model_prognostics::LakeModelPrognostics,
-      PROCESS BY HAND=>lake_model_diagnostics::LakeModelDiagnostics =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_parameters_as_array,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>0,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          return_lake_volumes=True, &
-          diagnostic_lake_volumes=lake_volumes_all_timesteps, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(0,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -13985,20 +13533,8 @@ subroutine testLakeModel19
       call assert_equals( first_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( first_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test first_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>15,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=-1, &
-          return_lake_volumes=True, &
-          diagnostic_lake_volumes=lake_volumes_all_timesteps, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(15,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -14043,20 +13579,8 @@ subroutine testLakeModel19
       call assert_equals( second_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( second_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testsecond_intermediate_expected_true_lake_depths,lake_model_parameters.true_lake_depths,nlat_lake,nlon_lake,0.1)
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>16,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=15, &
-          return_lake_volumes=True, &
-          diagnostic_lake_volumes=lake_volumes_all_timesteps, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(16,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -14101,20 +13625,8 @@ subroutine testLakeModel19
       call assert_equals( third_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( third_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testthird_intermediate_expected_true_lake_depths,lake_model_parameters.true_lake_depths,nlat_lake,nlon_lake,0.1)
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>17,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=16, &
-          return_lake_volumes=True, &
-          diagnostic_lake_volumes=lake_volumes_all_timesteps, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(17,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -14159,20 +13671,8 @@ subroutine testLakeModel19
       call assert_equals( fourth_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( fourth_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testfourth_intermediate_expected_true_lake_depths,lake_model_parameters.true_lake_depths,nlat_lake,nlon_lake,0.1)
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>83,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=17, &
-          return_lake_volumes=True, &
-          diagnostic_lake_volumes=lake_volumes_all_timesteps, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(83,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -14217,20 +13717,8 @@ subroutine testLakeModel19
       call assert_equals( fifth_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( fifth_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testfifth_intermediate_expected_true_lake_depths,lake_model_parameters.true_lake_depths,nlat_lake,nlon_lake,0.1)
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>84,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=83, &
-          return_lake_volumes=True, &
-          diagnostic_lake_volumes=lake_volumes_all_timesteps, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(84,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -14275,20 +13763,8 @@ subroutine testLakeModel19
       call assert_equals( sixth_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( sixth_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testsixth_intermediate_expected_true_lake_depths,lake_model_parameters.true_lake_depths,nlat_lake,nlon_lake,0.1)
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>85,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=84, &
-          return_lake_volumes=True, &
-          diagnostic_lake_volumes=lake_volumes_all_timesteps, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(85,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -14333,20 +13809,8 @@ subroutine testLakeModel19
       call assert_equals( seventh_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( seventh_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testseventh_intermediate_expected_true_lake_depths,lake_model_parameters.true_lake_depths,nlat_lake,nlon_lake,0.1)
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,_ =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>112,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=85, &
-          return_lake_volumes=True, &
-          diagnostic_lake_volumes=lake_volumes_all_timesteps, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(112,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       PROCESS BY HAND=>do(lake_volumes_slice,expected_lake_volumes_slice) in zip(lake_volumes_all_timesteps,expected_lake_volumes_all_timesteps) !
       PROCESS BY HAND=>
       PROCESS BY HAND=>call assert_equals(lake_volumes_slice,expected_lake_volumes_slice,
@@ -14886,63 +14350,47 @@ subroutine testLakeModel20
          !                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          !                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, /), &
          (/nlon_lake,nlat_lake/)))
-      PROCESS BY HAND=>
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       PROCESS BY HAND=>lake_volumes_all_timesteps::Vector{Vector{Float64}} = []
-      PROCESS BY HAND=>river_fields::RiverPrognosticFields,
-      PROCESS BY HAND=>lake_model_prognostics::LakeModelPrognostics,
-      PROCESS BY HAND=>lake_model_diagnostics::LakeModelDiagnostics =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_parameters_as_array,
-      PROCESS BY HAND=>drainages,runoffs,evaporations_one,
-      PROCESS BY HAND=>16,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          return_lake_volumes=True, &
-          diagnostic_lake_volumes=lake_volumes_all_timesteps, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(16,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       allocate(lake_types(nlat_lake,nlon_lake))
       lake_types(:,:) = 0
-      PROCESS BY HAND=>do i = 1,20 !
-      PROCESS BY HAND=>
-      PROCESS BY HAND=>do j = 1,20 !
-      PROCESS BY HAND=>
-      PROCESS BY HAND=>coords::LatLonCoords = LatLonCoords(i,j)
-      PROCESS BY HAND=>lake_number::Int64 = lake_model_prognostics.lake_numbers(coords)
-      PROCESS BY HAND=>if lake_number <= 0 continue end
-      PROCESS BY HAND=>lake::Lake = lake_model_prognostics.lakes[lake_number]
-      PROCESS BY HAND=>if isa(lake,FillingLake)
-      PROCESS BY HAND=>set!(lake_types,coords,1)
-      PROCESS BY HAND=>elseif isa(lake,OverflowingLake)
-      PROCESS BY HAND=>set!(lake_types,coords,2)
-      PROCESS BY HAND=>elseif isa(lake,SubsumedLake)
-      PROCESS BY HAND=>set!(lake_types,coords,3)
-      PROCESS BY HAND=>else
-      PROCESS BY HAND=>set!(lake_types,coords,4)
-      PROCESS BY HAND=>end
-      PROCESS BY HAND=>end
-      PROCESS BY HAND=>end
-      PROCESS BY HAND=>lake_volumes::Array{Float64} = Float64[]
-      PROCESS BY HAND=>lake_types_list::Array{Int64} = Int64[]
-      PROCESS BY HAND=>lake_fractions = calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
-          lake_model_prognostics)
-      PROCESS BY HAND=>dolake::Lake in lake_model_prognostics.lakes !
-      PROCESS BY HAND=>
-      PROCESS BY HAND=>append!(lake_volumes,get_lake_volume(lake))
-      PROCESS BY HAND=>local type_code::Int64
-      PROCESS BY HAND=>if isa(lake,FillingLake)
-      PROCESS BY HAND=>type_code = 1 &
-          elseif isa(lake,OverflowingLake)
-      PROCESS BY HAND=>type_code = 2 &
-          elseif isa(lake,SubsumedLake)
-      PROCESS BY HAND=>type_code = 3 &
-          else &
-          type_code = 4 &
-          end &
-          append!(lake_types_list,type_code)
-      PROCESS BY HAND=>end
-      PROCESS BY HAND=>diagnostic_lake_volumes::Field{Float64} =    calculate_diagnostic_lake_volumes_field(lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics)
+      lake_model_prognostics_out => get_lake_model_prognostics()
+      call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
+                                                   lake_model_prognostics_out, &
+                                                   lake_fractions)
+      allocate(lake_types(nlat_lake,nlon_lake))
+      lake_types(:,:) = 0
+      do i = 1,nlat_lake
+        do j = 1,nlon_lake
+          lake_number = lake_model_prognostics_out%lake_numbers(i,j)
+          if (lake_number > 0) then
+            working_lake_ptr = lake_model_prognostics_out%lakes(lake_number)
+            lake_type = working_lake_ptr%lake_pointer%lake_type
+              if (lake_type == filling_lake_type) then
+                lake_types(i,j) = 1
+              else if (lake_type == overflowing_lake_type) then
+                lake_types(i,j) = 2
+              else if (lake_type == subsumed_lake_type) then
+                lake_types(i,j) = 3
+              else
+                lake_types(i,j) = 4
+              end if
+          end if
+        end do
+      end do
+      allocate(lake_volumes(size(lake_model_prognostics_out%lakes))
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_prognostics_out%lakes(i)
+        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+      end do
+      diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
+                                                                         lake_model_prognostics)
       call assert_equals( intermediate_expected_river_inflow, river_fields.river_inflow,nlat_hd,nlon_hd)
       call assert_equals(intermediate_expected_water_to_ocean,
                        river_fields.water_to_ocean,nlat_hd,nlon_hd,0.00001)
@@ -14957,20 +14405,8 @@ subroutine testLakeModel20
       call assert_equals( intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,_ =    drive_hd_and_lake_model(river_parameters,river_fields,
-      PROCESS BY HAND=>lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations_two,
-      PROCESS BY HAND=>80,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          forcing_timesteps_to_skip=16, &
-          return_lake_volumes=True, &
-          diagnostic_lake_volumes=lake_volumes_all_timesteps, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(80,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       PROCESS BY HAND=>do(lake_volumes_slice,expected_lake_volumes_slice) in zip(lake_volumes_all_timesteps,expected_lake_volumes_all_timesteps) !
       PROCESS BY HAND=>
       PROCESS BY HAND=>call assert_equals(lake_volumes_slice,expected_lake_volumes_slice,
@@ -15786,18 +15222,13 @@ subroutine testLakeModel21
          !                0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0, 0.0, 0.00, 0.00, 0.00, 0.0, &
          !                0.0,  0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0, 0.0, 0.00, 0.00, 0.00, 0.0,  /), &
          (/nlon_lake,nlat_lake/)))
-      PROCESS BY HAND=>
-      PROCESS BY HAND=>river_fields::RiverPrognosticFields,
-      PROCESS BY HAND=>lake_model_prognostics::LakeModelPrognostics,
-      PROCESS BY HAND=>lake_model_diagnostics::LakeModelDiagnostics =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_parameters_as_array,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>0,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          use_realistic_surface_coupling=True)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(0,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -15842,17 +15273,8 @@ subroutine testLakeModel21
       call assert_equals( first_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( first_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test first_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>1,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          forcing_timesteps_to_skip=-1, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(1,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -15897,17 +15319,8 @@ subroutine testLakeModel21
       call assert_equals( second_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( second_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test second_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,lake_model_diagnostics =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>2,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          forcing_timesteps_to_skip=1, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(2,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &
@@ -15953,17 +15366,8 @@ subroutine testLakeModel21
       call assert_equals( third_intermediate_expected_number_lake_cells, lake_model_prognostics.lake_cell_count,nlat_surface,nlon_surface)
       call assert_equals( third_intermediate_expected_number_fine_grid_cells, lake_model_parameters.number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test third_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
-      PROCESS BY HAND=>river_fields,lake_model_prognostics,_ =    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
-      PROCESS BY HAND=>lake_model_prognostics,
-      PROCESS BY HAND=>drainages,runoffs,evaporations,
-      PROCESS BY HAND=>3,true,
-      PROCESS BY HAND=>initial_water_to_lake_centers,
-      PROCESS BY HAND=>initial_spillover_to_rivers,
-      PROCESS BY HAND=>print_timestep_results=False, &
-          write_output=False,return_output=True, &
-          forcing_timesteps_to_skip=2, &
-          lake_model_diagnostics= lake_model_diagnostics, &
-          use_realistic_surface_coupling=True)
+      call run_hd_model(3,runoffs,drainages,lake_evaporations, &
+                        use_realistic_surface_coupling=.true.)
       lake_model_prognostics_out => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics_out, &

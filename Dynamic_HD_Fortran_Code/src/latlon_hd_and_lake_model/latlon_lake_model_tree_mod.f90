@@ -3,6 +3,8 @@ module latlon_lake_model_tree_mod
 implicit none
 private
 
+public :: find_root
+
 type, public :: rooted_tree
   private
   integer :: label
@@ -97,7 +99,6 @@ interface doubly_linked_list
 end interface doubly_linked_list
 
 type, public :: rooted_tree_forest
-  private
   type(doubly_linked_list), pointer :: sets => null()
   contains
     procedure :: rooted_tree_forest_destructor
