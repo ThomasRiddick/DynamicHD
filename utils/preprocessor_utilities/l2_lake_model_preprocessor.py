@@ -16,7 +16,24 @@ extended_line = None
 in_lake_grid_loop = False
 in_hd_grid_loop = False
 in_surface_grid_loop = False
+ignore_following_lines = False
+filtered_lines = []
 for line in lines:
+    if re.match(r'\s*_IF_USE_SINGLE_INDEX_',line):
+        ignore_following_lines = True
+        continue
+    elif re.match(r'\s*_ELSE_',line):
+        ignore_following_lines = False
+        continue
+    elif re.match(r'\s*_END_IF_USE_SINGLE_INDEX_',line):
+        ignore_following_lines = False
+        continue
+    elif ignore_following_lines:
+        continue
+    else:
+        filtered_lines.append(line)
+
+for line in filtered_lines:
     if extended_line is not None:
         extended_line += line.rstrip('\n')
         if not re.match(".*&",line):
@@ -122,6 +139,14 @@ for line in lines:
                              f'{m.group(1)}  do {dim2}_{m.group(3)} = '
                              f'1,{m.group(4) if m.group(4) else ''}n{dim2}_{m.group(2)}'.lower(),
                   line)
+    line = re.sub(r'(\s*)_GET_COORDS_\s+_COORDS_(\w+)_\s+_FROM_\s+_ARRAY_(\w*)_\s*_OFFSET_(\d*)_',
+                  f'\\1\\2_{dim1} = \\3(1+\\4)\\n'
+                  f'\\1\\2_{dim2} = \\3(2+\\4)',
+                  line)
+    line = re.sub(r'(\s*)_GET_COORDS_\s+_COORDS_(\w+)_\s+_FROM_\s+_ARRAY_(\w*)_',
+                  f'\\1\\2_{dim1} = \\3(1)\\n'
+                  f'\\1\\2_{dim2} = \\3(2)',
+                  line)
     line = re.sub(r'(\s*)_GET_COORDS_\s+_COORDS_(\w+)_\s+_FROM_\s+_INDICES_FIELD_(\w*)'
                   r'INDEX_NAME(\w*)_\s+_COORDS_(HD|LAKE|SURFACE)_',
                   lambda m : f'{m.group(1)}{m.group(2)}_{dim1} = '
@@ -194,6 +219,10 @@ for line in lines:
                                    r'INDEX_NAME(.*)_\s*=\s*(.*)_COORDS_(HD|LAKE|SURFACE)_',
                                    f'\\1\\2\\3{dim1}\\4 = \\5{dim1}_\\6\\n'
                                    f'\\1\\2\\3{dim2}\\4 = \\5{dim2}_\\6\\n',
+                                   line)
+    line = re.sub(r'(\s*)_ASSIGN_?(.*)_COORDS_(.*)_\s*=\s*_VALUE_(.*)_',
+                                   f'\\1\\2\\3_{dim1} = \\4\\n'
+                                   f'\\1\\2\\3_{dim2} = \\4\\n',
                                    line)
     line = re.sub(r'(\s*)_ASSIGN_?(.*)_COORDS_(.*)_\s*='
                                    r'\s*(&?)\s*(.*)_COORDS_(HD|LAKE|SURFACE)_',

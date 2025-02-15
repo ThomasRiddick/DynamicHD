@@ -234,7 +234,7 @@ function lakemodelparametersconstructor( &
   real(dp), pointer, dimension(_DIMS_), intent(in) :: cell_areas_on_surface_model_grid
   real(dp), intent(inout), optional :: lake_retention_constant
   real(dp), intent(inout), optional :: minimum_lake_volume_threshold
-  type(lakemodelparameters) :: constructor
+  type(lakemodelparameters), pointer :: constructor
   type(integerlist), pointer, dimension(:) :: basins
   integer, pointer, dimension(_DIMS_) :: basin_numbers
   integer, allocatable, dimension(_DIMS_) :: number_fine_grid_cells
@@ -251,6 +251,7 @@ function lakemodelparametersconstructor( &
   integer :: k
   _DEF_LOOP_INDEX_LAKE_
   _DEF_LOOP_INDEX_SURFACE_
+    allocate(constructor)
     if (.not. present(lake_retention_constant)) then
       lake_retention_constant = 0.1_dp
     end if
@@ -331,7 +332,8 @@ end function lakemodelparametersconstructor
 
 function lakemodelprognosticsconstructor(lake_model_parameters) result(constructor)
     type(lakemodelparameters), intent(in) :: lake_model_parameters
-    type(lakemodelprognostics) :: constructor
+    type(lakemodelprognostics), pointer :: constructor
+      allocate(constructor)
       allocate(constructor%lakes(lake_model_parameters%number_of_lakes))
       constructor%lake_numbers(_DIMS_) = 0
       constructor%lake_cell_count(_DIMS_) = 0
@@ -349,13 +351,16 @@ function lakemodelprognosticsconstructor(lake_model_parameters) result(construct
       constructor%set_forest => rooted_tree_forest()
 end function lakemodelprognosticsconstructor
 
-function cellconstructor(height_type, &
+function cellconstructor(_COORDS_ARG_coords_, &
+                         height_type, &
                          fill_threshold, &
                          height) result(constructor)
+  _DEF_COORDS_coords_ _INTENT_in_
   integer  :: height_type
   real(dp) :: fill_threshold
   real(dp) :: height
   type(cell), pointer :: constructor
+    _ASSIGN_constructor%_COORDS_coords_ = _COORDS_coords_
     constructor%height_type = height_type
     constructor%fill_threshold = fill_threshold
     constructor%height = height
@@ -390,13 +395,14 @@ function lakeparametersconstructor(lake_number, &
   integer, dimension(:), allocatable, intent(in) :: secondary_lakes
   _DEF_COORDS_center_coords_ _INTENT_in_
   type(cell), allocatable, dimension(:), intent(in) :: filling_order
-  type(redirectdictionary), allocatable, intent(in) :: outflow_points
+  type(redirectdictionary), intent(in) :: outflow_points
   _DEF_NPOINTS_LAKE_ _INTENT_in_
   _DEF_NPOINTS_HD_ _INTENT_in_
   _DEF_COORDS_fine_cells_per_coarse_cell_
-  type(lakeparameters) :: constructor
+  type(lakeparameters), pointer :: constructor
   logical :: is_primary
   logical :: is_leaf
+    allocate(constructor)
     _ASSIGN_constructor%_COORDS_center_coords_ = _COORDS_center_coords_
     _GET_COARSE_COORDS_FROM_FINE_COORDS_ constructor%_COORDS_center_cell_coarse_coords_ _NPOINTS_LAKE_ _NPOINTS_HD_ _COORDS_center_coords_
     constructor%lake_number = lake_number
@@ -606,9 +612,11 @@ recursive subroutine add_water(lake,inflow,store_water)
         !Take the first sub-basin of this lake
         sublake => lake_model_prognostics%lakes(lake_parameters%secondary_lakes(1))%lake_pointer
         call add_water(sublake,inflow_local,.false.)
+        return
       end if
       if (store_water) then
         lake%unprocessed_water = lake%unprocessed_water + inflow_local
+        return
       end if
       do while (inflow_local > 0.0_dp)
         if (lake%lake_volume >= 0 .and. lake%current_filling_cell_index == 1 .and. &
@@ -634,6 +642,7 @@ recursive subroutine add_water(lake,inflow,store_water)
             else
               call change_to_overflowing_lake(lake,inflow_local)
             end if
+            return
           end if
           lake%current_filling_cell_index = lake%current_filling_cell_index + 1
           lake%previous_cell_volume_threshold = lake%next_cell_volume_threshold
@@ -660,6 +669,7 @@ recursive subroutine add_water(lake,inflow,store_water)
       end if
       if (store_water) then
         lake%unprocessed_water = lake%unprocessed_water + inflow_local
+        return
       end if
       if (lake%current_redirect%use_local_redirect) then
         other_lake_number = lake%current_redirect%local_redirect_target_lake_number
@@ -711,6 +721,7 @@ recursive subroutine remove_water(lake,outflow,store_water)
       end if
       if (store_water) then
         lake%unprocessed_water = lake%unprocessed_water - outflow_local
+        return
       end if
       repeat_loop = .false.
       do while (outflow_local > 0.0_dp .or. repeat_loop)
@@ -1094,83 +1105,83 @@ function get_lake_volume(lake) result(lake_volume)
     end if
 end function get_lake_volume
 
-! function get_lake_filled_cells(
-
-!   NEEDS WORK
-!   get_lake_filled_cells(lake::FillingLake) =
-!   map(f->f%coords,lake%parameters%
-!                   filling_order(1:lake%current_filling_cell_index))
-
-! get_lake_filled_cells(lake::Union{OverflowingLake,SubsumedLake}) =
-!   map(f->f%coords,lake%parameters%filling_order)
-!   NEEDS WORK UP TO HERE
-! end function get_lake_filled_cells
-
-! subroutine calculate_effective_lake_volume_per_cell(lake)
-!   type(lakeprognostics), pointer, intent(inout) :: lake
-!   type(lakeparameters), pointer :: lake_parameters
-!   type(lakemodelparameters), pointer :: lake_model_parameters
-!   type(lakemodelprognostics), pointer :: lake_model_prognostics
-!   real(dp) :: total_lake_volume
-!   real(dp) :: effective_volume_per_cell
-!   integer :: total_number_of_flooded_cells
-!     if (lake%lake_type == filling_lake_type .and.
-!         lake%lake_type == overflowing_lake_type) then
-!       lake_parameters => lake%parameters
-!       lake_model_parameters => lake%lake_model_parameter
-!       lake_model_prognostics => lake%lake_model_prognostics
-!       total_number_of_flooded_cells = 0
-!       total_lake_volume = 0.0_dp
-!       lake_number_root_label = lake_model_prognostics%set_forest%&
-!         &find_root_from_label(lake_parameters%lake_number)
-!       call lake_model_prognostics%set_forest%sets%reset_iterator()
-!       do while (.not. lake_model_prognostics%set_forest%sets%iterate_forward())
-!         x => lake_model_prognostics%set_forest%sets%get_value_at_iterator_position()
-!         root => find_root(x)
-!         if (root%get_label() == lake_number_root_label) then
-!           total_lake_volume = total_lake_volume +
-!             get_lake_volume(lake_model_prognostics%lakes(x%get_label())))
-!           other_lake = lake_model_prognostics%lakes(x%get_label())%lake_pointer
-!           if (other_lake%lake_type == filling_lake_type)
-!             total_number_of_flooded_cells = total_number_of_flooded_cells +
-!               other_lake%current_filling_cell_index
-!           else
-!             total_number_of_flooded_cells = total_number_of_flooded_cells +
-!               other_lake%parameters%number_of_cells_when_filled
-!           end if
-!         end if
-!       end do
-!       effective_volume_per_cell = &
-!         total_lake_volume / total_number_of_flooded_cells
-!       NEEDS WORK
-!       working_cell_list::Vector{CartesianIndex} = CartesianIndex[]
-!       for_elements_in_set(lake_model_prognostics%set_forest,
-!                           find_root(lake_model_prognostics%set_forest,
-!                                     lake%parameters%lake_number),
-!                           function (x)
-!                             other_lake::Lake = lake_model_prognostics%lakes(get_label(x))
-!                             other_lake_working_cells::Vector{CartesianIndex} =
-!                               get_lake_filled_cells(other_lake)
-!                             append!(working_cell_list,
-!                                     other_lake_working_cells)
-!                           end)
-!       do for coords::CartesianIndex in working_cell_list
-!         surface_model_coords = get_corresponding_surface_model_grid_cell(coords, &
-!                                   lake_model_parameters%grid_specific_lake_model_parameters)
-!         lake_model_prognostics%&
-!           &effective_volume_per_cell_on_surface_grid(surface_model_coords) = &
-!             lake_model_prognostics% &
-!             effective_volume_per_cell_on_surface_grid(surface_model_coords) + &
-!             effective_volume_per_cell)
-!       end do
-!       NEEDS WORK UP TO HERE
-!     else if (lake%lake_type == subsumed_lake_type) then
-!       calculate_effective_lake_volume_per_cell::CalculateEffectiveLakeVolumePerCell)
-!     else
-!       write(*,*) "Unrecognised lake type"
-!       stop
-!     end if
-! end subroutine calculate_effective_lake_volume_per_cell
+subroutine calculate_effective_lake_volume_per_cell(lake)
+  type(lakeprognostics), pointer, intent(inout) :: lake
+  type(lakeparameters), pointer :: lake_parameters
+  type(lakemodelparameters), pointer :: lake_model_parameters
+  type(lakemodelprognostics), pointer :: lake_model_prognostics
+  type(lakeprognostics), pointer :: other_lake
+  type(rooted_tree), pointer :: x
+  type(rooted_tree), pointer :: root
+  real(dp) :: total_lake_volume
+  real(dp) :: effective_volume_per_cell
+  _DEF_COORDS_surface_model_coords_
+  _DEF_COORDS_coords_
+  integer :: total_number_of_flooded_cells
+  integer :: lake_number_root_label
+  integer :: number_of_filled_cells
+  integer :: i
+    if (lake%lake_type == filling_lake_type .and. &
+        lake%lake_type == overflowing_lake_type) then
+      lake_parameters => lake%parameters
+      lake_model_parameters => lake%lake_model_parameters
+      lake_model_prognostics => lake%lake_model_prognostics
+      total_number_of_flooded_cells = 0
+      total_lake_volume = 0.0_dp
+      lake_number_root_label = lake_model_prognostics%set_forest%&
+        &find_root_from_label(lake_parameters%lake_number)
+      call lake_model_prognostics%set_forest%sets%reset_iterator()
+      do while (.not. lake_model_prognostics%set_forest%sets%iterate_forward())
+        x => lake_model_prognostics%set_forest%sets%get_value_at_iterator_position()
+        root => find_root(x)
+        if (root%get_label() == lake_number_root_label) then
+          other_lake = lake_model_prognostics%lakes(x%get_label())%lake_pointer
+          total_lake_volume = total_lake_volume + &
+            get_lake_volume(other_lake)
+          if (other_lake%lake_type == filling_lake_type) then
+            total_number_of_flooded_cells = total_number_of_flooded_cells + &
+              other_lake%current_filling_cell_index
+          else
+            total_number_of_flooded_cells = total_number_of_flooded_cells + &
+              other_lake%parameters%number_of_cells_when_filled
+          end if
+        end if
+      end do
+      effective_volume_per_cell = &
+        total_lake_volume / total_number_of_flooded_cells
+      call lake_model_prognostics%set_forest%sets%reset_iterator()
+      do while (.not. lake_model_prognostics%set_forest%sets%iterate_forward())
+        x => lake_model_prognostics%set_forest%sets%get_value_at_iterator_position()
+        root => find_root(x)
+        if (root%get_label() == lake_number_root_label) then
+          other_lake = lake_model_prognostics%lakes(x%get_label())%lake_pointer
+          if (other_lake%lake_type == filling_lake_type) then
+            number_of_filled_cells = other_lake%current_filling_cell_index
+          else if (other_lake%lake_type == overflowing_lake_type .or. &
+                   other_lake%lake_type == subsumed_lake_type) then
+            number_of_filled_cells = other_lake%parameters%number_of_cells_when_filled
+          else
+            write(*,*) "Unrecognised lake type"
+            stop
+          end if
+          do i = 1,other_lake%parameters%number_of_cells_when_filled
+            _ASSIGN_COORDS_coords_ = other_lake%parameters%filling_order(i)%_COORDS_coords_
+            _GET_COORDS_ _COORDS_surface_model_coords_ _FROM_ lake_model_parameters%_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ _COORDS_coords_
+            lake_model_prognostics%&
+              &effective_volume_per_cell_on_surface_grid(_COORDS_ARG_surface_model_coords_) = &
+                lake_model_prognostics%&
+                &effective_volume_per_cell_on_surface_grid(_COORDS_ARG_surface_model_coords_) + &
+                effective_volume_per_cell
+          end do
+        end if
+      end do
+    else if (lake%lake_type == subsumed_lake_type) then
+      return
+    else
+      write(*,*) "Unrecognised lake type"
+      stop
+    end if
+end subroutine calculate_effective_lake_volume_per_cell
 
 subroutine show(lake)
   type(lakeprognostics), pointer, intent(inout) :: lake
@@ -1537,94 +1548,6 @@ subroutine calculate_effective_lake_height_on_surface_grid(&
       lake_model_parameters%cell_areas_on_surface_model_grid(_DIMS_)
 end subroutine calculate_effective_lake_height_on_surface_grid
 
-! subroutine print_results(lake_model_parameters,lake_model_prognostics, &
-!                          timestep)
-!   type(lakemodelparameters), intent(in) :: lake_model_parameters
-!   type(lakemodelprognostics), intent(inout) :: lake_model_prognostics
-!     write(*,*) "Timestep: $(timestep)"
-!     call print_river_results(prognostic_fields)
-!     write(*,*) ""
-!     write(*,*) "Water to HD"
-!     write(*,*) lake_model_prognostics%water_to_hd
-!     write(*,*) "Water to lakes"
-!     write(*,*) lake_model_prognostics%water_to_lakes
-!     do i = 1,size(lake_model_prognostics%lakes)
-!       lake => lake_model_prognostics%lakes(i)
-!       write(*,*) "Lake Center: $(lake%parameters%center_coords) "*
-!                  "Lake Volume: $(get_lake_volume(lake))"
-!     end do
-!     write(*,*) ""
-!     write(*,*) "Diagnostic Lake Volumes:"
-!     call print_lake_types(lake_model_parameters%lake_model_grid,lake_model_prognostics)
-!     write(*,*) ""
-!     diagnostic_lake_volumes(_DIMS_) =
-!       calculate_diagnostic_lake_volumes_field(lake_model_parameters,
-!                                               lake_model_prognostics)
-!     write(*,*) diagnostic_lake_volumes
-!     return prognostic_fields
-! end subroutine print_results
-
-! subroutine print_selected_lakes(lake_model_prognostics, &
-!                                 lakes_to_print)
-!   type(lakemodelprognostics), pointer :: lake_model_prognostics
-!     do for lake_number in print_selected_lakes%lakes_to_print
-!       if (size(lake_model_prognostics%lakes) >= lake_number) then
-!         lake => lake_model_prognostics%lakes(lake_number)
-!         call show(lake)
-!       end if
-!     end do
-!     return prognostic_fields
-! end subroutine print_selected_lakes
-
-! subroutine print_lake_types(grid::LatLonGrid,
-!                             lake_model_prognostics)
-!   type(lakemodelprognostics), pointer :: lake_model_prognostics
-!     do for_all_with_line_breaks(grid) do coords::Coords
-!       call print_lake_type(coords,lake_model_prognostics)
-!     end do
-! end subroutine
-
-! subroutine print_lake_type(coords::Coords,
-!                            lake_model_prognostics::LakeModelPrognostics)
-!   type(lakemodelprognostics), pointer :: lake_model_prognostics
-!   integer :: lake_number
-!     lake_number = lake_model_prognostics%lake_numbers(coords)
-!     if (lake_number == 0) then
-!       print("- ")
-!     else
-!       lake => lake_model_prognostics%lakes(lake_number)
-!       if (lake%active_lake) then
-!         if (lake%lake_type == filling_lake_type) then
-!           print("F ")
-!         else if (lake%lake_type == overflowing_lake_type) then
-!           print("O ")
-!         else if (lake%lake_type == subsumed_lake_type) then
-!           print("S ")
-!         else
-!           print("U ")
-!         end if
-!       else
-!         print("- ")
-!       end if
-!     end if
-! end subroutine print_lake_type
-
-! subroutine print_section(lake_model_parameters,lake_model_prognostics)
-!   type(lakemodelparameters), pointer :: lake_model_parameters
-!   type(lakemodelprognostics), pointer :: lake_model_prognostics
-!     write(*,*) ""
-!     call print_lake_types_section(lake_model_parameters%lake_model_grid,lake_model_prognostics)
-! end subroutine print_section
-
-! subroutine print_lake_types_section(grid::LatLonGrid,
-!                                     lake_model_prognostics)
-!   type(lakemodelprognostics), pointer :: lake_model_prognostics
-!     section_coords::LatLonSectionCoords = LatLonSectionCoords(225,295,530,580)
-!     do for_section_with_line_breaks(grid,section_coords) do coords::Coords
-!       call print_lake_type(coords,lake_model_prognostics)
-!     end do
-! end subroutine print_lake_types_section
-
 ! subroutine write_lake_numbers(lake_model_parameters,lake_model_prognostics, &
 !                               timestep)
 !   type(lakemodelparameters), pointer :: lake_model_parameters
@@ -1659,36 +1582,51 @@ end subroutine calculate_effective_lake_height_on_surface_grid
 !                                         timestep)
 ! end subroutine write_diagnostic_lake_volumes
 
-! function calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
-!                                                  lake_model_prognostics)
-!   type(lakemodelparameters), pointer :: lake_model_parameters
-!   type(lakemodelprognostics), pointer :: lake_model_prognostics
-!   type(lakeprognostics), pointer :: lake
-!   real(dp) :: total_lake_volume
-!   integer :: i
-!     lake_volumes_by_lake_number::Vector{Float64} = &
-!       zeros(Float64,size(lake_model_prognostics%lakes))
-!     diagnostic_lake_volumes(_DIMS_) = 0.0_dp
-!     do i = 1,size(lake_model_prognostics%lakes)
-!       lake => lake_model_prognostics%lakes(i)
-!       if (lake%active_lake) then
-!         total_lake_volume = 0.0_dp
-!         for_elements_in_set(lake_model_prognostics%set_forest,
-!                             find_root(lake_model_prognostics%set_forest,
-!                                       lake%parameters%lake_number),
-!                             x -> total_lake_volume = total_lake_volume +
-!                             get_lake_volume(lake_model_prognostics%lakes(get_label(x))))
-!         lake_volumes_by_lake_number(i) = total_lake_volume
-!       end if
-!     end do
-!     _LOOP_OVER_LAKE_GRID_ _COORDS_LAKE_
-!       lake_number = lake_model_prognostics%lake_numbers(_COORDS_LAKE_)
-!       if (lake_number > 0) then
-!         diagnostic_lake_volumes(_COORDS_LAKE_) = lake_volumes_by_lake_number(lake_number)
-!       end if
-!     _LOOP_OVER_LAKE_GRID_END_
-!     return diagnostic_lake_volumes
-! end function calculate_diagnostic_lake_volumes_field
+function calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
+                                                 lake_model_prognostics) &
+    result(diagnostic_lake_volumes)
+  type(lakemodelparameters), pointer :: lake_model_parameters
+  type(lakemodelprognostics), pointer :: lake_model_prognostics
+  real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
+  real(dp), dimension(:), allocatable :: lake_volumes_by_lake_number
+  type(lakeprognostics), pointer :: lake
+  type(rooted_tree), pointer :: x
+  type(rooted_tree), pointer :: root
+  real(dp) :: total_lake_volume
+  integer :: lake_number
+  integer :: lake_number_root_label
+  integer :: i
+  _DEF_LOOP_INDEX_LAKE_
+    allocate(diagnostic_lake_volumes(lake_model_parameters%_NPOINTS_LAKE_))
+    diagnostic_lake_volumes(_DIMS_) = 0.0_dp
+    allocate(lake_volumes_by_lake_number(size(lake_model_prognostics%lakes)))
+    lake_volumes_by_lake_number(:) = 0.0_dp
+    do i = 1,size(lake_model_prognostics%lakes)
+      lake => lake_model_prognostics%lakes(i)%lake_pointer
+      if (lake%active_lake) then
+        total_lake_volume = 0.0_dp
+        lake_number_root_label = lake_model_prognostics%set_forest%&
+          &find_root_from_label(lake%parameters%lake_number)
+        call lake_model_prognostics%set_forest%sets%reset_iterator()
+        do while (.not. lake_model_prognostics%set_forest%sets%iterate_forward())
+          x => lake_model_prognostics%set_forest%sets%get_value_at_iterator_position()
+          root => find_root(x)
+          if (root%get_label() == lake_number_root_label) then
+            total_lake_volume = total_lake_volume + &
+              get_lake_volume(lake_model_prognostics%lakes(x%get_label())%lake_pointer)
+          end if
+          lake_volumes_by_lake_number(i) = total_lake_volume
+        end do
+      end if
+    end do
+    _LOOP_OVER_LAKE_GRID_ _COORDS_LAKE_ _lake_model_parameters%_
+      lake_number = lake_model_prognostics%lake_numbers(_COORDS_LAKE_)
+      if (lake_number > 0) then
+        diagnostic_lake_volumes(_COORDS_LAKE_) = lake_volumes_by_lake_number(lake_number)
+      end if
+    _LOOP_OVER_LAKE_GRID_END_
+    deallocate(lake_volumes_by_lake_number)
+end function calculate_diagnostic_lake_volumes_field
 
 subroutine set_lake_evaporation_for_testing(lake_model_parameters,lake_model_prognostics, &
                                 lake_evaporation)
@@ -1745,8 +1683,9 @@ subroutine check_water_budget(lake_model_prognostics, &
                               total_initial_water_volume)
   type(lakemodelparameters), pointer :: lake_model_parameters
   type(lakemodelprognostics), pointer :: lake_model_prognostics
-  real(dp), intent(in) :: total_initial_water_volume
+  real(dp), intent(in), optional :: total_initial_water_volume
   type(lakeprognostics), pointer :: lake
+  real(dp) :: total_initial_water_volume_local
   real(dp) :: new_total_lake_volume
   real(dp) :: change_in_total_lake_volume
   real(dp) :: total_water_to_lakes
@@ -1754,6 +1693,11 @@ subroutine check_water_budget(lake_model_prognostics, &
   real(dp) :: difference
   real(dp) :: tolerance
   integer :: i
+    if (present(total_initial_water_volume)) then
+      total_initial_water_volume_local = total_initial_water_volume
+    else
+      total_initial_water_volume_local = 0
+    end if
     new_total_lake_volume = 0.0_dp
     do i = 1,size(lake_model_prognostics%lakes)
       lake => lake_model_prognostics%lakes(i)%lake_pointer
@@ -1761,7 +1705,7 @@ subroutine check_water_budget(lake_model_prognostics, &
     end do
     change_in_total_lake_volume = new_total_lake_volume - &
                                   lake_model_prognostics%total_lake_volume - &
-                                  total_initial_water_volume
+                                  total_initial_water_volume_local
     total_water_to_lakes = sum(lake_model_prognostics%water_to_lakes)
     total_inflow_minus_outflow = total_water_to_lakes + &
                                  sum(lake_model_prognostics%lake_water_from_ocean) - &
