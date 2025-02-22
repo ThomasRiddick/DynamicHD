@@ -21,6 +21,23 @@ implicit none
 !   use latlon_lake_logger_mod
 ! #endif
 
+! Distribute spillover
+! subroutine distribute_spillover(lake_model_parameters,lake_model_prognostics, &
+!                               initial_spillover_to_rivers)
+!   type(lakemodelparameters), intent(in) :: lake_model_parameters
+!   type(lakemodelprognostics), intent(inout) :: lake_model_prognostics
+!   real(dp), dimension(_DIMS_), intent(in) :: initial_spillover_to_rivers
+!   real(dp) :: initial_spillover
+!   _DEF_LOOP_INDEX_HD_
+!     _LOOP_OVER_HD_GRID_ _COORDS_HD_  _lake_model_parameters%_
+!       initial_spillover = initial_spillover_to_rivers(_COORDS_HD_)
+!       if (initial_spillover > 0.0_dp) then
+!         lake_model_prognostics%water_to_hd(_COORDS_HD_) = &
+!           lake_model_prognostics%water_to_hd(_COORDS_HD_) + initial_spillover
+!       end if
+!     _LOOP_OVER_HD_GRID_END_
+! end subroutine distribute_spillover
+
 !##############################################################################
 !##############################################################################
 !                Section 0: Parameter definitions
@@ -231,7 +248,7 @@ function lakemodelparametersconstructor( &
   _DEF_NPOINTS_LAKE_ _INTENT_in_
   _DEF_NPOINTS_SURFACE_ _INTENT_in_
   _DEF_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ _INTENT_in_
-  real(dp), pointer, dimension(_DIMS_), intent(in) :: cell_areas_on_surface_model_grid
+  real(dp), allocatable, dimension(_DIMS_), intent(in) :: cell_areas_on_surface_model_grid
   real(dp), intent(inout), optional :: lake_retention_constant
   real(dp), intent(inout), optional :: minimum_lake_volume_threshold
   type(lakemodelparameters), pointer :: constructor
@@ -964,6 +981,7 @@ subroutine change_to_subsumed_lake(lake,excess_water)
   type(lakeparameters), pointer :: lake_parameters
   type(lakemodelparameters), pointer :: lake_model_parameters
   type(lakemodelprognostics), pointer :: lake_model_prognostics
+  logical :: succeeded
     lake_parameters => lake%parameters
     lake_model_parameters => lake%lake_model_parameters
     lake_model_prognostics => lake%lake_model_prognostics
@@ -971,9 +989,9 @@ subroutine change_to_subsumed_lake(lake,excess_water)
     !   println("Lake $(lake_parameters%lake_number) accepting merge")
     ! end
     call initialise_subsumed_lake(lake)
-    call make_new_link(lake_model_prognostics%set_forest, &
-                       lake_parameters%primary_lake, &
-                       lake_parameters%lake_number)
+    succeeded = lake_model_prognostics%set_forest%make_new_link_from_labels( &
+                  lake_parameters%primary_lake, &
+                  lake_parameters%lake_number)
     if (lake%lake_type == overflowing_lake_type) then
       excess_water = lake%excess_water
     else
@@ -1007,12 +1025,13 @@ subroutine change_subsumed_to_filling_lake(lake,split_from_lake_number)
   type(lakemodelprognostics), pointer :: lake_model_prognostics
   type(rooted_tree), pointer :: x
   type(rooted_tree), pointer :: root
+  logical :: succeeded
     lake_parameters => lake%parameters
     lake_model_parameters => lake%lake_model_parameters
     lake_model_prognostics => lake%lake_model_prognostics
-    call split_set(lake_model_prognostics%set_forest, &
-                   split_from_lake_number, &
-                   lake_parameters%lake_number)
+    succeeded = lake_model_prognostics%set_forest%split_set( &
+                  split_from_lake_number, &
+                  lake_parameters%lake_number)
     call lake_model_prognostics%set_forest%sets%reset_iterator()
     do while (.not. lake_model_prognostics%set_forest%sets%iterate_forward())
       x => lake_model_prognostics%set_forest%sets%get_value_at_iterator_position()
@@ -1219,11 +1238,10 @@ end subroutine show
 
 subroutine create_lakes(lake_model_parameters, &
                         lake_model_prognostics, &
-                        lake_parameters_as_array)
+                        lake_parameters_array)
   type(lakemodelparameters), intent(inout) :: lake_model_parameters
   type(lakemodelprognostics), intent(inout) :: lake_model_prognostics
-  real(dp), dimension(:), allocatable, intent(in) :: lake_parameters_as_array
-  type(lakeparameterspointer), dimension(:), allocatable :: lake_parameters_array
+  type(lakeparameterspointer), dimension(:), allocatable, intent(in) :: lake_parameters_array
   type(integerlist), pointer, dimension(:) :: basins_temp
   integer, dimension(:), allocatable :: basins_in_coarse_cell
   integer, dimension(:), allocatable :: basins_in_coarse_cell_temp
@@ -1240,17 +1258,13 @@ subroutine create_lakes(lake_model_parameters, &
   logical :: contains_lake
   logical :: basins_found
   integer :: i
-    ! lake_parameters_array = &
-    !   get_lake_parameters_from_array(lake_parameters_as_array, &
-    !                                  lake_model_parameters%_NPOINTS_LAKE_, &
-    !                                  lake_model_parameters%_NPOINTS_HD_)
     do i = 1,size(lake_parameters_array)
       lake_parameters = lake_parameters_array(i)%lake_parameters_pointer
       if (i /= lake_parameters%lake_number) then
         write(*,*) "Lake number doesn't match position when creating lakes"
         stop
       end if
-      call add_set(lake_model_prognostics%set_forest,lake_parameters%lake_number)
+      call lake_model_prognostics%set_forest%add_set(lake_parameters%lake_number)
       lake = lakeprognostics(lake_parameters, &
                              lake_model_parameters, &
                              lake_model_prognostics)
@@ -1341,22 +1355,6 @@ subroutine setup_lakes(lake_model_parameters,lake_model_prognostics,&
       end if
     _LOOP_OVER_LAKE_GRID_END_
 end subroutine setup_lakes
-
-subroutine distribute_spillover(lake_model_parameters,lake_model_prognostics, &
-                              initial_spillover_to_rivers)
-  type(lakemodelparameters), intent(in) :: lake_model_parameters
-  type(lakemodelprognostics), intent(inout) :: lake_model_prognostics
-  real(dp), dimension(_DIMS_), intent(in) :: initial_spillover_to_rivers
-  real(dp) :: initial_spillover
-  _DEF_LOOP_INDEX_HD_
-    _LOOP_OVER_HD_GRID_ _COORDS_HD_  _lake_model_parameters%_
-      initial_spillover = initial_spillover_to_rivers(_COORDS_HD_)
-      if (initial_spillover > 0.0_dp) then
-        lake_model_prognostics%water_to_hd(_COORDS_HD_) = &
-          lake_model_prognostics%water_to_hd(_COORDS_HD_) + initial_spillover
-      end if
-    _LOOP_OVER_HD_GRID_END_
-end subroutine distribute_spillover
 
 subroutine run_lakes(lake_model_parameters,lake_model_prognostics)
   type(lakemodelparameters), intent(in) :: lake_model_parameters

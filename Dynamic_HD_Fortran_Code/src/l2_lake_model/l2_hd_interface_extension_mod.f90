@@ -2,13 +2,15 @@ module l2_hd_interface_extension_mod
 
 use latlon_hd_model_mod, only: riverparameters, &
                                riverprognosticfields, &
-                               prognostics
+                               prognostics, &
+                               distribute_spillover
 use latlon_hd_model_interface_mod, only: global_prognostics, &
                                          global_step_length, &
                                          write_output
 !use latlon_hd_model_io_mod
 use l2_lake_model_mod, only: dp, lakemodelparameters, &
                              lakeparameters
+use l2_lake_model_interface_mod, only: init_lake_model_test
 
 implicit none
 
@@ -22,7 +24,7 @@ subroutine l2_init_hd_model_for_testing(river_parameters,river_fields,using_lake
   type(riverparameters), intent(in) :: river_parameters
   type(riverprognosticfields), pointer, optional, intent(inout) :: river_fields
   type(lakemodelparameters), pointer, optional, intent(in) :: lake_model_parameters
-  real(dp), allocatable, dimension(:), optional, intent(in) :: lake_parameters_as_array
+  real(dp), pointer, dimension(:), optional, intent(in) :: lake_parameters_as_array
   real(dp), pointer, dimension(:,:), optional, intent(in) :: initial_spillover_to_rivers
   real(dp), pointer, dimension(:,:), optional, intent(in) :: initial_water_to_lake_centers
   real(dp), pointer, dimension(:,:) :: initial_spillover_to_rivers_local

@@ -11,7 +11,7 @@ struct LakeProperties
 end
 
 struct Pixel
-  pixel_id::Integer
+  id::Integer
   fine_grid_coords::CartesianIndex
   true_coarse_grid_coords::CartesianIndex
   assigned_coarse_grid_coords:CartesianIndex
@@ -22,9 +22,48 @@ struct LakeCell
   coarse_grid_coords::CartesianIndex
   pixels::Array{CartesianIndex}
   total_all_lake_pixel_count::Integer
-  lake_pixels::Array{Pixel}
-  lake_pixels_added::Array{Pixel}
+  lake_pixels::Dict{Pixel}
+  lake_pixels_added::Dict{Pixel}
+  pixels_count::Integer
+  lake_pixels_count::Integer
+  lake_pixels_added_count::Integer
   max_pixels_from_lake::Int64
+end
+
+function insert_pixel(cell::LakeCell,pixel::Pixel)
+  pixel%assigned_coarse_grid_coords = cell%coarse_grid_coords
+  if pixel%true_coarse_grid_coords != cell%coarse_grid_coords
+    cell%lake_pixels_added[pixel%id] = pixel
+    cell%lake_pixels_added_count += 1
+    pixel%transferred = true
+  end
+  cell%lake_pixels[pixel%id] = pixel
+  cell%lake_pixels_count += 1
+end
+
+function extract_pixel(cell::LakeCell,pixel::Pixel)
+  pixel%assigned_coarse_grid_coords = nothing
+  if pixel%true_coarse_grid_coords != cell%coarse_grid_coords
+    delete!(cell%lake_pixels_added,pixel%id)
+    cell%lake_pixels_added_count -= 1
+    pixel%transferred = false
+  end
+  delete!(cell%lake_pixels,pixel%id)
+  cell%lake_pixels_counts -= 1
+end
+
+function extract_any_pixel(cell::LakeCell)
+  if cell%lake_pixels_count <= 0
+    error("No pixels to extract")
+  end
+  pixel = cell%lake_pixels%keys[1]
+  extract_pixel(cell,pixel)
+  return pixel
+end
+
+function move_pixel(pixel,source_cell,target_cell)
+  extract_pixel(source_cell,pixel)
+  insert_pixel(target_cell,pixel)
 end
 
 dims_lake = (nlat_lake,nlon_lake)
@@ -49,13 +88,13 @@ calculate_total_all_lake_pixel_counts(lakes)
 
 CELLS MUST BE SORTED BY FRACTION
 for lake in lakes
-  sort!(lake%cell_list,by=x->length(x%lake_pixels))
+  sort!(lake%cell_list,by=x->x%lake_pixels_count)
   j = length(lake%cell_list)
   unprocessed_cells_total_pixel_count = 0
   for cell in lake%cell_list
-    unprocessed_cells_total_pixel_count += length(cell%lake_pixels)
+    unprocessed_cells_total_pixel_count += cell%lake_pixels_count
   end
-  if unprocessed_cells_total_pixel_count < 0.5*length(cell%pixels)
+  if unprocessed_cells_total_pixel_count < 0.5*cell%pixels_count
     continue
   end
   for i = 1:length(lake%cell_list)
@@ -63,32 +102,33 @@ for lake in lakes
       break
     end
     cell = lake%cell_list[i]
-    unprocessed_cells_total_pixel_count -= length(cell%lake_pixels)
-    cell%max_pixels_from_lake = length(cell%true_pixels) + length(cell%pixels) -
-                                length(total_all_lake_pixel_count)
-    if cell%max_pixels_from_lake == length(cell%lake_pixels)
+    unprocessed_cells_total_pixel_count -= cell%lake_pixels_count
+    cell%max_pixels_from_lake = length(cell%true_pixels) + cell%pixels_count -
+                                cell%total_all_lake_pixel_count
+    if cell%max_pixels_from_lake == cell%lake_pixels_count
       continue
     end
-    if cell%max_pixels_from_lake < 0.5*length(cell%pixels)
+    if cell%max_pixels_from_lake < 0.5*cell%pixels_count
       continue
     end
-    if unprocessed_cells_total_pixel_count + length(cell%lake_pixels) < 0.5*length(cell%pixels)
+    if unprocessed_cells_total_pixel_count + cell%lake_pixels_count < 0.5*cell%pixels_count
       break
     end
     while true
       least_filled_cell = lake%cell_list[j]
-      if length(cell%lake_pixels) + length(least_filled_cell%lake_pixels)  <= cell%max_pixels_from_lake
-        for pixel in least_filled_cell%lake_pixels
+      if cell%lake_pixels_count + least_filled_cell%lake_pixels_count  <= cell%max_pixels_from_lake
+        for pixel in least_filled_cell%lake_pixels%values
           move_pixel(pixel,least_filled_cell,cell)
-          unprocessed_cells_total_pixel_count -= length(least_filled_cell%lake_pixels)
+          unprocessed_cells_total_pixel_count -= least_filled_cell%lake_pixels_count
         end
         j -= 1
-        if length(cell%lake_pixels) == cell%max_pixels_from_lake
+        if cell%lake_pixels_count == cell%max_pixels_from_lake
           break
         end
       else
-        pixels_to_transfer = cell%max_pixels_from_lake - length(cell%lake_pixels)
-        for pixel in least_filled_cell%lake_pixels[1:pixels_to_transfer]
+        pixels_to_transfer = cell%max_pixels_from_lake - cell%lake_pixels_count
+        for pixel_id in least_filled_cell%lake_pixels%keys[1:pixels_to_transfer]
+          pixel = least_filled_cell%lake_pixels[pixel_id]
           move_pixel(pixel,least_filled_cell,cell)
           unprocessed_cells_total_pixel_count -= pixels_to_transfer
         break
@@ -97,32 +137,42 @@ for lake in lakes
   end
 end
 
-
-REMOVE PIXEL AT TOP OF ADDED PIXEL LIST (FROM LEAST FILLED CELL)
 MOST FILLED CELL NEEDS TO BE BY FRACTION
 
 function add_pixel(cell,pixel)
   if ANY CELL IN LAKE ARE ABOVE IN SLAKE MASK
-  if cell%max_pixels_from_lake == length(cell%lake_pixels)
-    other_pixel = remove_top_added_pixel(cell)
-    other_pixel_origin_cell = get_origin(other_pixel)
+  if cell%max_pixels_from_lake == cell%lake_pixels_count
+    other_pixel = nothing
+    other_pixel_origin_cell = nothing
+    max_other_pixel_origin_cell_lake_pixel_count = -1
+    for pixel in cell%lake_pixels_added%values
+      working_pixel_origin_cell = get_lake_cell_from_coords(lake,pixel%true_coarse_grid_coords)
+      if working_pixel_origin_cell%lake_cell_count > max_other_pixel_origin_cell_lake_pixel_count
+        other_pixel = pixel
+        other_pixel_origin_cell =  working_pixel_origin_cell
+        max_other_pixel_origin_cell_lake_pixel_count = working_pixel_origin_cell%lake_cell_count
+      end
+    end
+    if isnothing(other_pixel)
+      error("No added pixel to return - logic error")
+    end
     add_pixel(other_pixel_origin_cell,other_pixel)
     insert_pixel(cell,pixel)
-  else if length(cell%lake_pixels) => 0.5*length(cell%pixels)
+  else if cell%lake_pixels_count >= 0.5*cell%pixels_count
     insert_pixel(cell,pixel)
   else
     most_filled_cell = nothing
     most_filled_cell_pixel_count = 0
     for other_cell in lake%cells_list
-      if length(other_cell%lake_pixels) > most_filled_cell_pixel_count &&
-         length(other_cell%lake_pixels) < other_cell%max_pixels_from_lake
+      if other_cell%lake_pixels_count > most_filled_cell_pixel_count &&
+         other_cell%lake_pixels_count < other_cell%max_pixels_from_lake
         most_filled_cell = other_cell
-        most_filled_cell_pixel_count = length(other_cell%lake_pixels)
+        most_filled_cell_pixel_count = other_cell%lake_pixels_count
       end
     end
-    if most_filled_cell EQUALS NOTHING??
+    if isnothing(most_filled_cell)
       insert_pixel(cell,pixel)
-    else if length(most_filled_cell%lake_pixels) >= 0.5*length(most_filled_cell%pixels)
+    else if most_filled_cell%lake_pixels_count >= 0.5*most_filled_cell%pixels_count
       insert_pixel(most_filled_cell,pixel)
     else
       insert_pixel(cell,pixel)
@@ -134,17 +184,17 @@ use in_slake_mask consistently
 LEAST MUST BE BY FRACTION
 function remove_pixel(cell,pixel)
   extract_pixel(cell,pixel)
-  if length(cell%lake_pixels) >= 0.5*length(cell%pixels)
+  if cell%lake_pixels_count >= 0.5*cell%pixels_count
     for other_cell in lake%cell_list
       least_filled_cell_pixel_count = total_fine_grid_points
       least_filled_cell = nothing
-      if length(other_cell%lake_pixels) < least_filled_cell_pixel_count &&
-         ! in_slake_mask(other_cell)
-         least_filled_cell = length(other_cell%lake_pixels)
+      if other_cell%lake_pixels_count < least_filled_cell_pixel_count &&
+         ! in_slake_mask(other_cell) && other_cell%lake_pixels_count
+         least_filled_cell = other_cell%lake_pixels_count
          least_filled_cell = other_cell
       end
     end
-    if ! least_filled_cell EQUALS NOTHING
+    if ! isnothing(least_filled_cell)
       pixel = extract_any_pixel(least_filled_cell)
       insert_pixel(cell,pixel)
     end
