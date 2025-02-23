@@ -5,6 +5,312 @@ implicit none
 
 contains
 
+subroutine testRedirectDictionary1
+  use l2_lake_model_mod
+  type(redirectdictionary) :: dict
+  type(redirect), pointer :: redirect_in
+  type(redirect) :: redirect_out
+    dict = redirectdictionary(1)
+    redirect_in => redirect(.false.,5,-1,-1)
+    call add_entry_to_dictionary(dict,5,redirect_in)
+    call finish_dictionary(dict)
+    redirect_out = get_dictionary_entry(dict,5)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,5)
+end subroutine testRedirectDictionary1
+
+subroutine testRedirectDictionary2
+  use l2_lake_model_mod
+  type(redirectdictionary) :: dict
+  type(redirect), pointer :: redirect_in
+  type(redirect) :: redirect_out
+    dict = redirectdictionary(3)
+    redirect_in => redirect(.false.,6,-1,-1)
+    call add_entry_to_dictionary(dict,6  ,redirect_in)
+    redirect_in => redirect(.false.,1,-1,-1)
+    call add_entry_to_dictionary(dict,1  ,redirect_in)
+    redirect_in => redirect(.true.,3,3,2)
+    call add_entry_to_dictionary(dict,3  ,redirect_in)
+    call finish_dictionary(dict)
+    redirect_out = get_dictionary_entry(dict,1)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,1)
+    redirect_out = get_dictionary_entry(dict,3)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,3)
+    redirect_out = get_dictionary_entry(dict,6)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,6)
+end subroutine testRedirectDictionary2
+
+subroutine testRedirectDictionary3
+  use l2_lake_model_mod
+  type(redirectdictionary) :: dict
+  type(redirect), pointer :: redirect_in
+  type(redirect) :: redirect_out
+    dict = redirectdictionary(7)
+    redirect_in => redirect(.false.,7,-1,-1)
+    call add_entry_to_dictionary(dict,7  ,redirect_in)
+    redirect_in => redirect(.false.,2,-1,-1)
+    call add_entry_to_dictionary(dict,2  ,redirect_in)
+    redirect_in => redirect(.true.,5,3,2)
+    call add_entry_to_dictionary(dict,5  ,redirect_in)
+    redirect_in => redirect(.false.,16,-1,-1)
+    call add_entry_to_dictionary(dict,16  ,redirect_in)
+    redirect_in => redirect(.false.,1,-1,-1)
+    call add_entry_to_dictionary(dict,1  ,redirect_in)
+    redirect_in => redirect(.true.,-1,3,2)
+    call add_entry_to_dictionary(dict,-1  ,redirect_in)
+    redirect_in => redirect(.true.,11,3,2)
+    call add_entry_to_dictionary(dict,11  ,redirect_in)
+    call finish_dictionary(dict)
+    redirect_out = get_dictionary_entry(dict,5)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,5)
+    redirect_out = get_dictionary_entry(dict,-1)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,-1)
+    redirect_out = get_dictionary_entry(dict,16)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,16)
+    redirect_out = get_dictionary_entry(dict,1)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,1)
+    redirect_out = get_dictionary_entry(dict,11)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,11)
+    redirect_out = get_dictionary_entry(dict,2)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,2)
+    redirect_out = get_dictionary_entry(dict,7)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,7)
+    redirect_out = get_dictionary_entry(dict,11)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,11)
+    redirect_out = get_dictionary_entry(dict,1)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,1)
+end subroutine testRedirectDictionary3
+
+subroutine testRedirectDictionary4
+  use l2_lake_model_mod
+  type(redirectdictionary) :: dict
+  type(redirect), pointer :: redirect_in
+  type(redirect) :: redirect_out
+  integer :: i
+    dict = redirectdictionary(40)
+    do i=1,40
+      redirect_in => redirect(.false.,i-2,-1,-1)
+      call add_entry_to_dictionary(dict,i+7,redirect_in)
+    end do
+    call finish_dictionary(dict)
+    do i=1,40
+      redirect_out = get_dictionary_entry(dict,i+7)
+      call assert_equals(redirect_out%local_redirect_target_lake_number,i-2)
+    end do
+end subroutine testRedirectDictionary4
+
+subroutine testRedirectDictionary5
+  use l2_lake_model_mod
+  type(redirectdictionary) :: dict
+  type(redirect), pointer :: redirect_in
+  type(redirect) :: redirect_out
+  integer :: i
+    dict = redirectdictionary(40)
+    do i=40,1,-1
+      redirect_in => redirect(.false.,i-33,-1,-1)
+      call add_entry_to_dictionary(dict,i+42,redirect_in)
+    end do
+    call finish_dictionary(dict)
+    do i=1,40
+      redirect_out = get_dictionary_entry(dict,i+42)
+      call assert_equals(redirect_out%local_redirect_target_lake_number,i-33)
+    end do
+end subroutine testRedirectDictionary5
+
+subroutine testRedirectDictionary6
+  use l2_lake_model_mod
+  type(redirectdictionary) :: dict
+  type(redirect), pointer :: redirect_in
+  type(redirect) :: redirect_out
+  integer :: i
+    dict = redirectdictionary(39)
+    !1-10
+    redirect_in => redirect(.false.,1005,-1,-1)
+    call add_entry_to_dictionary(dict,1005,redirect_in)
+    redirect_in => redirect(.false.,1004,-1,-1)
+    call add_entry_to_dictionary(dict,1004,redirect_in)
+    redirect_in => redirect(.false.,4444,-1,-1)
+    call add_entry_to_dictionary(dict,4444,redirect_in)
+    redirect_in => redirect(.false.,152,-1,-1)
+    call add_entry_to_dictionary(dict,152,redirect_in)
+    redirect_in => redirect(.false.,3,-1,-1)
+    call add_entry_to_dictionary(dict,3,redirect_in)
+    redirect_in => redirect(.false.,132,-1,-1)
+    call add_entry_to_dictionary(dict,132,redirect_in)
+    redirect_in => redirect(.false.,51,-1,-1)
+    call add_entry_to_dictionary(dict,51,redirect_in)
+    redirect_in => redirect(.false.,163,-1,-1)
+    call add_entry_to_dictionary(dict,163,redirect_in)
+    redirect_in => redirect(.false.,89,-1,-1)
+    call add_entry_to_dictionary(dict,89,redirect_in)
+    redirect_in => redirect(.false.,57,-1,-1)
+    call add_entry_to_dictionary(dict,57,redirect_in)
+    !11-20
+    redirect_in => redirect(.false.,55,-1,-1)
+    call add_entry_to_dictionary(dict,55,redirect_in)
+    redirect_in => redirect(.false.,2003,-1,-1)
+    call add_entry_to_dictionary(dict,2003,redirect_in)
+    redirect_in => redirect(.false.,3333 ,-1,-1)
+    call add_entry_to_dictionary(dict,3333 ,redirect_in)
+    redirect_in => redirect(.false.,5999,-1,-1)
+    call add_entry_to_dictionary(dict,5999,redirect_in)
+    redirect_in => redirect(.false.,6001,-1,-1)
+    call add_entry_to_dictionary(dict,6001,redirect_in)
+    redirect_in => redirect(.false.,1002 ,-1,-1)
+    call add_entry_to_dictionary(dict,1002 ,redirect_in)
+    redirect_in => redirect(.false.,58,-1,-1)
+    call add_entry_to_dictionary(dict,58,redirect_in)
+    redirect_in => redirect(.false.,31,-1,-1)
+    call add_entry_to_dictionary(dict,31,redirect_in)
+    redirect_in => redirect(.false.,49,-1,-1)
+    call add_entry_to_dictionary(dict,49,redirect_in)
+    redirect_in => redirect(.false.,1001,-1,-1)
+    call add_entry_to_dictionary(dict,1001,redirect_in)
+    !21-30
+    redirect_in => redirect(.false.,1003 ,-1,-1)
+    call add_entry_to_dictionary(dict,1003 ,redirect_in)
+    redirect_in => redirect(.false.,1,-1,-1)
+    call add_entry_to_dictionary(dict,1,redirect_in)
+    redirect_in => redirect(.false.,144,-1,-1)
+    call add_entry_to_dictionary(dict,144,redirect_in)
+    redirect_in => redirect(.false.,54 ,-1,-1)
+    call add_entry_to_dictionary(dict,54 ,redirect_in)
+    redirect_in => redirect(.false.,2033,-1,-1)
+    call add_entry_to_dictionary(dict,2033,redirect_in)
+    redirect_in => redirect(.false.,6014 ,-1,-1)
+    call add_entry_to_dictionary(dict,6014 ,redirect_in)
+    redirect_in => redirect(.false.,50,-1,-1)
+    call add_entry_to_dictionary(dict,50,redirect_in)
+    redirect_in => redirect(.false.,107,-1,-1)
+    call add_entry_to_dictionary(dict,107,redirect_in)
+    redirect_in => redirect(.false.,161,-1,-1)
+    call add_entry_to_dictionary(dict,161,redirect_in)
+    redirect_in => redirect(.false.,2333,-1,-1)
+    call add_entry_to_dictionary(dict,2333,redirect_in)
+    !31-39
+    redirect_in => redirect(.false.,52,-1,-1)
+    call add_entry_to_dictionary(dict,52,redirect_in)
+    redirect_in => redirect(.false.,160,-1,-1)
+    call add_entry_to_dictionary(dict,160,redirect_in)
+    redirect_in => redirect(.false.,182,-1,-1)
+    call add_entry_to_dictionary(dict,182,redirect_in)
+    redirect_in => redirect(.false.,9,-1,-1)
+    call add_entry_to_dictionary(dict,9,redirect_in)
+    redirect_in => redirect(.false.,5238,-1,-1)
+    call add_entry_to_dictionary(dict,5238,redirect_in)
+    redirect_in => redirect(.false.,53,-1,-1)
+    call add_entry_to_dictionary(dict,53,redirect_in)
+    redirect_in => redirect(.false.,47,-1,-1)
+    call add_entry_to_dictionary(dict,47,redirect_in)
+    redirect_in => redirect(.false.,162,-1,-1)
+    call add_entry_to_dictionary(dict,162,redirect_in)
+    redirect_in => redirect(.false.,45,-1,-1)
+    call add_entry_to_dictionary(dict,45,redirect_in)
+    call finish_dictionary(dict)
+    !1-10
+    redirect_out = get_dictionary_entry(dict,6014)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,6014)
+    redirect_out = get_dictionary_entry(dict,6001)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,6001)
+    redirect_out = get_dictionary_entry(dict,5999)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,5999)
+    redirect_out = get_dictionary_entry(dict,5238)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,5238)
+    redirect_out = get_dictionary_entry(dict,1)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,1)
+    redirect_out = get_dictionary_entry(dict,3)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,3)
+    redirect_out = get_dictionary_entry(dict,9)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,9)
+    redirect_out = get_dictionary_entry(dict,31)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,31)
+    redirect_out = get_dictionary_entry(dict,45)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,45)
+    redirect_out = get_dictionary_entry(dict,1004)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,1004)
+    !11-20
+    redirect_out = get_dictionary_entry(dict,152)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,152)
+    redirect_out = get_dictionary_entry(dict,144)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,144)
+    redirect_out = get_dictionary_entry(dict,132)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,132)
+    redirect_out = get_dictionary_entry(dict,107)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,107)
+    redirect_out = get_dictionary_entry(dict,160)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,160)
+    redirect_out = get_dictionary_entry(dict,161)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,161)
+    redirect_out = get_dictionary_entry(dict,162)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,162)
+    redirect_out = get_dictionary_entry(dict,1002)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,1002)
+    redirect_out = get_dictionary_entry(dict,1005)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,1005)
+    redirect_out = get_dictionary_entry(dict,57)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,57)
+    !21-30
+    redirect_out = get_dictionary_entry(dict,1003)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,1003)
+    redirect_out = get_dictionary_entry(dict,163)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,163)
+    redirect_out = get_dictionary_entry(dict,1001)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,1001)
+    redirect_out = get_dictionary_entry(dict,55)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,55)
+    redirect_out = get_dictionary_entry(dict,50)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,50)
+    redirect_out = get_dictionary_entry(dict,4444)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,4444)
+    redirect_out = get_dictionary_entry(dict,2333)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,2333)
+    redirect_out = get_dictionary_entry(dict,2033)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,2033)
+    redirect_out = get_dictionary_entry(dict,2003)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,2003)
+    redirect_out = get_dictionary_entry(dict,54)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,54)
+    !31-39
+    redirect_out = get_dictionary_entry(dict,49)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,49)
+    redirect_out = get_dictionary_entry(dict,182)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,182)
+    redirect_out = get_dictionary_entry(dict,89)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,89)
+    redirect_out = get_dictionary_entry(dict,51)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,51)
+    redirect_out = get_dictionary_entry(dict,58)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,58)
+    redirect_out = get_dictionary_entry(dict,53)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,53)
+    redirect_out = get_dictionary_entry(dict,52)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,52)
+    redirect_out = get_dictionary_entry(dict,47)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,47)
+    redirect_out = get_dictionary_entry(dict,3333)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,3333)
+    !11-20 repeat
+    redirect_out = get_dictionary_entry(dict,152)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,152)
+    redirect_out = get_dictionary_entry(dict,144)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,144)
+    redirect_out = get_dictionary_entry(dict,132)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,132)
+    redirect_out = get_dictionary_entry(dict,107)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,107)
+    redirect_out = get_dictionary_entry(dict,160)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,160)
+    redirect_out = get_dictionary_entry(dict,161)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,161)
+    redirect_out = get_dictionary_entry(dict,162)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,162)
+    redirect_out = get_dictionary_entry(dict,1002)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,1002)
+    redirect_out = get_dictionary_entry(dict,1005)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,1005)
+    redirect_out = get_dictionary_entry(dict,57)
+    call assert_equals(redirect_out%local_redirect_target_lake_number,57)
+end subroutine testRedirectDictionary6
+
 subroutine testLakeModel1
    use latlon_hd_model_interface_mod, only: run_hd_model
    use l2_hd_interface_extension_mod, only: init_hd_model_for_testing => &
@@ -23,7 +329,7 @@ subroutine testLakeModel1
    type(riverprognosticfields), pointer :: river_fields
    type(lakemodelparameters), pointer :: lake_model_parameters
    type(lakemodelprognostics), pointer :: lake_model_prognostics
-   real(dp), dimension(:), allocatable :: lake_parameters_as_array
+   real(dp), dimension(:), pointer :: lake_parameters_as_array
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: river_reservoir_nums
@@ -34,41 +340,41 @@ subroutine testLakeModel1
    real(dp),dimension(:,:), pointer :: base_retention_coefficients
    logical,dimension(:,:), pointer :: landsea_mask
    integer :: nlat_lake, nlon_lake
-   real(dp),dimension(:,:), allocatable :: cell_areas_on_surface_model_grid
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lat_index
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lon_index
-   logical,dimension(:,:), allocatable :: is_lake
-   real(dp),dimension(:,:), allocatable :: runoff
-   real(dp),dimension(:,:), allocatable :: drainage
-   real(dp),dimension(:,:), allocatable :: evaporation
-   real(dp),dimension(:,:,:), allocatable :: runoffs
-   real(dp),dimension(:,:,:), allocatable :: drainages
-   real(dp),dimension(:,:,:), allocatable :: evaporations
-   real(dp),dimension(:,:), allocatable :: additional_evaporation
-   real(dp),dimension(:,:), allocatable :: expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: expected_water_to_hd
-   integer,dimension(:,:), allocatable :: expected_lake_numbers
-   integer,dimension(:,:), allocatable :: expected_lake_types
-   real(dp),dimension(:,:), allocatable :: expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: expected_lake_fractions
-   integer,dimension(:,:), allocatable :: expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   logical,dimension(:,:), pointer:: is_lake
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:), pointer :: evaporation
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:,:), pointer :: evaporations
+   real(dp),dimension(:,:), pointer :: additional_evaporation
+   real(dp),dimension(:,:), pointer :: expected_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_water_to_hd
+   integer,dimension(:,:), pointer :: expected_lake_numbers
+   integer,dimension(:,:), pointer :: expected_lake_types
+   real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_lake_fractions
+   integer,dimension(:,:), pointer :: expected_number_lake_cells
+   integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: intermediate_expected_lake_volumes
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
-   integer,dimension(:,:), allocatable :: lake_types
-   real(dp),dimension(:), allocatable :: lake_volumes
-   real(dp),dimension(:,:), allocatable :: lake_fractions
+   integer,dimension(:,:), pointer :: lake_types
+   real(dp),dimension(:), pointer :: lake_volumes
+   real(dp),dimension(:,:), pointer :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -158,6 +464,7 @@ subroutine testLakeModel1
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+      allocate(lake_parameters_as_array(68))
       lake_parameters_as_array = &
         (/ 1.0, 66.0, 1.0, -1.0, 0.0, 4.0, 3.0, 11.0, 4.0, 3.0, 1.0, 0.0, 5.0, 4.0, 4.0, 1.0, 0.0, &
            5.0, 3.0, 4.0, 1.0, 0.0, 5.0, 3.0, 3.0, 1.0, 0.0, 5.0, 2.0, 5.0, 1.0, 5.0, 6.0, 4.0, 5.0, &
@@ -250,6 +557,7 @@ subroutine testLakeModel1
          4, 4, 4, &
          4, 4, 4 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(expected_lake_volumes(1))
       expected_lake_volumes = (/ 0.0 /)
       !allocate(expected_true_lake_depths(nlat_lake,nlon_lake))
       !expected_true_lake_depths = transpose(reshape((/   &
@@ -326,6 +634,7 @@ subroutine testLakeModel1
          4, 4, 4, &
          4, 4, 4 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(intermediate_expected_lake_volumes(1))
       intermediate_expected_lake_volumes = (/ 43.0 /)
       !allocate(intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -455,7 +764,7 @@ subroutine testLakeModel2
    type(riverprognosticfields), pointer :: river_fields
    type(lakemodelparameters), pointer :: lake_model_parameters
    type(lakemodelprognostics), pointer :: lake_model_prognostics
-   real(dp), dimension(:), allocatable :: lake_parameters_as_array
+   real(dp), dimension(:), pointer :: lake_parameters_as_array
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: river_reservoir_nums
@@ -466,71 +775,71 @@ subroutine testLakeModel2
    real(dp),dimension(:,:), pointer :: base_retention_coefficients
    logical,dimension(:,:), pointer :: landsea_mask
    integer :: nlat_lake, nlon_lake
-   real(dp),dimension(:,:), allocatable :: cell_areas_on_surface_model_grid
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lat_index
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lon_index
-   logical,dimension(:,:), allocatable :: is_lake
-   real(dp),dimension(:,:), allocatable :: drainage
-   real(dp),dimension(:,:), allocatable :: runoff
-   real(dp),dimension(:,:), allocatable :: evaporation
-   real(dp),dimension(:,:,:), allocatable :: runoffs
-   real(dp),dimension(:,:,:), allocatable :: drainages
-   real(dp),dimension(:,:,:), allocatable :: evaporations
-   real(dp),dimension(:,:), allocatable :: additional_evaporation
-   real(dp),dimension(:,:), allocatable :: expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: expected_water_to_hd
-   integer,dimension(:,:), allocatable :: expected_lake_numbers
-   integer,dimension(:,:), allocatable :: expected_lake_types
-   real(dp),dimension(:,:), allocatable :: expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: expected_lake_fractions
-   integer,dimension(:,:), allocatable :: expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: first_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: second_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: third_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: fourth_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: fourth_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: fourth_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: fourth_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: fourth_intermediate_expected_lake_volumes
-   integer,dimension(:,:), allocatable :: lake_types
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   logical,dimension(:,:), pointer:: is_lake
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:), pointer :: evaporation
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:,:), pointer :: evaporations
+   real(dp),dimension(:,:), pointer :: additional_evaporation
+   real(dp),dimension(:,:), pointer :: expected_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_water_to_hd
+   integer,dimension(:,:), pointer :: expected_lake_numbers
+   integer,dimension(:,:), pointer :: expected_lake_types
+   real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_lake_fractions
+   integer,dimension(:,:), pointer :: expected_number_lake_cells
+   integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: first_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: second_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: third_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: third_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: third_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: third_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: third_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: fourth_intermediate_expected_lake_volumes
+   integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp),dimension(:), allocatable :: lake_volumes
-   real(dp),dimension(:,:), allocatable :: lake_fractions
+   real(dp),dimension(:), pointer :: lake_volumes
+   real(dp),dimension(:,:), pointer :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -619,6 +928,7 @@ subroutine testLakeModel2
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+      allocate(lake_parameters_as_array(94))
       lake_parameters_as_array = &
         (/ 3.0, 21.0, 1.0, 3.0, 0.0, 4.0, 5.0, 2.0, 4.0, 5.0, 1.0, 0.0, 5.0, 3.0, 5.0, 1.0, 6.0, 8.0, 1.0, 2.0, &
            2.0, 2.0, 0.0, 26.0, 2.0, 3.0, 0.0, 4.0, 2.0, 3.0, 4.0, 2.0, 1.0, 0.0, 5.0, 3.0, 2.0, 1.0, 2.0, 6.0, &
@@ -712,6 +1022,7 @@ subroutine testLakeModel2
          4, 4, 4, &
          4, 4, 4 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(expected_lake_volumes(3))
       expected_lake_volumes = (/ 0.0,0.0,0.0 /)
       !allocate(expected_true_lake_depths(nlat_lake,nlon_lake))
       !expected_true_lake_depths = transpose(reshape((/   &
@@ -788,6 +1099,7 @@ subroutine testLakeModel2
          4, 4, 4, &
          4, 4, 4 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(first_intermediate_expected_lake_volumes(3))
       first_intermediate_expected_lake_volumes = (/ 0.0,0.0,0.0 /)
       ! first_intermediate_expected_true_lake_depths::Field{Float64} =  !   LatLonField{Float64}(lake_grid,
       !       Float64[    0    0    0   7.0    0    0    0    0    0
@@ -862,6 +1174,7 @@ subroutine testLakeModel2
          4, 4, 4, &
          4, 4, 4 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(second_intermediate_expected_lake_volumes(3))
       second_intermediate_expected_lake_volumes = (/ 3.5757575757575757, 5.151515151515151, 0.0 /)
       ! second_intermediate_expected_true_lake_depths::Field{Float64} =  !   LatLonField{Float64}(lake_grid,
       !       Float64[    0    0    0   7.0    0    0    0    0    0
@@ -936,6 +1249,7 @@ subroutine testLakeModel2
          4, 4, 4, &
          4, 4, 4 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(third_intermediate_expected_lake_volumes(3))
       third_intermediate_expected_lake_volumes = (/ 6.0, 8.0, 12.0 /)
       !allocate(third_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !third_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -1012,6 +1326,7 @@ subroutine testLakeModel2
          4, 4, 4, &
          4, 4, 4 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(fourth_intermediate_expected_lake_volumes(3))
       fourth_intermediate_expected_lake_volumes = (/ 6.0, 8.0, 12.0 /)
       ! fourth_intermediate_expected_true_lake_depths::Field{Float64} =  !   LatLonField{Float64}(lake_grid,
       !       Float64[    0    0    0   7.0    0    0    0    0    0
@@ -1288,7 +1603,7 @@ subroutine testLakeModel3
    type(riverprognosticfields), pointer :: river_fields
    type(lakemodelparameters), pointer :: lake_model_parameters
    type(lakemodelprognostics), pointer :: lake_model_prognostics
-   real(dp), dimension(:), allocatable :: lake_parameters_as_array
+   real(dp), dimension(:), pointer :: lake_parameters_as_array
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: river_reservoir_nums
@@ -1299,30 +1614,30 @@ subroutine testLakeModel3
    real(dp),dimension(:,:), pointer :: base_retention_coefficients
    logical,dimension(:,:), pointer :: landsea_mask
    integer :: nlat_lake, nlon_lake
-   real(dp),dimension(:,:), allocatable :: cell_areas_on_surface_model_grid
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lat_index
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lon_index
-   logical,dimension(:,:), allocatable :: is_lake
-   real(dp),dimension(:,:), allocatable :: drainage
-   real(dp),dimension(:,:), allocatable :: evaporation
-   real(dp),dimension(:,:), allocatable :: runoff
-   real(dp),dimension(:,:,:), allocatable :: runoffs
-   real(dp),dimension(:,:,:), allocatable :: drainages
-   real(dp),dimension(:,:,:), allocatable :: evaporations
-   real(dp),dimension(:,:), allocatable :: expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: expected_water_to_hd
-   integer,dimension(:,:), allocatable :: expected_lake_numbers
-   integer,dimension(:,:), allocatable :: expected_lake_types
-   real(dp),dimension(:,:), allocatable :: expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: expected_lake_fractions
-   integer,dimension(:,:), allocatable :: expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: expected_lake_volumes
-   integer,dimension(:,:), allocatable :: lake_types
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   logical,dimension(:,:), pointer :: is_lake
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:), pointer :: evaporation
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:,:), pointer :: evaporations
+   real(dp),dimension(:,:), pointer :: expected_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_water_to_hd
+   integer,dimension(:,:), pointer :: expected_lake_numbers
+   integer,dimension(:,:), pointer :: expected_lake_types
+   real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_lake_fractions
+   integer,dimension(:,:), pointer :: expected_number_lake_cells
+   integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: expected_lake_volumes
+   integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp),dimension(:), allocatable :: lake_volumes
-   real(dp),dimension(:,:), allocatable :: lake_fractions
+   real(dp),dimension(:), pointer :: lake_volumes
+   real(dp),dimension(:,:), pointer :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -1419,6 +1734,7 @@ subroutine testLakeModel3
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+      allocate(lake_parameters_as_array(53))
       lake_parameters_as_array = &
         (/ 1.0, 51.0, 1.0, -1.0, 0.0, 3.0, 3.0, 8.0, 3.0, 3.0, 1.0, 1.0, 2.0, 4.0, 4.0, 1.0, 1.0, 2.0, 4.0, &
          3.0, 1.0, 1.0, 2.0, 5.0, 3.0, 1.0, 1.0, 2.0, 5.0, 4.0, 1.0, 6.0, 3.0, 2.0, 4.0, 1.0, 6.0, 3.0, 3.0, &
@@ -1514,6 +1830,7 @@ subroutine testLakeModel3
          15, 15, 15, &
          6, 6, 6 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(expected_lake_volumes(1))
       expected_lake_volumes = (/ 62.0 /)
       !allocate(expected_true_lake_depths(nlat_lake,nlon_lake))
       !expected_true_lake_depths = transpose(reshape((/   &
@@ -1595,7 +1912,7 @@ subroutine testLakeModel4
    type(riverprognosticfields), pointer :: river_fields
    type(lakemodelparameters), pointer :: lake_model_parameters
    type(lakemodelprognostics), pointer :: lake_model_prognostics
-   real(dp), dimension(:), allocatable :: lake_parameters_as_array
+   real(dp), dimension(:), pointer :: lake_parameters_as_array
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: river_reservoir_nums
@@ -1606,30 +1923,30 @@ subroutine testLakeModel4
    real(dp),dimension(:,:), pointer :: base_retention_coefficients
    logical,dimension(:,:), pointer :: landsea_mask
    integer :: nlat_lake, nlon_lake
-   real(dp),dimension(:,:), allocatable :: cell_areas_on_surface_model_grid
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lat_index
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lon_index
-   logical,dimension(:,:), allocatable :: is_lake
-   real(dp),dimension(:,:), allocatable :: drainage
-   real(dp),dimension(:,:), allocatable :: evaporation
-   real(dp),dimension(:,:), allocatable :: runoff
-   real(dp),dimension(:,:,:), allocatable :: runoffs
-   real(dp),dimension(:,:,:), allocatable :: drainages
-   real(dp),dimension(:,:,:), allocatable :: evaporations
-   real(dp),dimension(:,:), allocatable :: expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: expected_water_to_hd
-   integer,dimension(:,:), allocatable :: expected_lake_numbers
-   integer,dimension(:,:), allocatable :: expected_lake_types
-   real(dp),dimension(:,:), allocatable :: expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: expected_lake_fractions
-   integer,dimension(:,:), allocatable :: expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: expected_lake_volumes
-   integer,dimension(:,:), allocatable :: lake_types
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   logical,dimension(:,:), pointer:: is_lake
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:), pointer :: evaporation
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:,:), pointer :: evaporations
+   real(dp),dimension(:,:), pointer :: expected_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_water_to_hd
+   integer,dimension(:,:), pointer :: expected_lake_numbers
+   integer,dimension(:,:), pointer :: expected_lake_types
+   real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_lake_fractions
+   integer,dimension(:,:), pointer :: expected_number_lake_cells
+   integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: expected_lake_volumes
+   integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp),dimension(:), allocatable :: lake_volumes
-   real(dp),dimension(:,:), allocatable :: lake_fractions
+   real(dp),dimension(:), pointer :: lake_volumes
+   real(dp),dimension(:,:), pointer :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -1784,6 +2101,7 @@ subroutine testLakeModel4
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+      allocate(lake_parameters_as_array(1185))
       lake_parameters_as_array = &
         (/ 9.0, 16.0, 1.0, -1.0, 0.0, 16.0, 4.0, 1.0, 16.0, 4.0, 1.0, 1.0, 3.0, 1.0, -1.0, 4.0, 2.0, 0.0, 46.0, 2.0, &
           -1.0, 0.0, 14.0, 16.0, 7.0, 14.0, 16.0, 1.0, 0.0, 2.0, 14.0, 17.0, 1.0, 0.0, 2.0, 15.0, 16.0, 1.0, 3.0, 3.0, &
@@ -1971,6 +2289,7 @@ subroutine testLakeModel4
          42, 36, 42 /), &
          (/nlon_surface,nlat_surface/)))
       expected_lake_volumes = (/ 1.0, 10.0, 1.0, 38.0, 6.0, 46.0, 55.0, 55.0, 229.0 /)
+      allocate(expected_lake_volumes(9))
       !allocate(expected_true_lake_depths(nlat_lake,nlon_lake))
       !expected_true_lake_depths = transpose(reshape((/   &
          !        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
@@ -2059,7 +2378,7 @@ subroutine testLakeModel5
    type(riverprognosticfields), pointer :: river_fields
    type(lakemodelparameters), pointer :: lake_model_parameters
    type(lakemodelprognostics), pointer :: lake_model_prognostics
-   real(dp), dimension(:), allocatable :: lake_parameters_as_array
+   real(dp), dimension(:), pointer :: lake_parameters_as_array
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: river_reservoir_nums
@@ -2070,41 +2389,41 @@ subroutine testLakeModel5
    real(dp),dimension(:,:), pointer :: base_retention_coefficients
    logical,dimension(:,:), pointer :: landsea_mask
    integer :: nlat_lake, nlon_lake
-   real(dp),dimension(:,:), allocatable :: cell_areas_on_surface_model_grid
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lat_index
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lon_index
-   logical,dimension(:,:), allocatable :: is_lake
-   real(dp),dimension(:,:), allocatable :: drainage
-   real(dp),dimension(:,:), allocatable :: evaporation
-   real(dp),dimension(:,:), allocatable :: additional_evaporation
-   real(dp),dimension(:,:), allocatable :: runoff
-   real(dp),dimension(:,:,:), allocatable :: runoffs
-   real(dp),dimension(:,:,:), allocatable :: drainages
-   real(dp),dimension(:,:,:), allocatable :: evaporations
-   real(dp),dimension(:,:), allocatable :: expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: expected_water_to_hd
-   integer,dimension(:,:), allocatable :: expected_lake_numbers
-   integer,dimension(:,:), allocatable :: expected_lake_types
-   real(dp),dimension(:,:), allocatable :: expected_lake_fractions
-   integer,dimension(:,:), allocatable :: expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: expected_intermediate_river_inflow
-   real(dp),dimension(:,:), allocatable :: expected_intermediate_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: expected_intermediate_water_to_hd
-   integer,dimension(:,:), allocatable :: expected_intermediate_lake_numbers
-   integer,dimension(:,:), allocatable :: expected_intermediate_lake_types
-   real(dp),dimension(:,:), allocatable :: expected_intermediate_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: expected_intermediate_lake_fractions
-   integer,dimension(:,:), allocatable :: expected_intermediate_number_lake_cells
-   integer,dimension(:,:), allocatable :: expected_intermediate_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: expected_intermediate_lake_volumes
-   integer,dimension(:,:), allocatable :: lake_types
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   logical,dimension(:,:), pointer:: is_lake
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:), pointer :: evaporation
+   real(dp),dimension(:,:), pointer :: additional_evaporation
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:,:), pointer :: evaporations
+   real(dp),dimension(:,:), pointer :: expected_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_water_to_hd
+   integer,dimension(:,:), pointer :: expected_lake_numbers
+   integer,dimension(:,:), pointer :: expected_lake_types
+   real(dp),dimension(:,:), pointer :: expected_lake_fractions
+   integer,dimension(:,:), pointer :: expected_number_lake_cells
+   integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_intermediate_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_intermediate_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_intermediate_water_to_hd
+   integer,dimension(:,:), pointer :: expected_intermediate_lake_numbers
+   integer,dimension(:,:), pointer :: expected_intermediate_lake_types
+   real(dp),dimension(:,:), pointer :: expected_intermediate_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_intermediate_lake_fractions
+   integer,dimension(:,:), pointer :: expected_intermediate_number_lake_cells
+   integer,dimension(:,:), pointer :: expected_intermediate_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: expected_intermediate_lake_volumes
+   integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp),dimension(:), allocatable :: lake_volumes
-   real(dp),dimension(:,:), allocatable :: lake_fractions
+   real(dp),dimension(:), pointer :: lake_volumes
+   real(dp),dimension(:,:), pointer :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -2259,6 +2578,7 @@ subroutine testLakeModel5
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+      allocate(lake_parameters_as_array(1185))
       lake_parameters_as_array = &
         (/ 9.0, 16.0, 1.0, -1.0, 0.0, 16.0, 4.0, 1.0, 16.0, 4.0, 1.0, 1.0, 3.0, 1.0, -1.0, 4.0, 2.0, 0.0, 46.0, 2.0, -1.0, 0.0, &
          14.0, 16.0, 7.0, 14.0, 16.0, 1.0, 0.0, 2.0, 14.0, 17.0, 1.0, 0.0, 2.0, 15.0, 16.0, 1.0, 3.0, 3.0, 15.0, 17.0, 1.0, 3.0,&
@@ -2425,6 +2745,7 @@ subroutine testLakeModel5
          1, 43, 1, &
          15, 7,  1 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(expected_lake_volumes(9))
       expected_lake_volumes = (/ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 /)
       allocate(expected_intermediate_river_inflow(nlat_hd,nlon_hd))
       expected_intermediate_river_inflow = transpose(reshape((/   &
@@ -2718,7 +3039,7 @@ subroutine testLakeModel6
    type(riverprognosticfields), pointer :: river_fields
    type(lakemodelparameters), pointer :: lake_model_parameters
    type(lakemodelprognostics), pointer :: lake_model_prognostics
-   real(dp), dimension(:), allocatable :: lake_parameters_as_array
+   real(dp), dimension(:), pointer :: lake_parameters_as_array
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: river_reservoir_nums
@@ -2729,74 +3050,74 @@ subroutine testLakeModel6
    real(dp),dimension(:,:), pointer :: base_retention_coefficients
    logical,dimension(:,:), pointer :: landsea_mask
    integer :: nlat_lake, nlon_lake
-   real(dp),dimension(:,:), allocatable :: cell_areas_on_surface_model_grid
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lat_index
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lon_index
-   logical,dimension(:,:), allocatable :: is_lake
-   real(dp),dimension(:,:), allocatable :: drainage
-   real(dp),dimension(:,:), allocatable :: runoff
-   real(dp),dimension(:,:), allocatable :: evaporation
-   real(dp),dimension(:,:,:), allocatable :: runoffs
-   real(dp),dimension(:,:,:), allocatable :: drainages
-   real(dp),dimension(:,:,:), allocatable :: evaporations
-   real(dp),dimension(:,:), allocatable :: expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: expected_water_to_hd
-   integer,dimension(:,:), allocatable :: expected_lake_numbers
-   integer,dimension(:,:), allocatable :: expected_lake_types
-   real(dp),dimension(:,:), allocatable :: expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: expected_lake_fractions
-   integer,dimension(:,:), allocatable :: expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: first_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: second_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: third_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_water_to_hd
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: fourth_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: fourth_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: fourth_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: fifth_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: fifth_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: fifth_intermediate_expected_water_to_hd
-   real(dp),dimension(:,:), allocatable :: fifth_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: fifth_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: fifth_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: fifth_intermediate_expected_lake_volumes
-   integer,dimension(:,:), allocatable :: lake_types
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   logical,dimension(:,:), pointer:: is_lake
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:), pointer :: evaporation
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:,:), pointer :: evaporations
+   real(dp),dimension(:,:), pointer :: expected_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_water_to_hd
+   integer,dimension(:,:), pointer :: expected_lake_numbers
+   integer,dimension(:,:), pointer :: expected_lake_types
+   real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_lake_fractions
+   integer,dimension(:,:), pointer :: expected_number_lake_cells
+   integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: first_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: second_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: third_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: third_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: third_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: third_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: third_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_hd
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: fourth_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_water_to_hd
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: fifth_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: fifth_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: fifth_intermediate_expected_lake_volumes
+   integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp),dimension(:), allocatable :: lake_volumes
-   real(dp),dimension(:,:), allocatable :: lake_fractions
+   real(dp),dimension(:), pointer :: lake_volumes
+   real(dp),dimension(:,:), pointer :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -2890,6 +3211,7 @@ subroutine testLakeModel6
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+      allocate(lake_parameters_as_array(53))
       lake_parameters_as_array = &
         (/ 1.0, 51.0, 1.0, -1.0, 0.0, 3.0, 3.0, 8.0, 3.0, 3.0, 1.0, 0.0, 2.0, 4.0, 4.0, 1.0, 0.0, 2.0, &
            3.0, 4.0, 1.0, 0.0, 2.0, 5.0, 3.0, 1.0, 0.0, 2.0, 4.0, 3.0, 1.0, 0.0, 2.0, 5.0, 4.0, 1.0, &
@@ -2982,6 +3304,7 @@ subroutine testLakeModel6
           8, 1, &
          1, 71 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(expected_lake_volumes(1))
       expected_lake_volumes = (/ 432000.0 /)
       !allocate(expected_true_lake_depths(nlat_lake,nlon_lake))
       !expected_true_lake_depths = transpose(reshape((/   &
@@ -3064,6 +3387,7 @@ subroutine testLakeModel6
           8, 1, &
          1, 71 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(first_intermediate_expected_lake_volumes(1))
       first_intermediate_expected_lake_volumes = (/ 172800.0 /)
       !allocate(first_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !first_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -3146,6 +3470,7 @@ subroutine testLakeModel6
           8, 1, &
          1, 71 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(second_intermediate_expected_lake_volumes(1))
       second_intermediate_expected_lake_volumes = (/ 259200.0 /)
       !allocate(second_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !second_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -3228,6 +3553,7 @@ subroutine testLakeModel6
           8, 1, &
          1, 71 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(third_intermediate_expected_lake_volumes(1))
       third_intermediate_expected_lake_volumes = (/ 432000.0 /)
       !allocate(third_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !third_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -3626,7 +3952,7 @@ subroutine testLakeModel7
    type(riverprognosticfields), pointer :: river_fields
    type(lakemodelparameters), pointer :: lake_model_parameters
    type(lakemodelprognostics), pointer :: lake_model_prognostics
-   real(dp), dimension(:), allocatable :: lake_parameters_as_array
+   real(dp), dimension(:), pointer :: lake_parameters_as_array
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: river_reservoir_nums
@@ -3637,74 +3963,74 @@ subroutine testLakeModel7
    real(dp),dimension(:,:), pointer :: base_retention_coefficients
    logical,dimension(:,:), pointer :: landsea_mask
    integer :: nlat_lake, nlon_lake
-   real(dp),dimension(:,:), allocatable :: cell_areas_on_surface_model_grid
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lat_index
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lon_index
-   logical,dimension(:,:), allocatable :: is_lake
-   real(dp),dimension(:,:), allocatable :: runoff
-   real(dp),dimension(:,:), allocatable :: drainage
-   real(dp),dimension(:,:), allocatable :: evaporation
-   real(dp),dimension(:,:,:), allocatable :: runoffs
-   real(dp),dimension(:,:,:), allocatable :: drainages
-   real(dp),dimension(:,:,:), allocatable :: evaporations
-   real(dp),dimension(:,:), allocatable :: expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: expected_water_to_hd
-   integer,dimension(:,:), allocatable :: expected_lake_numbers
-   integer,dimension(:,:), allocatable :: expected_lake_types
-   real(dp),dimension(:,:), allocatable :: expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: expected_lake_fractions
-   integer,dimension(:,:), allocatable :: expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: first_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: second_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: third_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_water_to_hd
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: fourth_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: fourth_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: fourth_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: fifth_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: fifth_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: fifth_intermediate_expected_water_to_hd
-   real(dp),dimension(:,:), allocatable :: fifth_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: fifth_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: fifth_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: fifth_intermediate_expected_lake_volumes
-   integer,dimension(:,:), allocatable :: lake_types
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   logical,dimension(:,:), pointer:: is_lake
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:), pointer :: evaporation
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:,:), pointer :: evaporations
+   real(dp),dimension(:,:), pointer :: expected_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_water_to_hd
+   integer,dimension(:,:), pointer :: expected_lake_numbers
+   integer,dimension(:,:), pointer :: expected_lake_types
+   real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_lake_fractions
+   integer,dimension(:,:), pointer :: expected_number_lake_cells
+   integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: first_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: second_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: third_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: third_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: third_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: third_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: third_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_hd
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: fourth_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_water_to_hd
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: fifth_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: fifth_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: fifth_intermediate_expected_lake_volumes
+   integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp),dimension(:), allocatable :: lake_volumes
-   real(dp),dimension(:,:), allocatable :: lake_fractions
+   real(dp),dimension(:), pointer :: lake_volumes
+   real(dp),dimension(:,:), pointer :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -3798,6 +4124,7 @@ subroutine testLakeModel7
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+      allocate(lake_parameters_as_array(53))
       lake_parameters_as_array = &
         (/ 1.0, 51.0, 1.0, -1.0, 0.0, 3.0, 3.0, 8.0, 3.0, 3.0, 1.0, 0.0, 2.0, 4.0, 4.0, 1.0, 0.0, 2.0, &
            3.0, 4.0, 1.0, 0.0, 2.0, 5.0, 3.0, 1.0, 0.0, 2.0, 4.0, 3.0, 1.0, 0.0, 2.0, 5.0, 4.0, 1.0, &
@@ -3890,6 +4217,7 @@ subroutine testLakeModel7
           8, 1, &
          1, 71 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(expected_lake_volumes(1))
       expected_lake_volumes = (/ 432000.0 /)
       !allocate(expected_true_lake_depths(nlat_lake,nlon_lake))
       !expected_true_lake_depths = transpose(reshape((/   &
@@ -3972,6 +4300,7 @@ subroutine testLakeModel7
           8, 1, &
          1, 71 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(first_intermediate_expected_lake_volumes(1))
       first_intermediate_expected_lake_volumes = (/ 172800.0 /)
       !allocate(first_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !first_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -4054,6 +4383,7 @@ subroutine testLakeModel7
           8, 1, &
          1, 71 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(second_intermediate_expected_lake_volumes(1))
       second_intermediate_expected_lake_volumes = (/ 259200.0 /)
       !allocate(second_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !second_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -4136,6 +4466,7 @@ subroutine testLakeModel7
           8, 1, &
          1, 71  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(third_intermediate_expected_lake_volumes(1))
       third_intermediate_expected_lake_volumes = (/ 432000.0 /)
       !allocate(third_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !third_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -4536,7 +4867,7 @@ subroutine testLakeModel8
    type(riverprognosticfields), pointer :: river_fields
    type(lakemodelparameters), pointer :: lake_model_parameters
    type(lakemodelprognostics), pointer :: lake_model_prognostics
-   real(dp), dimension(:), allocatable :: lake_parameters_as_array
+   real(dp), dimension(:), pointer :: lake_parameters_as_array
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: river_reservoir_nums
@@ -4547,146 +4878,146 @@ subroutine testLakeModel8
    real(dp),dimension(:,:), pointer :: base_retention_coefficients
    logical,dimension(:,:), pointer :: landsea_mask
    integer :: nlat_lake, nlon_lake
-   real(dp),dimension(:,:), allocatable :: cell_areas_on_surface_model_grid
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lat_index
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lon_index
-   logical,dimension(:,:), allocatable :: is_lake
-   real(dp),dimension(:,:), allocatable :: drainage_one
-   real(dp),dimension(:,:), allocatable :: drainage_two
-   real(dp),dimension(:,:), allocatable :: runoff
-   real(dp),dimension(:,:), allocatable :: evaporation
-   real(dp),dimension(:,:,:), allocatable :: runoffs
-   real(dp),dimension(:,:,:), allocatable :: drainages
-   real(dp),dimension(:,:,:), allocatable :: evaporations
-   real(dp),dimension(:,:), allocatable :: expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: expected_water_to_hd
-   integer,dimension(:,:), allocatable :: expected_lake_numbers
-   integer,dimension(:,:), allocatable :: expected_lake_types
-   real(dp),dimension(:,:), allocatable :: expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: expected_lake_fractions
-   integer,dimension(:,:), allocatable :: expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: first_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: second_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: third_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_water_to_hd
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: fourth_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: fourth_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: fourth_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: fifth_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: fifth_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: fifth_intermediate_expected_water_to_hd
-   real(dp),dimension(:,:), allocatable :: fifth_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: fifth_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: fifth_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: fifth_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: sixth_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: sixth_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: sixth_intermediate_expected_water_to_ocean_variant_two
-   real(dp),dimension(:,:), allocatable :: sixth_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: sixth_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: sixth_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: sixth_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: sixth_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: sixth_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: sixth_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: sixth_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: seven_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: seven_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: seven_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: seven_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: seven_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: seven_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: seven_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: seven_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: seven_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: seven_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: eight_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: eight_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: eight_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: eight_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: eight_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: eight_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: eight_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: eight_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: eight_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: eight_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: nine_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: nine_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: nine_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: nine_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: nine_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: nine_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: nine_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: nine_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: nine_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: nine_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: ten_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: ten_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: ten_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: ten_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: ten_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: ten_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: ten_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: ten_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: ten_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: ten_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: eleven_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: eleven_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: eleven_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: eleven_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: eleven_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: eleven_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: eleven_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: eleven_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: eleven_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: eleven_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: twelve_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: twelve_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: twelve_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: twelve_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: twelve_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: twelve_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: twelve_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: twelve_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: twelve_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: twelve_intermediate_expected_lake_volumes
-   integer,dimension(:,:), allocatable :: lake_types
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   logical,dimension(:,:), pointer:: is_lake
+   real(dp),dimension(:,:), pointer :: drainage_one
+   real(dp),dimension(:,:), pointer :: drainage_two
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:), pointer :: evaporation
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:,:), pointer :: evaporations
+   real(dp),dimension(:,:), pointer :: expected_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_water_to_hd
+   integer,dimension(:,:), pointer :: expected_lake_numbers
+   integer,dimension(:,:), pointer :: expected_lake_types
+   real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_lake_fractions
+   integer,dimension(:,:), pointer :: expected_number_lake_cells
+   integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: first_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: second_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: third_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: third_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: third_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: third_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: third_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_hd
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: fourth_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_water_to_hd
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: fifth_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: fifth_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: fifth_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: sixth_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: sixth_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: sixth_intermediate_expected_water_to_ocean_variant_two
+   real(dp),dimension(:,:), pointer :: sixth_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: sixth_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: sixth_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: sixth_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: sixth_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: sixth_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: sixth_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: sixth_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: seven_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: seven_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: seven_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: seven_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: seven_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: seven_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: seven_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: seven_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: seven_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: seven_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: eight_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: eight_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: eight_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: eight_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: eight_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: eight_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: eight_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: eight_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: eight_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: eight_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: nine_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: nine_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: nine_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: nine_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: nine_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: nine_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: nine_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: nine_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: nine_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: nine_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: ten_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: ten_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: ten_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: ten_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: ten_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: ten_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: ten_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: ten_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: ten_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: ten_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: eleven_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: eleven_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: eleven_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: eleven_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: eleven_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: eleven_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: eleven_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: eleven_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: eleven_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: eleven_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: twelve_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: twelve_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: twelve_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: twelve_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: twelve_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: twelve_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: twelve_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: twelve_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: twelve_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: twelve_intermediate_expected_lake_volumes
+   integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp),dimension(:), allocatable :: lake_volumes
-   real(dp),dimension(:,:), allocatable :: lake_fractions
+   real(dp),dimension(:), pointer :: lake_volumes
+   real(dp),dimension(:,:), pointer :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -4780,6 +5111,7 @@ subroutine testLakeModel8
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+      allocate(lake_parameters_as_array(53))
       lake_parameters_as_array = &
         (/ 1.0, 51.0, 1.0, -1.0, 0.0, 3.0, 3.0, 8.0, 3.0, 3.0, 1.0, 0.0, 2.0, 4.0, 4.0, &
            1.0, 0.0, 2.0, 3.0, 4.0, 1.0, 0.0, 2.0, 5.0, 3.0, 1.0, 0.0, 2.0, 4.0, 3.0, 1.0, &
@@ -4883,6 +5215,7 @@ subroutine testLakeModel8
           8,  1, &
          1, 71 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(expected_lake_volumes(1))
       expected_lake_volumes = (/ 0.0 /)
       !allocate(expected_true_lake_depths(nlat_lake,nlon_lake))
       !expected_true_lake_depths = transpose(reshape((/   &
@@ -4965,6 +5298,7 @@ subroutine testLakeModel8
           8,  1, &
          1, 71/), &
          (/nlon_surface,nlat_surface/)))
+      allocate(first_intermediate_expected_lake_volumes(1))
       first_intermediate_expected_lake_volumes = (/ 172800.0 /)
       !allocate(first_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !first_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -5047,6 +5381,7 @@ subroutine testLakeModel8
           8,  1, &
          1, 71 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(second_intermediate_expected_lake_volumes(1))
       second_intermediate_expected_lake_volumes = (/ 259200.0 /)
       !allocate(second_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !second_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -5129,6 +5464,7 @@ subroutine testLakeModel8
           8,  1, &
          1, 71 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(third_intermediate_expected_lake_volumes(1))
       third_intermediate_expected_lake_volumes = (/ 432000.0 /)
       !allocate(third_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !third_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -5307,6 +5643,7 @@ subroutine testLakeModel8
           8,  1, &
          1, 71 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(sixth_intermediate_expected_lake_volumes(1))
       sixth_intermediate_expected_lake_volumes = (/432000.0/)
           ! sixth_intermediate_expected_true_lake_depths::Field{Float64} = LatLonField{Float64}(lake_grid, &
           ! Float64[0 0 0 5.0 0 0 0 0 0 &
@@ -5387,6 +5724,7 @@ subroutine testLakeModel8
           8,  1, &
          1, 71 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(seven_intermediate_expected_lake_volumes(1))
       seven_intermediate_expected_lake_volumes = (/345600.0/)
           ! seven_intermediate_expected_true_lake_depths::Field{Float64} = LatLonField{Float64}(lake_grid, &
           ! Float64[0 0 0 0 0 0 0 0 0 &
@@ -5467,6 +5805,7 @@ subroutine testLakeModel8
           8,  1, &
          1, 71 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(eight_intermediate_expected_lake_volumes(1))
       eight_intermediate_expected_lake_volumes = (/259200.0/)
           ! eight_intermediate_expected_true_lake_depths::Field{Float64} = LatLonField{Float64}(lake_grid, &
           ! Float64[0 0 0 0 0 0 0 0 0 &
@@ -5547,6 +5886,7 @@ subroutine testLakeModel8
           8,  1, &
          1, 71 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(nine_intermediate_expected_lake_volumes(1))
       nine_intermediate_expected_lake_volumes = (/172800.0/)
           ! nine_intermediate_expected_true_lake_depths::Field{Float64} = LatLonField{Float64}(lake_grid, &
           ! Float64[0 0 0 0 0 0 0 0 0 &
@@ -5627,6 +5967,7 @@ subroutine testLakeModel8
           8,  1, &
          1, 71 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(ten_intermediate_expected_lake_volumes(1))
       ten_intermediate_expected_lake_volumes = (/86400.0/)
           ! ten_intermediate_expected_true_lake_depths::Field{Float64} = LatLonField{Float64}(lake_grid, &
           ! Float64[0 0 0 0 0 0 0 0 0 &
@@ -5707,6 +6048,7 @@ subroutine testLakeModel8
           8,  1, &
          1, 71 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(eleven_intermediate_expected_lake_volumes(1))
       eleven_intermediate_expected_lake_volumes = (/0.0/)
           ! eleven_intermediate_expected_true_lake_depths::Field{Float64} = LatLonField{Float64}(lake_grid, &
           ! Float64[0 0 0 0 0 0 0 0 0 &
@@ -5787,6 +6129,7 @@ subroutine testLakeModel8
           8,  1, &
          1, 71 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(twelve_intermediate_expected_lake_volumes(1))
       twelve_intermediate_expected_lake_volumes = (/0.0/)
           ! twelve_intermediate_expected_true_lake_depths::Field{Float64} = LatLonField{Float64}(lake_grid, &
           ! Float64[0 0 0 0 0 0 0 0 0 &
@@ -6465,7 +6808,7 @@ subroutine testLakeModel9
    type(riverprognosticfields), pointer :: river_fields
    type(lakemodelparameters), pointer :: lake_model_parameters
    type(lakemodelprognostics), pointer :: lake_model_prognostics
-   real(dp), dimension(:), allocatable :: lake_parameters_as_array
+   real(dp), dimension(:), pointer :: lake_parameters_as_array
    type(lakepointer) :: working_lake_ptr
    real :: seconds_per_day
    real(dp),dimension(:,:), pointer :: flow_directions
@@ -6477,53 +6820,53 @@ subroutine testLakeModel9
    real(dp),dimension(:,:), pointer :: base_retention_coefficients
    logical,dimension(:,:), pointer :: landsea_mask
    integer :: nlat_lake, nlon_lake
-   real(dp),dimension(:,:), allocatable :: cell_areas_on_surface_model_grid
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lat_index
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lon_index
-   logical,dimension(:,:), allocatable :: is_lake
-   real(dp),dimension(:,:), allocatable :: drainage
-   real(dp),dimension(:,:), allocatable :: runoff
-   real(dp),dimension(:,:), allocatable :: evaporation
-   real(dp),dimension(:,:,:), allocatable :: drainages
-   real(dp),dimension(:,:,:), allocatable :: runoffs
-   real(dp),dimension(:,:,:), allocatable :: evaporations
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   logical,dimension(:,:), pointer:: is_lake
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:), pointer :: evaporation
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:,:), pointer :: evaporations
    real :: high_lake_volume
    real(dp),dimension(:,:), pointer :: initial_water_to_lake_centers
    real(dp),dimension(:,:), pointer :: initial_spillover_to_rivers
-   real(dp),dimension(:,:), allocatable :: expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: expected_water_to_hd
-   integer,dimension(:,:), allocatable :: expected_lake_numbers
-   integer,dimension(:,:), allocatable :: expected_lake_types
-   real(dp),dimension(:,:), allocatable :: expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: expected_lake_fractions
-   integer,dimension(:,:), allocatable :: expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: first_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: second_intermediate_expected_lake_volumes
-   integer,dimension(:,:), allocatable :: lake_types
+   real(dp),dimension(:,:), pointer :: expected_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_water_to_hd
+   integer,dimension(:,:), pointer :: expected_lake_numbers
+   integer,dimension(:,:), pointer :: expected_lake_types
+   real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_lake_fractions
+   integer,dimension(:,:), pointer :: expected_number_lake_cells
+   integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: first_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: second_intermediate_expected_lake_volumes
+   integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp),dimension(:), allocatable :: lake_volumes
-   real(dp),dimension(:,:), allocatable :: lake_fractions
+   real(dp),dimension(:), pointer :: lake_volumes
+   real(dp),dimension(:,:), pointer :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -6619,6 +6962,7 @@ subroutine testLakeModel9
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+      allocate(lake_parameters_as_array(53))
       lake_parameters_as_array = &
         (/ 1.0, 51.0, 1.0, -1.0, 0.0, 3.0, 3.0, 8.0, 3.0, 3.0, 1.0, 0.0, 2.0, 4.0, 4.0, 1.0, &
            0.0, 2.0, 3.0, 4.0, 1.0, 0.0, 2.0, 5.0, 3.0, 1.0, 0.0, 2.0, 4.0, 3.0, 1.0, 0.0, &
@@ -6731,6 +7075,7 @@ subroutine testLakeModel9
          12, 12, 12, &
          9, 9, 9 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(expected_lake_volumes(1))
       expected_lake_volumes = (/ 432000.0 /)
       !allocate(expected_true_lake_depths(nlat_lake,nlon_lake))
       !expected_true_lake_depths = transpose(reshape((/   &
@@ -6816,6 +7161,7 @@ subroutine testLakeModel9
          12, 12, 12, &
          9, 9, 9 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(first_intermediate_expected_lake_volumes(1))
       first_intermediate_expected_lake_volumes = (/ 432000.0 /)
       !allocate(first_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !first_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -6901,6 +7247,7 @@ subroutine testLakeModel9
          12, 12, 12, &
          9, 9, 9 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(second_intermediate_expected_lake_volumes(1))
       second_intermediate_expected_lake_volumes = (/ 432000.0 /)
       !allocate(second_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !second_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -7076,7 +7423,7 @@ subroutine testLakeModel10
    type(riverprognosticfields), pointer :: river_fields
    type(lakemodelparameters), pointer :: lake_model_parameters
    type(lakemodelprognostics), pointer :: lake_model_prognostics
-   real(dp), dimension(:), allocatable :: lake_parameters_as_array
+   real(dp), dimension(:), pointer :: lake_parameters_as_array
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: river_reservoir_nums
@@ -7087,62 +7434,62 @@ subroutine testLakeModel10
    real(dp),dimension(:,:), pointer :: base_retention_coefficients
    logical,dimension(:,:), pointer :: landsea_mask
    integer :: nlat_lake, nlon_lake
-   real(dp),dimension(:,:), allocatable :: cell_areas_on_surface_model_grid
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lat_index
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lon_index
-   logical,dimension(:,:), allocatable :: is_lake
-   real(dp),dimension(:,:), allocatable :: drainage
-   real(dp),dimension(:,:), allocatable :: runoff
-   real(dp),dimension(:,:), allocatable :: evaporation
-   real(dp),dimension(:,:,:), allocatable :: runoffs
-   real(dp),dimension(:,:,:), allocatable :: drainages
-   real(dp),dimension(:,:,:), allocatable :: evaporations
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   logical,dimension(:,:), pointer:: is_lake
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:), pointer :: evaporation
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:,:), pointer :: evaporations
    real(dp),dimension(:,:), pointer :: initial_water_to_lake_centers
    real(dp),dimension(:,:), pointer :: initial_spillover_to_rivers
-   real(dp),dimension(:,:), allocatable :: expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: expected_water_to_hd
-   integer,dimension(:,:), allocatable :: expected_lake_numbers
-   integer,dimension(:,:), allocatable :: expected_lake_types
-   real(dp),dimension(:,:), allocatable :: expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: expected_lake_fractions
-   integer,dimension(:,:), allocatable :: expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: first_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: second_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: third_intermediate_expected_lake_volumes
-   integer,dimension(:,:), allocatable :: lake_types
+   real(dp),dimension(:,:), pointer :: expected_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_water_to_hd
+   integer,dimension(:,:), pointer :: expected_lake_numbers
+   integer,dimension(:,:), pointer :: expected_lake_types
+   real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_lake_fractions
+   integer,dimension(:,:), pointer :: expected_number_lake_cells
+   integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: first_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: second_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: third_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: third_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: third_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: third_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: third_intermediate_expected_lake_volumes
+   integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp),dimension(:), allocatable :: lake_volumes
-   real(dp),dimension(:,:), allocatable :: lake_fractions
+   real(dp),dimension(:), pointer :: lake_volumes
+   real(dp),dimension(:,:), pointer :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -7296,6 +7643,7 @@ subroutine testLakeModel10
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+      allocate(lake_parameters_as_array(1185))
       lake_parameters_as_array = &
         (/ 9.0, 16.0, 1.0, -1.0, 0.0, 16.0, 4.0, 1.0, 16.0, 4.0, 1.0, 1.0, 3.0, 1.0, -1.0, 4.0, 2.0, 0.0, 46.0, 2.0, &
          -1.0, 0.0, 14.0, 16.0, 7.0, 14.0, 16.0, 1.0, 0.0, 2.0, 14.0, 17.0, 1.0, 0.0, 2.0, 15.0, 16.0, 1.0, 3.0, 3.0, &
@@ -7512,6 +7860,7 @@ subroutine testLakeModel10
          1,  43, 1, &
          15, 7,  1 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(expected_lake_volumes(9))
       expected_lake_volumes = (/ 0.0, 0.0, 1.0, 38.0, 6.0, 46.0, 55.0, 55.0, 229.0 /)
       !allocate(expected_true_lake_depths(nlat_lake,nlon_lake))
       !expected_true_lake_depths = transpose(reshape((/   &
@@ -7644,6 +7993,7 @@ subroutine testLakeModel10
          1, 43, 1, &
          15, 7,  1  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(first_intermediate_expected_lake_volumes(9))
       first_intermediate_expected_lake_volumes = (/ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 /)
       !allocate(first_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !first_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -7776,6 +8126,7 @@ subroutine testLakeModel10
          1, 43, 1, &
          15, 7,  1  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(second_intermediate_expected_lake_volumes(9))
       second_intermediate_expected_lake_volumes = (/ 0.0, 0.0, 0.0, 0.0, 0.0, 46.0, 0.0, 0.0, 0.0 /)
       !allocate(second_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !second_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -7908,6 +8259,7 @@ subroutine testLakeModel10
          1,  43, 1, &
          15, 7,  1  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(third_intermediate_expected_lake_volumes(9))
       third_intermediate_expected_lake_volumes = (/ 0.0, 0.0, 346.0, 38.0, 0.0, 46.0, 0.0, 0.0, 0.0 /)
       !allocate(third_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !third_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -8141,7 +8493,7 @@ subroutine testLakeModel11
    type(riverprognosticfields), pointer :: river_fields
    type(lakemodelparameters), pointer :: lake_model_parameters
    type(lakemodelprognostics), pointer :: lake_model_prognostics
-   real(dp), dimension(:), allocatable :: lake_parameters_as_array
+   real(dp), dimension(:), pointer :: lake_parameters_as_array
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: river_reservoir_nums
@@ -8152,32 +8504,32 @@ subroutine testLakeModel11
    real(dp),dimension(:,:), pointer :: base_retention_coefficients
    logical,dimension(:,:), pointer :: landsea_mask
    integer :: nlat_lake, nlon_lake
-   real(dp),dimension(:,:), allocatable :: cell_areas_on_surface_model_grid
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lat_index
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lon_index
-   logical,dimension(:,:), allocatable :: is_lake
-   real(dp),dimension(:,:), allocatable :: drainage
-   real(dp),dimension(:,:), allocatable :: evaporation
-   real(dp),dimension(:,:), allocatable :: runoff
-   real(dp),dimension(:,:,:), allocatable :: drainages
-   real(dp),dimension(:,:,:), allocatable :: runoffs
-   real(dp),dimension(:,:,:), allocatable :: evaporations
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   logical,dimension(:,:), pointer:: is_lake
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:), pointer :: evaporation
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:,:), pointer :: evaporations
    real(dp),dimension(:,:), pointer :: initial_water_to_lake_centers
    real(dp),dimension(:,:), pointer :: initial_spillover_to_rivers
-   real(dp),dimension(:,:), allocatable :: expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: expected_water_to_hd
-   integer,dimension(:,:), allocatable :: expected_lake_numbers
-   integer,dimension(:,:), allocatable :: expected_lake_types
-   real(dp),dimension(:,:), allocatable :: expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: expected_lake_fractions
-   integer,dimension(:,:), allocatable :: expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: expected_lake_volumes
-   integer,dimension(:,:), allocatable :: lake_types
+   real(dp),dimension(:,:), pointer :: expected_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_water_to_hd
+   integer,dimension(:,:), pointer :: expected_lake_numbers
+   integer,dimension(:,:), pointer :: expected_lake_types
+   real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_lake_fractions
+   integer,dimension(:,:), pointer :: expected_number_lake_cells
+   integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: expected_lake_volumes
+   integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp),dimension(:), allocatable :: lake_volumes
-   real(dp),dimension(:,:), allocatable :: lake_fractions
+   real(dp),dimension(:), pointer :: lake_volumes
+   real(dp),dimension(:,:), pointer :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -8332,6 +8684,7 @@ subroutine testLakeModel11
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+      allocate(lake_parameters_as_array(1185))
       lake_parameters_as_array = &
        (/ 9.0, 16.0, 1.0, -1.0, 0.0, 16.0, 4.0, 1.0, 16.0, 4.0, 1.0, 1.0, 3.0, 1.0, -1.0, 4.0, 2.0, &
           0.0, 46.0, 2.0, -1.0, 0.0, 14.0, 16.0, 7.0, 14.0, 16.0, 1.0, 0.0, 2.0, 14.0, 17.0, 1.0, &
@@ -8560,6 +8913,7 @@ subroutine testLakeModel11
          1,  43, 1, &
          15, 7,  1 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(expected_lake_volumes(9))
       expected_lake_volumes = (/ 0.0, 10.0, 1.0, 38.0, 6.0, 46.0, 55.0, 55.0, 229.0 /)
       !allocate(expected_true_lake_depths(nlat_lake,nlon_lake))
       !expected_true_lake_depths = transpose(reshape((/   &
@@ -8655,7 +9009,7 @@ subroutine testLakeModel12
    type(riverprognosticfields), pointer :: river_fields
    type(lakemodelparameters), pointer :: lake_model_parameters
    type(lakemodelprognostics), pointer :: lake_model_prognostics
-   real(dp), dimension(:), allocatable :: lake_parameters_as_array
+   real(dp), dimension(:), pointer :: lake_parameters_as_array
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: river_reservoir_nums
@@ -8666,32 +9020,32 @@ subroutine testLakeModel12
    real(dp),dimension(:,:), pointer :: base_retention_coefficients
    logical,dimension(:,:), pointer :: landsea_mask
    integer :: nlat_lake, nlon_lake
-   real(dp),dimension(:,:), allocatable :: cell_areas_on_surface_model_grid
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lat_index
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lon_index
-   logical,dimension(:,:), allocatable :: is_lake
-   real(dp),dimension(:,:), allocatable :: drainage
-   real(dp),dimension(:,:), allocatable :: evaporation
-   real(dp),dimension(:,:), allocatable :: runoff
-   real(dp),dimension(:,:,:), allocatable :: runoffs
-   real(dp),dimension(:,:,:), allocatable :: drainages
-   real(dp),dimension(:,:,:), allocatable :: evaporations
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   logical,dimension(:,:), pointer:: is_lake
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:), pointer :: evaporation
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:,:), pointer :: evaporations
    real(dp),dimension(:,:), pointer :: initial_water_to_lake_centers
    real(dp),dimension(:,:), pointer :: initial_spillover_to_rivers
-   real(dp),dimension(:,:), allocatable :: expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: expected_water_to_hd
-   integer,dimension(:,:), allocatable :: expected_lake_numbers
-   integer,dimension(:,:), allocatable :: expected_lake_types
-   real(dp),dimension(:,:), allocatable :: expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: expected_lake_fractions
-   integer,dimension(:,:), allocatable :: expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: expected_lake_volumes
-   integer,dimension(:,:), allocatable :: lake_types
+   real(dp),dimension(:,:), pointer :: expected_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_water_to_hd
+   integer,dimension(:,:), pointer :: expected_lake_numbers
+   integer,dimension(:,:), pointer :: expected_lake_types
+   real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_lake_fractions
+   integer,dimension(:,:), pointer :: expected_number_lake_cells
+   integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: expected_lake_volumes
+   integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp),dimension(:), allocatable :: lake_volumes
-   real(dp),dimension(:,:), allocatable :: lake_fractions
+   real(dp),dimension(:), pointer :: lake_volumes
+   real(dp),dimension(:,:), pointer :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -8845,6 +9199,7 @@ subroutine testLakeModel12
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+      allocate(lake_parameters_as_array(1185))
       lake_parameters_as_array = &
         (/ 9.0, 16.0, 1.0, -1.0, 0.0, 16.0, 4.0, 1.0, 16.0, 4.0, 1.0, 1.0, 3.0, 1.0, -1.0, 4.0, 2.0, 0.0, 46.0, 2.0, -1.0, 0.0, &
           14.0, 16.0, 7.0, 14.0, 16.0, 1.0, 0.0, 2.0, 14.0, 17.0, 1.0, 0.0, 2.0, 15.0, 16.0, 1.0, 3.0, 3.0, 15.0, 17.0, 1.0, 3.0, &
@@ -9053,6 +9408,7 @@ subroutine testLakeModel12
          1,  43, 1, &
          15, 7,  1 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(expected_lake_volumes(9))
       expected_lake_volumes = (/ 0.0, 0.0, 1.0, 38.0, 6.0, 46.0, 49.0, 0.0, 0.0 /)
       !allocate(expected_true_lake_depths(nlat_lake,nlon_lake))
       !expected_true_lake_depths = transpose(reshape((/   &
@@ -9147,7 +9503,7 @@ subroutine testLakeModel13
    type(riverprognosticfields), pointer :: river_fields
    type(lakemodelparameters), pointer :: lake_model_parameters
    type(lakemodelprognostics), pointer :: lake_model_prognostics
-   real(dp), dimension(:), allocatable :: lake_parameters_as_array
+   real(dp), dimension(:), pointer :: lake_parameters_as_array
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: river_reservoir_nums
@@ -9158,53 +9514,53 @@ subroutine testLakeModel13
    real(dp),dimension(:,:), pointer :: base_retention_coefficients
    logical,dimension(:,:), pointer :: landsea_mask
    integer :: nlat_lake, nlon_lake
-   real(dp),dimension(:,:), allocatable :: cell_areas_on_surface_model_grid
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lat_index
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lon_index
-   logical,dimension(:,:), allocatable :: is_lake
-   real(dp),dimension(:,:), allocatable :: drainage
-   real(dp),dimension(:,:), allocatable :: evaporation
-   real(dp),dimension(:,:), allocatable :: additional_evaporation
-   real(dp),dimension(:,:), allocatable :: runoff
-   real(dp),dimension(:,:,:), allocatable :: runoffs
-   real(dp),dimension(:,:,:), allocatable :: drainages
-   real(dp),dimension(:,:,:), allocatable :: evaporations
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   logical,dimension(:,:), pointer:: is_lake
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:), pointer :: evaporation
+   real(dp),dimension(:,:), pointer :: additional_evaporation
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:,:), pointer :: evaporations
    real(dp),dimension(:,:), pointer :: initial_water_to_lake_centers
    real(dp),dimension(:,:), pointer :: initial_spillover_to_rivers
-   real(dp),dimension(:,:), allocatable :: expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: expected_water_to_hd
-   integer,dimension(:,:), allocatable :: expected_lake_numbers
-   integer,dimension(:,:), allocatable :: expected_lake_types
-   real(dp),dimension(:,:), allocatable :: expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: expected_lake_fractions
-   integer,dimension(:,:), allocatable :: expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: first_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: second_intermediate_expected_lake_volumes
-   integer,dimension(:,:), allocatable :: lake_types
+   real(dp),dimension(:,:), pointer :: expected_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_water_to_hd
+   integer,dimension(:,:), pointer :: expected_lake_numbers
+   integer,dimension(:,:), pointer :: expected_lake_types
+   real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_lake_fractions
+   integer,dimension(:,:), pointer :: expected_number_lake_cells
+   integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: first_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: second_intermediate_expected_lake_volumes
+   integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp),dimension(:), allocatable :: lake_volumes
-   real(dp),dimension(:,:), allocatable :: lake_fractions
+   real(dp),dimension(:), pointer :: lake_volumes
+   real(dp),dimension(:,:), pointer :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -9359,6 +9715,7 @@ subroutine testLakeModel13
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+      allocate(lake_parameters_as_array(1185))
       lake_parameters_as_array = &
         (/ 9.0, 16.0, 1.0, -1.0, 0.0, 16.0, 4.0, 1.0, 16.0, 4.0, 1.0, 1.0, 3.0, 1.0, -1.0, 4.0, &
            2.0, 0.0, 46.0, 2.0, -1.0, 0.0, 14.0, 16.0, 7.0, 14.0, 16.0, 1.0, 0.0, 2.0, 14.0, 17.0, &
@@ -9588,6 +9945,7 @@ subroutine testLakeModel13
          1,  43, 1, &
          15, 7,  1  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(expected_lake_volumes(9))
       expected_lake_volumes = (/ 0.0, 0.0, 1.0, 38.0, 6.0, 46.0, 55.0, 55.0, 229.0 /)
       !allocate(expected_true_lake_depths(nlat_lake,nlon_lake))
       !expected_true_lake_depths = transpose(reshape((/   &
@@ -9720,6 +10078,7 @@ subroutine testLakeModel13
          1,  43, 1, &
          15, 7,  1  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(first_intermediate_expected_lake_volumes(9))
       first_intermediate_expected_lake_volumes = (/ 0.0, 0.0, 1.0, 38.0, 6.0, 0.0, 55.0, 55.0, 0.0 /)
       !allocate(first_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !first_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -9855,6 +10214,7 @@ subroutine testLakeModel13
          1,  43, 1, &
          15, 7,  1 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(second_intermediate_expected_lake_volumes(9))
       second_intermediate_expected_lake_volumes = (/ 0.0, 0.0, 1.0, 38.0, 6.0, 46.0, 55.0, 55.0, 229.0 /)
       !allocate(second_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !second_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -10041,7 +10401,7 @@ subroutine testLakeModel14
    type(riverprognosticfields), pointer :: river_fields
    type(lakemodelparameters), pointer :: lake_model_parameters
    type(lakemodelprognostics), pointer :: lake_model_prognostics
-   real(dp), dimension(:), allocatable :: lake_parameters_as_array
+   real(dp), dimension(:), pointer :: lake_parameters_as_array
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: river_reservoir_nums
@@ -10052,32 +10412,32 @@ subroutine testLakeModel14
    real(dp),dimension(:,:), pointer :: base_retention_coefficients
    logical,dimension(:,:), pointer :: landsea_mask
    integer :: nlat_lake, nlon_lake
-   real(dp),dimension(:,:), allocatable :: cell_areas_on_surface_model_grid
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lat_index
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lon_index
-   logical,dimension(:,:), allocatable :: is_lake
-   real(dp),dimension(:,:), allocatable :: drainage
-   real(dp),dimension(:,:), allocatable :: evaporation
-   real(dp),dimension(:,:), allocatable :: runoff
-   real(dp),dimension(:,:,:), allocatable :: runoffs
-   real(dp),dimension(:,:,:), allocatable :: drainages
-   real(dp),dimension(:,:,:), allocatable :: evaporations
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   logical,dimension(:,:), pointer:: is_lake
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:), pointer :: evaporation
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:,:), pointer :: evaporations
    real(dp),dimension(:,:), pointer :: initial_water_to_lake_centers
    real(dp),dimension(:,:), pointer :: initial_spillover_to_rivers
-   real(dp),dimension(:,:), allocatable :: expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: expected_water_to_hd
-   integer,dimension(:,:), allocatable :: expected_lake_numbers
-   integer,dimension(:,:), allocatable :: expected_lake_types
-   real(dp),dimension(:,:), allocatable :: expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: expected_lake_fractions
-   integer,dimension(:,:), allocatable :: expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: expected_lake_volumes
-   integer,dimension(:,:), allocatable :: lake_types
+   real(dp),dimension(:,:), pointer :: expected_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_water_to_hd
+   integer,dimension(:,:), pointer :: expected_lake_numbers
+   integer,dimension(:,:), pointer :: expected_lake_types
+   real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_lake_fractions
+   integer,dimension(:,:), pointer :: expected_number_lake_cells
+   integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: expected_lake_volumes
+   integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp),dimension(:), allocatable :: lake_volumes
-   real(dp),dimension(:,:), allocatable :: lake_fractions
+   real(dp),dimension(:), pointer :: lake_volumes
+   real(dp),dimension(:,:), pointer :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -10232,6 +10592,7 @@ subroutine testLakeModel14
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+      allocate(lake_parameters_as_array(1185))
       lake_parameters_as_array = &
         (/ 9.0, 16.0, 1.0, -1.0, 0.0, 16.0, 4.0, 1.0, 16.0, 4.0, 1.0, 1.0, 3.0, 1.0, -1.0, 4.0, &
            2.0, 0.0, 46.0, 2.0, -1.0, 0.0, 14.0, 16.0, 7.0, 14.0, 16.0, 1.0, 0.0, 2.0, 14.0, 17.0, &
@@ -10452,6 +10813,7 @@ subroutine testLakeModel14
          1,  43, 1, &
          15, 7,  1  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(expected_lake_volumes(9))
       expected_lake_volumes = (/ 0.0, 10.0, 1.0, 38.0, 6.0, 46.0, 55.0, 55.0, 229.0 /)
       !allocate(expected_true_lake_depths(nlat_lake,nlon_lake))
       !expected_true_lake_depths = transpose(reshape((/   &
@@ -10547,7 +10909,7 @@ subroutine testLakeModel15
    type(riverprognosticfields), pointer :: river_fields
    type(lakemodelparameters), pointer :: lake_model_parameters
    type(lakemodelprognostics), pointer :: lake_model_prognostics
-   real(dp), dimension(:), allocatable :: lake_parameters_as_array
+   real(dp), dimension(:), pointer :: lake_parameters_as_array
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: river_reservoir_nums
@@ -10558,32 +10920,32 @@ subroutine testLakeModel15
    real(dp),dimension(:,:), pointer :: base_retention_coefficients
    logical,dimension(:,:), pointer :: landsea_mask
    integer :: nlat_lake, nlon_lake
-   real(dp),dimension(:,:), allocatable :: cell_areas_on_surface_model_grid
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lat_index
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lon_index
-   logical,dimension(:,:), allocatable :: is_lake
-   real(dp),dimension(:,:), allocatable :: drainage
-   real(dp),dimension(:,:), allocatable :: evaporation
-   real(dp),dimension(:,:), allocatable :: runoff
-   real(dp),dimension(:,:,:), allocatable :: runoffs
-   real(dp),dimension(:,:,:), allocatable :: drainages
-   real(dp),dimension(:,:,:), allocatable :: evaporations
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   logical,dimension(:,:), pointer:: is_lake
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:), pointer :: evaporation
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:,:), pointer :: evaporations
    real(dp),dimension(:,:), pointer :: initial_water_to_lake_centers
    real(dp),dimension(:,:), pointer :: initial_spillover_to_rivers
-   real(dp),dimension(:,:), allocatable :: expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: expected_water_to_hd
-   integer,dimension(:,:), allocatable :: expected_lake_numbers
-   integer,dimension(:,:), allocatable :: expected_lake_types
-   real(dp),dimension(:,:), allocatable :: expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: expected_lake_fractions
-   integer,dimension(:,:), allocatable :: expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: expected_lake_volumes
-   integer,dimension(:,:), allocatable :: lake_types
+   real(dp),dimension(:,:), pointer :: expected_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_water_to_hd
+   integer,dimension(:,:), pointer :: expected_lake_numbers
+   integer,dimension(:,:), pointer :: expected_lake_types
+   real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_lake_fractions
+   integer,dimension(:,:), pointer :: expected_number_lake_cells
+   integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: expected_lake_volumes
+   integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp),dimension(:), allocatable :: lake_volumes
-   real(dp),dimension(:,:), allocatable :: lake_fractions
+   real(dp),dimension(:), pointer :: lake_volumes
+   real(dp),dimension(:,:), pointer :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -10736,6 +11098,7 @@ subroutine testLakeModel15
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+      allocate(lake_parameters_as_array(1185))
       lake_parameters_as_array = &
         (/ 9.0, 16.0, 1.0, -1.0, 0.0, 16.0, 4.0, 1.0, 16.0, 4.0, 1.0, 1.0, 3.0, 1.0, -1.0, 4.0, &
            2.0, 0.0, 46.0, 2.0, -1.0, 0.0, 14.0, 16.0, 7.0, 14.0, 16.0, 1.0, 0.0, 2.0, 14.0, 17.0, &
@@ -10959,6 +11322,7 @@ subroutine testLakeModel15
          1,  43, 1, &
          15, 7,  1  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(expected_lake_volumes(9))
       expected_lake_volumes = (/ 0.0, 0.0, 1.0, 38.0, 6.0, 46.0, 49.0, 0.0, 0.0 /)
       !allocate(expected_true_lake_depths(nlat_lake,nlon_lake))
       !expected_true_lake_depths = transpose(reshape((/   &
@@ -11053,7 +11417,7 @@ subroutine testLakeModel16
    type(riverprognosticfields), pointer :: river_fields
    type(lakemodelparameters), pointer :: lake_model_parameters
    type(lakemodelprognostics), pointer :: lake_model_prognostics
-   real(dp), dimension(:), allocatable :: lake_parameters_as_array
+   real(dp), dimension(:), pointer :: lake_parameters_as_array
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: river_reservoir_nums
@@ -11064,52 +11428,52 @@ subroutine testLakeModel16
    real(dp),dimension(:,:), pointer :: base_retention_coefficients
    logical,dimension(:,:), pointer :: landsea_mask
    integer :: nlat_lake, nlon_lake
-   real(dp),dimension(:,:), allocatable :: cell_areas_on_surface_model_grid
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lat_index
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lon_index
-   logical,dimension(:,:), allocatable :: is_lake
-   real(dp),dimension(:,:), allocatable :: drainage
-   real(dp),dimension(:,:), allocatable :: evaporation
-   real(dp),dimension(:,:), allocatable :: runoff
-   real(dp),dimension(:,:,:), allocatable :: runoffs
-   real(dp),dimension(:,:,:), allocatable :: drainages
-   real(dp),dimension(:,:,:), allocatable :: evaporations
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   logical,dimension(:,:), pointer:: is_lake
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:), pointer :: evaporation
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:,:), pointer :: evaporations
    real(dp),dimension(:,:), pointer :: initial_water_to_lake_centers
    real(dp),dimension(:,:), pointer :: initial_spillover_to_rivers
-   real(dp),dimension(:,:), allocatable :: expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: expected_water_to_hd
-   integer,dimension(:,:), allocatable :: expected_lake_numbers
-   integer,dimension(:,:), allocatable :: expected_lake_types
-   real(dp),dimension(:,:), allocatable :: expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: expected_lake_fractions
-   integer,dimension(:,:), allocatable :: expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: first_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: second_intermediate_expected_lake_volumes
-   integer,dimension(:,:), allocatable :: lake_types
+   real(dp),dimension(:,:), pointer :: expected_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_water_to_hd
+   integer,dimension(:,:), pointer :: expected_lake_numbers
+   integer,dimension(:,:), pointer :: expected_lake_types
+   real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_lake_fractions
+   integer,dimension(:,:), pointer :: expected_number_lake_cells
+   integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: first_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: second_intermediate_expected_lake_volumes
+   integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp),dimension(:), allocatable :: lake_volumes
-   real(dp),dimension(:,:), allocatable :: lake_fractions
+   real(dp),dimension(:), pointer :: lake_volumes
+   real(dp),dimension(:,:), pointer :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -11263,6 +11627,7 @@ subroutine testLakeModel16
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+      allocate(lake_parameters_as_array(1185))
       lake_parameters_as_array = &
         (/ 9.0, 16.0, 1.0, -1.0, 0.0, 16.0, 4.0, 1.0, 16.0, 4.0, 1.0, 1.0, 3.0, 1.0, -1.0, 4.0, 2.0, &
            0.0, 46.0, 2.0, -1.0, 0.0, 14.0, 16.0, 7.0, 14.0, 16.0, 1.0, 0.0, 2.0, 14.0, 17.0, 1.0, 0.0, &
@@ -11490,6 +11855,7 @@ subroutine testLakeModel16
          1,  43, 1, &
          15, 7,  1  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(expected_lake_volumes(9))
       expected_lake_volumes = (/ 0.0, 0.0, 1.0, 38.0, 6.0, 46.0, 55.0, 55.0, 229.0 /)
       !allocate(expected_true_lake_depths(nlat_lake,nlon_lake))
       !expected_true_lake_depths = transpose(reshape((/   &
@@ -11622,6 +11988,7 @@ subroutine testLakeModel16
          1,  43, 1, &
          15, 7,  1  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(first_intermediate_expected_lake_volumes(9))
       first_intermediate_expected_lake_volumes = (/ 0.0, 0.0, 0.0, 0.0, 0.0, 46.0, 0.0, 0.0, 0.0 /)
       !allocate(first_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !first_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -11754,6 +12121,7 @@ subroutine testLakeModel16
          1,  43, 1, &
          15, 7,  1  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(second_intermediate_expected_lake_volumes(9))
       second_intermediate_expected_lake_volumes = (/ 0.0, 0.0, 346.0, 38.0, 0.0, 46.0, 0.0, 0.0, 0.0 /)
       !allocate(second_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !second_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -11941,7 +12309,7 @@ subroutine testLakeModel17
    type(riverprognosticfields), pointer :: river_fields
    type(lakemodelparameters), pointer :: lake_model_parameters
    type(lakemodelprognostics), pointer :: lake_model_prognostics
-   real(dp), dimension(:), allocatable :: lake_parameters_as_array
+   real(dp), dimension(:), pointer :: lake_parameters_as_array
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: river_reservoir_nums
@@ -11952,81 +12320,81 @@ subroutine testLakeModel17
    real(dp),dimension(:,:), pointer :: base_retention_coefficients
    logical,dimension(:,:), pointer :: landsea_mask
    integer :: nlat_lake, nlon_lake
-   real(dp),dimension(:,:), allocatable :: cell_areas_on_surface_model_grid
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lat_index
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lon_index
-   logical,dimension(:,:), allocatable :: is_lake
-   real(dp),dimension(:,:), allocatable :: drainage
-   real(dp),dimension(:,:), allocatable :: evaporation
-   real(dp),dimension(:,:), allocatable :: runoff
-   real(dp),dimension(:,:,:), allocatable :: drainages
-   real(dp),dimension(:,:,:), allocatable :: evaporations
-   real(dp),dimension(:,:,:), allocatable :: runoffs
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   logical,dimension(:,:), pointer:: is_lake
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:), pointer :: evaporation
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:,:), pointer :: evaporations
+   real(dp),dimension(:,:,:), pointer :: runoffs
    real(dp),dimension(:,:), pointer :: initial_water_to_lake_centers
    real(dp),dimension(:,:), pointer :: initial_spillover_to_rivers
-   real(dp),dimension(:,:), allocatable :: expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: expected_water_to_hd
-   integer,dimension(:,:), allocatable :: expected_lake_numbers
-   integer,dimension(:,:), allocatable :: expected_lake_types
-   real(dp),dimension(:,:), allocatable :: expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: expected_lake_fractions
-   integer,dimension(:,:), allocatable :: expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: first_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: second_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: third_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: fourth_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: fourth_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: fourth_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: fourth_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: fourth_intermediate_expected_lake_volumes
-   real(dp),dimension(:), allocatable :: fifth_intermediate_expected_lake_volumes
-   real(dp),dimension(:), allocatable :: seventh_intermediate_expected_lake_volumes
-   real(dp),dimension(:), allocatable :: sixth_intermediate_expected_lake_volumes
-   real(dp),dimension(:), allocatable :: eighth_intermediate_expected_lake_volumes
-   real(dp),dimension(:), allocatable :: ninth_intermediate_expected_lake_volumes
-   real(dp),dimension(:), allocatable :: tenth_intermediate_expected_lake_volumes
-   real(dp),dimension(:), allocatable :: eleventh_intermediate_expected_lake_volumes
-   real(dp),dimension(:), allocatable :: twelfth_intermediate_expected_lake_volumes
-   real(dp),dimension(:), allocatable :: thirteenth_intermediate_expected_lake_volumes
-   integer,dimension(:,:), allocatable :: lake_types
+   real(dp),dimension(:,:), pointer :: expected_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_water_to_hd
+   integer,dimension(:,:), pointer :: expected_lake_numbers
+   integer,dimension(:,:), pointer :: expected_lake_types
+   real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_lake_fractions
+   integer,dimension(:,:), pointer :: expected_number_lake_cells
+   integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: first_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: second_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: third_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: third_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: third_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: third_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: third_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: fourth_intermediate_expected_lake_volumes
+   real(dp),dimension(:), pointer :: fifth_intermediate_expected_lake_volumes
+   real(dp),dimension(:), pointer :: seventh_intermediate_expected_lake_volumes
+   real(dp),dimension(:), pointer :: sixth_intermediate_expected_lake_volumes
+   real(dp),dimension(:), pointer :: eighth_intermediate_expected_lake_volumes
+   real(dp),dimension(:), pointer :: ninth_intermediate_expected_lake_volumes
+   real(dp),dimension(:), pointer :: tenth_intermediate_expected_lake_volumes
+   real(dp),dimension(:), pointer :: eleventh_intermediate_expected_lake_volumes
+   real(dp),dimension(:), pointer :: twelfth_intermediate_expected_lake_volumes
+   real(dp),dimension(:), pointer :: thirteenth_intermediate_expected_lake_volumes
+   integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp),dimension(:), allocatable :: lake_volumes
-   real(dp),dimension(:,:), allocatable :: lake_fractions
+   real(dp),dimension(:), pointer :: lake_volumes
+   real(dp),dimension(:,:), pointer :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -12178,6 +12546,7 @@ subroutine testLakeModel17
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+      allocate(lake_parameters_as_array(1483))
       lake_parameters_as_array = &
         (/ 1.0, 1481.0, 1.0, -1.0, 0.0, 10.0, 11.0, 294.0, 10.0, 11.0, 1.0, 0.0, 1.0, 11.0, 12.0, 1.0, 0.0, 1.0, 9.0, 12.0, &
            1.0, 0.0, 1.0, 10.0, 10.0, 1.0, 0.0, 1.0, 12.0, 11.0, 1.0, 0.0, 1.0, 11.0, 10.0, 1.0, 0.0, 1.0, 8.0, 12.0, 1.0, &
@@ -12402,6 +12771,7 @@ subroutine testLakeModel17
          48, 64, 48, &
          36, 48, 36  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(expected_lake_volumes(1))
       expected_lake_volumes = (/ 0.0 /)
       !allocate(expected_true_lake_depths(nlat_lake,nlon_lake))
       !expected_true_lake_depths = transpose(reshape((/   &
@@ -12552,6 +12922,7 @@ subroutine testLakeModel17
          48, 64, 48, &
          36, 48, 36  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(first_intermediate_expected_lake_volumes(1))
       first_intermediate_expected_lake_volumes = (/ 502.0 /)
       !allocate(first_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !first_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -12702,6 +13073,7 @@ subroutine testLakeModel17
          48, 64, 48, &
          36, 48, 36  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(second_intermediate_expected_lake_volumes(1))
       second_intermediate_expected_lake_volumes = (/ 495.5008758 /)
       !allocate(second_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !second_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -12885,6 +13257,7 @@ subroutine testLakeModel17
          48, 64, 48, &
          36, 48, 36  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(third_intermediate_expected_lake_volumes(1))
       third_intermediate_expected_lake_volumes = (/ 209.53941055597593 /)
       !allocate(third_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !third_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -13055,6 +13428,7 @@ subroutine testLakeModel17
          48, 64, 48, &
          36, 48, 36  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(fourth_intermediate_expected_lake_volumes(1))
       fourth_intermediate_expected_lake_volumes = (/ 203.04028634610876 /)
       !allocate(fourth_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !fourth_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -13079,14 +13453,23 @@ subroutine testLakeModel17
          !                  0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00, &
          !                  0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00  /), &
          ! (/nlon_lake,nlat_lake/)))
+      allocate(fifth_intermediate_expected_lake_volumes(1))
       fifth_intermediate_expected_lake_volumes = (/ 130.0971746259524 /)
+      allocate(sixth_intermediate_expected_lake_volumes(1))
       sixth_intermediate_expected_lake_volumes = (/ 125.53823014344262 /)
+      allocate(seventh_intermediate_expected_lake_volumes(1))
       seventh_intermediate_expected_lake_volumes = (/ 93.62561876587421 /)
+      allocate(eighth_intermediate_expected_lake_volumes(1))
       eighth_intermediate_expected_lake_volumes = (/ 89.06667428336443 /)
+      allocate(ninth_intermediate_expected_lake_volumes(1))
       ninth_intermediate_expected_lake_volumes = (/ 48.03617394077642 /)
+      allocate(tenth_intermediate_expected_lake_volumes(1))
       tenth_intermediate_expected_lake_volumes = (/ 43.47722945826665 /)
+      allocate(eleventh_intermediate_expected_lake_volumes(1))
       eleventh_intermediate_expected_lake_volumes = (/ 25.241451528227554 /)
+      allocate(twelfth_intermediate_expected_lake_volumes(1))
       twelfth_intermediate_expected_lake_volumes = (/ 20.682507045717777 /)
+      allocate(thirteenth_intermediate_expected_lake_volumes(1))
       thirteenth_intermediate_expected_lake_volumes = (/ 2.446729115678684 /)
       call run_hd_model(0,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
@@ -13421,7 +13804,7 @@ subroutine testLakeModel18
    type(riverprognosticfields), pointer :: river_fields
    type(lakemodelparameters), pointer :: lake_model_parameters
    type(lakemodelprognostics), pointer :: lake_model_prognostics
-   real(dp), dimension(:), allocatable :: lake_parameters_as_array
+   real(dp), dimension(:), pointer :: lake_parameters_as_array
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: river_reservoir_nums
@@ -13432,22 +13815,22 @@ subroutine testLakeModel18
    real(dp),dimension(:,:), pointer :: base_retention_coefficients
    logical,dimension(:,:), pointer :: landsea_mask
    integer :: nlat_lake, nlon_lake
-   real(dp),dimension(:,:), allocatable :: cell_areas_on_surface_model_grid
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lat_index
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lon_index
-   logical,dimension(:,:), allocatable :: is_lake
-   real(dp),dimension(:,:), allocatable :: drainage
-   real(dp),dimension(:,:), allocatable :: runoff
-   real(dp),dimension(:,:), allocatable :: evaporation
-   real(dp),dimension(:,:,:), allocatable :: drainages
-   real(dp),dimension(:,:,:), allocatable :: runoffs
-   real(dp),dimension(:,:,:), allocatable :: evaporations
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   logical,dimension(:,:), pointer:: is_lake
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:), pointer :: evaporation
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:,:), pointer :: evaporations
    real(dp),dimension(:,:), pointer :: initial_water_to_lake_centers
    real(dp),dimension(:,:), pointer :: initial_spillover_to_rivers
-   real(dp),dimension(:,:), allocatable :: expected_lake_volumes_all_timesteps
-   real(dp),dimension(:), allocatable :: lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_lake_volumes_all_timesteps
+   real(dp),dimension(:), pointer :: lake_volumes
    real(dp),dimension(:,:), pointer :: lake_volumes_all_timesteps
-   real(dp),dimension(:,:), allocatable :: lake_fractions
+   real(dp),dimension(:,:), pointer :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -13599,6 +13982,7 @@ subroutine testLakeModel18
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+      allocate(lake_parameters_as_array(1483))
       lake_parameters_as_array = &
         (/ 1.0, 1481.0, 1.0, -1.0, 0.0, 10.0, 11.0, 294.0, 10.0, 11.0, 1.0, 0.0, 1.0, 11.0, 12.0, 1.0, 0.0, 1.0, 9.0, &
          12.0, 1.0, 0.0, 1.0, 10.0, 10.0, 1.0, 0.0, 1.0, 12.0, 11.0, 1.0, 0.0, 1.0, 11.0, 10.0, 1.0, 0.0, 1.0, 8.0, 12.0, &
@@ -13823,7 +14207,7 @@ subroutine testLakeModel19
    type(riverprognosticfields), pointer :: river_fields
    type(lakemodelparameters), pointer :: lake_model_parameters
    type(lakemodelprognostics), pointer :: lake_model_prognostics
-   real(dp), dimension(:), allocatable :: lake_parameters_as_array
+   real(dp), dimension(:), pointer :: lake_parameters_as_array
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: river_reservoir_nums
@@ -13834,108 +14218,108 @@ subroutine testLakeModel19
    real(dp),dimension(:,:), pointer :: base_retention_coefficients
    logical,dimension(:,:), pointer :: landsea_mask
    integer :: nlat_lake, nlon_lake
-   logical,dimension(:,:), allocatable :: lake_centers
-   real(dp),dimension(:,:), allocatable :: cell_areas_on_surface_model_grid
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lat_index
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lon_index
-   real(dp),dimension(:,:), allocatable :: cell_areas
-   real(dp),dimension(:,:), allocatable :: raw_heights
-   real(dp),dimension(:,:), allocatable :: corrected_heights
-   logical,dimension(:,:), allocatable :: is_lake
-   real(dp),dimension(:,:), allocatable :: drainage
-   real(dp),dimension(:,:), allocatable :: runoff
-   real(dp),dimension(:,:), allocatable :: evaporation
-   real(dp),dimension(:,:,:), allocatable :: evaporations
-   real(dp),dimension(:,:,:), allocatable :: runoffs
-   real(dp),dimension(:,:,:), allocatable :: drainages
+   logical,dimension(:,:), pointer :: lake_centers
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   real(dp),dimension(:,:), pointer :: cell_areas
+   real(dp),dimension(:,:), pointer :: raw_heights
+   real(dp),dimension(:,:), pointer :: corrected_heights
+   logical,dimension(:,:), pointer:: is_lake
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:), pointer :: evaporation
+   real(dp),dimension(:,:,:), pointer :: evaporations
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:,:), pointer :: drainages
    real(dp),dimension(:,:), pointer :: initial_water_to_lake_centers
    real(dp),dimension(:,:), pointer :: initial_spillover_to_rivers
-   real(dp),dimension(:,:), allocatable :: expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: expected_water_to_hd
-   integer,dimension(:,:), allocatable :: expected_lake_numbers
-   integer,dimension(:,:), allocatable :: expected_lake_types
-   real(dp),dimension(:,:), allocatable :: expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: expected_lake_fractions
-   integer,dimension(:,:), allocatable :: expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: first_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: second_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: third_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: fourth_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: fourth_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: fourth_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: fourth_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: fourth_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: fourth_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: fifth_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: fifth_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: fifth_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: fifth_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: fifth_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: fifth_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: fifth_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: fifth_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: fifth_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: fifth_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: sixth_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: sixth_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: sixth_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: sixth_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: sixth_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: sixth_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: sixth_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: sixth_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: sixth_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: sixth_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: seventh_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: seventh_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: seventh_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: seventh_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: seventh_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: seventh_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: seventh_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: seventh_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: seventh_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: seventh_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: expected_lake_volumes_all_timesteps
-   integer,dimension(:,:), allocatable :: lake_types
+   real(dp),dimension(:,:), pointer :: expected_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_water_to_hd
+   integer,dimension(:,:), pointer :: expected_lake_numbers
+   integer,dimension(:,:), pointer :: expected_lake_types
+   real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_lake_fractions
+   integer,dimension(:,:), pointer :: expected_number_lake_cells
+   integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: first_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: second_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: third_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: third_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: third_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: third_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: third_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: fourth_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: fifth_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: fifth_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: fifth_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: fifth_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: fifth_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: sixth_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: sixth_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: sixth_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: sixth_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: sixth_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: sixth_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: sixth_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: sixth_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: sixth_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: sixth_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: seventh_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: seventh_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: seventh_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: seventh_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: seventh_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: seventh_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: seventh_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: seventh_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: seventh_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: seventh_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_lake_volumes_all_timesteps
+   integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp),dimension(:), allocatable :: lake_volumes
+   real(dp),dimension(:), pointer :: lake_volumes
    real(dp),dimension(:,:), pointer :: lake_volumes_all_timesteps
-   real(dp),dimension(:,:), allocatable :: lake_fractions
+   real(dp),dimension(:,:), pointer :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -14198,6 +14582,7 @@ subroutine testLakeModel19
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+      allocate(lake_parameters_as_array(2275))
       lake_parameters_as_array = &
         (/ 12.0, 236.0, 1.0, 8.0, 0.0, 15.0, 2.0, 45.0, 15.0, 2.0, 1.0, 0.0, 6.0, 16.0, 3.0, 1.0, &
            0.0, 6.0, 15.0, 3.0, 1.0, 0.0, 6.0, 16.0, 4.0, 1.0, 0.0, 6.0, 16.0, 2.0, 1.0, 0.0, 6.0, &
@@ -14498,6 +14883,7 @@ subroutine testLakeModel19
          48, 64, 48, &
          36, 48, 36 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(expected_lake_volumes(12))
       expected_lake_volumes = (/ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
                                  0.0, 0.0, 0.0, 0.0, 0.0 /)
       !allocate(expected_true_lake_depths(nlat_lake,nlon_lake))
@@ -14804,6 +15190,7 @@ subroutine testLakeModel19
          48, 64, 48, &
          36, 48, 36 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(first_intermediate_expected_lake_volumes(12))
       first_intermediate_expected_lake_volumes = (/ 45.0, 63.0, 18.0, 66.0, 48.0, 104.0, &
                                                     27.0, 56.0, 34.0, 45.0, 55.0, 91.0 /)
       !allocate(first_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
@@ -14957,6 +15344,7 @@ subroutine testLakeModel19
          48, 64, 48, &
          36, 48, 36 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(second_intermediate_expected_lake_volumes(12))
       second_intermediate_expected_lake_volumes = (/45.0, 63.0, 18.0, 66.0, 48.0, 104.0, 27.0, 1.0, &
                                                     34.0, 45.0, 55.0, 3.1875/)
       !allocate(second_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
@@ -15110,6 +15498,7 @@ subroutine testLakeModel19
          48, 64, 48, &
          36, 48, 36 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(third_intermediate_expected_lake_volumes(12))
       third_intermediate_expected_lake_volumes = (/43.666666666666686, 63.0, 18.0, 64.66666666666669, &
                                                    48.0, 104.0, 27.0, 0.0, 32.66666666666666, 45.0, &
                                                    53.66666666666666, 0.0 /)
@@ -15264,6 +15653,7 @@ subroutine testLakeModel19
          48, 64, 48, &
          36, 48, 36  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(fourth_intermediate_expected_lake_volumes(12))
       fourth_intermediate_expected_lake_volumes = (/ 40.7152777777778, 63.0, 18.0, 63.95138888888891, &
                                                      48.0, 104.0, 27.0, 0.0, 30.45138888888888, &
                                                      45.0, 50.16666666666666, 0.0 /)
@@ -15398,6 +15788,7 @@ subroutine testLakeModel19
          48, 64, 48, &
          36, 48, 36  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(fifth_intermediate_expected_lake_volumes(1))
       fifth_intermediate_expected_lake_volumes = (/ 0.0, 0.0, 0.0, 16.74305555555553, &
                                                     4.385416666666662, 46.541666666666615, &
                                                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0 /)
@@ -15532,6 +15923,7 @@ subroutine testLakeModel19
          48, 64, 48, &
          36, 48, 36  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(sixth_intermediate_expected_lake_volumes(12))
       sixth_intermediate_expected_lake_volumes = (/ 0.0, 0.0, 0.0, 16.02777777777775, &
                                                     3.5520833333333286, 44.916666666666615, &
                                                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0 /)
@@ -15666,6 +16058,7 @@ subroutine testLakeModel19
          48, 64, 48, &
          36, 48, 36  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(seventh_intermediate_expected_lake_volumes(12))
       seventh_intermediate_expected_lake_volumes = (/ 0.0, 0.0, 0.0, 15.312499999999972, &
                                                       2.7187499999999956, 43.291666666666615, &
                                                       0.0, 0.0, 0.0, 0.0, 0.0, 0.0 /)
@@ -16110,7 +16503,7 @@ subroutine testLakeModel20
    type(riverprognosticfields), pointer :: river_fields
    type(lakemodelparameters), pointer :: lake_model_parameters
    type(lakemodelprognostics), pointer :: lake_model_prognostics
-   real(dp), dimension(:), allocatable :: lake_parameters_as_array
+   real(dp), dimension(:), pointer :: lake_parameters_as_array
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: river_reservoir_nums
@@ -16121,48 +16514,48 @@ subroutine testLakeModel20
    real(dp),dimension(:,:), pointer :: base_retention_coefficients
    logical,dimension(:,:), pointer :: landsea_mask
    integer :: nlat_lake, nlon_lake
-   real(dp),dimension(:,:), allocatable :: cell_areas_on_surface_model_grid
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lat_index
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lon_index
-   logical,dimension(:,:), allocatable :: is_lake
-   real(dp),dimension(:,:), allocatable :: drainage
-   real(dp),dimension(:,:), allocatable :: runoff
-   real(dp),dimension(:,:), allocatable :: evaporation_one
-   real(dp),dimension(:,:), allocatable :: evaporation_two
-   real(dp),dimension(:,:,:), allocatable :: runoffs
-   real(dp),dimension(:,:,:), allocatable :: drainages
-   real(dp),dimension(:,:,:), allocatable :: evaporations
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   logical,dimension(:,:), pointer:: is_lake
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:), pointer :: evaporation_one
+   real(dp),dimension(:,:), pointer :: evaporation_two
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:,:), pointer :: evaporations
    real(dp),dimension(:,:), pointer :: initial_water_to_lake_centers
    real(dp),dimension(:,:), pointer :: initial_spillover_to_rivers
-   real(dp),dimension(:,:), allocatable :: expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: expected_water_to_hd
-   integer,dimension(:,:), allocatable :: expected_lake_numbers
-   integer,dimension(:,:), allocatable :: expected_lake_types
-   real(dp),dimension(:,:), allocatable :: expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: expected_lake_fractions
-   integer,dimension(:,:), allocatable :: expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: intermediate_expected_lake_volumes
-   integer,dimension(:,:), allocatable :: lake_types
+   real(dp),dimension(:,:), pointer :: expected_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_water_to_hd
+   integer,dimension(:,:), pointer :: expected_lake_numbers
+   integer,dimension(:,:), pointer :: expected_lake_types
+   real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_lake_fractions
+   integer,dimension(:,:), pointer :: expected_number_lake_cells
+   integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: intermediate_expected_lake_volumes
+   integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp),dimension(:), allocatable :: lake_volumes
-   real(dp),dimension(:,:), allocatable :: lake_volumes_all_timesteps
-   real(dp),dimension(:,:), allocatable :: lake_fractions
-   real(dp),dimension(:,:), allocatable :: expected_lake_volumes_all_timesteps
-   integer, dimension(:), allocatable :: intermediate_expected_lake_types_list
-   integer, dimension(:), allocatable :: expected_lake_types_list
-   integer, dimension(:), allocatable :: lake_types_list
+   real(dp),dimension(:), pointer :: lake_volumes
+   real(dp),dimension(:,:), pointer :: lake_volumes_all_timesteps
+   real(dp),dimension(:,:), pointer :: lake_fractions
+   real(dp),dimension(:,:), pointer :: expected_lake_volumes_all_timesteps
+   integer, dimension(:), pointer :: intermediate_expected_lake_types_list
+   integer, dimension(:), pointer :: expected_lake_types_list
+   integer, dimension(:), pointer :: lake_types_list
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -16312,6 +16705,7 @@ subroutine testLakeModel20
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+      allocate(lake_parameters_as_array(3539))
       lake_parameters_as_array = &
        (/ 68.0, 24.0, 1.0, 57.0, 0.0, 20.0, 9.0, 1.0, 20.0, 9.0,  1.0, 1.0, 2.0, 3.0, 2.0, -1.0, -1.0, 1.0, 6.0, -1.0, &
         -1.0, 1.0, 7.0, -1.0, -1.0, 1.0, 24.0, 2.0, 57.0, 0.0,  20.0, 7.0, 1.0, 20.0, 7.0, 1.0, 1.0, 2.0, 3.0, 1.0,  &
@@ -16768,6 +17162,7 @@ subroutine testLakeModel20
          48, 64, 48, &
          36, 48, 36  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(expected_lake_volumes(68))
       expected_lake_volumes = (/ 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, &
                                  0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, &
                                  0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, &
@@ -17247,6 +17642,7 @@ subroutine testLakeModel20
          48, 64, 48, &
          36, 48, 36  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(intermediate_expected_lake_volumes(68))
       intermediate_expected_lake_volumes = (/ 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0,    &
                                             0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0,    &
                                             1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0,    &
@@ -17409,7 +17805,7 @@ subroutine testLakeModel21
    type(riverprognosticfields), pointer :: river_fields
    type(lakemodelparameters), pointer :: lake_model_parameters
    type(lakemodelprognostics), pointer :: lake_model_prognostics
-   real(dp), dimension(:), allocatable :: lake_parameters_as_array
+   real(dp), dimension(:), pointer :: lake_parameters_as_array
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: river_reservoir_nums
@@ -17420,62 +17816,62 @@ subroutine testLakeModel21
    real(dp),dimension(:,:), pointer :: base_retention_coefficients
    logical,dimension(:,:), pointer :: landsea_mask
    integer :: nlat_lake, nlon_lake
-   real(dp),dimension(:,:), allocatable :: cell_areas_on_surface_model_grid
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lat_index
-   integer,dimension(:,:), allocatable :: corresponding_surface_cell_lon_index
-   logical,dimension(:,:), allocatable :: is_lake
-   real(dp),dimension(:,:), allocatable :: drainage
-   real(dp),dimension(:,:), allocatable :: runoff
-   real(dp),dimension(:,:), allocatable :: evaporation
-   real(dp),dimension(:,:,:), allocatable :: runoffs
-   real(dp),dimension(:,:,:), allocatable :: drainages
-   real(dp),dimension(:,:,:), allocatable :: evaporations
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   logical,dimension(:,:), pointer:: is_lake
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:), pointer :: evaporation
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:,:), pointer :: evaporations
    real(dp),dimension(:,:), pointer :: initial_water_to_lake_centers
    real(dp),dimension(:,:), pointer :: initial_spillover_to_rivers
-   real(dp),dimension(:,:), allocatable :: expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: expected_water_to_hd
-   integer,dimension(:,:), allocatable :: expected_lake_numbers
-   integer,dimension(:,:), allocatable :: expected_lake_types
-   real(dp),dimension(:,:), allocatable :: expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: expected_lake_fractions
-   integer,dimension(:,:), allocatable :: expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: first_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: first_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: first_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: second_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: second_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: second_intermediate_expected_lake_volumes
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_river_inflow
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_water_to_ocean
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_water_to_hd
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_lake_numbers
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_lake_types
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_diagnostic_lake_volumes
-   real(dp),dimension(:,:), allocatable :: third_intermediate_expected_lake_fractions
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_number_lake_cells
-   integer,dimension(:,:), allocatable :: third_intermediate_expected_number_fine_grid_cells
-   real(dp),dimension(:), allocatable :: third_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_water_to_hd
+   integer,dimension(:,:), pointer :: expected_lake_numbers
+   integer,dimension(:,:), pointer :: expected_lake_types
+   real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_lake_fractions
+   integer,dimension(:,:), pointer :: expected_number_lake_cells
+   integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: first_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: second_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: third_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: third_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: third_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: third_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: third_intermediate_expected_lake_volumes
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
-   integer,dimension(:,:), allocatable :: lake_types
-   real(dp),dimension(:), allocatable :: lake_volumes
-   real(dp),dimension(:,:), allocatable :: lake_fractions
+   integer,dimension(:,:), pointer :: lake_types
+   real(dp),dimension(:), pointer :: lake_volumes
+   real(dp),dimension(:,:), pointer :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -17625,6 +18021,7 @@ subroutine testLakeModel21
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+      allocate(lake_parameters_as_array(240))
       lake_parameters_as_array = &
         (/ 12.0, 26.0, 1.0, -1.0, 0.0, 8.0, 11.0, 3.0, 8.0, 11.0,  1.0, 1.0, 5.0, 8.0, 12.0, 1.0, 1.0, 5.0, 8.0, &
            10.0,  1.0, 4.0, 6.0, 1.0, -1.0, 3.0, 3.0, 0.0, 31.0, 2.0,  -1.0, 0.0, 8.0, 6.0, 4.0, 8.0, 6.0, 1.0, 1.0, &
@@ -17797,6 +18194,7 @@ subroutine testLakeModel21
          48, 64, 48, &
          36, 48, 36  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(expected_lake_volumes(12))
       expected_lake_volumes = (/ 16422.504132231406, 3.0, 4.0,   39272.22727272727, 0.5, 19992.979338842997,  &
                                  0.5, 1.0, 1.0, 1.0, 1.0, 0.0 /)
       !allocate(expected_true_lake_depths(nlat_lake,nlon_lake))
@@ -17930,6 +18328,7 @@ subroutine testLakeModel21
          48, 64, 48, &
          36, 48, 36  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(first_intermediate_expected_lake_volumes(12))
       first_intermediate_expected_lake_volumes = (/ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 0.0, 0.0 /)
       !allocate(first_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !first_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -18062,6 +18461,7 @@ subroutine testLakeModel21
          48, 64, 48, &
          36, 48, 36  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(second_intermediate_expected_lake_volumes(12))
       second_intermediate_expected_lake_volumes = (/ 0.0, 86396.0, 4.0, 0.0, 0.0, 0.0, 0.0,   43199.0, 43199.0, 1.0, 1.0, 0.0 /)
       !allocate(second_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       ! second_intermediate_expected_true_lake_depths = transpose(reshape((/   &
@@ -18194,6 +18594,7 @@ subroutine testLakeModel21
          48, 64, 48, &
          36, 48, 36 /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(third_intermediate_expected_lake_volumes(12))
       third_intermediate_expected_lake_volumes = (/ 94247.54545454546, 3.0, 4.0, 0.0, 0.0, &
                                                     133522.77272727274, 0.5, 1.0, 1.0, 1.0, 1.0, 0.0 /)
       !allocate(third_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))

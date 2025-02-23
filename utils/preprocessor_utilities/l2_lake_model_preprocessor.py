@@ -60,10 +60,10 @@ for line in filtered_lines:
                                    f'\\1\\2\\3{dim2}\\4 = \\5\\6_{dim2}\\n',
                                    extended_line)
             extended_line = re.sub(r'(\s*)_ASSIGN_?(.*)_INDICES_LIST_(\w*)'
-                                   r'INDEX_NAME(.*)_\s*=\s*(.*)_INDICES_LIST_(\w*)'
+                                   r'INDEX_NAME(.*)_\s*(=>?)\s*(.*)_INDICES_LIST_(\w*)'
                                    r'INDEX_NAME(.*)_',
-                                   f'\\1\\2\\3{dim1}\\4 = \\5\\6{dim1}\\7\\n'
-                                   f'\\1\\2\\3{dim2}\\4 = \\5\\6{dim2}\\7\\n',
+                                   f'\\1\\2\\3{dim1}\\4 \\5 \\6\\7{dim1}\\8\\n'
+                                   f'\\1\\2\\3{dim2}\\4 \\5 \\6\\7{dim2}\\8\\n',
                                    extended_line)
             extended_line = re.sub(r'(\s*)_ASSIGN_?(.*)_INDICES_LIST_(\w*)'
                                    r'INDEX_NAME(.*)_\s*=\s*(.*)',
@@ -135,9 +135,9 @@ for line in filtered_lines:
     line = re.sub(r'(\s*)_LOOP_OVER_(\w+)_GRID_END_',r'\1  end do\n\1end do',line)
     line = re.sub(r'(\s*)_LOOP_OVER_(\w+)_GRID_ _COORDS_(\w+)_(?:\s+_(.*)_)?',
                   lambda m : f'{m.group(1)}do {dim1}_{m.group(3)} ='
-                             f' 1,{m.group(4) if m.group(4) else ''}n{dim1}_{m.group(2)}\n'
+                             f' 1,{m.group(4) if m.group(4) else ""}n{dim1}_{m.group(2)}\n'
                              f'{m.group(1)}  do {dim2}_{m.group(3)} = '
-                             f'1,{m.group(4) if m.group(4) else ''}n{dim2}_{m.group(2)}'.lower(),
+                             f'1,{m.group(4) if m.group(4) else ""}n{dim2}_{m.group(2)}'.lower(),
                   line)
     line = re.sub(r'(\s*)_GET_COORDS_\s+_COORDS_(\w+)_\s+_FROM_\s+_ARRAY_(\w*)_\s*_OFFSET_(\d*)_',
                   f'\\1\\2_{dim1} = \\3(1+\\4)\\n'
@@ -251,11 +251,11 @@ for line in filtered_lines:
                   line)
     line = re.sub(r'_INDICES_LIST_(\w*)INDEX_NAME(\w*)_FIRST_DIM_',f'\\1{dim1}\\2',line)
     line = re.sub(r'(\s*)_DEF_INDICES_FIELD_(\w*)INDEX_NAME(\w*)_(\s*_INTENT_\w*_)?',
-                 f'\\1integer, dimension(:,:), allocatable :: \\2{dim1}\\3\\4\\n'
-                 f'\\1integer, dimension(:,:), allocatable :: \\2{dim2}\\3\\4',line)
+                 f'\\1integer, dimension(:,:), pointer :: \\2{dim1}\\3\\4\\n'
+                 f'\\1integer, dimension(:,:), pointer :: \\2{dim2}\\3\\4',line)
     line = re.sub(r'(\s*)_DEF_INDICES_LIST_(\w*)INDEX_NAME(\w*)_(\s*_INTENT_\w*_)?',
-                  f'\\1integer, dimension(:), allocatable :: \\2{dim1}\\3\\4\\n'
-                  f'\\1integer, dimension(:), allocatable :: \\2{dim2}\\3\\4',line)
+                  f'\\1integer, dimension(:), pointer :: \\2{dim1}\\3\\4\\n'
+                  f'\\1integer, dimension(:), pointer :: \\2{dim2}\\3\\4',line)
     line = re.sub(r'(\s*)_DEF_COORDS_(\w*)_( _INTENT_\w*_)?',
                   f'\\1integer :: \\2_{dim1}\\3\\n\\1integer :: \\2_{dim2}\\3',line)
     line = re.sub(r'_INDICES_(?:FIELD|LIST)_(\w*)INDEX_NAME(\w*)_',

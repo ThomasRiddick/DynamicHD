@@ -121,7 +121,7 @@ function read_outflow_points_dict(decoder) result(outflow_points)
   type(arraydecoder), intent(inout) :: decoder
   type(redirectdictionary) :: outflow_points
   real(dp), dimension(:), pointer :: entry
-  type(redirect) :: working_redirect
+  type(redirect), pointer :: working_redirect
   _DEF_COORDS_coords_
   integer :: length
   integer :: entry_length
