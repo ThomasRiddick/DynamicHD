@@ -303,7 +303,9 @@ end
   @test intermediate_expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test intermediate_expected_true_lake_depths == lake_model_parameters.true_lake_depths
   river_fields,lake_model_prognostics,_ =
-    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
+    drive_hd_and_lake_model(river_parameters,
+                            river_fields,
+                            lake_model_parameters,
                             lake_model_prognostics,
                             drainages,runoffs,evaporations,
                             1100,print_timestep_results=false,
@@ -431,12 +433,12 @@ end
   append!(evaporations,additional_evaporations)
   expected_river_inflow::Field{Float64} = LatLonField{Float64}(hd_grid,
                                                                Float64[ 0.0 0.0 0.0
-                                                                        0.0 1.96 0.0
-                                                                        0.0 1.96 0.0 ])
+                                                                        0.0 2.00 0.0
+                                                                        0.0 2.00 0.0 ])
   expected_water_to_ocean::Field{Float64} = LatLonField{Float64}(hd_grid,
                                                                  Float64[ 0.0 0.0 0.0
-                                                                         -3.76 0.0 0.0
-                                                                          0.0 0.0 2.32  ])
+                                                                          0.0 0.0 -4.0
+                                                                          0.0 0.0 4.0  ])
   expected_water_to_hd::Field{Float64} = LatLonField{Float64}(hd_grid,
                                                               Float64[ 0.0 0.0 0.0
                                                                        0.0 0.0 0.0
@@ -620,18 +622,18 @@ end
   third_intermediate_expected_river_inflow::Field{Float64} =
     LatLonField{Float64}(hd_grid,
                          Float64[ 0.0 0.0  0.0
-                                  0.0 1.96 0.0
-                                  0.0 1.96 0.0 ])
+                                  0.0 1.99 0.0
+                                  0.0 1.99 0.0 ])
   third_intermediate_expected_water_to_ocean::Field{Float64} =
     LatLonField{Float64}(hd_grid,
                          Float64[ 0.0 0.0  0.0
                                   0.0 0.0  0.0
-                                  0.0 0.0 3.53 ])
+                                  0.0 0.0 5.41 ])
   third_intermediate_expected_water_to_hd::Field{Float64} =
     LatLonField{Float64}(hd_grid,
                          Float64[ 0.0 0.0 0.0
                                   0.0 0.0 0.0
-                                  0.0 0.0 10.25 ])
+                                  0.0 0.0 10.66 ])
   third_intermediate_expected_lake_numbers::Field{Int64} = LatLonField{Int64}(lake_grid,
       Int64[ 0 0 0 0 0 0
              0 0 0 0 0 0
@@ -746,6 +748,71 @@ end
   #                   0    0    0    0    0    0    0    0    0
   #                   0    0    0    0    0    0    0    0    0
   #                   0    0    0    0    0    0    0    0    0 ])
+  fifth_intermediate_expected_river_inflow::Field{Float64} =
+    LatLonField{Float64}(hd_grid,
+                         Float64[ 0.0 0.0  0.0
+                                  0.0 2.0  0.0
+                                  0.0 2.0  0.0 ])
+  fifth_intermediate_expected_water_to_ocean::Field{Float64} =
+    LatLonField{Float64}(hd_grid,
+                         Float64[ 0.0 0.0  0.0
+                                  0.0 0.0  0.0
+                                  0.0 0.0  4.0 ])
+  fifth_intermediate_expected_water_to_hd::Field{Float64} =
+    LatLonField{Float64}(hd_grid,
+                         Float64[ 0.0 0.0 0.0
+                                  0.0 0.0 0.0
+                                  0.0 0.0 0.0 ])
+  fifth_intermediate_expected_lake_numbers::Field{Int64} = LatLonField{Int64}(lake_grid,
+      Int64[ 0 0 0 0 0 0
+             0 0 0 0 0 0
+             0 0 0 0 0 0
+             0 2 0 0 1 0
+             0 0 0 0 0 0
+             0 0 0 0 0 0  ])
+  fifth_intermediate_expected_lake_types::Field{Int64} = LatLonField{Int64}(lake_grid,
+      Int64[ 0 0 0 0 0 0
+             0 0 0 0 0 0
+             0 0 0 0 0 0
+             0 1 0 0 1 0
+             0 0 0 0 0 0
+             0 0 0 0 0 0  ])
+  fifth_intermediate_expected_diagnostic_lake_volumes::Field{Float64} =
+    LatLonField{Float64}(lake_grid,
+        Float64[ 0.0  0.0  0.0  0.0  0.0 0.0
+                 0.0  0.0  0.0  0.0  0.0 0.0
+                 0.0  0.0  0.0  0.0  0.0 0.0
+                 0.0  0.0  0.0  0.0  0.0 0.0
+                 0.0  0.0  0.0  0.0  0.0 0.0
+                 0.0  0.0  0.0  0.0  0.0 0.0 ])
+  fifth_intermediate_expected_lake_fractions::Field{Float64} =
+    LatLonField{Float64}(surface_model_grid,
+        Float64[ 0.0 0.0 0.0
+                 0.25 0.0 0.25
+                 0.0 0.0 0.0 ])
+  fifth_intermediate_expected_number_lake_cells::Field{Int64} =
+    LatLonField{Int64}(surface_model_grid,
+        Int64[ 0 0 0
+               1 0 1
+               0 0 0 ])
+  fifth_intermediate_expected_number_fine_grid_cells::Field{Int64} =
+    LatLonField{Int64}(surface_model_grid,
+        Int64[ 4 4 4
+               4 4 4
+               4 4 4 ])
+  fifth_intermediate_expected_lake_volumes::Array{Float64} =
+    Float64[0.0,0.0,0.0]
+  # fourth_intermediate_expected_true_lake_depths::Field{Float64} =
+  #   LatLonField{Float64}(lake_grid,
+  #       Float64[    0    0    0   7.0    0    0    0    0    0
+  #                   0    0    0   7.0   0    0    0    0    0
+  #                   0    0    9.0 7.0    0    0    0    0    0
+  #                   0    0    8.0 8.0    0    0    0    0    0
+  #                   0    0    8.0 8.0    0    0    0    0    0
+  #                   0    0    0    0    0    0    0    0    0
+  #                   0    0    0    0    0    0    0    0    0
+  #                   0    0    0    0    0    0    0    0    0
+  #                   0    0    0    0    0    0    0    0    0 ])
   river_fields::RiverPrognosticFields,
     lake_model_prognostics::LakeModelPrognostics,
     lake_model_diagnostics::LakeModelDiagnostics =
@@ -795,7 +862,9 @@ end
   @test first_intermediate_expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test first_intermediate_expected_true_lake_depths == lake_model_parameters.true_lake_depths
   river_fields,lake_model_prognostics,lake_model_diagnostics =
-    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
+    drive_hd_and_lake_model(river_parameters,
+                            river_fields,
+                            lake_model_parameters,
                             lake_model_prognostics,
                             drainages,runoffs,evaporations,
                             1,print_timestep_results=false,
@@ -847,7 +916,9 @@ end
   @test second_intermediate_expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test second_intermediate_expected_true_lake_depths == lake_model_parameters.true_lake_depths
   river_fields,lake_model_prognostics,lake_model_diagnostics =
-    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
+    drive_hd_and_lake_model(river_parameters,
+                            river_fields,
+                            lake_model_parameters,
                             lake_model_prognostics,
                             drainages,runoffs,evaporations,
                             4,print_timestep_results=false,
@@ -898,7 +969,9 @@ end
   @test third_intermediate_expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test third_intermediate_expected_true_lake_depths == lake_model_parameters.true_lake_depths
   river_fields,lake_model_prognostics,lake_model_diagnostics =
-    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
+    drive_hd_and_lake_model(river_parameters,
+                            river_fields,
+                            lake_model_parameters,
                             lake_model_prognostics,
                             drainages,runoffs,evaporations,
                             900,print_timestep_results=false,
@@ -947,10 +1020,63 @@ end
   @test fourth_intermediate_expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test fourth_intermediate_expected_true_lake_depths == lake_model_parameters.true_lake_depths
   river_fields,lake_model_prognostics,lake_model_diagnostics =
-    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
+    drive_hd_and_lake_model(river_parameters,
+                            river_fields,
+                            lake_model_parameters,
                             lake_model_prognostics,
                             drainages,runoffs,evaporations,
                             903,print_timestep_results=false,
+                            write_output=false,return_output=true,
+                            lake_model_diagnostics=
+                            lake_model_diagnostics,
+                            forcing_timesteps_to_skip=900)
+  lake_fractions =
+    calculate_lake_fraction_on_surface_grid(lake_model_parameters,
+                                            lake_model_prognostics)
+  lake_types = LatLonField{Int64}(lake_grid,0)
+  for i = 1:6
+    for j = 1:6
+      coords::LatLonCoords = LatLonCoords(i,j)
+      lake_number::Int64 = lake_model_prognostics.lake_numbers(coords)
+      if lake_number <= 0 continue end
+      lake::Lake = lake_model_prognostics.lakes[lake_number]
+      if isa(lake,FillingLake)
+        set!(lake_types,coords,1)
+      elseif isa(lake,OverflowingLake)
+        set!(lake_types,coords,2)
+      elseif isa(lake,SubsumedLake)
+        set!(lake_types,coords,3)
+      else
+        set!(lake_types,coords,4)
+      end
+    end
+  end
+  lake_volumes = Float64[]
+  for lake::Lake in lake_model_prognostics.lakes
+    append!(lake_volumes,get_lake_volume(lake))
+  end
+    diagnostic_lake_volumes =
+      calculate_diagnostic_lake_volumes_field(lake_model_parameters,
+                                              lake_model_prognostics)
+  @test fifth_intermediate_expected_river_inflow == river_fields.river_inflow
+  @test isapprox(fifth_intermediate_expected_water_to_ocean,
+                 river_fields.water_to_ocean,rtol=0.0,atol=0.02)
+  @test fifth_intermediate_expected_water_to_hd == lake_model_prognostics.water_to_hd
+  @test fifth_intermediate_expected_lake_numbers == lake_model_prognostics.lake_numbers
+  @test fifth_intermediate_expected_lake_types == lake_types
+  @test fifth_intermediate_expected_lake_volumes == lake_volumes
+  @test diagnostic_lake_volumes == fifth_intermediate_expected_diagnostic_lake_volumes
+  @test fifth_intermediate_expected_lake_fractions == lake_fractions
+  @test fifth_intermediate_expected_number_lake_cells == lake_model_prognostics.lake_cell_count
+  @test fifth_intermediate_expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
+  #@test fifth_intermediate_expected_true_lake_depths == lake_model_parameters.true_lake_depths
+  river_fields,lake_model_prognostics,lake_model_diagnostics =
+    drive_hd_and_lake_model(river_parameters,
+                            river_fields,
+                            lake_model_parameters,
+                            lake_model_prognostics,
+                            drainages,runoffs,evaporations,
+                            1000,print_timestep_results=false,
                             write_output=false,return_output=true,
                             lake_model_diagnostics=
                             lake_model_diagnostics,
@@ -14740,7 +14866,8 @@ end
   @test first_intermediate_expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test first_intermediate_expected_true_lake_depths == lake_model_parameters.true_lake_depths
   river_fields,lake_model_prognostics,lake_model_diagnostics =
-    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
+    drive_hd_and_lake_model(river_parameters,river_fields,
+                            lake_model_parameters,
                             lake_model_prognostics,
                             drainages,runoffs,evaporations,
                             1,true,
@@ -14794,7 +14921,8 @@ end
   @test second_intermediate_expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test second_intermediate_expected_true_lake_depths == lake_model_parameters.true_lake_depths
   river_fields,lake_model_prognostics,lake_model_diagnostics =
-    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
+    drive_hd_and_lake_model(river_parameters,river_fields,
+                            lake_model_parameters,
                             lake_model_prognostics,
                             drainages,runoffs,evaporations,
                             2,true,
@@ -14849,7 +14977,8 @@ end
   @test third_intermediate_expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test third_intermediate_expected_true_lake_depths == lake_model_parameters.true_lake_depths
   river_fields,lake_model_prognostics,_ =
-    drive_hd_and_lake_model(river_parameters,lake_model_parameters,
+    drive_hd_and_lake_model(river_parameters,river_fields,
+                            lake_model_parameters,
                             lake_model_prognostics,
                             drainages,runoffs,evaporations,
                             3,true,

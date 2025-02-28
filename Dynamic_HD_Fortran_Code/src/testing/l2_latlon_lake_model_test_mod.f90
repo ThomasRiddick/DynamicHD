@@ -7,23 +7,23 @@ contains
 
 subroutine testRedirectDictionary1
   use l2_lake_model_mod
-  type(redirectdictionary) :: dict
+  type(redirectdictionary), pointer :: dict
   type(redirect), pointer :: redirect_in
-  type(redirect) :: redirect_out
-    dict = redirectdictionary(1)
+  type(redirect), pointer :: redirect_out
+    dict => redirectdictionary(1)
     redirect_in => redirect(.false.,5,-1,-1)
     call add_entry_to_dictionary(dict,5,redirect_in)
     call finish_dictionary(dict)
-    redirect_out = get_dictionary_entry(dict,5)
+    redirect_out => get_dictionary_entry(dict,5)
     call assert_equals(redirect_out%local_redirect_target_lake_number,5)
 end subroutine testRedirectDictionary1
 
 subroutine testRedirectDictionary2
   use l2_lake_model_mod
-  type(redirectdictionary) :: dict
+  type(redirectdictionary), pointer :: dict
   type(redirect), pointer :: redirect_in
-  type(redirect) :: redirect_out
-    dict = redirectdictionary(3)
+  type(redirect), pointer :: redirect_out
+    dict => redirectdictionary(3)
     redirect_in => redirect(.false.,6,-1,-1)
     call add_entry_to_dictionary(dict,6  ,redirect_in)
     redirect_in => redirect(.false.,1,-1,-1)
@@ -31,20 +31,20 @@ subroutine testRedirectDictionary2
     redirect_in => redirect(.true.,3,3,2)
     call add_entry_to_dictionary(dict,3  ,redirect_in)
     call finish_dictionary(dict)
-    redirect_out = get_dictionary_entry(dict,1)
+    redirect_out => get_dictionary_entry(dict,1)
     call assert_equals(redirect_out%local_redirect_target_lake_number,1)
-    redirect_out = get_dictionary_entry(dict,3)
+    redirect_out => get_dictionary_entry(dict,3)
     call assert_equals(redirect_out%local_redirect_target_lake_number,3)
-    redirect_out = get_dictionary_entry(dict,6)
+    redirect_out => get_dictionary_entry(dict,6)
     call assert_equals(redirect_out%local_redirect_target_lake_number,6)
 end subroutine testRedirectDictionary2
 
 subroutine testRedirectDictionary3
   use l2_lake_model_mod
-  type(redirectdictionary) :: dict
+  type(redirectdictionary), pointer :: dict
   type(redirect), pointer :: redirect_in
-  type(redirect) :: redirect_out
-    dict = redirectdictionary(7)
+  type(redirect), pointer :: redirect_out
+    dict => redirectdictionary(7)
     redirect_in => redirect(.false.,7,-1,-1)
     call add_entry_to_dictionary(dict,7  ,redirect_in)
     redirect_in => redirect(.false.,2,-1,-1)
@@ -60,69 +60,69 @@ subroutine testRedirectDictionary3
     redirect_in => redirect(.true.,11,3,2)
     call add_entry_to_dictionary(dict,11  ,redirect_in)
     call finish_dictionary(dict)
-    redirect_out = get_dictionary_entry(dict,5)
+    redirect_out => get_dictionary_entry(dict,5)
     call assert_equals(redirect_out%local_redirect_target_lake_number,5)
-    redirect_out = get_dictionary_entry(dict,-1)
+    redirect_out => get_dictionary_entry(dict,-1)
     call assert_equals(redirect_out%local_redirect_target_lake_number,-1)
-    redirect_out = get_dictionary_entry(dict,16)
+    redirect_out => get_dictionary_entry(dict,16)
     call assert_equals(redirect_out%local_redirect_target_lake_number,16)
-    redirect_out = get_dictionary_entry(dict,1)
+    redirect_out => get_dictionary_entry(dict,1)
     call assert_equals(redirect_out%local_redirect_target_lake_number,1)
-    redirect_out = get_dictionary_entry(dict,11)
+    redirect_out => get_dictionary_entry(dict,11)
     call assert_equals(redirect_out%local_redirect_target_lake_number,11)
-    redirect_out = get_dictionary_entry(dict,2)
+    redirect_out => get_dictionary_entry(dict,2)
     call assert_equals(redirect_out%local_redirect_target_lake_number,2)
-    redirect_out = get_dictionary_entry(dict,7)
+    redirect_out => get_dictionary_entry(dict,7)
     call assert_equals(redirect_out%local_redirect_target_lake_number,7)
-    redirect_out = get_dictionary_entry(dict,11)
+    redirect_out => get_dictionary_entry(dict,11)
     call assert_equals(redirect_out%local_redirect_target_lake_number,11)
-    redirect_out = get_dictionary_entry(dict,1)
+    redirect_out => get_dictionary_entry(dict,1)
     call assert_equals(redirect_out%local_redirect_target_lake_number,1)
 end subroutine testRedirectDictionary3
 
 subroutine testRedirectDictionary4
   use l2_lake_model_mod
-  type(redirectdictionary) :: dict
+  type(redirectdictionary), pointer :: dict
   type(redirect), pointer :: redirect_in
-  type(redirect) :: redirect_out
+  type(redirect), pointer :: redirect_out
   integer :: i
-    dict = redirectdictionary(40)
+    dict => redirectdictionary(40)
     do i=1,40
       redirect_in => redirect(.false.,i-2,-1,-1)
       call add_entry_to_dictionary(dict,i+7,redirect_in)
     end do
     call finish_dictionary(dict)
     do i=1,40
-      redirect_out = get_dictionary_entry(dict,i+7)
+      redirect_out => get_dictionary_entry(dict,i+7)
       call assert_equals(redirect_out%local_redirect_target_lake_number,i-2)
     end do
 end subroutine testRedirectDictionary4
 
 subroutine testRedirectDictionary5
   use l2_lake_model_mod
-  type(redirectdictionary) :: dict
+  type(redirectdictionary), pointer :: dict
   type(redirect), pointer :: redirect_in
-  type(redirect) :: redirect_out
+  type(redirect), pointer :: redirect_out
   integer :: i
-    dict = redirectdictionary(40)
+    dict => redirectdictionary(40)
     do i=40,1,-1
       redirect_in => redirect(.false.,i-33,-1,-1)
       call add_entry_to_dictionary(dict,i+42,redirect_in)
     end do
     call finish_dictionary(dict)
     do i=1,40
-      redirect_out = get_dictionary_entry(dict,i+42)
+      redirect_out => get_dictionary_entry(dict,i+42)
       call assert_equals(redirect_out%local_redirect_target_lake_number,i-33)
     end do
 end subroutine testRedirectDictionary5
 
 subroutine testRedirectDictionary6
   use l2_lake_model_mod
-  type(redirectdictionary) :: dict
+  type(redirectdictionary), pointer :: dict
   type(redirect), pointer :: redirect_in
-  type(redirect) :: redirect_out
+  type(redirect), pointer :: redirect_out
   integer :: i
-    dict = redirectdictionary(39)
+    dict => redirectdictionary(39)
     !1-10
     redirect_in => redirect(.false.,1005,-1,-1)
     call add_entry_to_dictionary(dict,1005,redirect_in)
@@ -207,118 +207,119 @@ subroutine testRedirectDictionary6
     call add_entry_to_dictionary(dict,45,redirect_in)
     call finish_dictionary(dict)
     !1-10
-    redirect_out = get_dictionary_entry(dict,6014)
+    redirect_out => get_dictionary_entry(dict,6014)
     call assert_equals(redirect_out%local_redirect_target_lake_number,6014)
-    redirect_out = get_dictionary_entry(dict,6001)
+    redirect_out => get_dictionary_entry(dict,6001)
     call assert_equals(redirect_out%local_redirect_target_lake_number,6001)
-    redirect_out = get_dictionary_entry(dict,5999)
+    redirect_out => get_dictionary_entry(dict,5999)
     call assert_equals(redirect_out%local_redirect_target_lake_number,5999)
-    redirect_out = get_dictionary_entry(dict,5238)
+    redirect_out => get_dictionary_entry(dict,5238)
     call assert_equals(redirect_out%local_redirect_target_lake_number,5238)
-    redirect_out = get_dictionary_entry(dict,1)
+    redirect_out => get_dictionary_entry(dict,1)
     call assert_equals(redirect_out%local_redirect_target_lake_number,1)
-    redirect_out = get_dictionary_entry(dict,3)
+    redirect_out => get_dictionary_entry(dict,3)
     call assert_equals(redirect_out%local_redirect_target_lake_number,3)
-    redirect_out = get_dictionary_entry(dict,9)
+    redirect_out => get_dictionary_entry(dict,9)
     call assert_equals(redirect_out%local_redirect_target_lake_number,9)
-    redirect_out = get_dictionary_entry(dict,31)
+    redirect_out => get_dictionary_entry(dict,31)
     call assert_equals(redirect_out%local_redirect_target_lake_number,31)
-    redirect_out = get_dictionary_entry(dict,45)
+    redirect_out => get_dictionary_entry(dict,45)
     call assert_equals(redirect_out%local_redirect_target_lake_number,45)
-    redirect_out = get_dictionary_entry(dict,1004)
+    redirect_out => get_dictionary_entry(dict,1004)
     call assert_equals(redirect_out%local_redirect_target_lake_number,1004)
     !11-20
-    redirect_out = get_dictionary_entry(dict,152)
+    redirect_out => get_dictionary_entry(dict,152)
     call assert_equals(redirect_out%local_redirect_target_lake_number,152)
-    redirect_out = get_dictionary_entry(dict,144)
+    redirect_out => get_dictionary_entry(dict,144)
     call assert_equals(redirect_out%local_redirect_target_lake_number,144)
-    redirect_out = get_dictionary_entry(dict,132)
+    redirect_out => get_dictionary_entry(dict,132)
     call assert_equals(redirect_out%local_redirect_target_lake_number,132)
-    redirect_out = get_dictionary_entry(dict,107)
+    redirect_out => get_dictionary_entry(dict,107)
     call assert_equals(redirect_out%local_redirect_target_lake_number,107)
-    redirect_out = get_dictionary_entry(dict,160)
+    redirect_out => get_dictionary_entry(dict,160)
     call assert_equals(redirect_out%local_redirect_target_lake_number,160)
-    redirect_out = get_dictionary_entry(dict,161)
+    redirect_out => get_dictionary_entry(dict,161)
     call assert_equals(redirect_out%local_redirect_target_lake_number,161)
-    redirect_out = get_dictionary_entry(dict,162)
+    redirect_out => get_dictionary_entry(dict,162)
     call assert_equals(redirect_out%local_redirect_target_lake_number,162)
-    redirect_out = get_dictionary_entry(dict,1002)
+    redirect_out => get_dictionary_entry(dict,1002)
     call assert_equals(redirect_out%local_redirect_target_lake_number,1002)
-    redirect_out = get_dictionary_entry(dict,1005)
+    redirect_out => get_dictionary_entry(dict,1005)
     call assert_equals(redirect_out%local_redirect_target_lake_number,1005)
-    redirect_out = get_dictionary_entry(dict,57)
+    redirect_out => get_dictionary_entry(dict,57)
     call assert_equals(redirect_out%local_redirect_target_lake_number,57)
     !21-30
-    redirect_out = get_dictionary_entry(dict,1003)
+    redirect_out => get_dictionary_entry(dict,1003)
     call assert_equals(redirect_out%local_redirect_target_lake_number,1003)
-    redirect_out = get_dictionary_entry(dict,163)
+    redirect_out => get_dictionary_entry(dict,163)
     call assert_equals(redirect_out%local_redirect_target_lake_number,163)
-    redirect_out = get_dictionary_entry(dict,1001)
+    redirect_out => get_dictionary_entry(dict,1001)
     call assert_equals(redirect_out%local_redirect_target_lake_number,1001)
-    redirect_out = get_dictionary_entry(dict,55)
+    redirect_out => get_dictionary_entry(dict,55)
     call assert_equals(redirect_out%local_redirect_target_lake_number,55)
-    redirect_out = get_dictionary_entry(dict,50)
+    redirect_out => get_dictionary_entry(dict,50)
     call assert_equals(redirect_out%local_redirect_target_lake_number,50)
-    redirect_out = get_dictionary_entry(dict,4444)
+    redirect_out => get_dictionary_entry(dict,4444)
     call assert_equals(redirect_out%local_redirect_target_lake_number,4444)
-    redirect_out = get_dictionary_entry(dict,2333)
+    redirect_out => get_dictionary_entry(dict,2333)
     call assert_equals(redirect_out%local_redirect_target_lake_number,2333)
-    redirect_out = get_dictionary_entry(dict,2033)
+    redirect_out => get_dictionary_entry(dict,2033)
     call assert_equals(redirect_out%local_redirect_target_lake_number,2033)
-    redirect_out = get_dictionary_entry(dict,2003)
+    redirect_out => get_dictionary_entry(dict,2003)
     call assert_equals(redirect_out%local_redirect_target_lake_number,2003)
-    redirect_out = get_dictionary_entry(dict,54)
+    redirect_out => get_dictionary_entry(dict,54)
     call assert_equals(redirect_out%local_redirect_target_lake_number,54)
     !31-39
-    redirect_out = get_dictionary_entry(dict,49)
+    redirect_out => get_dictionary_entry(dict,49)
     call assert_equals(redirect_out%local_redirect_target_lake_number,49)
-    redirect_out = get_dictionary_entry(dict,182)
+    redirect_out => get_dictionary_entry(dict,182)
     call assert_equals(redirect_out%local_redirect_target_lake_number,182)
-    redirect_out = get_dictionary_entry(dict,89)
+    redirect_out => get_dictionary_entry(dict,89)
     call assert_equals(redirect_out%local_redirect_target_lake_number,89)
-    redirect_out = get_dictionary_entry(dict,51)
+    redirect_out => get_dictionary_entry(dict,51)
     call assert_equals(redirect_out%local_redirect_target_lake_number,51)
-    redirect_out = get_dictionary_entry(dict,58)
+    redirect_out => get_dictionary_entry(dict,58)
     call assert_equals(redirect_out%local_redirect_target_lake_number,58)
-    redirect_out = get_dictionary_entry(dict,53)
+    redirect_out => get_dictionary_entry(dict,53)
     call assert_equals(redirect_out%local_redirect_target_lake_number,53)
-    redirect_out = get_dictionary_entry(dict,52)
+    redirect_out => get_dictionary_entry(dict,52)
     call assert_equals(redirect_out%local_redirect_target_lake_number,52)
-    redirect_out = get_dictionary_entry(dict,47)
+    redirect_out => get_dictionary_entry(dict,47)
     call assert_equals(redirect_out%local_redirect_target_lake_number,47)
-    redirect_out = get_dictionary_entry(dict,3333)
+    redirect_out => get_dictionary_entry(dict,3333)
     call assert_equals(redirect_out%local_redirect_target_lake_number,3333)
     !11-20 repeat
-    redirect_out = get_dictionary_entry(dict,152)
+    redirect_out => get_dictionary_entry(dict,152)
     call assert_equals(redirect_out%local_redirect_target_lake_number,152)
-    redirect_out = get_dictionary_entry(dict,144)
+    redirect_out => get_dictionary_entry(dict,144)
     call assert_equals(redirect_out%local_redirect_target_lake_number,144)
-    redirect_out = get_dictionary_entry(dict,132)
+    redirect_out => get_dictionary_entry(dict,132)
     call assert_equals(redirect_out%local_redirect_target_lake_number,132)
-    redirect_out = get_dictionary_entry(dict,107)
+    redirect_out => get_dictionary_entry(dict,107)
     call assert_equals(redirect_out%local_redirect_target_lake_number,107)
-    redirect_out = get_dictionary_entry(dict,160)
+    redirect_out => get_dictionary_entry(dict,160)
     call assert_equals(redirect_out%local_redirect_target_lake_number,160)
-    redirect_out = get_dictionary_entry(dict,161)
+    redirect_out => get_dictionary_entry(dict,161)
     call assert_equals(redirect_out%local_redirect_target_lake_number,161)
-    redirect_out = get_dictionary_entry(dict,162)
+    redirect_out => get_dictionary_entry(dict,162)
     call assert_equals(redirect_out%local_redirect_target_lake_number,162)
-    redirect_out = get_dictionary_entry(dict,1002)
+    redirect_out => get_dictionary_entry(dict,1002)
     call assert_equals(redirect_out%local_redirect_target_lake_number,1002)
-    redirect_out = get_dictionary_entry(dict,1005)
+    redirect_out => get_dictionary_entry(dict,1005)
     call assert_equals(redirect_out%local_redirect_target_lake_number,1005)
-    redirect_out = get_dictionary_entry(dict,57)
+    redirect_out => get_dictionary_entry(dict,57)
     call assert_equals(redirect_out%local_redirect_target_lake_number,57)
 end subroutine testRedirectDictionary6
 
 subroutine testLakeModel1
-   use latlon_hd_model_interface_mod, only: run_hd_model
-   use l2_hd_interface_extension_mod, only: init_hd_model_for_testing => &
+   use latlon_hd_model_interface_mod, only: run_hd_model, &
+                                            init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
                                 lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type
+                                overflowing_lake_type, subsumed_lake_type, &
+                                get_lake_volume
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
@@ -374,7 +375,7 @@ subroutine testLakeModel1
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:), pointer :: lake_volumes
-   real(dp),dimension(:,:), pointer :: lake_fractions
+   real(dp),dimension(:,:), allocatable :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -419,6 +420,7 @@ subroutine testLakeModel1
                                           overland_retention_coefficients, &
                                           base_retention_coefficients, &
                                           landsea_mask)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       step_length = 86400.0_dp
       nlat_lake = 6
       nlon_lake = 6
@@ -455,7 +457,7 @@ subroutine testLakeModel1
          .False., .False., .False., .False., .False., .False., &
          .False., .False., .False., .False., .False., .False. /), &
          (/nlon_lake,nlat_lake/)))
-      lake_model_parameters = &
+      lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
                             cell_areas_on_surface_model_grid, &
@@ -487,11 +489,11 @@ subroutine testLakeModel1
       evaporation(:,:) = 0.0
       allocate(additional_evaporation(nlat_surface,nlon_surface))
       additional_evaporation(:,:) = 5.0
-      allocate(evaporations(nlat_surface,nlon_surface,60))
-      do i = 1,30
+      allocate(evaporations(nlat_surface,nlon_surface,1800))
+      do i = 1,900
         evaporations(:,:,i) = evaporation(:,:)
       end do
-      do i = 31,60
+      do i = 901,1800
         evaporations(:,:,i) = additional_evaporation(:,:)
       end do
       allocate(expected_river_inflow(nlat_hd,nlon_hd))
@@ -500,18 +502,21 @@ subroutine testLakeModel1
          0.0, 0.0,  6.0, &
          0.0, 2.0,  0.0 /), &
          (/nlon_hd,nlat_hd/)))
+      expected_river_inflow(:,:) = expected_river_inflow(:,:)/step_length
       allocate(expected_water_to_ocean(nlat_hd,nlon_hd))
       expected_water_to_ocean = transpose(reshape((/   &
           0.0,  0.0,  0.0, &
          0.0, -1.0,  0.0, &
          0.0,  0.0, 12.0 /), &
          (/nlon_hd,nlat_hd/)))
+      expected_water_to_ocean(:,:) = expected_water_to_ocean(:,:)/step_length
       allocate(expected_water_to_hd(nlat_hd,nlon_hd))
       expected_water_to_hd = transpose(reshape((/   &
           0.0, 0.0,  0.0, &
          0.0, 0.0,  0.0, &
          0.0, 0.0,  0.0 /), &
          (/nlon_hd,nlat_hd/)))
+      expected_water_to_hd(:,:) = expected_water_to_hd(:,:)/step_length
       allocate(expected_lake_numbers(nlat_lake,nlon_lake))
       expected_lake_numbers = transpose(reshape((/   &
           0, 0, 0, 0, 0, 0, &
@@ -577,18 +582,21 @@ subroutine testLakeModel1
          0.0, 0.0,  6.0, &
          0.0, 2.0,  0.0 /), &
          (/nlon_hd,nlat_hd/)))
+      intermediate_expected_river_inflow(:,:) = intermediate_expected_river_inflow(:,:)/step_length
       allocate(intermediate_expected_water_to_ocean(nlat_hd,nlon_hd))
       intermediate_expected_water_to_ocean = transpose(reshape((/   &
           0.0, 0.0,  0.0, &
          0.0, 0.0,  0.0, &
          0.0, 0.0, 16.0 /), &
          (/nlon_hd,nlat_hd/)))
+      intermediate_expected_water_to_ocean(:,:) = intermediate_expected_water_to_ocean(:,:)/step_length
       allocate(intermediate_expected_water_to_hd(nlat_hd,nlon_hd))
       intermediate_expected_water_to_hd = transpose(reshape((/   &
           0.0, 0.0,  0.0, &
          0.0, 0.0,  0.0, &
          0.0, 0.0,  4.0 /), &
          (/nlon_hd,nlat_hd/)))
+      intermediate_expected_water_to_hd(:,:) = intermediate_expected_water_to_hd(:,:)/step_length
       allocate(intermediate_expected_lake_numbers(nlat_lake,nlon_lake))
       intermediate_expected_lake_numbers = transpose(reshape((/   &
           0, 0, 0, 0, 0, 0, &
@@ -651,8 +659,10 @@ subroutine testLakeModel1
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array)
+      lake_model_prognostics => get_lake_model_prognostics()
       call run_hd_model(800,runoffs,drainages,evaporations)
       lake_model_prognostics => get_lake_model_prognostics()
+      allocate(lake_fractions(nlat_surface,nlon_surface))
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
@@ -679,13 +689,14 @@ subroutine testLakeModel1
       allocate(lake_volumes(size(lake_model_prognostics%lakes)))
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
-      call assert_equals( intermediate_expected_river_inflow, river_fields%river_inflow,nlat_hd,nlon_hd)
-      call assert_equals( intermediate_expected_water_to_ocean,river_fields%water_to_ocean,nlat_hd,nlon_hd,0.00001_dp)
-      call assert_equals( intermediate_expected_water_to_hd, lake_model_prognostics%water_to_hd,nlat_hd,nlon_hd)
+      call assert_equals( intermediate_expected_river_inflow, river_fields%river_inflow,nlat_hd,nlon_hd,0.0000001_dp/step_length)
+      call assert_equals( intermediate_expected_water_to_ocean,river_fields%water_to_ocean,nlat_hd,nlon_hd,0.00001_dp/step_length)
+      call assert_equals( intermediate_expected_water_to_hd, lake_model_prognostics%water_to_hd,nlat_hd,nlon_hd,&
+                          0.00001_dp/step_length)
       call assert_equals( intermediate_expected_lake_numbers, &
                           lake_model_prognostics%lake_numbers,nlat_lake,nlon_lake)
       call assert_equals( intermediate_expected_lake_types, lake_types,nlat_lake,nlon_lake)
@@ -727,12 +738,12 @@ subroutine testLakeModel1
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
-      call assert_equals( expected_river_inflow, river_fields%river_inflow,nlat_hd,nlon_hd)
-      call assert_equals( expected_water_to_ocean,river_fields%water_to_ocean,nlat_hd,nlon_hd,0.00001_dp)
+      call assert_equals( expected_river_inflow, river_fields%river_inflow,nlat_hd,nlon_hd,0.0000001_dp/step_length)
+      call assert_equals( expected_water_to_ocean,river_fields%water_to_ocean,nlat_hd,nlon_hd,0.00001_dp/step_length)
       call assert_equals( expected_water_to_hd, lake_model_prognostics%water_to_hd,nlat_hd,nlon_hd)
       call assert_equals( expected_lake_numbers, &
                           lake_model_prognostics%lake_numbers,nlat_lake,nlon_lake)
@@ -748,13 +759,14 @@ subroutine testLakeModel1
 end subroutine testLakeModel1
 
 subroutine testLakeModel2
-   use latlon_hd_model_interface_mod, only: run_hd_model
-   use l2_hd_interface_extension_mod, only: init_hd_model_for_testing => &
+   use latlon_hd_model_interface_mod, only: run_hd_model, &
+                                            init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
                                 lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type
+                                overflowing_lake_type, subsumed_lake_type, &
+                                get_lake_volume
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
@@ -836,16 +848,26 @@ subroutine testLakeModel2
    integer,dimension(:,:), pointer :: fourth_intermediate_expected_number_lake_cells
    integer,dimension(:,:), pointer :: fourth_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:), pointer :: fourth_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: fifth_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: fifth_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: fifth_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: fifth_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: fifth_intermediate_expected_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
-   real(dp),dimension(:,:), pointer :: lake_fractions
+   real(dp),dimension(:,:), allocatable :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
    integer :: timesteps
    integer :: i,j
-      timesteps=950
+      timesteps=1800
       !Lake with two sub-basins, fill, overflow, empty
       nlat_hd = 3
       nlon_hd = 3
@@ -883,6 +905,7 @@ subroutine testLakeModel2
                                           overland_retention_coefficients, &
                                           base_retention_coefficients, &
                                           landsea_mask)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       step_length = 86400.0_dp
       nlat_lake = 6
       nlon_lake = 6
@@ -919,7 +942,7 @@ subroutine testLakeModel2
          .False., .False., .False., .False., .False., .False., &
          .False., .False., .False., .False., .False., .False. /), &
          (/nlon_lake,nlat_lake/)))
-      lake_model_parameters = &
+      lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
                             cell_areas_on_surface_model_grid, &
@@ -952,31 +975,34 @@ subroutine testLakeModel2
       evaporation(:,:) = 0.0
       allocate(additional_evaporation(nlat_surface,nlon_surface))
       additional_evaporation(:,:) = 8.0
-      allocate(evaporations(nlat_surface,nlon_surface,60))
-      do i = 1,30
+      allocate(evaporations(nlat_surface,nlon_surface,1800))
+      do i = 1,900
         evaporations(:,:,i) = evaporation(:,:)
       end do
-      do i = 31,60
+      do i = 901,1800
         evaporations(:,:,i) = additional_evaporation(:,:)
       end do
       allocate(expected_river_inflow(nlat_hd,nlon_hd))
       expected_river_inflow = transpose(reshape((/   &
           0.0, 0.0, 0.0, &
-         0.0, 1.96, 0.0, &
-         0.0, 1.96, 0.0 /), &
+         0.0, 2.00, 0.0, &
+         0.0, 2.00, 0.0 /), &
          (/nlon_hd,nlat_hd/)))
+      expected_river_inflow(:,:) = expected_river_inflow(:,:)/step_length
       allocate(expected_water_to_ocean(nlat_hd,nlon_hd))
       expected_water_to_ocean = transpose(reshape((/   &
           0.0, 0.0, 0.0, &
-         -3.76, 0.0, 0.0, &
-         0.0, 0.0, 2.32  /), &
+         0.0, 0.0, -4.0, &
+         0.0, 0.0, 4.0  /), &
          (/nlon_hd,nlat_hd/)))
+      expected_water_to_ocean(:,:) = expected_water_to_ocean(:,:)/step_length
       allocate(expected_water_to_hd(nlat_hd,nlon_hd))
       expected_water_to_hd = transpose(reshape((/   &
           0.0, 0.0, 0.0, &
          0.0, 0.0, 0.0, &
          0.0, 0.0, 0.0 /), &
          (/nlon_hd,nlat_hd/)))
+      expected_water_to_hd(:,:) = expected_water_to_hd(:,:)/step_length
       allocate(expected_lake_numbers(nlat_lake,nlon_lake))
       expected_lake_numbers = transpose(reshape((/   &
           0, 0, 0, 0, 0, 0, &
@@ -1042,18 +1068,24 @@ subroutine testLakeModel2
          0.0, 0.0, 0.0, &
          0.0, 0.0, 0.0 /), &
          (/nlon_hd,nlat_hd/)))
+      first_intermediate_expected_river_inflow(:,:) = &
+        first_intermediate_expected_river_inflow(:,:)/step_length
       allocate(first_intermediate_expected_water_to_ocean(nlat_hd,nlon_hd))
       first_intermediate_expected_water_to_ocean = transpose(reshape((/   &
           0.0, 0.0, 0.0, &
          0.0, 0.0, 0.0, &
          0.0, 0.0, 0.0 /), &
          (/nlon_hd,nlat_hd/)))
+      first_intermediate_expected_water_to_ocean(:,:) = &
+        first_intermediate_expected_water_to_ocean(:,:)
       allocate(first_intermediate_expected_water_to_hd(nlat_hd,nlon_hd))
       first_intermediate_expected_water_to_hd = transpose(reshape((/   &
           0.0, 0.0, 0.0, &
          0.0, 0.0, 0.0, &
          0.0, 0.0, 0.0 /), &
          (/nlon_hd,nlat_hd/)))
+      first_intermediate_expected_water_to_hd(:,:) = &
+        first_intermediate_expected_water_to_hd(:,:)
       allocate(first_intermediate_expected_lake_numbers(nlat_lake,nlon_lake))
       first_intermediate_expected_lake_numbers = transpose(reshape((/   &
           0, 0, 0, 0, 0, 0, &
@@ -1117,18 +1149,24 @@ subroutine testLakeModel2
          0.0, 1.58, 0.0, &
          0.0, 1.58, 0.0 /), &
          (/nlon_hd,nlat_hd/)))
+      second_intermediate_expected_river_inflow(:,:) = &
+        second_intermediate_expected_river_inflow(:,:)/step_length
       allocate(second_intermediate_expected_water_to_ocean(nlat_hd,nlon_hd))
       second_intermediate_expected_water_to_ocean = transpose(reshape((/   &
           0.0, 0.0,  0.0, &
          0.0, 0.0,  0.0, &
          0.0, 0.0,  1.58 /), &
          (/nlon_hd,nlat_hd/)))
+      second_intermediate_expected_water_to_ocean(:,:) = &
+        second_intermediate_expected_water_to_ocean(:,:)/step_length
       allocate(second_intermediate_expected_water_to_hd(nlat_hd,nlon_hd))
       second_intermediate_expected_water_to_hd = transpose(reshape((/   &
           0.0, 0.0, 0.0, &
          0.0, 0.0, 0.0, &
          0.0, 0.0, 0.0 /), &
          (/nlon_hd,nlat_hd/)))
+      second_intermediate_expected_water_to_hd(:,:) = &
+        second_intermediate_expected_water_to_hd(:,:)/step_length
       allocate(second_intermediate_expected_lake_numbers(nlat_lake,nlon_lake))
       second_intermediate_expected_lake_numbers = transpose(reshape((/   &
           0, 0, 0, 0, 0, 0, &
@@ -1189,21 +1227,27 @@ subroutine testLakeModel2
       allocate(third_intermediate_expected_river_inflow(nlat_hd,nlon_hd))
       third_intermediate_expected_river_inflow = transpose(reshape((/   &
           0.0, 0.0,  0.0, &
-         0.0, 1.96, 0.0, &
-         0.0, 1.96, 0.0 /), &
+         0.0, 1.99, 0.0, &
+         0.0, 1.99, 0.0 /), &
          (/nlon_hd,nlat_hd/)))
+      third_intermediate_expected_river_inflow(:,:) = &
+        third_intermediate_expected_river_inflow(:,:)/step_length
       allocate(third_intermediate_expected_water_to_ocean(nlat_hd,nlon_hd))
       third_intermediate_expected_water_to_ocean = transpose(reshape((/   &
           0.0, 0.0,  0.0, &
          0.0, 0.0,  0.0, &
-         0.0, 0.0, 3.53 /), &
+         0.0, 0.0, 5.41 /), &
          (/nlon_hd,nlat_hd/)))
+      third_intermediate_expected_water_to_ocean(:,:) = &
+        third_intermediate_expected_water_to_ocean(:,:)/step_length
       allocate(third_intermediate_expected_water_to_hd(nlat_hd,nlon_hd))
       third_intermediate_expected_water_to_hd = transpose(reshape((/   &
           0.0, 0.0, 0.0, &
          0.0, 0.0, 0.0, &
-         0.0, 0.0, 10.25 /), &
+         0.0, 0.0, 10.66 /), &
          (/nlon_hd,nlat_hd/)))
+      third_intermediate_expected_water_to_hd(:,:) = &
+        third_intermediate_expected_water_to_hd(:,:)/step_length
       allocate(third_intermediate_expected_lake_numbers(nlat_lake,nlon_lake))
       third_intermediate_expected_lake_numbers = transpose(reshape((/   &
           0, 0, 0, 0, 0, 0, &
@@ -1269,18 +1313,24 @@ subroutine testLakeModel2
          0.0, 2.0,  0.0, &
          0.0, 2.0,  0.0 /), &
          (/nlon_hd,nlat_hd/)))
+      fourth_intermediate_expected_river_inflow(:,:) = &
+        fourth_intermediate_expected_river_inflow(:,:)/step_length
       allocate(fourth_intermediate_expected_water_to_ocean(nlat_hd,nlon_hd))
       fourth_intermediate_expected_water_to_ocean = transpose(reshape((/   &
           0.0, 0.0,  0.0, &
          0.0, 0.0,  0.0, &
          0.0, 0.0, 16.0 /), &
          (/nlon_hd,nlat_hd/)))
+      fourth_intermediate_expected_water_to_ocean(:,:) = &
+        fourth_intermediate_expected_water_to_ocean(:,:)/step_length
       allocate(fourth_intermediate_expected_water_to_hd(nlat_hd,nlon_hd))
       fourth_intermediate_expected_water_to_hd = transpose(reshape((/   &
           0.0, 0.0, 0.0, &
          0.0, 0.0, 0.0, &
          0.0, 0.0, 12.0 /), &
          (/nlon_hd,nlat_hd/)))
+      fourth_intermediate_expected_water_to_hd(:,:) = &
+        fourth_intermediate_expected_water_to_hd(:,:)/step_length
       allocate(fourth_intermediate_expected_lake_numbers(nlat_lake,nlon_lake))
       fourth_intermediate_expected_lake_numbers = transpose(reshape((/   &
           0, 0, 0, 0, 0, 0, &
@@ -1338,11 +1388,93 @@ subroutine testLakeModel2
       !                   0    0    0    0    0    0    0    0    0
       !                   0    0    0    0    0    0    0    0    0
       !                   0    0    0    0    0    0    0    0    0 )
+      allocate(fifth_intermediate_expected_river_inflow(nlat_hd,nlon_hd))
+      fifth_intermediate_expected_river_inflow = transpose(reshape((/   &
+          0.0, 0.0,  0.0, &
+         0.0, 2.0,  0.0, &
+         0.0, 2.0,  0.0 /), &
+         (/nlon_hd,nlat_hd/)))
+      fifth_intermediate_expected_river_inflow(:,:) = &
+        fifth_intermediate_expected_river_inflow(:,:)/step_length
+      allocate(fifth_intermediate_expected_water_to_ocean(nlat_hd,nlon_hd))
+      fifth_intermediate_expected_water_to_ocean = transpose(reshape((/   &
+          0.0, 0.0,  0.0, &
+         0.0, 0.0,  0.0, &
+         0.0, 0.0, 4.0 /), &
+         (/nlon_hd,nlat_hd/)))
+      fifth_intermediate_expected_water_to_ocean(:,:) = &
+        fifth_intermediate_expected_water_to_ocean(:,:)/step_length
+      allocate(fifth_intermediate_expected_water_to_hd(nlat_hd,nlon_hd))
+      fifth_intermediate_expected_water_to_hd = transpose(reshape((/   &
+          0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0 /), &
+         (/nlon_hd,nlat_hd/)))
+      fifth_intermediate_expected_water_to_hd(:,:) = &
+        fifth_intermediate_expected_water_to_hd(:,:)/step_length
+      allocate(fifth_intermediate_expected_lake_numbers(nlat_lake,nlon_lake))
+      fifth_intermediate_expected_lake_numbers = transpose(reshape((/   &
+          0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, &
+         0, 2, 0, 0, 1, 0, &
+         0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0 /), &
+         (/nlon_lake,nlat_lake/)))
+      allocate(fifth_intermediate_expected_lake_types(nlat_lake,nlon_lake))
+      fifth_intermediate_expected_lake_types = transpose(reshape((/   &
+          0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 1, 0, &
+         0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0 /), &
+         (/nlon_lake,nlat_lake/)))
+      allocate(fifth_intermediate_expected_diagnostic_lake_volumes(nlat_lake,nlon_lake))
+      fifth_intermediate_expected_diagnostic_lake_volumes = transpose(reshape((/   &
+          0.0,  0.0,  0.0,  0.0,  0.0, 0.0, &
+         0.0,  0.0,  0.0,  0.0,  0.0, 0.0, &
+         0.0,  0.0,  0.0,  0.0,  0.0, 0.0, &
+         0.0,  0.0,  0.0,  0.0,  0.0, 0.0, &
+         0.0,  0.0,  0.0,  0.0,  0.0, 0.0, &
+         0.0,  0.0,  0.0,  0.0,  0.0, 0.0 /), &
+         (/nlon_lake,nlat_lake/)))
+      allocate(fifth_intermediate_expected_lake_fractions(nlat_surface,nlon_surface))
+      fifth_intermediate_expected_lake_fractions = transpose(reshape((/   &
+          0.0, 0.0, 0.0, &
+         0.25, 0.0, 0.25, &
+         0.0, 0.0, 0.0 /), &
+         (/nlon_surface,nlat_surface/)))
+      allocate(fifth_intermediate_expected_number_lake_cells(nlat_surface,nlon_surface))
+      fifth_intermediate_expected_number_lake_cells = transpose(reshape((/   &
+          0, 0, 0, &
+         1, 0, 1, &
+         0, 0, 0 /), &
+         (/nlon_surface,nlat_surface/)))
+      allocate(fifth_intermediate_expected_number_fine_grid_cells(nlat_surface,nlon_surface))
+      fifth_intermediate_expected_number_fine_grid_cells = transpose(reshape((/   &
+          4, 4, 4, &
+         4, 4, 4, &
+         4, 4, 4 /), &
+         (/nlon_surface,nlat_surface/)))
+      allocate(fifth_intermediate_expected_lake_volumes(3))
+      fifth_intermediate_expected_lake_volumes = (/ 0.0, 0.0, 0.0 /)
+      ! fifth_intermediate_expected_true_lake_depths::Field{Float64} =  !   LatLonField{Float64}(lake_grid,
+      !       Float64[    0    0    0   7.0    0    0    0    0    0
+      !                   0    0    0   7.0   0    0    0    0    0
+      !                   0    0    9.0 7.0    0    0    0    0    0
+      !                   0    0    8.0 8.0    0    0    0    0    0
+      !                   0    0    8.0 8.0    0    0    0    0    0
+      !                   0    0    0    0    0    0    0    0    0
+      !                   0    0    0    0    0    0    0    0    0
+      !                   0    0    0    0    0    0    0    0    0
+      !                   0    0    0    0    0    0    0    0    0 )
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array)
       call run_hd_model(0,runoffs,drainages,evaporations)
       lake_model_prognostics => get_lake_model_prognostics()
+      allocate(lake_fractions(nlat_surface,nlon_surface))
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
@@ -1369,12 +1501,13 @@ subroutine testLakeModel2
       allocate(lake_volumes(size(lake_model_prognostics%lakes)))
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
       call assert_equals( first_intermediate_expected_river_inflow, river_fields%river_inflow,nlat_hd,nlon_hd)
-      call assert_equals( first_intermediate_expected_water_to_ocean,river_fields%water_to_ocean,nlat_hd,nlon_hd,0.00001_dp)
+      call assert_equals( first_intermediate_expected_water_to_ocean,river_fields%water_to_ocean,nlat_hd,nlon_hd,&
+                         0.00001_dp/step_length)
       call assert_equals( first_intermediate_expected_water_to_hd, lake_model_prognostics%water_to_hd,nlat_hd,nlon_hd)
       call assert_equals( first_intermediate_expected_lake_numbers, &
                           lake_model_prognostics%lake_numbers,nlat_lake,nlon_lake)
@@ -1387,6 +1520,7 @@ subroutine testLakeModel2
       call assert_equals( first_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test first_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array)
@@ -1417,19 +1551,20 @@ subroutine testLakeModel2
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
       call assert_equals(second_intermediate_expected_river_inflow, &
-                       river_fields%river_inflow,nlat_hd,nlon_hd,0.02_dp)
+                       river_fields%river_inflow,nlat_hd,nlon_hd,0.02_dp/step_length)
       call assert_equals(second_intermediate_expected_water_to_ocean, &
-                       river_fields%water_to_ocean,nlat_hd,nlon_hd,0.02_dp)
+                       river_fields%water_to_ocean,nlat_hd,nlon_hd,0.02_dp/step_length)
       call assert_equals( second_intermediate_expected_water_to_hd, lake_model_prognostics%water_to_hd,nlat_hd,nlon_hd)
       call assert_equals( second_intermediate_expected_lake_numbers, &
                           lake_model_prognostics%lake_numbers,nlat_lake,nlon_lake)
       call assert_equals( second_intermediate_expected_lake_types, lake_types,nlat_lake,nlon_lake)
-      call assert_equals( second_intermediate_expected_lake_volumes, lake_volumes, size(second_intermediate_expected_lake_volumes))
+      call assert_equals( second_intermediate_expected_lake_volumes, lake_volumes, size(second_intermediate_expected_lake_volumes),&
+                          0.000001_dp)
       call assert_equals(diagnostic_lake_volumes,second_intermediate_expected_diagnostic_lake_volumes,nlat_lake,nlon_lake,0.01_dp)
       call assert_equals( second_intermediate_expected_lake_fractions, lake_fractions,nlat_surface,nlon_surface)
       call assert_equals( second_intermediate_expected_number_lake_cells, &
@@ -1437,6 +1572,7 @@ subroutine testLakeModel2
       call assert_equals( second_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test second_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array)
@@ -1467,15 +1603,16 @@ subroutine testLakeModel2
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
       call assert_equals(third_intermediate_expected_river_inflow, &
-                       river_fields%river_inflow,nlat_hd,nlon_hd,0.02_dp)
+                       river_fields%river_inflow,nlat_hd,nlon_hd,0.02_dp/step_length)
       call assert_equals(third_intermediate_expected_water_to_ocean, &
-                       river_fields%water_to_ocean,nlat_hd,nlon_hd,0.02_dp)
-      call assert_equals(third_intermediate_expected_water_to_hd,lake_model_prognostics%water_to_hd,nlat_hd,nlon_hd,0.02_dp)
+                       river_fields%water_to_ocean,nlat_hd,nlon_hd,0.02_dp/step_length)
+      call assert_equals(third_intermediate_expected_water_to_hd,lake_model_prognostics%water_to_hd,nlat_hd,nlon_hd,&
+                         0.02_dp/step_length)
       call assert_equals( third_intermediate_expected_lake_numbers, &
                           lake_model_prognostics%lake_numbers,nlat_lake,nlon_lake)
       call assert_equals( third_intermediate_expected_lake_types, lake_types,nlat_lake,nlon_lake)
@@ -1487,6 +1624,7 @@ subroutine testLakeModel2
       call assert_equals( third_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test third_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array)
@@ -1517,14 +1655,16 @@ subroutine testLakeModel2
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
-      call assert_equals( fourth_intermediate_expected_river_inflow, river_fields%river_inflow,nlat_hd,nlon_hd)
+      call assert_equals( fourth_intermediate_expected_river_inflow, river_fields%river_inflow,nlat_hd,nlon_hd, &
+                          0.00000001_dp/step_length)
       call assert_equals(fourth_intermediate_expected_water_to_ocean, &
-                       river_fields%water_to_ocean,nlat_hd,nlon_hd,0.02_dp)
-      call assert_equals( fourth_intermediate_expected_water_to_hd, lake_model_prognostics%water_to_hd,nlat_hd,nlon_hd)
+                       river_fields%water_to_ocean,nlat_hd,nlon_hd,0.02_dp/step_length)
+      call assert_equals( fourth_intermediate_expected_water_to_hd, lake_model_prognostics%water_to_hd,nlat_hd,nlon_hd, &
+                          0.00000001_dp/step_length)
       call assert_equals( fourth_intermediate_expected_lake_numbers, &
                           lake_model_prognostics%lake_numbers,nlat_lake,nlon_lake)
       call assert_equals( fourth_intermediate_expected_lake_types, lake_types,nlat_lake,nlon_lake)
@@ -1536,6 +1676,7 @@ subroutine testLakeModel2
       call assert_equals( fourth_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test fourth_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array)
@@ -1566,12 +1707,63 @@ subroutine testLakeModel2
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
-      call assert_equals( expected_river_inflow,river_fields%river_inflow,nlat_hd,nlon_hd,0.02_dp)
-      call assert_equals( expected_water_to_ocean,river_fields%water_to_ocean,nlat_hd,nlon_hd,0.02_dp)
+      call assert_equals( fifth_intermediate_expected_river_inflow, river_fields%river_inflow,nlat_hd,nlon_hd, &
+                          0.00000001_dp/step_length)
+      call assert_equals(fifth_intermediate_expected_water_to_ocean, &
+                       river_fields%water_to_ocean,nlat_hd,nlon_hd,0.02_dp/step_length)
+      call assert_equals( fifth_intermediate_expected_water_to_hd, lake_model_prognostics%water_to_hd,nlat_hd,nlon_hd)
+      call assert_equals( fifth_intermediate_expected_lake_numbers, &
+                          lake_model_prognostics%lake_numbers,nlat_lake,nlon_lake)
+      call assert_equals( fifth_intermediate_expected_lake_types, lake_types,nlat_lake,nlon_lake)
+      call assert_equals( fifth_intermediate_expected_lake_volumes, lake_volumes, size(fifth_intermediate_expected_lake_volumes))
+      call assert_equals( diagnostic_lake_volumes, fifth_intermediate_expected_diagnostic_lake_volumes,nlat_lake,nlon_lake)
+      call assert_equals( fifth_intermediate_expected_lake_fractions, lake_fractions,nlat_surface,nlon_surface)
+      call assert_equals( fifth_intermediate_expected_number_lake_cells, &
+                          lake_model_prognostics%lake_cell_count,nlat_surface,nlon_surface)
+      call assert_equals( fifth_intermediate_expected_number_fine_grid_cells, &
+                          lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
+      !@test fifth_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array)
+      call run_hd_model(1000,runoffs,drainages,evaporations)
+      lake_model_prognostics => get_lake_model_prognostics()
+      call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
+                                                   lake_model_prognostics, &
+                                                   lake_fractions)
+      allocate(lake_types(nlat_lake,nlon_lake))
+      lake_types(:,:) = 0
+      do i = 1,nlat_lake
+        do j = 1,nlon_lake
+          lake_number = lake_model_prognostics%lake_numbers(i,j)
+          if (lake_number > 0) then
+            working_lake_ptr = lake_model_prognostics%lakes(lake_number)
+            lake_type = working_lake_ptr%lake_pointer%lake_type
+              if (lake_type == filling_lake_type) then
+                lake_types(i,j) = 1
+              else if (lake_type == overflowing_lake_type) then
+                lake_types(i,j) = 2
+              else if (lake_type == subsumed_lake_type) then
+                lake_types(i,j) = 3
+              else
+                lake_types(i,j) = 4
+              end if
+          end if
+        end do
+      end do
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_model_prognostics%lakes(i)
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
+      end do
+      diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
+                                                                         lake_model_prognostics)
+      call assert_equals( expected_river_inflow,river_fields%river_inflow,nlat_hd,nlon_hd,0.02_dp/step_length)
+      call assert_equals( expected_water_to_ocean,river_fields%water_to_ocean,nlat_hd,nlon_hd,0.02_dp/step_length)
       call assert_equals( expected_water_to_hd, lake_model_prognostics%water_to_hd,nlat_hd,nlon_hd)
       call assert_equals( expected_lake_numbers, &
                           lake_model_prognostics%lake_numbers,nlat_lake,nlon_lake)
@@ -1587,13 +1779,14 @@ subroutine testLakeModel2
 end subroutine testLakeModel2
 
 subroutine testLakeModel3
-   use latlon_hd_model_interface_mod, only: run_hd_model
-   use l2_hd_interface_extension_mod, only: init_hd_model_for_testing => &
+   use latlon_hd_model_interface_mod, only: run_hd_model, &
+                                            init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
                                 lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type
+                                overflowing_lake_type, subsumed_lake_type, &
+                                get_lake_volume
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
@@ -1637,7 +1830,7 @@ subroutine testLakeModel3
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
-   real(dp),dimension(:,:), pointer :: lake_fractions
+   real(dp),dimension(:,:), allocatable :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -1680,6 +1873,7 @@ subroutine testLakeModel3
                                           overland_retention_coefficients, &
                                           base_retention_coefficients, &
                                           landsea_mask)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       step_length = 86400.0_dp
       nlat_lake = 9
       nlon_lake = 9
@@ -1725,7 +1919,7 @@ subroutine testLakeModel3
          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
          .False., .False., .False., .False., .False., .False., .False., .False., .False. /), &
          (/nlon_lake,nlat_lake/)))
-      lake_model_parameters = &
+      lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
                             cell_areas_on_surface_model_grid, &
@@ -1764,18 +1958,24 @@ subroutine testLakeModel3
          4.0, 0.0,  4.0, &
          0.0, 0.0,  0.0 /), &
          (/nlon_hd,nlat_hd/)))
+      expected_river_inflow(:,:) = &
+        expected_river_inflow(:,:)/step_length
       allocate(expected_water_to_ocean(nlat_hd,nlon_hd))
       expected_water_to_ocean = transpose(reshape((/   &
           0.0, 0.0,  0.0, &
          0.0, 0.0,  0.0, &
          0.0, 0.0, 16.0 /), &
          (/nlon_hd,nlat_hd/)))
+      expected_water_to_ocean(:,:) = &
+        expected_water_to_ocean(:,:)/step_length
       allocate(expected_water_to_hd(nlat_hd,nlon_hd))
       expected_water_to_hd = transpose(reshape((/   &
           0.0, 0.0,  0.0, &
          0.0, 0.0,  0.0, &
          0.0, 0.0, 10.0 /), &
          (/nlon_hd,nlat_hd/)))
+      expected_water_to_hd(:,:) = &
+        expected_water_to_hd(:,:)/step_length
       allocate(expected_lake_numbers(nlat_lake,nlon_lake))
       expected_lake_numbers = transpose(reshape((/   &
              0,    0,    0,    1,    0,    0,    0,    0,    0, &
@@ -1849,6 +2049,7 @@ subroutine testLakeModel3
                                      lake_parameters_as_array)
       call run_hd_model(1000,runoffs,drainages,evaporations)
       lake_model_prognostics => get_lake_model_prognostics()
+      allocate(lake_fractions(nlat_surface,nlon_surface))
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
@@ -1875,13 +2076,16 @@ subroutine testLakeModel3
       allocate(lake_volumes(size(lake_model_prognostics%lakes)))
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
-      call assert_equals( expected_river_inflow, river_fields%river_inflow,nlat_hd,nlon_hd)
-      call assert_equals( expected_water_to_ocean,river_fields%water_to_ocean,nlat_hd,nlon_hd,0.00001_dp)
-      call assert_equals( expected_water_to_hd, lake_model_prognostics%water_to_hd,nlat_hd,nlon_hd)
+      call assert_equals( expected_river_inflow, river_fields%river_inflow,nlat_hd,nlon_hd,&
+                         0.0000001_dp/step_length)
+      call assert_equals( expected_water_to_ocean,river_fields%water_to_ocean,nlat_hd,nlon_hd,&
+                         0.00001_dp/step_length)
+      call assert_equals( expected_water_to_hd, lake_model_prognostics%water_to_hd,nlat_hd,nlon_hd,&
+                         0.0000001_dp/step_length)
       call assert_equals( expected_lake_numbers, &
                           lake_model_prognostics%lake_numbers,nlat_lake,nlon_lake)
       call assert_equals( expected_lake_types, lake_types,nlat_lake,nlon_lake)
@@ -1896,13 +2100,14 @@ subroutine testLakeModel3
 end subroutine testLakeModel3
 
 subroutine testLakeModel4
-   use latlon_hd_model_interface_mod, only: run_hd_model
-   use l2_hd_interface_extension_mod, only: init_hd_model_for_testing => &
+   use latlon_hd_model_interface_mod, only: run_hd_model, &
+                                            init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
                                 lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type
+                                overflowing_lake_type, subsumed_lake_type, &
+                                get_lake_volume
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
@@ -1946,7 +2151,7 @@ subroutine testLakeModel4
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
-   real(dp),dimension(:,:), pointer :: lake_fractions
+   real(dp),dimension(:,:), allocatable :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -1994,6 +2199,7 @@ subroutine testLakeModel4
                                           overland_retention_coefficients, &
                                           base_retention_coefficients, &
                                           landsea_mask)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       step_length = 86400.0_dp
       nlat_lake = 20
       nlon_lake = 20
@@ -2092,7 +2298,7 @@ subroutine testLakeModel4
          .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
           .False., .False., .False., .False., .False., .False., .False., .False. /), &
          (/nlon_lake,nlat_lake/)))
-      lake_model_parameters = &
+      lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
                             cell_areas_on_surface_model_grid, &
@@ -2185,6 +2391,8 @@ subroutine testLakeModel4
          0.0, 2.0, 0.0, 0.0, &
          0.0, 0.0, 0.0, 0.0 /), &
          (/nlon_hd,nlat_hd/)))
+      expected_river_inflow(:,:) = &
+        expected_river_inflow(:,:)/step_length
       allocate(expected_water_to_ocean(nlat_hd,nlon_hd))
       expected_water_to_ocean = transpose(reshape((/   &
           0.0, 0.0, 0.0, 0.0, &
@@ -2192,6 +2400,8 @@ subroutine testLakeModel4
          0.0, 0.0, 0.0, 0.0, &
          0.0, 6.0, 0.0, 22.0 /), &
          (/nlon_hd,nlat_hd/)))
+      expected_water_to_ocean(:,:) = &
+        expected_water_to_ocean(:,:)/step_length
       allocate(expected_water_to_hd(nlat_hd,nlon_hd))
       expected_water_to_hd = transpose(reshape((/   &
           0.0, 0.0, 0.0,  0.0, &
@@ -2199,6 +2409,8 @@ subroutine testLakeModel4
          0.0, 0.0, 0.0,  0.0, &
          0.0, 2.0, 0.0, 18.0 /), &
          (/nlon_hd,nlat_hd/)))
+      expected_water_to_hd(:,:) = &
+        expected_water_to_hd(:,:)/step_length
       allocate(expected_lake_numbers(nlat_lake,nlon_lake))
       expected_lake_numbers = transpose(reshape((/   &
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
@@ -2288,8 +2500,8 @@ subroutine testLakeModel4
          56, 48, 56, &
          42, 36, 42 /), &
          (/nlon_surface,nlat_surface/)))
-      expected_lake_volumes = (/ 1.0, 10.0, 1.0, 38.0, 6.0, 46.0, 55.0, 55.0, 229.0 /)
       allocate(expected_lake_volumes(9))
+      expected_lake_volumes = (/ 1.0, 10.0, 1.0, 38.0, 6.0, 46.0, 55.0, 55.0, 229.0 /)
       !allocate(expected_true_lake_depths(nlat_lake,nlon_lake))
       !expected_true_lake_depths = transpose(reshape((/   &
          !        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
@@ -2313,8 +2525,12 @@ subroutine testLakeModel4
          !                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          !                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 /), &
          ! (/nlon_lake,nlat_lake/)))
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array)
       call run_hd_model(10000,runoffs,drainages,evaporations)
       lake_model_prognostics => get_lake_model_prognostics()
+      allocate(lake_fractions(nlat_surface,nlon_surface))
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
@@ -2341,11 +2557,12 @@ subroutine testLakeModel4
       allocate(lake_volumes(size(lake_model_prognostics%lakes)))
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
-      call assert_equals( expected_river_inflow, river_fields%river_inflow,nlat_hd,nlon_hd)
+      call assert_equals( expected_river_inflow, river_fields%river_inflow,nlat_hd,nlon_hd, &
+                          0.000000001_dp/step_length)
       call assert_equals( expected_water_to_ocean,river_fields%water_to_ocean,nlat_hd,nlon_hd,0.00001_dp)
       call assert_equals( expected_water_to_hd,lake_model_prognostics%water_to_hd,nlat_hd,nlon_hd,0.0000000001_dp)
       call assert_equals( expected_lake_numbers, &
@@ -2362,13 +2579,14 @@ subroutine testLakeModel4
 end subroutine testLakeModel4
 
 subroutine testLakeModel5
-   use latlon_hd_model_interface_mod, only: run_hd_model
-   use l2_hd_interface_extension_mod, only: init_hd_model_for_testing => &
+   use latlon_hd_model_interface_mod, only: run_hd_model, &
+                                            init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
                                 lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type
+                                overflowing_lake_type, subsumed_lake_type, &
+                                get_lake_volume
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
@@ -2423,7 +2641,7 @@ subroutine testLakeModel5
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
-   real(dp),dimension(:,:), pointer :: lake_fractions
+   real(dp),dimension(:,:), allocatable :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -2471,6 +2689,7 @@ subroutine testLakeModel5
                                           overland_retention_coefficients, &
                                           base_retention_coefficients, &
                                           landsea_mask)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       step_length = 86400.0_dp
       nlat_lake = 20
       nlon_lake = 20
@@ -2569,7 +2788,7 @@ subroutine testLakeModel5
          .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
           .False., .False., .False., .False., .False., .False., .False./), &
          (/nlon_lake,nlat_lake/)))
-      lake_model_parameters = &
+      lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
                             cell_areas_on_surface_model_grid, &
@@ -2651,13 +2870,13 @@ subroutine testLakeModel5
       end do
       allocate(evaporation(nlat_surface,nlon_surface))
       evaporation(:,:) = 0.0
-      allocate(evaporation(nlat_surface,nlon_surface))
-      evaporation(:,:) = 100.0
-      allocate(evaporations(nlat_surface,nlon_surface,380))
-      do i = 1,180
+      allocate(additional_evaporation(nlat_surface,nlon_surface))
+      additional_evaporation(:,:) = 100.0
+      allocate(evaporations(nlat_surface,nlon_surface,11400))
+      do i = 1,5400
         evaporations(:,:,i) = evaporation(:,:)
       end do
-      do i = 181,380
+      do i = 5401,11400
         evaporations(:,:,i) = additional_evaporation(:,:)
       end do
       allocate(expected_river_inflow(nlat_hd,nlon_hd))
@@ -2667,6 +2886,8 @@ subroutine testLakeModel5
          0.0, 2.0, 0.0, 0.0, &
          0.0, 0.0, 0.0, 0.0 /), &
          (/nlon_hd,nlat_hd/)))
+      expected_river_inflow(:,:) = &
+        expected_river_inflow(:,:)/step_length
       allocate(expected_water_to_ocean(nlat_hd,nlon_hd))
       expected_water_to_ocean = transpose(reshape((/   &
           -94.0,   0.0,   0.0,   0.0, &
@@ -2674,6 +2895,8 @@ subroutine testLakeModel5
          0.0,   0.0,   0.0, -94.0, &
          -98.0,   4.0,   0.0,   4.0 /), &
          (/nlon_hd,nlat_hd/)))
+      expected_water_to_ocean(:,:) = &
+        expected_water_to_ocean(:,:)/step_length
       allocate(expected_water_to_hd(nlat_hd,nlon_hd))
       expected_water_to_hd = transpose(reshape((/   &
           0.0, 0.0, 0.0, 0.0, &
@@ -2681,6 +2904,8 @@ subroutine testLakeModel5
          0.0, 0.0, 0.0, 0.0, &
          0.0, 0.0, 0.0, 0.0 /), &
          (/nlon_hd,nlat_hd/)))
+      expected_water_to_hd(:,:) = &
+        expected_water_to_hd(:,:)/step_length
       allocate(expected_lake_numbers(nlat_lake,nlon_lake))
       expected_lake_numbers = transpose(reshape((/   &
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
@@ -2754,6 +2979,8 @@ subroutine testLakeModel5
          0.0, 2.0, 0.0, 0.0, &
          0.0, 0.0, 0.0, 0.0 /), &
          (/nlon_hd,nlat_hd/)))
+      expected_intermediate_river_inflow(:,:) = &
+        expected_intermediate_river_inflow(:,:)/step_length
       allocate(expected_intermediate_water_to_ocean(nlat_hd,nlon_hd))
       expected_intermediate_water_to_ocean = transpose(reshape((/   &
           0.0, 0.0, 0.0, 0.0, &
@@ -2761,6 +2988,8 @@ subroutine testLakeModel5
          0.0, 0.0, 0.0, 0.0, &
          0.0, 6.0, 0.0, 22.0 /), &
          (/nlon_hd,nlat_hd/)))
+      expected_intermediate_water_to_ocean(:,:) = &
+        expected_intermediate_water_to_ocean(:,:)/step_length
       allocate(expected_intermediate_water_to_hd(nlat_hd,nlon_hd))
       expected_intermediate_water_to_hd = transpose(reshape((/   &
           0.0, 0.0, 0.0,  0.0, &
@@ -2768,6 +2997,8 @@ subroutine testLakeModel5
          0.0, 0.0, 0.0,  0.0, &
          0.0, 2.0, 0.0, 18.0 /), &
          (/nlon_hd,nlat_hd/)))
+      expected_intermediate_water_to_hd(:,:) = &
+        expected_intermediate_water_to_hd(:,:)/step_length
       allocate(expected_intermediate_lake_numbers(nlat_lake,nlon_lake))
       expected_intermediate_lake_numbers = transpose(reshape((/   &
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
@@ -2926,9 +3157,14 @@ subroutine testLakeModel5
          1, 43, 1, &
          15, 7,  1  /), &
          (/nlon_surface,nlat_surface/)))
+      allocate(expected_intermediate_lake_volumes(9))
       expected_intermediate_lake_volumes = (/ 1.0, 10.0, 1.0, 38.0, 6.0, 46.0, 55.0, 55.0, 229.0 /)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array)
       call run_hd_model(5000,runoffs,drainages,evaporations)
       lake_model_prognostics => get_lake_model_prognostics()
+      allocate(lake_fractions(nlat_surface,nlon_surface))
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
@@ -2955,15 +3191,16 @@ subroutine testLakeModel5
       allocate(lake_volumes(size(lake_model_prognostics%lakes)))
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
-      call assert_equals( expected_intermediate_river_inflow, river_fields%river_inflow,nlat_hd,nlon_hd)
+      call assert_equals( expected_intermediate_river_inflow, river_fields%river_inflow,nlat_hd,nlon_hd, &
+                          0.000000001_dp/step_length)
       call assert_equals(expected_intermediate_water_to_ocean, &
-                       river_fields%water_to_ocean,nlat_hd,nlon_hd,0.00001_dp)
+                       river_fields%water_to_ocean,nlat_hd,nlon_hd,0.00001_dp/step_length)
       call assert_equals(expected_intermediate_water_to_hd, &
-                       lake_model_prognostics%water_to_hd,nlat_hd,nlon_hd,0.00001_dp)
+                       lake_model_prognostics%water_to_hd,nlat_hd,nlon_hd,0.00001_dp/step_length)
       call assert_equals( expected_intermediate_lake_numbers, &
                           lake_model_prognostics%lake_numbers,nlat_lake,nlon_lake)
       call assert_equals( expected_intermediate_lake_types, lake_types,nlat_lake,nlon_lake)
@@ -2975,6 +3212,10 @@ subroutine testLakeModel5
       call assert_equals( expected_intermediate_number_fine_grid_cells, lake_model_parameters%number_fine_grid_cells, &
                           nlat_surface,nlon_surface)
       !@test expected_intermediate_true_lake_depths, lake_model_parameters.true_lake_depths
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array)
       call run_hd_model(10000,runoffs,drainages,evaporations)
       lake_model_prognostics => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
@@ -3002,11 +3243,12 @@ subroutine testLakeModel5
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
-      call assert_equals( expected_river_inflow, river_fields%river_inflow,nlat_hd,nlon_hd)
+      call assert_equals( expected_river_inflow, river_fields%river_inflow,nlat_hd,nlon_hd, &
+                          0.000000001_dp/step_length)
       call assert_equals( expected_water_to_ocean,river_fields%water_to_ocean,nlat_hd,nlon_hd,0.00001_dp)
       call assert_equals( expected_water_to_hd, lake_model_prognostics%water_to_hd,nlat_hd,nlon_hd)
       call assert_equals( expected_lake_numbers, &
@@ -3023,13 +3265,14 @@ subroutine testLakeModel5
 end subroutine testLakeModel5
 
 subroutine testLakeModel6
-   use latlon_hd_model_interface_mod, only: run_hd_model
-   use l2_hd_interface_extension_mod, only: init_hd_model_for_testing => &
+   use latlon_hd_model_interface_mod, only: run_hd_model, &
+                                            init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
                                 lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type
+                                overflowing_lake_type, subsumed_lake_type, &
+                                get_lake_volume
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
@@ -3117,8 +3360,7 @@ subroutine testLakeModel6
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
-   real(dp),dimension(:,:), pointer :: lake_fractions
-   real :: step_length
+   real(dp),dimension(:,:), allocatable :: lake_fractions
    integer :: lake_number
    integer :: lake_type
    integer :: i,j
@@ -3159,6 +3401,7 @@ subroutine testLakeModel6
                                           overland_retention_coefficients, &
                                           base_retention_coefficients, &
                                           landsea_mask)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       nlat_lake = 9
       nlon_lake = 9
       allocate(cell_areas_on_surface_model_grid(nlat_surface,nlon_surface))
@@ -3202,7 +3445,7 @@ subroutine testLakeModel6
          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
          .False., .False., .False., .False., .False., .False., .False., .False., .False./), &
          (/nlon_lake,nlat_lake/)))
-      lake_model_parameters = &
+      lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
                             cell_areas_on_surface_model_grid, &
@@ -3226,8 +3469,8 @@ subroutine testLakeModel6
       allocate(runoffs(nlat_hd,nlon_hd,1000))
       allocate(drainages(nlat_hd,nlon_hd,1000))
       do i = 1,1000
-        drainages(:,:,i) = drainage(:,:)/step_length
-        runoffs(:,:,i) = runoff(:,:)/step_length
+        drainages(:,:,i) = drainage(:,:)
+        runoffs(:,:,i) = runoff(:,:)
       end do
       allocate(evaporation(nlat_surface,nlon_surface))
       evaporation(:,:) = 0.0
@@ -3657,8 +3900,12 @@ subroutine testLakeModel6
          !                  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
          !                  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,    0/), &
          ! (/nlon_lake,nlat_lake/)))
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array)
       call run_hd_model(2,runoffs,drainages,evaporations)
       lake_model_prognostics => get_lake_model_prognostics()
+      allocate(lake_fractions(nlat_surface,nlon_surface))
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
@@ -3685,7 +3932,7 @@ subroutine testLakeModel6
       allocate(lake_volumes(size(lake_model_prognostics%lakes)))
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -3731,7 +3978,7 @@ subroutine testLakeModel6
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -3777,7 +4024,7 @@ subroutine testLakeModel6
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -3823,7 +4070,7 @@ subroutine testLakeModel6
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -3869,7 +4116,7 @@ subroutine testLakeModel6
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -3915,7 +4162,7 @@ subroutine testLakeModel6
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -3936,13 +4183,14 @@ subroutine testLakeModel6
 end subroutine testLakeModel6
 
 subroutine testLakeModel7
-   use latlon_hd_model_interface_mod, only: run_hd_model
-   use l2_hd_interface_extension_mod, only: init_hd_model_for_testing => &
+   use latlon_hd_model_interface_mod, only: run_hd_model, &
+                                            init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
                                 lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type
+                                overflowing_lake_type, subsumed_lake_type, &
+                                get_lake_volume
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
@@ -4030,8 +4278,7 @@ subroutine testLakeModel7
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
-   real(dp),dimension(:,:), pointer :: lake_fractions
-   real :: step_length
+   real(dp),dimension(:,:), allocatable :: lake_fractions
    integer :: lake_number
    integer :: lake_type
    integer :: i,j
@@ -4072,6 +4319,7 @@ subroutine testLakeModel7
                                           overland_retention_coefficients, &
                                           base_retention_coefficients, &
                                           landsea_mask)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       nlat_lake = 9
       nlon_lake = 9
       allocate(cell_areas_on_surface_model_grid(nlat_surface,nlon_surface))
@@ -4115,7 +4363,7 @@ subroutine testLakeModel7
          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
          .False., .False., .False., .False., .False., .False., .False., .False., .False./), &
          (/nlon_lake,nlat_lake/)))
-      lake_model_parameters = &
+      lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
                             cell_areas_on_surface_model_grid, &
@@ -4139,8 +4387,8 @@ subroutine testLakeModel7
       allocate(runoffs(nlat_hd,nlon_hd,1000))
       allocate(drainages(nlat_hd,nlon_hd,1000))
       do i = 1,1000
-        drainages(:,:,i) = drainage(:,:)/step_length
-        runoffs(:,:,i) = runoff(:,:)/step_length
+        drainages(:,:,i) = drainage(:,:)
+        runoffs(:,:,i) = runoff(:,:)
       end do
       allocate(evaporation(nlat_surface,nlon_surface))
       evaporation(:,:) = 0.0
@@ -4575,6 +4823,7 @@ subroutine testLakeModel7
                                      lake_parameters_as_array)
       call run_hd_model(2,runoffs,drainages,evaporations)
       lake_model_prognostics => get_lake_model_prognostics()
+      allocate(lake_fractions(nlat_surface,nlon_surface))
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
@@ -4601,7 +4850,7 @@ subroutine testLakeModel7
       allocate(lake_volumes(size(lake_model_prognostics%lakes)))
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -4647,7 +4896,7 @@ subroutine testLakeModel7
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -4692,7 +4941,7 @@ subroutine testLakeModel7
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -4738,7 +4987,7 @@ subroutine testLakeModel7
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -4784,7 +5033,7 @@ subroutine testLakeModel7
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -4830,7 +5079,7 @@ subroutine testLakeModel7
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -4851,13 +5100,14 @@ subroutine testLakeModel7
 end subroutine testLakeModel7
 
 subroutine testLakeModel8
-   use latlon_hd_model_interface_mod, only: run_hd_model
-   use l2_hd_interface_extension_mod, only: init_hd_model_for_testing => &
+   use latlon_hd_model_interface_mod, only: run_hd_model, &
+                                            init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
                                 lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type
+                                overflowing_lake_type, subsumed_lake_type, &
+                                get_lake_volume
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
@@ -5017,8 +5267,7 @@ subroutine testLakeModel8
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
-   real(dp),dimension(:,:), pointer :: lake_fractions
-   real :: step_length
+   real(dp),dimension(:,:), allocatable :: lake_fractions
    integer :: lake_number
    integer :: lake_type
    integer :: i,j
@@ -5059,6 +5308,7 @@ subroutine testLakeModel8
                                           overland_retention_coefficients, &
                                           base_retention_coefficients, &
                                           landsea_mask)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       nlat_lake = 9
       nlon_lake = 9
       allocate(cell_areas_on_surface_model_grid(nlat_surface,nlon_surface))
@@ -5102,7 +5352,7 @@ subroutine testLakeModel8
          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
          .False., .False., .False., .False., .False., .False., .False., .False., .False./), &
          (/nlon_lake,nlat_lake/)))
-      lake_model_parameters = &
+      lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
                             cell_areas_on_surface_model_grid, &
@@ -5122,6 +5372,7 @@ subroutine testLakeModel8
                                            0.0, 0.0, 0.0, &
                                            0.0, 0.0, 0.0 /), &
                                        (/nlon_hd,nlat_hd/)))
+      allocate(drainages(nlat_hd,nlon_hd,1000))
       drainages(:,:,1) =  drainage_one(:,:)
       allocate(drainage_two(nlat_hd,nlon_hd))
       drainage_two = transpose(reshape((/  0.0, 0.0, 0.0,  &
@@ -5129,7 +5380,6 @@ subroutine testLakeModel8
                                            0.0, 0.0, 0.0 /), &
                                        (/nlon_hd,nlat_hd/)))
       allocate(runoffs(nlat_hd,nlon_hd,1000))
-      allocate(drainages(nlat_hd,nlon_hd,1000))
       do i = 2,1000
         drainages(:,:,i) = drainage_two(:,:)
       end do
@@ -6146,6 +6396,7 @@ subroutine testLakeModel8
                                      lake_parameters_as_array)
       call run_hd_model(2,runoffs,drainages,evaporations)
       lake_model_prognostics => get_lake_model_prognostics()
+      allocate(lake_fractions(nlat_surface,nlon_surface))
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
@@ -6172,7 +6423,7 @@ subroutine testLakeModel8
       allocate(lake_volumes(size(lake_model_prognostics%lakes)))
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -6191,6 +6442,9 @@ subroutine testLakeModel8
       call assert_equals( first_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test first_intermediate_expected_true_lake_depths, lake_model_parameters%true_lake_depths
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array)
       call run_hd_model(3,runoffs,drainages,evaporations)
       lake_model_prognostics => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
@@ -6218,7 +6472,7 @@ subroutine testLakeModel8
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -6237,6 +6491,9 @@ subroutine testLakeModel8
       call assert_equals( second_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test second_intermediate_expected_true_lake_depths, lake_model_parameters.true_lake_depths
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array)
       call run_hd_model(5,runoffs,drainages,evaporations)
       lake_model_prognostics => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
@@ -6264,7 +6521,7 @@ subroutine testLakeModel8
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -6283,6 +6540,9 @@ subroutine testLakeModel8
       call assert_equals( third_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test third_intermediate_expected_true_lake_depths, lake_model_parameters%true_lake_depths
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array)
       call run_hd_model(6,runoffs,drainages,evaporations)
       lake_model_prognostics => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
@@ -6310,7 +6570,7 @@ subroutine testLakeModel8
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -6329,6 +6589,9 @@ subroutine testLakeModel8
       call assert_equals( fourth_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test fourth_intermediate_expected_true_lake_depths, lake_model_parameters%true_lake_depths
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array)
       call run_hd_model(7,runoffs,drainages,evaporations)
       lake_model_prognostics => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
@@ -6356,7 +6619,7 @@ subroutine testLakeModel8
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -6402,7 +6665,7 @@ subroutine testLakeModel8
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -6448,7 +6711,7 @@ subroutine testLakeModel8
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -6494,7 +6757,7 @@ subroutine testLakeModel8
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -6540,7 +6803,7 @@ subroutine testLakeModel8
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -6586,7 +6849,7 @@ subroutine testLakeModel8
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -6632,7 +6895,7 @@ subroutine testLakeModel8
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -6678,7 +6941,7 @@ subroutine testLakeModel8
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -6724,7 +6987,7 @@ subroutine testLakeModel8
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -6770,7 +7033,7 @@ subroutine testLakeModel8
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -6792,13 +7055,14 @@ subroutine testLakeModel8
 end subroutine testLakeModel8
 
 subroutine testLakeModel9
-   use latlon_hd_model_interface_mod, only: run_hd_model
-   use l2_hd_interface_extension_mod, only: init_hd_model_for_testing => &
+   use latlon_hd_model_interface_mod, only: run_hd_model, &
+                                            init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
                                 lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type
+                                overflowing_lake_type, subsumed_lake_type, &
+                                get_lake_volume
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
@@ -6866,8 +7130,7 @@ subroutine testLakeModel9
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
-   real(dp),dimension(:,:), pointer :: lake_fractions
-   real :: step_length
+   real(dp),dimension(:,:), allocatable :: lake_fractions
    integer :: lake_number
    integer :: lake_type
    integer :: i,j
@@ -6909,6 +7172,7 @@ subroutine testLakeModel9
                                           overland_retention_coefficients, &
                                           base_retention_coefficients, &
                                           landsea_mask)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       nlat_lake = 9
       nlon_lake = 9
       allocate(cell_areas_on_surface_model_grid(nlat_surface,nlon_surface))
@@ -6953,7 +7217,7 @@ subroutine testLakeModel9
          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
          .False., .False., .False., .False., .False., .False., .False., .False., .False./), &
          (/nlon_lake,nlat_lake/)))
-      lake_model_parameters = &
+      lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
                             cell_areas_on_surface_model_grid, &
@@ -6975,8 +7239,8 @@ subroutine testLakeModel9
       allocate(runoffs(nlat_hd,nlon_hd,1000))
       allocate(drainages(nlat_hd,nlon_hd,1000))
       do i = 1,1000
-        drainages(:,:,i) = drainage(:,:)/step_length
-        runoffs(:,:,i) = runoff(:,:)/step_length
+        drainages(:,:,i) = drainage(:,:)
+        runoffs(:,:,i) = runoff(:,:)
       end do
       allocate(evaporation(nlat_surface,nlon_surface))
       evaporation(:,:) = 0.0
@@ -7268,6 +7532,7 @@ subroutine testLakeModel9
                                      initial_spillover_to_rivers)
       call run_hd_model(0,runoffs,drainages,evaporations)
       lake_model_prognostics => get_lake_model_prognostics()
+      allocate(lake_fractions(nlat_surface,nlon_surface))
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
@@ -7294,7 +7559,7 @@ subroutine testLakeModel9
       allocate(lake_volumes(size(lake_model_prognostics%lakes)))
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -7340,7 +7605,7 @@ subroutine testLakeModel9
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -7386,7 +7651,7 @@ subroutine testLakeModel9
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -7407,13 +7672,14 @@ subroutine testLakeModel9
 end subroutine testLakeModel9
 
 subroutine testLakeModel10
-   use latlon_hd_model_interface_mod, only: run_hd_model
-   use l2_hd_interface_extension_mod, only: init_hd_model_for_testing => &
+   use latlon_hd_model_interface_mod, only: run_hd_model, &
+                                            init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
                                 lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type
+                                overflowing_lake_type, subsumed_lake_type, &
+                                get_lake_volume
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
@@ -7489,8 +7755,7 @@ subroutine testLakeModel10
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
-   real(dp),dimension(:,:), pointer :: lake_fractions
-   real :: step_length
+   real(dp),dimension(:,:), allocatable :: lake_fractions
    integer :: lake_number
    integer :: lake_type
    integer :: i,j
@@ -7537,6 +7802,7 @@ subroutine testLakeModel10
                                           overland_retention_coefficients, &
                                           base_retention_coefficients, &
                                           landsea_mask)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       nlat_lake = 20
       nlon_lake = 20
       allocate(cell_areas_on_surface_model_grid(nlat_surface,nlon_surface))
@@ -7634,7 +7900,7 @@ subroutine testLakeModel10
          .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
           .False., .False., .False., .False., .False., .False., .False., .False./), &
          (/nlon_lake,nlat_lake/)))
-      lake_model_parameters = &
+      lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
                             cell_areas_on_surface_model_grid, &
@@ -7708,8 +7974,8 @@ subroutine testLakeModel10
       allocate(runoffs(nlat_hd,nlon_hd,10000))
       allocate(drainages(nlat_hd,nlon_hd,10000))
       do i = 1,10000
-        drainages(:,:,i) = drainage(:,:)/step_length
-        runoffs(:,:,i) = runoff(:,:)/step_length
+        drainages(:,:,i) = drainage(:,:)
+        runoffs(:,:,i) = runoff(:,:)
       end do
       allocate(evaporation(nlat_surface,nlon_surface))
       evaporation(:,:) = 0.0
@@ -8291,6 +8557,7 @@ subroutine testLakeModel10
                                      initial_spillover_to_rivers)
       call run_hd_model(0,runoffs,drainages,evaporations)
       lake_model_prognostics => get_lake_model_prognostics()
+      allocate(lake_fractions(nlat_surface,nlon_surface))
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
@@ -8317,7 +8584,7 @@ subroutine testLakeModel10
       allocate(lake_volumes(size(lake_model_prognostics%lakes)))
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -8364,7 +8631,7 @@ subroutine testLakeModel10
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -8411,7 +8678,7 @@ subroutine testLakeModel10
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -8457,7 +8724,7 @@ subroutine testLakeModel10
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -8477,13 +8744,14 @@ subroutine testLakeModel10
 end subroutine testLakeModel10
 
 subroutine testLakeModel11
-   use latlon_hd_model_interface_mod, only: run_hd_model
-   use l2_hd_interface_extension_mod, only: init_hd_model_for_testing => &
+   use latlon_hd_model_interface_mod, only: run_hd_model, &
+                                            init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
                                 lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type
+                                overflowing_lake_type, subsumed_lake_type, &
+                                get_lake_volume
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
@@ -8529,8 +8797,7 @@ subroutine testLakeModel11
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
-   real(dp),dimension(:,:), pointer :: lake_fractions
-   real :: step_length
+   real(dp),dimension(:,:), allocatable :: lake_fractions
    integer :: lake_number
    integer :: lake_type
    integer :: i,j
@@ -8578,6 +8845,7 @@ subroutine testLakeModel11
                                           overland_retention_coefficients, &
                                           base_retention_coefficients, &
                                           landsea_mask)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       nlat_lake = 20
       nlon_lake = 20
       allocate(cell_areas_on_surface_model_grid(nlat_surface,nlon_surface))
@@ -8675,7 +8943,7 @@ subroutine testLakeModel11
          .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
           .False., .False., .False., .False., .False., .False., .False., .False./), &
          (/nlon_lake,nlat_lake/)))
-      lake_model_parameters = &
+      lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
                             cell_areas_on_surface_model_grid, &
@@ -8764,8 +9032,8 @@ subroutine testLakeModel11
       allocate(runoffs(nlat_hd,nlon_hd,10000))
       allocate(drainages(nlat_hd,nlon_hd,10000))
       do i = 1,10000
-        drainages(:,:,i) = drainage(:,:)/step_length
-        runoffs(:,:,i) = runoff(:,:)/step_length
+        drainages(:,:,i) = drainage(:,:)
+        runoffs(:,:,i) = runoff(:,:)
       end do
       allocate(evaporation(nlat_surface,nlon_surface))
       evaporation(:,:) = 0.0
@@ -8945,6 +9213,7 @@ subroutine testLakeModel11
                                      initial_spillover_to_rivers)
       call run_hd_model(5,runoffs,drainages,evaporations)
       lake_model_prognostics => get_lake_model_prognostics()
+      allocate(lake_fractions(nlat_surface,nlon_surface))
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
@@ -8971,7 +9240,7 @@ subroutine testLakeModel11
       allocate(lake_volumes(size(lake_model_prognostics%lakes)))
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -8993,13 +9262,14 @@ subroutine testLakeModel11
 end subroutine testLakeModel11
 
 subroutine testLakeModel12
-   use latlon_hd_model_interface_mod, only: run_hd_model
-   use l2_hd_interface_extension_mod, only: init_hd_model_for_testing => &
+   use latlon_hd_model_interface_mod, only: run_hd_model, &
+                                            init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
                                 lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type
+                                overflowing_lake_type, subsumed_lake_type, &
+                                get_lake_volume
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
@@ -9045,8 +9315,7 @@ subroutine testLakeModel12
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
-   real(dp),dimension(:,:), pointer :: lake_fractions
-   real :: step_length
+   real(dp),dimension(:,:), allocatable :: lake_fractions
    integer :: lake_number
    integer :: lake_type
    integer :: i,j
@@ -9093,6 +9362,7 @@ subroutine testLakeModel12
                                           overland_retention_coefficients, &
                                           base_retention_coefficients, &
                                           landsea_mask)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       nlat_lake = 20
       nlon_lake = 20
       allocate(cell_areas_on_surface_model_grid(nlat_surface,nlon_surface))
@@ -9190,7 +9460,7 @@ subroutine testLakeModel12
          .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
           .False., .False., .False., .False., .False., .False., .False./), &
          (/nlon_lake,nlat_lake/)))
-      lake_model_parameters = &
+      lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
                             cell_areas_on_surface_model_grid, &
@@ -9261,8 +9531,8 @@ subroutine testLakeModel12
       allocate(runoffs(nlat_hd,nlon_hd,10000))
       allocate(drainages(nlat_hd,nlon_hd,10000))
       do i = 1,10000
-        drainages(:,:,i) = drainage(:,:)/step_length
-        runoffs(:,:,i) = runoff(:,:)/step_length
+        drainages(:,:,i) = drainage(:,:)
+        runoffs(:,:,i) = runoff(:,:)
       end do
       allocate(evaporation(nlat_surface,nlon_surface))
       evaporation(:,:) = 0.0
@@ -9440,6 +9710,7 @@ subroutine testLakeModel12
                                      initial_spillover_to_rivers)
       call run_hd_model(5,runoffs,drainages,evaporations)
       lake_model_prognostics => get_lake_model_prognostics()
+      allocate(lake_fractions(nlat_surface,nlon_surface))
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
@@ -9466,7 +9737,7 @@ subroutine testLakeModel12
       allocate(lake_volumes(size(lake_model_prognostics%lakes)))
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -9487,13 +9758,14 @@ subroutine testLakeModel12
 end subroutine testLakeModel12
 
 subroutine testLakeModel13
-   use latlon_hd_model_interface_mod, only: run_hd_model
-   use l2_hd_interface_extension_mod, only: init_hd_model_for_testing => &
+   use latlon_hd_model_interface_mod, only: run_hd_model, &
+                                            init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
                                 lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type
+                                overflowing_lake_type, subsumed_lake_type, &
+                                get_lake_volume
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
@@ -9560,8 +9832,7 @@ subroutine testLakeModel13
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
-   real(dp),dimension(:,:), pointer :: lake_fractions
-   real :: step_length
+   real(dp),dimension(:,:), allocatable :: lake_fractions
    integer :: lake_number
    integer :: lake_type
    integer :: i,j
@@ -9609,6 +9880,7 @@ subroutine testLakeModel13
                                           overland_retention_coefficients, &
                                           base_retention_coefficients, &
                                           landsea_mask)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       nlat_lake = 20
       nlon_lake = 20
       allocate(cell_areas_on_surface_model_grid(nlat_surface,nlon_surface))
@@ -9706,7 +9978,7 @@ subroutine testLakeModel13
          .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
           .False., .False., .False., .False., .False., .False., .False./), &
          (/nlon_lake,nlat_lake/)))
-      lake_model_parameters = &
+      lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
                             cell_areas_on_surface_model_grid, &
@@ -9796,14 +10068,14 @@ subroutine testLakeModel13
       allocate(runoffs(nlat_hd,nlon_hd,10000))
       allocate(drainages(nlat_hd,nlon_hd,10000))
       do i = 1,10000
-        drainages(:,:,i) = drainage(:,:)/step_length
-        runoffs(:,:,i) = runoff(:,:)/step_length
+        drainages(:,:,i) = drainage(:,:)
+        runoffs(:,:,i) = runoff(:,:)
       end do
       allocate(evaporation(nlat_surface,nlon_surface))
       evaporation(:,:) = 0.0
       allocate(evaporations(nlat_surface,nlon_surface,180))
       do i = 1,180
-        evaporations(:,:,i) = additional_evaporation(:,:)
+        evaporations(:,:,i) = evaporation(:,:)
       end do
       allocate(initial_water_to_lake_centers(nlat_lake,nlon_lake))
       initial_water_to_lake_centers = transpose(reshape((/   &
@@ -10246,6 +10518,7 @@ subroutine testLakeModel13
                                      initial_spillover_to_rivers)
       call run_hd_model(0,runoffs,drainages,evaporations)
       lake_model_prognostics => get_lake_model_prognostics()
+      allocate(lake_fractions(nlat_surface,nlon_surface))
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
@@ -10272,7 +10545,7 @@ subroutine testLakeModel13
       allocate(lake_volumes(size(lake_model_prognostics%lakes)))
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -10318,7 +10591,7 @@ subroutine testLakeModel13
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -10364,7 +10637,7 @@ subroutine testLakeModel13
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -10385,13 +10658,14 @@ subroutine testLakeModel13
 end subroutine testLakeModel13
 
 subroutine testLakeModel14
-   use latlon_hd_model_interface_mod, only: run_hd_model
-   use l2_hd_interface_extension_mod, only: init_hd_model_for_testing => &
+   use latlon_hd_model_interface_mod, only: run_hd_model, &
+                                            init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
                                 lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type
+                                overflowing_lake_type, subsumed_lake_type, &
+                                get_lake_volume
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
@@ -10437,8 +10711,7 @@ subroutine testLakeModel14
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
-   real(dp),dimension(:,:), pointer :: lake_fractions
-   real :: step_length
+   real(dp),dimension(:,:), allocatable :: lake_fractions
    integer :: lake_number
    integer :: lake_type
    integer :: i,j
@@ -10486,6 +10759,7 @@ subroutine testLakeModel14
                                           overland_retention_coefficients, &
                                           base_retention_coefficients, &
                                           landsea_mask)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       nlat_lake = 20
       nlon_lake = 20
       allocate(cell_areas_on_surface_model_grid(nlat_surface,nlon_surface))
@@ -10583,7 +10857,7 @@ subroutine testLakeModel14
          .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
           .False., .False., .False., .False., .False., .False., .False./), &
          (/nlon_lake,nlat_lake/)))
-      lake_model_parameters = &
+      lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
                             cell_areas_on_surface_model_grid, &
@@ -10664,8 +10938,8 @@ subroutine testLakeModel14
       allocate(runoffs(nlat_hd,nlon_hd,10000))
       allocate(drainages(nlat_hd,nlon_hd,10000))
       do i = 1,10000
-        drainages(:,:,i) = drainage(:,:)/step_length
-        runoffs(:,:,i) = runoff(:,:)/step_length
+        drainages(:,:,i) = drainage(:,:)
+        runoffs(:,:,i) = runoff(:,:)
       end do
       allocate(evaporation(nlat_surface,nlon_surface))
       evaporation(:,:) = 0.0
@@ -10845,6 +11119,7 @@ subroutine testLakeModel14
                                      initial_spillover_to_rivers)
       call run_hd_model(4,runoffs,drainages,evaporations)
       lake_model_prognostics => get_lake_model_prognostics()
+      allocate(lake_fractions(nlat_surface,nlon_surface))
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
@@ -10871,7 +11146,7 @@ subroutine testLakeModel14
       allocate(lake_volumes(size(lake_model_prognostics%lakes)))
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -10893,13 +11168,14 @@ subroutine testLakeModel14
 end subroutine testLakeModel14
 
 subroutine testLakeModel15
-   use latlon_hd_model_interface_mod, only: run_hd_model
-   use l2_hd_interface_extension_mod, only: init_hd_model_for_testing => &
+   use latlon_hd_model_interface_mod, only: run_hd_model, &
+                                            init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
                                 lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type
+                                overflowing_lake_type, subsumed_lake_type, &
+                                get_lake_volume
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
@@ -10945,8 +11221,7 @@ subroutine testLakeModel15
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
-   real(dp),dimension(:,:), pointer :: lake_fractions
-   real :: step_length
+   real(dp),dimension(:,:), allocatable :: lake_fractions
    integer :: lake_number
    integer :: lake_type
    integer :: i,j
@@ -10992,6 +11267,7 @@ subroutine testLakeModel15
                                           overland_retention_coefficients, &
                                           base_retention_coefficients, &
                                           landsea_mask)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       nlat_lake = 20
       nlon_lake = 20
       allocate(cell_areas_on_surface_model_grid(nlat_surface,nlon_surface))
@@ -11089,7 +11365,7 @@ subroutine testLakeModel15
          .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
           .False., .False., .False., .False., .False., .False., .False./), &
          (/nlon_lake,nlat_lake/)))
-      lake_model_parameters = &
+      lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
                             cell_areas_on_surface_model_grid, &
@@ -11175,8 +11451,8 @@ subroutine testLakeModel15
       allocate(runoffs(nlat_hd,nlon_hd,10000))
       allocate(drainages(nlat_hd,nlon_hd,10000))
       do i = 1,10000
-        drainages(:,:,i) = drainage(:,:)/step_length
-        runoffs(:,:,i) = runoff(:,:)/step_length
+        drainages(:,:,i) = drainage(:,:)
+        runoffs(:,:,i) = runoff(:,:)
       end do
       allocate(evaporation(nlat_surface,nlon_surface))
       evaporation(:,:) = 0.0
@@ -11354,6 +11630,7 @@ subroutine testLakeModel15
                                      initial_spillover_to_rivers)
       call run_hd_model(5,runoffs,drainages,evaporations)
       lake_model_prognostics => get_lake_model_prognostics()
+      allocate(lake_fractions(nlat_surface,nlon_surface))
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
@@ -11380,7 +11657,7 @@ subroutine testLakeModel15
       allocate(lake_volumes(size(lake_model_prognostics%lakes)))
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -11401,13 +11678,14 @@ subroutine testLakeModel15
 end subroutine testLakeModel15
 
 subroutine testLakeModel16
-   use latlon_hd_model_interface_mod, only: run_hd_model
-   use l2_hd_interface_extension_mod, only: init_hd_model_for_testing => &
+   use latlon_hd_model_interface_mod, only: run_hd_model, &
+                                            init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
                                 lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type
+                                overflowing_lake_type, subsumed_lake_type, &
+                                get_lake_volume
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
@@ -11473,8 +11751,7 @@ subroutine testLakeModel16
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
-   real(dp),dimension(:,:), pointer :: lake_fractions
-   real :: step_length
+   real(dp),dimension(:,:), allocatable :: lake_fractions
    integer :: lake_number
    integer :: lake_type
    integer :: i,j
@@ -11521,6 +11798,7 @@ subroutine testLakeModel16
                                           overland_retention_coefficients, &
                                           base_retention_coefficients, &
                                           landsea_mask)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       nlat_lake = 20
       nlon_lake = 20
       allocate(cell_areas_on_surface_model_grid(nlat_surface,nlon_surface))
@@ -11618,7 +11896,7 @@ subroutine testLakeModel16
          .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
           .False., .False., .False., .False., .False., .False., .False., .False./), &
          (/nlon_lake,nlat_lake/)))
-      lake_model_parameters = &
+      lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
                             cell_areas_on_surface_model_grid, &
@@ -11706,8 +11984,8 @@ subroutine testLakeModel16
       allocate(runoffs(nlat_hd,nlon_hd,10000))
       allocate(drainages(nlat_hd,nlon_hd,10000))
       do i = 1,10000
-        drainages(:,:,i) = drainage(:,:)/step_length
-        runoffs(:,:,i) = runoff(:,:)/step_length
+        drainages(:,:,i) = drainage(:,:)
+        runoffs(:,:,i) = runoff(:,:)
       end do
       allocate(evaporation(nlat_surface,nlon_surface))
       evaporation(:,:) = 0.0
@@ -12153,6 +12431,7 @@ subroutine testLakeModel16
                                      initial_spillover_to_rivers)
       call run_hd_model(0,runoffs,drainages,evaporations)
       lake_model_prognostics => get_lake_model_prognostics()
+      allocate(lake_fractions(nlat_surface,nlon_surface))
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
@@ -12179,7 +12458,7 @@ subroutine testLakeModel16
       allocate(lake_volumes(size(lake_model_prognostics%lakes)))
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -12225,7 +12504,7 @@ subroutine testLakeModel16
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -12271,7 +12550,7 @@ subroutine testLakeModel16
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -12293,13 +12572,14 @@ subroutine testLakeModel16
 end subroutine testLakeModel16
 
 subroutine testLakeModel17
-   use latlon_hd_model_interface_mod, only: run_hd_model
-   use l2_hd_interface_extension_mod, only: init_hd_model_for_testing => &
+   use latlon_hd_model_interface_mod, only: run_hd_model, &
+                                            init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
                                 lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type
+                                overflowing_lake_type, subsumed_lake_type, &
+                                get_lake_volume
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
@@ -12394,8 +12674,7 @@ subroutine testLakeModel17
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
-   real(dp),dimension(:,:), pointer :: lake_fractions
-   real :: step_length
+   real(dp),dimension(:,:), allocatable :: lake_fractions
    integer :: lake_number
    integer :: lake_type
    integer :: i,j
@@ -12440,6 +12719,7 @@ subroutine testLakeModel17
                                           overland_retention_coefficients, &
                                           base_retention_coefficients, &
                                           landsea_mask)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       nlat_lake = 20
       nlon_lake = 20
       allocate(cell_areas_on_surface_model_grid(nlat_surface,nlon_surface))
@@ -12537,7 +12817,7 @@ subroutine testLakeModel17
          .False., .False., .False., .False., .False., .False., .False., .False., .False.,   .False., .False., .False., .False.,&
           .False., .False., .False., .False., .False.,   .False., .False. /), &
          (/nlon_lake,nlat_lake/)))
-      lake_model_parameters = &
+      lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
                             cell_areas_on_surface_model_grid, &
@@ -12624,8 +12904,8 @@ subroutine testLakeModel17
       allocate(runoffs(nlat_hd,nlon_hd,10000))
       allocate(drainages(nlat_hd,nlon_hd,10000))
       do i = 1,10000
-        drainages(:,:,i) = drainage(:,:)/step_length
-        runoffs(:,:,i) = runoff(:,:)/step_length
+        drainages(:,:,i) = drainage(:,:)
+        runoffs(:,:,i) = runoff(:,:)
       end do
       allocate(evaporation(nlat_surface,nlon_surface))
       evaporation(:,:) = 1.0/2.906374502
@@ -13471,9 +13751,15 @@ subroutine testLakeModel17
       twelfth_intermediate_expected_lake_volumes = (/ 20.682507045717777 /)
       allocate(thirteenth_intermediate_expected_lake_volumes(1))
       thirteenth_intermediate_expected_lake_volumes = (/ 2.446729115678684 /)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       call run_hd_model(0,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       lake_model_prognostics => get_lake_model_prognostics()
+      allocate(lake_fractions(nlat_surface,nlon_surface))
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
@@ -13500,7 +13786,7 @@ subroutine testLakeModel17
       allocate(lake_volumes(size(lake_model_prognostics%lakes)))
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -13519,6 +13805,12 @@ subroutine testLakeModel17
       call assert_equals( first_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test first_intermediate_expected_true_lake_depths, lake_model_parameters%true_lake_depths
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       call run_hd_model(1,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       lake_model_prognostics => get_lake_model_prognostics()
@@ -13547,7 +13839,7 @@ subroutine testLakeModel17
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -13568,6 +13860,12 @@ subroutine testLakeModel17
       call assert_equals( second_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testsecond_intermediate_expected_true_lake_depths,lake_model_parameters%true_lake_depths,nlat_lake,nlon_lake,0.1)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       call run_hd_model(45,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       lake_model_prognostics => get_lake_model_prognostics()
@@ -13596,7 +13894,7 @@ subroutine testLakeModel17
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -13617,6 +13915,12 @@ subroutine testLakeModel17
       call assert_equals( third_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testthird_intermediate_expected_true_lake_depths,lake_model_parameters%true_lake_depths,nlat_lake,nlon_lake,0.1)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       call run_hd_model(46,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       lake_model_prognostics => get_lake_model_prognostics()
@@ -13645,7 +13949,7 @@ subroutine testLakeModel17
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -13666,78 +13970,138 @@ subroutine testLakeModel17
       call assert_equals( fourth_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testfourth_intermediate_expected_true_lake_depths,lake_model_parameters%true_lake_depths,nlat_lake,nlon_lake,0.1)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       call run_hd_model(62,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       call assert_equals(fifth_intermediate_expected_lake_volumes,lake_volumes,&
                          size(fifth_intermediate_expected_lake_volumes),0.00001_dp)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       call run_hd_model(63,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       call assert_equals(sixth_intermediate_expected_lake_volumes,lake_volumes,&
                          size(sixth_intermediate_expected_lake_volumes),0.00001_dp)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       call run_hd_model(70,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       call assert_equals(seventh_intermediate_expected_lake_volumes,lake_volumes,&
                          size(seventh_intermediate_expected_lake_volumes),0.00001_dp)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       call run_hd_model(71,runoffs,drainages,evaporations, &
           use_realistic_surface_coupling_in=.true.)
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       call assert_equals(eighth_intermediate_expected_lake_volumes,lake_volumes,&
                          size(eighth_intermediate_expected_lake_volumes),0.001_dp)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       call run_hd_model(80,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       call assert_equals(ninth_intermediate_expected_lake_volumes,lake_volumes,&
                          size(ninth_intermediate_expected_lake_volumes),0.0001_dp)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       call run_hd_model(81,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       call assert_equals(tenth_intermediate_expected_lake_volumes,lake_volumes,&
                          size(tenth_intermediate_expected_lake_volumes),0.00001_dp)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       call run_hd_model(85,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       call assert_equals(eleventh_intermediate_expected_lake_volumes,lake_volumes,&
                          size(eleventh_intermediate_expected_lake_volumes),0.00001_dp)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       call run_hd_model(86,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       call assert_equals(twelfth_intermediate_expected_lake_volumes,lake_volumes, &
                          size(twelfth_intermediate_expected_lake_volumes),0.00001_dp)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       call run_hd_model(90,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       call assert_equals(thirteenth_intermediate_expected_lake_volumes,lake_volumes,&
                          size(thirteenth_intermediate_expected_lake_volumes),0.00001_dp)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       call run_hd_model(91,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       lake_model_prognostics => get_lake_model_prognostics()
@@ -13766,7 +14130,7 @@ subroutine testLakeModel17
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -13788,13 +14152,14 @@ subroutine testLakeModel17
 end subroutine testLakeModel17
 
 subroutine testLakeModel18
-   use latlon_hd_model_interface_mod, only: run_hd_model
-   use l2_hd_interface_extension_mod, only: init_hd_model_for_testing => &
+   use latlon_hd_model_interface_mod, only: run_hd_model, &
+                                            init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
                                 lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type
+                                overflowing_lake_type, subsumed_lake_type, &
+                                get_lake_volume
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
@@ -13830,8 +14195,7 @@ subroutine testLakeModel18
    real(dp),dimension(:,:), pointer :: expected_lake_volumes_all_timesteps
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp),dimension(:,:), pointer :: lake_volumes_all_timesteps
-   real(dp),dimension(:,:), pointer :: lake_fractions
-   real :: step_length
+   real(dp),dimension(:,:), allocatable :: lake_fractions
    integer :: lake_number
    integer :: lake_type
    logical :: use_realistic_surface_coupling
@@ -13876,6 +14240,7 @@ subroutine testLakeModel18
                                           overland_retention_coefficients, &
                                           base_retention_coefficients, &
                                           landsea_mask)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       nlat_lake = 20
       nlon_lake = 20
       allocate(cell_areas_on_surface_model_grid(nlat_surface,nlon_surface))
@@ -13973,7 +14338,7 @@ subroutine testLakeModel18
          .False., .False., .False., .False., .False., .False., .False., .False., .False.,   .False., .False., .False., &
          .False., .False., .False., .False., .False., .False.,   .False., .False. /), &
          (/nlon_lake,nlat_lake/)))
-      lake_model_parameters = &
+      lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
                             cell_areas_on_surface_model_grid, &
@@ -14066,13 +14431,13 @@ subroutine testLakeModel18
       allocate(runoffs(nlat_hd,nlon_hd,10000))
       allocate(drainages(nlat_hd,nlon_hd,10000))
       do i = 1,10000
-        drainages(:,:,i) = drainage(:,:)/step_length
-        runoffs(:,:,i) = runoff(:,:)/step_length
+        drainages(:,:,i) = drainage(:,:)
+        runoffs(:,:,i) = runoff(:,:)
       end do
       allocate(evaporation(nlat_surface,nlon_surface))
       evaporation(:,:) = 1.0*1.003676471
-      allocate(evaporations(nlat_surface,nlon_surface,180))
-      do i = 1,180
+      allocate(evaporations(nlat_surface,nlon_surface,5400))
+      do i = 1,5400
         evaporations(:,:,i) = evaporation(:,:)
       end do
       allocate(initial_water_to_lake_centers(nlat_lake,nlon_lake))
@@ -14105,6 +14470,7 @@ subroutine testLakeModel18
          0.0, 0.0, 0.0, 0.0, &
          0.0, 0.0, 0.0, 0.0 /), &
          (/nlon_hd,nlat_hd/)))
+      allocate(expected_lake_volumes_all_timesteps(1,500))
       expected_lake_volumes_all_timesteps = &
         reshape((/ 1455.04, 1451.08, 1447.13, 1443.17, 1439.21, 1435.25, 1431.29,   1427.33, 1423.38, &
        1419.42, 1415.46, 1411.5, 1407.54, 1403.58,   1399.63, 1395.67, 1391.71, 1387.75, 1383.79, 1379.83, 1375.88, &
@@ -14183,6 +14549,11 @@ subroutine testLakeModel18
        572.1400088141362 /), (/1,500/))
       allocate(lake_volumes_all_timesteps(1,500))
       use_realistic_surface_coupling=.true.
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       call run_hd_model(500,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling, "", &
                         lake_volumes_all_timesteps)
@@ -14191,13 +14562,14 @@ subroutine testLakeModel18
 end subroutine testLakeModel18
 
 subroutine testLakeModel19
-   use latlon_hd_model_interface_mod, only: run_hd_model
-   use l2_hd_interface_extension_mod, only: init_hd_model_for_testing => &
+   use latlon_hd_model_interface_mod, only: run_hd_model, &
+                                            init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
                                 lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type
+                                overflowing_lake_type, subsumed_lake_type, &
+                                get_lake_volume
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
@@ -14319,7 +14691,7 @@ subroutine testLakeModel19
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp),dimension(:,:), pointer :: lake_volumes_all_timesteps
-   real(dp),dimension(:,:), pointer :: lake_fractions
+   real(dp),dimension(:,:), allocatable :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -14364,6 +14736,7 @@ subroutine testLakeModel19
                                           overland_retention_coefficients, &
                                           base_retention_coefficients, &
                                           landsea_mask)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       nlat_lake = 20
       nlon_lake = 20
       allocate(lake_centers(nlat_lake,nlon_lake))
@@ -14573,7 +14946,7 @@ subroutine testLakeModel19
          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
               .False., .False., .False., .False., .False., .False., .False., .False., .False.,      .False., .False. /), &
          (/nlon_lake,nlat_lake/)))
-      lake_model_parameters = &
+      lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
                             cell_areas_on_surface_model_grid, &
@@ -16094,6 +16467,7 @@ subroutine testLakeModel19
       call run_hd_model(0,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       lake_model_prognostics => get_lake_model_prognostics()
+      allocate(lake_fractions(nlat_surface,nlon_surface))
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
@@ -16120,7 +16494,7 @@ subroutine testLakeModel19
       allocate(lake_volumes(size(lake_model_prognostics%lakes)))
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -16140,6 +16514,12 @@ subroutine testLakeModel19
       call assert_equals( first_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test first_intermediate_expected_true_lake_depths, lake_model_parameters%true_lake_depths
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       call run_hd_model(15,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       lake_model_prognostics => get_lake_model_prognostics()
@@ -16168,7 +16548,7 @@ subroutine testLakeModel19
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -16189,6 +16569,12 @@ subroutine testLakeModel19
       call assert_equals( second_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testsecond_intermediate_expected_true_lake_depths,lake_model_parameters%true_lake_depths,nlat_lake,nlon_lake,0.1)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       call run_hd_model(16,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       lake_model_prognostics => get_lake_model_prognostics()
@@ -16217,7 +16603,7 @@ subroutine testLakeModel19
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -16237,6 +16623,12 @@ subroutine testLakeModel19
       call assert_equals( third_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testthird_intermediate_expected_true_lake_depths,lake_model_parameters%true_lake_depths,nlat_lake,nlon_lake,0.1)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       call run_hd_model(17,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       lake_model_prognostics => get_lake_model_prognostics()
@@ -16265,7 +16657,7 @@ subroutine testLakeModel19
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -16286,6 +16678,12 @@ subroutine testLakeModel19
       call assert_equals( fourth_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testfourth_intermediate_expected_true_lake_depths,lake_model_parameters%true_lake_depths,nlat_lake,nlon_lake,0.1)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       call run_hd_model(83,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       lake_model_prognostics => get_lake_model_prognostics()
@@ -16314,7 +16712,7 @@ subroutine testLakeModel19
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -16335,6 +16733,12 @@ subroutine testLakeModel19
       call assert_equals( fifth_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testfifth_intermediate_expected_true_lake_depths,lake_model_parameters%true_lake_depths,nlat_lake,nlon_lake,0.1)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       call run_hd_model(84,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       lake_model_prognostics => get_lake_model_prognostics()
@@ -16363,7 +16767,7 @@ subroutine testLakeModel19
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -16384,6 +16788,12 @@ subroutine testLakeModel19
       call assert_equals( sixth_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testsixth_intermediate_expected_true_lake_depths,lake_model_parameters%true_lake_depths,nlat_lake,nlon_lake,0.1)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       call run_hd_model(85,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       lake_model_prognostics => get_lake_model_prognostics()
@@ -16412,7 +16822,7 @@ subroutine testLakeModel19
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -16433,6 +16843,12 @@ subroutine testLakeModel19
       call assert_equals( seventh_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testseventh_intermediate_expected_true_lake_depths,lake_model_parameters%true_lake_depths,nlat_lake,nlon_lake,0.1)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       use_realistic_surface_coupling=.true.
       call run_hd_model(112,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling,"", &
@@ -16465,7 +16881,7 @@ subroutine testLakeModel19
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -16487,13 +16903,14 @@ subroutine testLakeModel19
 end subroutine testLakeModel19
 
 subroutine testLakeModel20
-   use latlon_hd_model_interface_mod, only: run_hd_model
-   use l2_hd_interface_extension_mod, only: init_hd_model_for_testing => &
+   use latlon_hd_model_interface_mod, only: run_hd_model, &
+                                            init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
                                 lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type
+                                overflowing_lake_type, subsumed_lake_type, &
+                                get_lake_volume
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
@@ -16551,7 +16968,7 @@ subroutine testLakeModel20
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp),dimension(:,:), pointer :: lake_volumes_all_timesteps
-   real(dp),dimension(:,:), pointer :: lake_fractions
+   real(dp),dimension(:,:), allocatable :: lake_fractions
    real(dp),dimension(:,:), pointer :: expected_lake_volumes_all_timesteps
    integer, dimension(:), pointer :: intermediate_expected_lake_types_list
    integer, dimension(:), pointer :: expected_lake_types_list
@@ -16559,7 +16976,7 @@ subroutine testLakeModel20
    real :: step_length
    integer :: lake_number
    integer :: lake_type
-   integer :: i,j
+   integer :: i,j,list_index
 
       !Filling and draining of large network of interconnected small lakes
       nlat_hd = 4
@@ -16599,6 +17016,7 @@ subroutine testLakeModel20
                                           overland_retention_coefficients, &
                                           base_retention_coefficients, &
                                           landsea_mask)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       nlat_lake = 20
       nlon_lake = 20
       allocate(cell_areas_on_surface_model_grid(nlat_surface,nlon_surface))
@@ -16696,7 +17114,7 @@ subroutine testLakeModel20
          .False.,  .True., .False., .False., .False., .False.,  .True., .False.,  .True.,   &
            .False., .False., .False., .False., .False., .False., .False., .False., .False.,     .False., .False./), &
          (/nlon_lake,nlat_lake/)))
-      lake_model_parameters = &
+      lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
                             cell_areas_on_surface_model_grid, &
@@ -17195,6 +17613,7 @@ subroutine testLakeModel20
          !               0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, &
          !               0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0 /), &
          !(/nlon_lake,nlat_lake/)))
+      allocate(expected_lake_volumes_all_timesteps(68,80))
       expected_lake_volumes_all_timesteps =  reshape( &
         (/ 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0,  0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, &
            0.0, 0.0, 0.0, 0.0, 1784.1818, 1.0, 1.0, 0.0, 0.0, 1.0,  1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, &
@@ -17650,6 +18069,7 @@ subroutine testLakeModel20
                                             1.0, 1.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0,    &
                                             1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,    &
                                             1.0, 1.0, 5.0, 0.0, 5.0, 0.0, 7.0, 5.0, 5.0,    0.0, 20.0, 5.0, 5.0, 80.0 /)
+      allocate(intermediate_expected_lake_types_list(68))
       intermediate_expected_lake_types_list = (/ 3,3,3,3,3, 3,3,3,3,3, 3,3,3,3,3, 3,3,3,3,3,   &
                                                3,3,3,3,3, 3,3,3,3,3, 3,3,3,3,3, 3,3,3,3,3,   &
                                                3,3,3,3,3, 3,3,3,3,3, 3,3,3,3,3, 3,3,3,3,3,   3,3,3,3,3, 3,3,2 /)
@@ -17685,13 +18105,16 @@ subroutine testLakeModel20
       call run_hd_model(16,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       allocate(lake_types(nlat_lake,nlon_lake))
+      allocate(lake_types_list(68))
       lake_types(:,:) = 0
+      lake_types_list(:) = 0
       lake_model_prognostics => get_lake_model_prognostics()
+      allocate(lake_fractions(nlat_surface,nlon_surface))
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
-      allocate(lake_types(nlat_lake,nlon_lake))
       lake_types(:,:) = 0
+      list_index = 1
       do i = 1,nlat_lake
         do j = 1,nlon_lake
           lake_number = lake_model_prognostics%lake_numbers(i,j)
@@ -17707,13 +18130,15 @@ subroutine testLakeModel20
               else
                 lake_types(i,j) = 4
               end if
+            lake_types_list(list_index) = lake_type
+            list_index = list_index + 1
           end if
         end do
       end do
       allocate(lake_volumes(size(lake_model_prognostics%lakes)))
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -17734,6 +18159,12 @@ subroutine testLakeModel20
       call assert_equals( intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test intermediate_expected_true_lake_depths, lake_model_parameters%true_lake_depths
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_model_parameters, &
+                                     lake_parameters_as_array, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
       call run_hd_model(80,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       call assert_equals(lake_volumes_all_timesteps,expected_lake_volumes_all_timesteps, &
@@ -17742,8 +18173,9 @@ subroutine testLakeModel20
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
-      allocate(lake_types(nlat_lake,nlon_lake))
       lake_types(:,:) = 0
+      lake_types_list(:) = 0
+      list_index = 1
       do i = 1,nlat_lake
         do j = 1,nlon_lake
           lake_number = lake_model_prognostics%lake_numbers(i,j)
@@ -17759,12 +18191,14 @@ subroutine testLakeModel20
               else
                 lake_types(i,j) = 4
               end if
+            lake_types_list(list_index) = lake_type
+            list_index = list_index + 1
           end if
         end do
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -17787,15 +18221,14 @@ subroutine testLakeModel20
 end subroutine testLakeModel20
 
 subroutine testLakeModel21
-   use latlon_hd_model_interface_mod, only: run_hd_model
-   use l2_hd_interface_extension_mod, only: init_hd_model_for_testing => &
-                                            l2_init_hd_model_for_testing
-   use l2_hd_interface_extension_mod, only: init_hd_model_for_testing => &
+   use latlon_hd_model_interface_mod, only: run_hd_model, &
+                                            init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
                                 lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type
+                                overflowing_lake_type, subsumed_lake_type, &
+                                get_lake_volume
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
@@ -17871,7 +18304,7 @@ subroutine testLakeModel21
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:), pointer :: lake_volumes
-   real(dp),dimension(:,:), pointer :: lake_fractions
+   real(dp),dimension(:,:), allocatable :: lake_fractions
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -17915,6 +18348,7 @@ subroutine testLakeModel21
                                           overland_retention_coefficients, &
                                           base_retention_coefficients, &
                                           landsea_mask)
+      river_fields => riverprognosticfields(nlat_hd,nlon_hd,1,1,5)
       nlat_lake = 20
       nlon_lake = 20
       allocate(cell_areas_on_surface_model_grid(nlat_surface,nlon_surface))
@@ -18628,6 +19062,7 @@ subroutine testLakeModel21
       call run_hd_model(0,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       lake_model_prognostics => get_lake_model_prognostics()
+      allocate(lake_fractions(nlat_surface,nlon_surface))
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
@@ -18654,7 +19089,7 @@ subroutine testLakeModel21
       allocate(lake_volumes(size(lake_model_prognostics%lakes)))
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -18702,7 +19137,7 @@ subroutine testLakeModel21
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -18751,7 +19186,7 @@ subroutine testLakeModel21
       allocate(lake_volumes(size(lake_model_prognostics%lakes)))
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
@@ -18800,7 +19235,7 @@ subroutine testLakeModel21
       end do
       do i = 1,size(lake_volumes)
         working_lake_ptr = lake_model_prognostics%lakes(i)
-        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+        lake_volumes(i) = get_lake_volume(working_lake_ptr%lake_pointer)
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)

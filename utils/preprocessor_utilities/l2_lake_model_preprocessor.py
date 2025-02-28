@@ -41,13 +41,17 @@ for line in filtered_lines:
                 raise RuntimeError("Preprocessor logic failure")
             extended_line = re.sub(r'(\s*)_ASSIGN_?(.*)_INDICES_LIST_(\w*)'
                                    r'INDEX_NAME(.*)_\s*=\s*(.*)_COORDS_(HD|LAKE|SURFACE)_',
-                                   f'\\1\\2\\3{dim1}\\4 = \\5{dim1}_\\6\\n'
-                                   f'\\1\\2\\3{dim2}\\4 = \\5{dim2}_\\6\\n',
+                                   lambda m : f'{m.group(1)}{m.group(2)}{m.group(3)}{dim1}'
+                                              f'{m.group(4)} = {m.group(5)}{dim1}_{m.group(6)}\n'
+                                   f'{m.group(1)}{m.group(2)}{m.group(3)}{dim2}'
+                                   f'{m.group(4)} = {m.group(5)}{dim2}_{m.group(6)}\n'.lower(),
                                    extended_line)
             extended_line = re.sub(r'(\s*)_ASSIGN_?(.*)_COORDS_(.*)_\s*='
                                    r'\s*(&?)\s*(.*)_COORDS_(HD|LAKE|SURFACE)_',
-                                   f'\\1\\2\\3_{dim1} = \\4\\5{dim1}_\\6\\n'
-                                   f'\\1\\2\\3_{dim2} = \\4\\5{dim2}_\\6\\n',
+                                   lambda m : f'{m.group(1)}{m.group(2)}{m.group(3)}'
+                                   f'_{dim1} = {m.group(4)}{m.group(5)}{dim1}_{m.group(6)}\n'
+                                   f'{m.group(1)}{m.group(2)}{m.group(3)}_{dim2} = '
+                                   f'{m.group(4)}{m.group(5)}{dim2}_{m.group(6)}\n'.lower(),
                                    extended_line)
             extended_line = re.sub(r'(\s*)_ASSIGN_?(.*)_COORDS_(.*)_\s*='
                                    r'\s*(&?)\s*(.*)_COORDS_(.*)_',
@@ -59,8 +63,8 @@ for line in filtered_lines:
                                    f'\\1\\2\\3{dim1}\\4 = \\5\\6_{dim1}\\n'
                                    f'\\1\\2\\3{dim2}\\4 = \\5\\6_{dim2}\\n',
                                    extended_line)
-            extended_line = re.sub(r'(\s*)_ASSIGN_?(.*)_INDICES_LIST_(\w*)'
-                                   r'INDEX_NAME(.*)_\s*(=>?)\s*(.*)_INDICES_LIST_(\w*)'
+            extended_line = re.sub(r'(\s*)_ASSIGN_?(.*)_INDICES_(?:LIST|FIELD)_(\w*)'
+                                   r'INDEX_NAME(.*)_\s*(=>?)\s*(.*)_INDICES_(?:LIST|FIELD)_(\w*)'
                                    r'INDEX_NAME(.*)_',
                                    f'\\1\\2\\3{dim1}\\4 \\5 \\6\\7{dim1}\\8\\n'
                                    f'\\1\\2\\3{dim2}\\4 \\5 \\6\\7{dim2}\\8\\n',
@@ -165,7 +169,7 @@ for line in filtered_lines:
                   f'\\3\\4{dim2}\\5'
                   f'(\\6\\7_{dim1},\\6\\7_{dim2})',
                   line)
-    line = re.sub(r'(\s*)_GET_COORDS_\s+_COORDS_(\w+)_\s+_FROM_\s+(.*)_INDICES_LIST_?(\w*)_'
+    line = re.sub(r'(\s*)_GET_COORDS_\s+_COORDS_(\w+)_\s+_FROM_\s+(.*)_INDICES_LIST_(\w*)'
                   r'INDEX_NAME(\w*)_\s+(.*)',
                   f'\\1\\2_{dim1} = '
                   f'\\3\\4{dim1}\\5'
@@ -217,8 +221,10 @@ for line in filtered_lines:
                   line)
     line = re.sub(r'(\s*)_ASSIGN_?(.*)_INDICES_LIST_(\w*)'
                                    r'INDEX_NAME(.*)_\s*=\s*(.*)_COORDS_(HD|LAKE|SURFACE)_',
-                                   f'\\1\\2\\3{dim1}\\4 = \\5{dim1}_\\6\\n'
-                                   f'\\1\\2\\3{dim2}\\4 = \\5{dim2}_\\6\\n',
+                                   lambda m : f'{m.group(1)}{m.group(2)}{m.group(3)}{dim1}'
+                                              f'{m.group(4)} = {m.group(5)}{dim1}_{m.group(6)}\n'
+                                   f'{m.group(1)}{m.group(2)}{m.group(3)}{dim2}'
+                                   f'{m.group(4)} = {m.group(5)}{dim2}_{m.group(6)}\n'.lower(),
                                    line)
     line = re.sub(r'(\s*)_ASSIGN_?(.*)_COORDS_(.*)_\s*=\s*_VALUE_(.*)_',
                                    f'\\1\\2\\3_{dim1} = \\4\\n'
@@ -226,8 +232,10 @@ for line in filtered_lines:
                                    line)
     line = re.sub(r'(\s*)_ASSIGN_?(.*)_COORDS_(.*)_\s*='
                                    r'\s*(&?)\s*(.*)_COORDS_(HD|LAKE|SURFACE)_',
-                                   f'\\1\\2\\3_{dim1} = \\4\\5{dim1}_\\6\\n'
-                                   f'\\1\\2\\3_{dim2} = \\4\\5{dim2}_\\6\\n',
+                                   lambda m : f'{m.group(1)}{m.group(2)}{m.group(3)}'
+                                   f'_{dim1} = {m.group(4)}{m.group(5)}{dim1}_{m.group(6)}\n'
+                                   f'{m.group(1)}{m.group(2)}{m.group(3)}_{dim2} = '
+                                   f'{m.group(4)}{m.group(5)}{dim2}_{m.group(6)}\n'.lower(),
                                    line)
     line = re.sub(r'(\s*)_ASSIGN_?(.*)_COORDS_(.*)_\s*=\s*(.*)_COORDS_(\w*)_',
                   f'\\1\\2\\3_{dim1} = \\4\\5_{dim1}\\n'
@@ -238,8 +246,8 @@ for line in filtered_lines:
                   f'\\1\\2\\3{dim1}\\4 = \\5\\6_{dim1}\\n'
                   f'\\1\\2\\3{dim2}\\4 = \\5\\6_{dim2}\\n',
                   line)
-    line = re.sub(r'(\s*)_ASSIGN_?(.*)_INDICES_LIST_(\w*)'
-                  r'INDEX_NAME(.*)_\s*=\s*(.*)_INDICES_LIST_(\w*)'
+    line = re.sub(r'(\s*)_ASSIGN_?(.*)_INDICES_(?:LIST|FIELD)_(\w*)'
+                  r'INDEX_NAME(.*)_\s*=\s*(.*)_INDICES_(?:LIST|FIELD)_(\w*)'
                   r'INDEX_NAME(.*)_',
                   f'\\1\\2\\3{dim1}\\4 = \\5\\6{dim1}\\7\\n'
                   f'\\1\\2\\3{dim2}\\4 = \\5\\6{dim2}\\7\\n',

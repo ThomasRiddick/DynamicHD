@@ -344,7 +344,6 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,
                                  diagnostic_lake_volumes::VectorOfVectorOfFloatsOrNothing=
                                  nothing,
                                  input_data_is_monthly_mean::Bool=true,
-                                 forcing_timesteps_to_skip::Int64=0,
                                  lake_model_diagnostics::LakeModelDiagnostics =
                                  LakeModelDiagnostics())
   river_fields::RiverPrognosticFields = RiverPrognosticFields(river_parameters)
@@ -365,8 +364,6 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,
                           diagnostic_lake_volumes,
                           input_data_is_monthly_mean=
                           input_data_is_monthly_mean,
-                          forcing_timesteps_to_skip=
-                          forcing_timesteps_to_skip,
                           lake_model_diagnostics=
                           lake_model_diagnostics)
   if return_output
@@ -391,7 +388,6 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,
                                  diagnostic_lake_volumes::VectorOfVectorOfFloatsOrNothing=
                                  nothing,
                                  input_data_is_monthly_mean::Bool=true,
-                                 forcing_timesteps_to_skip::Int64=0,
                                  lake_model_diagnostics::LakeModelDiagnostics =
                                  LakeModelDiagnostics())
   river_fields::RiverPrognosticFields = RiverPrognosticFields(river_parameters)
@@ -417,8 +413,6 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,
                           diagnostic_lake_volumes,
                           input_data_is_monthly_mean=
                           input_data_is_monthly_mean,
-                          forcing_timesteps_to_skip=
-                          forcing_timesteps_to_skip,
                           lake_model_diagnostics=
                           lake_model_diagnostics)
   if return_output

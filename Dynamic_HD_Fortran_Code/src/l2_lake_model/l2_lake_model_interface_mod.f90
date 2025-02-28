@@ -33,11 +33,8 @@ contains
 function lakeinterfaceprognosticfieldsconstructor(_NPOINTS_HD_) result(constructor)
   type(lakeinterfaceprognosticfields), pointer :: constructor
   _DEF_NPOINTS_HD_
-  integer :: nlat_coarse
-  integer :: nlon_coarse
     allocate(constructor)
-    call constructor%initialiselakeinterfaceprognosticfields(nlat_coarse, &
-                                                             nlon_coarse)
+    call constructor%initialiselakeinterfaceprognosticfields(_NPOINTS_HD_)
 end function lakeinterfaceprognosticfieldsconstructor
 
 subroutine  lakeinterfaceprognosticfieldsdestructor(this)
@@ -66,7 +63,7 @@ subroutine init_lake_model(lake_model_ctl_filename,initial_spillover_to_rivers, 
   type(lakeinterfaceprognosticfields), intent(inout) :: lake_interface_fields
   real(dp), intent(in) :: step_length
   real(dp), pointer, dimension(:) :: lake_parameters_as_array
-  type(lakeparameterspointer), dimension(:), allocatable :: lake_parameters_array
+  type(lakeparameterspointer), dimension(:), pointer :: lake_parameters_array
   real(dp), pointer, dimension(_DIMS_) :: initial_water_to_lake_centers
     ! call config_lakes(lake_model_ctl_filename,global_run_water_budget_check)
     ! global_lake_model_parameters => read_lake_parameters(.true.)
@@ -75,7 +72,7 @@ subroutine init_lake_model(lake_model_ctl_filename,initial_spillover_to_rivers, 
     ! call load_lake_initial_values(initial_water_to_lake_centers,&
     !                               initial_spillover_to_rivers, &
     !                               global_step_length)
-    lake_parameters_array = &
+    lake_parameters_array => &
       get_lake_parameters_from_array(lake_parameters_as_array, &
                                      global_lake_model_parameters%_NPOINTS_LAKE_, &
                                      global_lake_model_parameters%_NPOINTS_HD_)
@@ -102,7 +99,7 @@ subroutine init_lake_model_test(lake_model_parameters,lake_parameters_as_array, 
   real(dp), pointer, dimension(:), intent(in) :: lake_parameters_as_array
   real(dp), pointer, dimension(_DIMS_), intent(in) :: initial_water_to_lake_centers
   type(lakeinterfaceprognosticfields), intent(inout) :: lake_interface_fields
-  type(lakeparameterspointer), dimension(:), allocatable :: lake_parameters_array
+  type(lakeparameterspointer), dimension(:), pointer :: lake_parameters_array
   real(dp) :: step_length
     global_lake_model_parameters => lake_model_parameters
     ! if (associated(global_lake_model_prognostics)) then
@@ -111,7 +108,7 @@ subroutine init_lake_model_test(lake_model_parameters,lake_parameters_as_array, 
     ! end if
     global_lake_model_prognostics => lakemodelprognostics(global_lake_model_parameters)
     global_step_length = step_length
-    lake_parameters_array = &
+    lake_parameters_array => &
       get_lake_parameters_from_array(lake_parameters_as_array, &
                                      global_lake_model_parameters%_NPOINTS_LAKE_, &
                                      global_lake_model_parameters%_NPOINTS_HD_)
@@ -142,7 +139,7 @@ end subroutine clean_lake_model
 subroutine run_lake_model(lake_interface_fields)
   type(lakeinterfaceprognosticfields), intent(inout) :: lake_interface_fields
     global_lake_model_prognostics%water_to_lakes(_DIMS_) = &
-      global_lake_model_prognostics%water_to_lakes(_DIMS_)*global_step_length
+      lake_interface_fields%water_to_lakes(_DIMS_)*global_step_length
     call run_lakes(global_lake_model_parameters,global_lake_model_prognostics)
     if (global_run_water_budget_check) then
       call check_water_budget(global_lake_model_prognostics)
@@ -186,7 +183,7 @@ function get_lake_model_prognostics() result(value)
 end function get_lake_model_prognostics
 
 subroutine get_lake_fraction(lake_fraction)
-  real(dp), dimension(_DIMS_), intent(inout) :: lake_fraction
+  real(dp), dimension(_DIMS_), allocatable, intent(inout) :: lake_fraction
     call calculate_lake_fraction_on_surface_grid(global_lake_model_parameters, &
                                                  global_lake_model_prognostics, &
                                                  lake_fraction)
@@ -224,7 +221,7 @@ _END_IF_USE_SINGLE_INDEX_
 
 function get_lake_volumes() result(lake_volumes)
   real(dp), pointer, dimension(:) :: lake_volumes
-    lake_volumes => null() !get_lake_volume_list(global_lake_model_prognostics)
+    lake_volumes => get_lake_volume_list(global_lake_model_prognostics)
 end function get_lake_volumes
 
 end module l2_lake_model_interface_mod

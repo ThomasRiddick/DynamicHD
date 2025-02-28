@@ -42,6 +42,11 @@ function find_coarse_cell_containing_fine_cell(fine_grid::Grid,coarse_grid::Grid
   throw(UserError())
 end
 
+function find_coarse_cell_containing_fine_cell(fine_grid::Grid,coarse_grid::Grid,
+                                               fine_cell_coords::CartesianIndex)
+  throw(UserError())
+end
+
 function find_downstream_coords(grid::Grid,
                                 flow_direction::DirectionIndicator,
                                 coords::Coords)
