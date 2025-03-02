@@ -376,6 +376,7 @@ function lakemodelprognosticsconstructor(lake_model_parameters) result(construct
       constructor%lake_numbers(_DIMS_) = 0
       allocate(constructor%lake_cell_count(lake_model_parameters%_NPOINTS_SURFACE_))
       constructor%lake_cell_count(_DIMS_) = 0
+      constructor%total_lake_volume = 0.0_dp
       allocate(constructor%effective_volume_per_cell_on_surface_grid(lake_model_parameters%_NPOINTS_SURFACE_))
       constructor%effective_volume_per_cell_on_surface_grid(_DIMS_) = 0.0_dp
       allocate(constructor%effective_lake_height_on_surface_grid_to_lakes(lake_model_parameters%_NPOINTS_SURFACE_))
@@ -872,6 +873,7 @@ recursive subroutine remove_water(lake,outflow,store_water)
       end if
       if (outflow_local <= lake%excess_water) then
         lake%excess_water = lake%excess_water - outflow_local
+        return
       end if
       outflow_local = outflow_local - lake%excess_water
       lake%excess_water = 0.0_dp
@@ -900,12 +902,14 @@ end subroutine remove_water
 
 subroutine process_water(lake)
   type(lakeprognostics), pointer, intent(inout) :: lake
-    if (lake%unprocessed_water > 0.0_dp) then
-        call add_water(lake,lake%unprocessed_water,.false.)
-    else if (lake%unprocessed_water < 0.0_dp) then
-        call remove_water(lake,-lake%unprocessed_water,.false.)
-    end if
+  real(dp) :: unprocessed_water
+    unprocessed_water = lake%unprocessed_water
     lake%unprocessed_water = 0.0_dp
+    if (unprocessed_water > 0.0_dp) then
+        call add_water(lake,unprocessed_water,.false.)
+    else if (unprocessed_water < 0.0_dp) then
+        call remove_water(lake,-unprocessed_water,.false.)
+    end if
 end subroutine process_water
 
 function check_if_merge_is_possible(lake_parameters, &
@@ -1772,7 +1776,7 @@ subroutine check_water_budget(lake_model_prognostics, &
     if (present(total_initial_water_volume)) then
       total_initial_water_volume_local = total_initial_water_volume
     else
-      total_initial_water_volume_local = 0
+      total_initial_water_volume_local = 0.0_dp
     end if
     new_total_lake_volume = 0.0_dp
     do i = 1,size(lake_model_prognostics%lakes)

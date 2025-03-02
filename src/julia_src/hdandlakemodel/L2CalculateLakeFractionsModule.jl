@@ -12,6 +12,7 @@ using FieldModule: Field,set!
 
 mutable struct Pixel
   id::Int64
+  lake_number::Int64
   fine_grid_coords::CartesianIndex
   original_coarse_grid_coords::CartesianIndex
   assigned_coarse_grid_coords::CartesianIndex
@@ -119,8 +120,8 @@ function calculate_lake_fractions(lakes::Vector{LakeInput},
       in_cell::CartesianIndex =
         find_coarse_cell_containing_fine_cell(lake_grid,surface_grid,
                                               pixel_coords)
-      pixel::Pixel = Pixel(all_lake_total_pixels,pixel_coords,
-                         in_cell,in_cell,false)
+      pixel::Pixel = Pixel(all_lake_total_pixels,lake.lake_number,
+                           pixel_coords,in_cell,in_cell,false)
       push!(pixels,pixel)
       set!(all_lake_pixel_mask,pixel.fine_grid_coords,true)
     end
@@ -130,7 +131,8 @@ function calculate_lake_fractions(lakes::Vector{LakeInput},
                                         cell_coords) do fine_coords::CartesianIndex
         pixel_number::Int64 = pixel_numbers(fine_coords)
         if pixel_number > 0
-          if pixels[pixel_number].fine_grid_coords == fine_coords
+          if pixels[pixel_number].fine_grid_coords == fine_coords &&
+              pixels[pixel_number].lake_number == lake.lake_number
             pixels_in_cell[pixel_number] = pixels[pixel_number]
           end
         end
@@ -171,7 +173,6 @@ function calculate_lake_fractions(lakes::Vector{LakeInput},
     for cell in lake.cell_list
       unprocessed_cells_total_pixel_count += cell.lake_pixel_count
     end
-    println(unprocessed_cells_total_pixel_count)
     if unprocessed_cells_total_pixel_count <
         0.5*minimum(map(cell->cell.pixel_count,lake.cell_list))
       continue
@@ -229,11 +230,14 @@ function calculate_lake_fractions(lakes::Vector{LakeInput},
     end
   end
   println("----")
+  pixel_counts_field::Field{Int64} =  Field{Int64}(surface_grid,0)
   for lake in lake_properties
     for cell in lake.cell_list
-      println(cell.lake_pixel_count)
+      set!(pixel_counts_field,cell.coarse_grid_coords,
+           pixel_counts_field(cell.coarse_grid_coords)+cell.lake_pixel_count)
     end
   end
+  println(pixel_counts_field)
 end
 
 function add_pixel(cell,pixel)
