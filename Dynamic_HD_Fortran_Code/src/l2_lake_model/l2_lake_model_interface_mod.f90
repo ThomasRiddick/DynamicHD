@@ -130,8 +130,8 @@ subroutine clean_lake_model()
 ! #ifdef USE_LOGGING
 !   call delete_logger
 ! #endif
-  ! call global_lake_model_prognostics%lakemodelprognosticsdestructor()
-  ! call global_lake_model_parameters%lakeparametersdestructor()
+  call clean_lake_model_prognostics(global_lake_model_prognostics)
+  call clean_lake_model_parameters(global_lake_model_parameters)
   deallocate(global_lake_model_parameters)
   deallocate(global_lake_model_prognostics)
 end subroutine clean_lake_model

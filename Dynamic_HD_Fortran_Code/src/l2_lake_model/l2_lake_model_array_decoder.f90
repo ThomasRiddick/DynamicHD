@@ -115,6 +115,7 @@ function read_integer_field(decoder) result(field)
     field_length = size(field_as_real)
     allocate(field(field_length))
     field = nint(field_as_real)
+    deallocate(field_as_real)
 end function read_integer_field
 
 function read_outflow_points_dict(decoder) result(outflow_points)
@@ -139,7 +140,6 @@ function read_outflow_points_dict(decoder) result(outflow_points)
       entry_length = 4
       offset = 1
     _END_IF_USE_SINGLE_INDEX_
-    allocate(entry(entry_length))
     do i = 1,length
       entry => &
         decoder%array(decoder%current_index:decoder%current_index+entry_length-1)
@@ -181,9 +181,8 @@ function read_filling_order(decoder) result(filling_order)
       offset = 1
     _END_IF_USE_SINGLE_INDEX_
     allocate(filling_order(length))
-    allocate(entry(entry_length))
     do i = 1,length
-      entry(:) = &
+      entry => &
         decoder%array(decoder%current_index:decoder%current_index+entry_length-1)
       decoder%current_index = decoder%current_index + entry_length
       _GET_COORDS_ _COORDS_coords_ _FROM_ _ARRAY_entry_

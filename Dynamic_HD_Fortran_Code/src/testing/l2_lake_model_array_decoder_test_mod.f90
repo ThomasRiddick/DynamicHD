@@ -170,18 +170,23 @@ subroutine testArrayDecoderOneLake
                        &redirect_pointer%non_local_redirect_target_lat,2)
     call assert_equals(lake_parameters(1)%lake_parameters_pointer%outflow_points%values(1)%&
                        &redirect_pointer%non_local_redirect_target_lon,2)
-
+    deallocate(expected_outflow_keys)
+    deallocate(lake_parameters_as_array)
+    call clean_lake_parameters(lake_parameters(1)%lake_parameters_pointer)
+    deallocate(lake_parameters(1)%lake_parameters_pointer)
+    deallocate(lake_parameters)
 end subroutine testArrayDecoderOneLake
 
 subroutine testArrayDecoderTwoLakes
   use l2_lake_model_mod
   use l2_lake_model_array_decoder_mod
-  type(lakeparameterspointer), dimension(:), allocatable :: lake_parameters
+  type(lakeparameterspointer), dimension(:), pointer :: lake_parameters
   real(dp), dimension(:), pointer :: lake_parameters_as_array
   integer, pointer, dimension(:) :: expected_outflow_keys_lake_one
   integer, pointer, dimension(:) :: expected_outflow_keys_lake_two
   integer, pointer, dimension(:) :: expected_outflow_keys_lake_three
   integer, pointer, dimension(:) :: expected_secondary_lakes
+  integer :: i
     allocate(expected_outflow_keys_lake_one(1))
     expected_outflow_keys_lake_one = (/ 2 /)
     allocate(expected_outflow_keys_lake_two(1))
@@ -200,7 +205,7 @@ subroutine testArrayDecoderTwoLakes
          2.0, 4.0, 5.0, 6.0, 4.0, 5.0, 1.0, 0.0, 8.0, 3.0, 5.0, 1.0, 0.0, 8.0, &
          4.0, 4.0, 1.0, 0.0, 8.0, 4.0, 3.0, 1.0, 0.0, 8.0, 4.0, 2.0, 1.0, 0.0, &
          8.0, 3.0, 2.0, 1.0, 12.0, 10.0, 1.0, -1.0, 3.0, 3.0, 0.0 /)
-    lake_parameters = &
+    lake_parameters => &
         get_lake_parameters_from_array(lake_parameters_as_array, &
                                        6,6,3,3)
     call assert_equals(size(lake_parameters),3)
@@ -402,7 +407,16 @@ subroutine testArrayDecoderTwoLakes
                        &redirect_pointer%non_local_redirect_target_lat,3)
     call assert_equals(lake_parameters(3)%lake_parameters_pointer%outflow_points%values(1)%&
                        &redirect_pointer%non_local_redirect_target_lon,3)
-
+    deallocate(expected_outflow_keys_lake_one)
+    deallocate(expected_outflow_keys_lake_two)
+    deallocate(expected_outflow_keys_lake_three)
+    deallocate(expected_secondary_lakes)
+    deallocate(lake_parameters_as_array)
+    do i = 1,size(lake_parameters)
+      call clean_lake_parameters(lake_parameters(i)%lake_parameters_pointer)
+      deallocate(lake_parameters(i)%lake_parameters_pointer)
+    end do
+    deallocate(lake_parameters)
 end subroutine testArrayDecoderTwoLakes
 
 end module l2_lake_model_array_decoder_test_mod

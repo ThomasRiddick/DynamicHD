@@ -70,9 +70,9 @@ for line in filtered_lines:
                                    f'\\1\\2\\3{dim2}\\4 \\5 \\6\\7{dim2}\\8\\n',
                                    extended_line)
             extended_line = re.sub(r'(\s*)_ASSIGN_?(.*)_INDICES_LIST_(\w*)'
-                                   r'INDEX_NAME(.*)_\s*=\s*(.*)',
-                                   f'\\1\\2\\3{dim1}\\4 = \\5\\n'
-                                   f'\\1\\2\\3{dim2}\\4 = \\5\\n',
+                                   r'INDEX_NAME(.*)_\s*(=?)\s*(.*)',
+                                   f'\\1\\2\\3{dim1}\\4 \\5 \\6\\n'
+                                   f'\\1\\2\\3{dim2}\\4 \\5 \\6\\n',
                                    extended_line)
             extended_line_spacing = re.match(r'(\s*)',extended_line).group(1)
             extended_line_as_list = extended_line.split("&")
@@ -215,6 +215,10 @@ for line in filtered_lines:
     line = re.sub(r'(\w+%)?_NPOINTS_TOTAL_HD_',f'\\1n{dim1}_hd*\\1n{dim2}_hd',line)
     line = re.sub(r'(\w+%)?_NPOINTS_TOTAL_LAKE_',f'\\1n{dim1}_lake*\\1n{dim2}_lake',line)
     line = re.sub(r'(\w+%)?_NPOINTS_TOTAL_SURFACE_',f'\\1n{dim1}_surface*\\1n{dim2}_surface',line)
+    line = re.sub(r'(\s*)deallocate\((.*)_INDICES_LIST_(\w*)INDEX_NAME(.*)_\)',
+                  f'\\1deallocate(\\2\\3{dim1}\\4)\n'
+                  f'\\1deallocate(\\2\\3{dim2}\\4)',
+                  line)
     line = re.sub(r'(\s*)allocate\((.*)_INDICES_LIST_(\w*)INDEX_NAME(.*)_\)',
                   f'\\1allocate(\\2\\3{dim1}\\4)\n'
                   f'\\1allocate(\\2\\3{dim2}\\4)',
@@ -253,9 +257,9 @@ for line in filtered_lines:
                   f'\\1\\2\\3{dim2}\\4 = \\5\\6{dim2}\\7\\n',
                   line)
     line = re.sub(r'(\s*)_ASSIGN_?(.*)_INDICES_LIST_(\w*)'
-                  r'INDEX_NAME(.*)_\s*=\s*(.*)',
-                  f'\\1\\2\\3{dim1}\\4 = \\5\\n'
-                  f'\\1\\2\\3{dim2}\\4 = \\5\\n',
+                  r'INDEX_NAME(.*)_\s*(=>?)\s*(.*)',
+                  f'\\1\\2\\3{dim1}\\4 \\5 \\6\\n'
+                  f'\\1\\2\\3{dim2}\\4 \\5 \\6\\n',
                   line)
     line = re.sub(r'_INDICES_LIST_(\w*)INDEX_NAME(\w*)_FIRST_DIM_',f'\\1{dim1}\\2',line)
     line = re.sub(r'(\s*)_DEF_INDICES_FIELD_(\w*)INDEX_NAME(\w*)_(\s*_INTENT_\w*_)?',

@@ -146,6 +146,7 @@ type :: lakemodelprognostics
   real(dp) :: total_lake_volume
   real(dp), pointer, dimension(_DIMS_) :: effective_volume_per_cell_on_surface_grid
   real(dp), pointer, dimension(_DIMS_) :: effective_lake_height_on_surface_grid_to_lakes
+  real(dp), pointer, dimension(_DIMS_) :: effective_lake_height_on_surface_grid_from_lakes
   real(dp), pointer, dimension(_DIMS_) :: new_effective_volume_per_cell_on_surface_grid
   real(dp), pointer, dimension(_DIMS_) :: evaporation_on_surface_grid
   real(dp), pointer, dimension(_DIMS_) :: water_to_lakes
@@ -215,7 +216,7 @@ contains
 
 !##############################################################################
 !##############################################################################
-!              Section 2: Constructors and Initialisation Routines
+! Section 2: Constructors, Initialisation and Deallocation Routines
 !##############################################################################
 !##############################################################################
 
@@ -230,6 +231,16 @@ function redirectdictionaryconstructor(number_of_entries) result(constructor)
     constructor%next_entry_index = 1
 end function redirectdictionaryconstructor
 
+subroutine clean_redirect_dictionary(dictionary)
+  type(redirectdictionary), pointer, intent(inout) :: dictionary
+  integer :: i
+    deallocate(dictionary%keys)
+    do i=1,size(dictionary%values)
+      deallocate(dictionary%values(i)%redirect_pointer)
+    end do
+    deallocate(dictionary%values)
+end subroutine clean_redirect_dictionary
+
 function coordslistconstructor(_INDICES_LIST_INDEX_NAME_coords_) &
     result(constructor)
   _DEF_INDICES_LIST_INDEX_NAME_coords_
@@ -238,11 +249,21 @@ function coordslistconstructor(_INDICES_LIST_INDEX_NAME_coords_) &
       _INDICES_LIST_INDEX_NAME_coords_
 end function coordslistconstructor
 
+subroutine clean_coords_list(coords_list)
+  type(coordslist), intent(inout) :: coords_list
+    deallocate(coords_list%_INDICES_LIST_INDEX_NAME_coords_)
+end subroutine clean_coords_list
+
 function integerlistconstructor(list) result(constructor)
   integer, dimension(:), pointer, intent(in) :: list
   type(integerlist) :: constructor
     constructor%list => list
 end function integerlistconstructor
+
+subroutine clean_integer_list(integer_list)
+  type(integerlist), intent(inout) :: integer_list
+    deallocate(integer_list%list)
+end subroutine clean_integer_list
 
 function lakemodelparametersconstructor( &
     _INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_, &
@@ -357,8 +378,7 @@ function lakemodelparametersconstructor( &
     constructor%number_of_lakes = number_of_lakes
     constructor%basins => null()
     constructor%basin_numbers => null()
-    _ASSIGN_constructor%_INDICES_LIST_cells_with_lakes_INDEX_NAME_ => &
-      _INDICES_LIST_cells_with_lakes_INDEX_NAME_
+    _ASSIGN_constructor%_INDICES_LIST_cells_with_lakes_INDEX_NAME_ => null()
     constructor%cell_areas_on_surface_model_grid => cell_areas_on_surface_model_grid
     allocate(constructor%lake_centers(_NPOINTS_LAKE_))
     constructor%lake_centers(_DIMS_) = .false.
@@ -366,6 +386,24 @@ function lakemodelparametersconstructor( &
     constructor%surface_cell_to_fine_cell_maps => surface_cell_to_fine_cell_maps
     constructor%surface_cell_to_fine_cell_map_numbers => surface_cell_to_fine_cell_map_numbers
 end function lakemodelparametersconstructor
+
+subroutine clean_lake_model_parameters(lake_model_parameters)
+  type(lakemodelparameters), pointer, intent(inout) :: lake_model_parameters
+  integer :: i
+    do i = 1,size(lake_model_parameters%basins)
+      call clean_integer_list(lake_model_parameters%basins(i))
+    end do
+    deallocate(lake_model_parameters%basins)
+    deallocate(lake_model_parameters%basin_numbers)
+    deallocate(lake_model_parameters%lake_centers)
+    deallocate(lake_model_parameters%number_fine_grid_cells)
+    do i=1,size(lake_model_parameters%surface_cell_to_fine_cell_maps)
+      call clean_coords_list(lake_model_parameters%surface_cell_to_fine_cell_maps(i))
+    end do
+    deallocate(lake_model_parameters%surface_cell_to_fine_cell_maps)
+    deallocate(lake_model_parameters%surface_cell_to_fine_cell_map_numbers)
+    deallocate(lake_model_parameters%_INDICES_LIST_cells_with_lakes_INDEX_NAME_)
+end subroutine clean_lake_model_parameters
 
 function lakemodelprognosticsconstructor(lake_model_parameters) result(constructor)
     type(lakemodelparameters), pointer, intent(in) :: lake_model_parameters
@@ -381,6 +419,8 @@ function lakemodelprognosticsconstructor(lake_model_parameters) result(construct
       constructor%effective_volume_per_cell_on_surface_grid(_DIMS_) = 0.0_dp
       allocate(constructor%effective_lake_height_on_surface_grid_to_lakes(lake_model_parameters%_NPOINTS_SURFACE_))
       constructor%effective_lake_height_on_surface_grid_to_lakes(_DIMS_) = 0.0_dp
+      allocate(constructor%effective_lake_height_on_surface_grid_from_lakes(lake_model_parameters%_NPOINTS_SURFACE_))
+      constructor%effective_lake_height_on_surface_grid_from_lakes(_DIMS_) = 0.0_dp
       allocate(constructor%new_effective_volume_per_cell_on_surface_grid(lake_model_parameters%_NPOINTS_SURFACE_))
       constructor%new_effective_volume_per_cell_on_surface_grid(_DIMS_) = 0.0_dp
       allocate(constructor%evaporation_on_surface_grid(lake_model_parameters%_NPOINTS_SURFACE_))
@@ -397,6 +437,31 @@ function lakemodelprognosticsconstructor(lake_model_parameters) result(construct
       constructor%evaporation_applied(:) = .false.
       constructor%set_forest => rooted_tree_forest()
 end function lakemodelprognosticsconstructor
+
+subroutine clean_lake_model_prognostics(lake_model_prognostics)
+  type(lakemodelprognostics), pointer, intent(inout) :: lake_model_prognostics
+  integer :: i
+    do i = 1,size(lake_model_prognostics%lakes)
+      call clean_lake_parameters(lake_model_prognostics%lakes(i)%lake_pointer%parameters)
+      deallocate(lake_model_prognostics%lakes(i)%lake_pointer%parameters)
+      deallocate(lake_model_prognostics%lakes(i)%lake_pointer)
+    end do
+    deallocate(lake_model_prognostics%lakes)
+    deallocate(lake_model_prognostics%lake_numbers)
+    deallocate(lake_model_prognostics%lake_cell_count)
+    deallocate(lake_model_prognostics%effective_volume_per_cell_on_surface_grid)
+    deallocate(lake_model_prognostics%effective_lake_height_on_surface_grid_to_lakes)
+    deallocate(lake_model_prognostics%effective_lake_height_on_surface_grid_from_lakes)
+    deallocate(lake_model_prognostics%new_effective_volume_per_cell_on_surface_grid)
+    deallocate(lake_model_prognostics%evaporation_on_surface_grid)
+    deallocate(lake_model_prognostics%water_to_lakes)
+    deallocate(lake_model_prognostics%water_to_hd)
+    deallocate(lake_model_prognostics%lake_water_from_ocean)
+    deallocate(lake_model_prognostics%evaporation_from_lakes)
+    deallocate(lake_model_prognostics%evaporation_applied)
+    call lake_model_prognostics%set_forest%rooted_tree_forest_destructor()
+    deallocate(lake_model_prognostics%set_forest)
+end subroutine clean_lake_model_prognostics
 
 function cellconstructor(_COORDS_ARG_coords_, &
                          height_type, &
@@ -468,6 +533,18 @@ function lakeparametersconstructor(lake_number, &
     constructor%outflow_points => outflow_points
     constructor%number_of_cells_when_filled = size(filling_order)
 end function lakeparametersconstructor
+
+subroutine clean_lake_parameters(lake_parameters)
+  type(lakeparameters), pointer, intent(inout) :: lake_parameters
+  integer :: i
+    deallocate(lake_parameters%secondary_lakes)
+    do i = 1,size(lake_parameters%filling_order)
+      deallocate(lake_parameters%filling_order(i)%cell_pointer)
+    end do
+    deallocate(lake_parameters%filling_order)
+    call clean_redirect_dictionary(lake_parameters%outflow_points)
+    deallocate(lake_parameters%outflow_points)
+end subroutine clean_lake_parameters
 
 !Construct an empty filling lake by default
 function lakeprognosticsconstructor(lake_parameters, &
@@ -1304,7 +1381,7 @@ subroutine create_lakes(lake_model_parameters, &
                         lake_parameters_array)
   type(lakemodelparameters), pointer, intent(inout) :: lake_model_parameters
   type(lakemodelprognostics), pointer, intent(inout) :: lake_model_prognostics
-  type(lakeparameterspointer), dimension(:), pointer, intent(in) :: lake_parameters_array
+  type(lakeparameterspointer), dimension(:), pointer, intent(inout) :: lake_parameters_array
   type(integerlist), pointer, dimension(:) :: basins_temp
   integer, dimension(:), pointer :: basins_in_coarse_cell
   integer, dimension(:), allocatable :: basins_in_coarse_cell_temp
@@ -1341,6 +1418,7 @@ subroutine create_lakes(lake_model_parameters, &
           lake%parameters%lake_number
       end if
     end do
+    deallocate(lake_parameters_array)
     do i=1,size(lake_model_prognostics%lakes)
       lake => lake_model_prognostics%lakes(i)%lake_pointer
       lake_model_parameters%lake_centers(lake%parameters%_COORDS_ARG_center_coords_) = .true.
@@ -1391,13 +1469,25 @@ subroutine create_lakes(lake_model_parameters, &
       _ASSIGN_lake_model_parameters%_INDICES_LIST_cells_with_lakes_INDEX_NAME(i)_ = &
         _INDICES_LIST_cells_with_lakes_temp_INDEX_NAME(i)_
     end do
-    allocate(lake_model_parameters%basins(basin_number))
-    do i=1,basin_number
+    allocate(lake_model_parameters%basins(basin_number-1))
+    do i=1,basin_number-1
       lake_model_parameters%basins(i) = basins_temp(i)
     end do
     deallocate(basins_temp)
     deallocate(basins_in_coarse_cell_temp)
+    deallocate(_INDICES_LIST_cells_with_lakes_temp_INDEX_NAME_)
 end subroutine create_lakes
+
+subroutine clean_lakes(lake_model_parameters)
+  type(lakemodelparameters), pointer, intent(inout) :: lake_model_parameters
+  integer :: i
+    do i = 1,size(lake_model_parameters%basins)
+      call clean_integer_list(lake_model_parameters%basins(i))
+    end do
+    deallocate(lake_model_parameters%basins)
+    deallocate(lake_model_parameters%basin_numbers)
+    deallocate(lake_model_parameters%_INDICES_LIST_cells_with_lakes_INDEX_NAME_)
+end subroutine clean_lakes
 
 subroutine setup_lakes(lake_model_parameters,lake_model_prognostics,&
                        initial_water_to_lake_centers)
@@ -1577,19 +1667,6 @@ subroutine run_lakes(lake_model_parameters,lake_model_prognostics)
     end do
 end subroutine run_lakes
 
-subroutine set_effective_lake_height_on_surface_grid_to_lakes(lake_model_parameters, &
-                                                              lake_model_prognostics, &
-                                                              effective_lake_height_on_surface_grid)
-  type(lakemodelparameters), pointer, intent(in) :: lake_model_parameters
-  type(lakemodelprognostics), pointer, intent(inout) :: lake_model_prognostics
-  real(dp), dimension(_DIMS_), pointer, intent(in) :: effective_lake_height_on_surface_grid
-  _DEF_LOOP_INDEX_SURFACE_
-    _LOOP_OVER_SURFACE_GRID_ _COORDS_SURFACE_  _lake_model_parameters%_
-      lake_model_prognostics%effective_lake_height_on_surface_grid_to_lakes(_COORDS_SURFACE_) = &
-        effective_lake_height_on_surface_grid(_COORDS_SURFACE_)
-    _LOOP_OVER_SURFACE_GRID_END_
-end subroutine set_effective_lake_height_on_surface_grid_to_lakes
-
 subroutine calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fraction_on_surface_grid)
@@ -1602,12 +1679,10 @@ end subroutine calculate_lake_fraction_on_surface_grid
 
 subroutine calculate_effective_lake_height_on_surface_grid(&
     lake_model_parameters, &
-    lake_model_prognostics, &
-    effective_lake_height_on_surface_grid_from_lakes)
+    lake_model_prognostics)
   type(lakemodelparameters), pointer, intent(in) :: lake_model_parameters
   type(lakemodelprognostics), pointer, intent(inout) :: lake_model_prognostics
-  real(dp), dimension(:,:), pointer, intent(inout) :: effective_lake_height_on_surface_grid_from_lakes
-    effective_lake_height_on_surface_grid_from_lakes(_DIMS_) = &
+    lake_model_prognostics%effective_lake_height_on_surface_grid_from_lakes(_DIMS_) = &
       lake_model_prognostics%effective_volume_per_cell_on_surface_grid(_DIMS_) / &
       lake_model_parameters%cell_areas_on_surface_model_grid(_DIMS_)
 end subroutine calculate_effective_lake_height_on_surface_grid
@@ -1709,20 +1784,12 @@ subroutine set_lake_evaporation_for_testing(lake_model_parameters,lake_model_pro
   type(lakemodelparameters), pointer :: lake_model_parameters
   type(lakemodelprognostics), pointer :: lake_model_prognostics
   real(dp), dimension(_DIMS_), allocatable, intent(in) :: lake_evaporation
-  real(dp), dimension(_DIMS_), pointer :: effective_lake_height_on_surface_grid
-  real(dp), dimension(_DIMS_), pointer :: old_effective_lake_height_on_surface_grid
-    allocate(old_effective_lake_height_on_surface_grid(lake_model_parameters%_NPOINTS_SURFACE_))
     call calculate_effective_lake_height_on_surface_grid( &
-      lake_model_parameters,lake_model_prognostics, &
-      old_effective_lake_height_on_surface_grid)
-    allocate(effective_lake_height_on_surface_grid(lake_model_parameters%_NPOINTS_SURFACE_))
-    effective_lake_height_on_surface_grid(_DIMS_) = &
-      old_effective_lake_height_on_surface_grid(_DIMS_) - &
+      lake_model_parameters,lake_model_prognostics)
+    lake_model_prognostics%effective_lake_height_on_surface_grid_to_lakes(_DIMS_) = &
+      lake_model_prognostics%effective_lake_height_on_surface_grid_from_lakes(_DIMS_) - &
         (lake_evaporation(_DIMS_)/ &
          lake_model_parameters%cell_areas_on_surface_model_grid(_DIMS_))
-    call set_effective_lake_height_on_surface_grid_to_lakes(lake_model_parameters, &
-                                                            lake_model_prognostics, &
-                                                            effective_lake_height_on_surface_grid)
 end subroutine set_lake_evaporation_for_testing
 
 subroutine set_lake_evaporation(lake_model_parameters,lake_model_prognostics, &
@@ -1730,33 +1797,26 @@ subroutine set_lake_evaporation(lake_model_parameters,lake_model_prognostics, &
   type(lakemodelparameters), pointer, intent(in) :: lake_model_parameters
   type(lakemodelprognostics), pointer, intent(inout) :: lake_model_prognostics
   real(dp), dimension(_DIMS_), intent(in) :: height_of_water_evaporated
-  real(dp), dimension(_DIMS_), pointer :: effective_lake_height_on_surface_grid
-  real(dp), dimension(_DIMS_), pointer :: old_effective_lake_height_on_surface_grid
   real(dp) :: working_effective_lake_height_on_surface_grid
   _DEF_LOOP_INDEX_SURFACE_
-    allocate(old_effective_lake_height_on_surface_grid(lake_model_parameters%_NPOINTS_SURFACE_))
     call calculate_effective_lake_height_on_surface_grid(&
-      lake_model_parameters, lake_model_prognostics, &
-      old_effective_lake_height_on_surface_grid)
-    allocate(effective_lake_height_on_surface_grid(lake_model_parameters%_NPOINTS_SURFACE_))
-    effective_lake_height_on_surface_grid(_DIMS_) = &
-      old_effective_lake_height_on_surface_grid
+      lake_model_parameters, lake_model_prognostics)
+    lake_model_prognostics%effective_lake_height_on_surface_grid_to_lakes(_DIMS_) = &
+      lake_model_prognostics%effective_lake_height_on_surface_grid_from_lakes
     _LOOP_OVER_SURFACE_GRID_ _COORDS_SURFACE_ _lake_model_parameters%_
-      if (old_effective_lake_height_on_surface_grid(_COORDS_SURFACE_) > 0.0_dp) then
+      if (lake_model_prognostics%&
+          &effective_lake_height_on_surface_grid_from_lakes(_COORDS_SURFACE_) > 0.0_dp) then
         working_effective_lake_height_on_surface_grid = &
-          old_effective_lake_height_on_surface_grid(_COORDS_SURFACE_) - &
+          lake_model_prognostics%effective_lake_height_on_surface_grid_from_lakes(_COORDS_SURFACE_) - &
           height_of_water_evaporated(_COORDS_SURFACE_)
         if (working_effective_lake_height_on_surface_grid > 0.0_dp) then
-          effective_lake_height_on_surface_grid(_COORDS_SURFACE_) = &
+          lake_model_prognostics%effective_lake_height_on_surface_grid_to_lakes(_COORDS_SURFACE_) = &
             working_effective_lake_height_on_surface_grid
         else
-          effective_lake_height_on_surface_grid(_COORDS_SURFACE_) = 0.0_dp
+          lake_model_prognostics%effective_lake_height_on_surface_grid_to_lakes(_COORDS_SURFACE_) = 0.0_dp
         end if
       end if
     _LOOP_OVER_SURFACE_GRID_END_
-    call set_effective_lake_height_on_surface_grid_to_lakes(&
-              lake_model_parameters,lake_model_prognostics, &
-              effective_lake_height_on_surface_grid)
 end subroutine set_lake_evaporation
 
 subroutine check_water_budget(lake_model_prognostics, &
