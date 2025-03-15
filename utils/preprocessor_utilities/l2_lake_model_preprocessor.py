@@ -215,6 +215,7 @@ for line in filtered_lines:
     line = re.sub(r'(\w+%)?_NPOINTS_TOTAL_HD_',f'\\1n{dim1}_hd*\\1n{dim2}_hd',line)
     line = re.sub(r'(\w+%)?_NPOINTS_TOTAL_LAKE_',f'\\1n{dim1}_lake*\\1n{dim2}_lake',line)
     line = re.sub(r'(\w+%)?_NPOINTS_TOTAL_SURFACE_',f'\\1n{dim1}_surface*\\1n{dim2}_surface',line)
+    line = re.sub(r'_INDICES_LIST_(\w*)INDEX_NAME(\w*)_FIRST_DIM_',f'\\1{dim1}\\2',line)
     line = re.sub(r'(\s*)deallocate\((.*)_INDICES_LIST_(\w*)INDEX_NAME(.*)_\)',
                   f'\\1deallocate(\\2\\3{dim1}\\4)\n'
                   f'\\1deallocate(\\2\\3{dim2}\\4)',
@@ -261,7 +262,6 @@ for line in filtered_lines:
                   f'\\1\\2\\3{dim1}\\4 \\5 \\6\\n'
                   f'\\1\\2\\3{dim2}\\4 \\5 \\6\\n',
                   line)
-    line = re.sub(r'_INDICES_LIST_(\w*)INDEX_NAME(\w*)_FIRST_DIM_',f'\\1{dim1}\\2',line)
     line = re.sub(r'(\s*)_DEF_INDICES_FIELD_(\w*)INDEX_NAME(\w*)_(\s*_INTENT_\w*_)?',
                  f'\\1integer, dimension(:,:), pointer :: \\2{dim1}\\3\\4\\n'
                  f'\\1integer, dimension(:,:), pointer :: \\2{dim2}\\3\\4',line)
@@ -281,6 +281,10 @@ for line in filtered_lines:
     line = re.sub(r'(\s*)(.*)_EQUALS_(\w+%)?(\w+%)?_COORDS_(\w*)_ == (\w+%)?(\w+%)?_COORDS_(\w*)_',
                   f'\\1\\2(\\3\\4\\5_{dim1} == \\6\\7\\8_{dim1}) .and. &\\n'
                   f'\\1    (\\3\\4\\5_{dim2} == \\6\\7\\8_{dim2})',
+                  line)
+    line = re.sub(r'(\s*)(.*)_NEQUALS_(\w+%)?(\w+%)?_COORDS_(\w*)_ /= (\w+%)?(\w+%)?_COORDS_(\w*)_',
+                  f'\\1\\2(\\3\\4\\5_{dim1} /= \\6\\7\\8_{dim1}) .or. &\\n'
+                  f'\\1    (\\3\\4\\5_{dim2} /= \\6\\7\\8_{dim2})',
                   line)
     line = re.sub(r'(.*)\s+::(.*) _INTENT_(\w*)_',r'\1, intent(\3) ::\2',line)
     if re.match(r'^$',line):

@@ -45,7 +45,7 @@ implicit none
 !##############################################################################
 !##############################################################################
 
-integer,parameter :: dp = selected_real_kind(12)
+integer, parameter :: dp = selected_real_kind(12)
 integer, parameter :: filling_lake_type = 1
 integer, parameter :: overflowing_lake_type = 2
 integer, parameter :: subsumed_lake_type = 3
