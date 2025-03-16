@@ -94,7 +94,12 @@ function extract_any_pixel(cell::LakeCell)
   if cell.lake_pixel_count <= 0
     error("No pixels to extract")
   end
-  pixel = keys(cell.lake_pixels)[1]
+  local pixel::Pixel
+  for key in keys(cell.lake_pixels)
+    pixel_id::Int64 = key
+    pixel = cell.lake_pixels[pixel_id]
+    break
+  end
   extract_pixel(cell,pixel)
   return pixel
 end
@@ -120,7 +125,7 @@ function setup_cells_lakes_and_pixels(lakes::Vector{LakeInput},
                                       pixel_numbers::Field{Int64},
                                       pixels::Vector{Pixel},
                                       all_lake_potential_pixel_counts::Field{Int64},
-                                      grid_specific_lake_model_parameters::LatLonLakeModelParameters,
+                                      grid_specific_lake_model_parameters::GridSpecificLakeModelParameters,
                                       lake_grid::Grid,
                                       surface_grid::Grid)
   all_lake_total_pixels::Int64 = 0
@@ -206,7 +211,7 @@ end
 
 function calculate_lake_fractions(lakes::Vector{LakeInput},
                                   cell_pixel_counts::Field{Int64},
-                                  grid_specific_lake_model_parameters::LatLonLakeModelParameters,
+                                  grid_specific_lake_model_parameters::GridSpecificLakeModelParameters,
                                   lake_grid::Grid,
                                   surface_grid::Grid)
   all_lake_potential_pixel_mask::Field{Bool} =  Field{Bool}(lake_grid,false)
@@ -301,7 +306,8 @@ end
 function setup_lake_for_fraction_calculation(lakes::Vector{LakeInput},
                                              cell_pixel_counts::Field{Int64},
                                              binary_lake_mask::Field{Bool},
-                                             grid_specific_lake_model_parameters::LatLonLakeModelParameters,
+                                             grid_specific_lake_model_parameters::
+                                             GridSpecificLakeModelParameters,
                                              lake_grid::Grid,
                                              surface_grid::Grid)
   all_lake_potential_pixel_mask::Field{Bool} =  Field{Bool}(lake_grid,false)
@@ -401,10 +407,9 @@ function remove_pixel(lake::LakeProperties,pixel::Pixel,
   set!(lake_pixel_counts_field,cell.coarse_grid_coords,
        lake_pixel_counts_field(cell.coarse_grid_coords)-1)
   if cell.in_binary_mask
-    local least_filled_cell_lake_fraction::Float64
+    local least_filled_cell_lake_fraction::Float64 = 999.0
     local least_filled_cell::LakeCell
     for other_cell in lake.cell_list
-      least_filled_cell_lake_fraction = 999.0
       other_cell_lake_fraction = other_cell.lake_pixel_count/
                                  other_cell.pixel_count
       if ! other_cell.in_binary_mask && other_cell.lake_pixel_count > 0 &&
@@ -413,7 +418,7 @@ function remove_pixel(lake::LakeProperties,pixel::Pixel,
          least_filled_cell = other_cell
       end
     end
-    if least_filled_cell_lake_fraction > 999.0
+    if least_filled_cell_lake_fraction < 999.0
       other_pixel = extract_any_pixel(least_filled_cell)
       set!(lake_pixel_counts_field,least_filled_cell.coarse_grid_coords,
        lake_pixel_counts_field(least_filled_cell.coarse_grid_coords)-1)
