@@ -175,19 +175,14 @@ function setup_cells_lakes_and_pixels(lakes::Vector{LakeInput},
                                          lake_cells,
                                          lake_cell_pixel_count))
   end
-  for_all(surface_grid; use_cartesian_index=true) do coords::CartesianIndex
-    cell_all_lake_potential_pixel_count::Int64 = 0
-    for_all(lake_grid; use_cartesian_index=true) do fine_coords::CartesianIndex
+  for_all(lake_grid; use_cartesian_index=true) do fine_coords::CartesianIndex
+    if all_lake_potential_pixel_mask(fine_coords)
       coarse_coords::CartesianIndex =
         get_corresponding_surface_model_grid_cell(fine_coords,
                                                   grid_specific_lake_model_parameters)
-      if coarse_coords == coords
-        if all_lake_potential_pixel_mask(fine_coords)
-          cell_all_lake_potential_pixel_count += 1
-        end
-      end
+      set!(all_lake_potential_pixel_counts,coarse_coords,
+           all_lake_potential_pixel_counts(coarse_coords) + 1)
     end
-    set!(all_lake_potential_pixel_counts,coords,cell_all_lake_potential_pixel_count)
   end
   for lake::LakeProperties in lake_properties::Vector{LakeProperties}
     for cell in lake.cell_list
