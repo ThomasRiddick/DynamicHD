@@ -292,7 +292,7 @@ end
   lakes::Vector{LakeInput} = LakeInput[]
   lake_pixel_mask::Field{Int64} = LatLonField{Int64}(lake_grid,
     Int64[ 0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0
-           0 0 1 0  1 1 0 0  0 0 1 0  0 0 0 0  0 0 7 0
+           0 0 1 0  1 1 0 0  0 0 0 0  0 0 0 0  0 0 7 0
            0 0 1 0  1 1 0 1  1 1 1 0  0 0 8 8  0 7 7 0
            0 0 1 0  1 1 1 1  1 1 0 0  0 0 8 8  0 7 7 0
 
@@ -374,13 +374,13 @@ end
   expected_lake_pixel_counts_field::Field{Int64} = LatLonField{Int64}(surface_grid,
     Int64[ 0 16  0  0 9
            16 14 0 13 0
-           0 16  1  0 12
+           0 15  1  0 12
            0 15  1 12 14
            1 0  3  1 0 ])
   expected_lake_fractions_field::Field{Float64} = LatLonField{Float64}(surface_grid,
     Float64[ 0.0    1.0     0.0    0.0    0.5625
              1.0    0.875   0.0    0.8125 0.0
-             0.0    1.0     0.0625 0.0    0.75
+             0.0    0.9375  0.0625 0.0    0.75
              0.0    0.9375  0.0625 0.75   0.875
              0.0625 0.0     0.1875 0.0625 0.0 ])
   expected_binary_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,

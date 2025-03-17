@@ -126,8 +126,7 @@ function setup_cells_lakes_and_pixels(lakes::Vector{LakeInput},
                                       pixels::Vector{Pixel},
                                       all_lake_potential_pixel_counts::Field{Int64},
                                       grid_specific_lake_model_parameters::GridSpecificLakeModelParameters,
-                                      lake_grid::Grid,
-                                      surface_grid::Grid)
+                                      lake_grid::Grid)
   all_lake_total_pixels::Int64 = 0
   for lake::LakeInput in lakes::Vector{LakeInput}
     cell_coords_list = lake.cell_coords_list
@@ -222,7 +221,7 @@ function calculate_lake_fractions(lakes::Vector{LakeInput},
                                  pixel_numbers,pixels,
                                  all_lake_potential_pixel_counts,
                                  grid_specific_lake_model_parameters,
-                                 lake_grid,surface_grid)
+                                 lake_grid)
   sort!(lake_properties,by=x->x.lake_pixel_count,rev=true)
   for lake::LakeProperties in lake_properties::Vector{LakeProperties}
     for cell in lake.cell_list
@@ -318,7 +317,7 @@ function setup_lake_for_fraction_calculation(lakes::Vector{LakeInput},
                                pixel_numbers,pixels,
                                all_lake_potential_pixel_counts,
                                grid_specific_lake_model_parameters,
-                               lake_grid,surface_grid)
+                               lake_grid)
   for lake in lake_properties
     for cell in lake.cell_list
       cell.in_binary_mask = binary_lake_mask(cell.coarse_grid_coords)

@@ -273,12 +273,16 @@ for line in filtered_lines:
     line = re.sub(r'_INDICES_(?:FIELD|LIST)_(\w*)INDEX_NAME(\w*)_',
                   f'\\1{dim1}\\2,\\1{dim2}\\2',
                   line)
+    line = re.sub(r'(\s*)(.*)_EQUALS_?(\w+%)?(\w+%)?_COORDS_(\w*)_ == _COORDS_(HD|LAKE|SURFACE)_',
+                  f'\\1\\2(\\3\\4\\5_{dim1} == {dim1}_\\6) .and. &\\n'
+                  f'\\1    (\\3\\4\\5_{dim2} == {dim2}_\\6)',
+                  line)
     line = re.sub(r'_COORDS_LAKE_',f'{dim1}_lake,{dim2}_lake',line)
     line = re.sub(r'_COORDS_HD_',f'{dim1}_hd,{dim2}_hd',line)
     line = re.sub(r'_COORDS_SURFACE_',f'{dim1}_surface,{dim2}_surface',line)
     line = re.sub(r'(\w+%)?(\w+%)?_COORDS_ARG_(\w*)_',
                   f'\\1\\2\\3_{dim1},\\1\\2\\3_{dim2}',line)
-    line = re.sub(r'(\s*)(.*)_EQUALS_(\w+%)?(\w+%)?_COORDS_(\w*)_ == (\w+%)?(\w+%)?_COORDS_(\w*)_',
+    line = re.sub(r'(\s*)(.*)_EQUALS_?(\w+%)?(\w+%)?_COORDS_(\w*)_ == (\w+%)?(\w+%)?_COORDS_(\w*)_',
                   f'\\1\\2(\\3\\4\\5_{dim1} == \\6\\7\\8_{dim1}) .and. &\\n'
                   f'\\1    (\\3\\4\\5_{dim2} == \\6\\7\\8_{dim2})',
                   line)
