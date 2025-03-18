@@ -3540,8 +3540,8 @@ subroutine testLakeFractionCalculationTest13
           0, 16,  0,  0, 9, &
          16, 16, 0, 13, 0, &
          0, 16,  1,  0, 14, &
-         0, 13,  2, 16, 8, &
-         1, 0,  0,  3, 0 /), &
+         0, 13,  1, 16, 8, &
+         1, 0,  1,  3, 0 /), &
          (/nlon_surface,nlat_surface/)))
       allocate(expected_lake_pixel_counts_field_two(nlat_surface,nlon_surface))
       expected_lake_pixel_counts_field_two = transpose(reshape((/   &
@@ -3553,8 +3553,8 @@ subroutine testLakeFractionCalculationTest13
          (/nlon_surface,nlat_surface/)))
       allocate(expected_intermediate_lake_pixel_counts_field(nlat_surface,nlon_surface))
       expected_intermediate_lake_pixel_counts_field = transpose(reshape((/   &
-          0, 12,  0,  0, 5, &
-         11, 1, 0,   9, 0, &
+          0, 9,  0,  0, 5, &
+         14, 1, 0,   9, 0, &
          0, 16,  0,  0, 8, &
          0, 10,  1, 10, 5, &
          1, 0,  0,  0, 0 /), &
@@ -3652,9 +3652,6 @@ subroutine testLakeFractionCalculationTest13
         end do
         deallocate(potential_lake_pixel_coords_list_lat)
         deallocate(potential_lake_pixel_coords_list_lon)
-      end do
-      do i = 1,nlat_surface
-        write(*,*) (lake_pixel_counts_field(i,j), j =1,nlon_surface)
       end do
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field,&
@@ -4279,10 +4276,10 @@ subroutine testLakeFractionCalculationTest14
       allocate(expected_lake_pixel_counts_field(nlat_surface,nlon_surface))
       expected_lake_pixel_counts_field = transpose(reshape((/   &
           0, 16, 16, 0, 0, &
-         0, 16, 16, 16, 12, &
+         0, 16, 16, 16, 16, &
          6, 16, 16, 16, 0, &
          16, 16,  0, 16, 0, &
-         0, 16, 16, 0, 0 /), &
+         0, 16, 12, 0, 0 /), &
          (/nlon_surface,nlat_surface/)))
       allocate(expected_lake_fractions_field(nlat_surface,nlon_surface))
       expected_lake_fractions_field = transpose(reshape((/   &
@@ -4377,9 +4374,6 @@ subroutine testLakeFractionCalculationTest14
         end do
         deallocate(potential_lake_pixel_coords_list_lat)
         deallocate(potential_lake_pixel_coords_list_lon)
-      end do
-      do i=1,nlat_surface
-        write(*,*) (lake_pixel_counts_field(i,j),j=1,nlon_surface)
       end do
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field,nlat_surface,nlon_surface)
@@ -4935,9 +4929,9 @@ subroutine testLakeFractionCalculationTest16
       expected_lake_pixel_counts_field = transpose(reshape((/   &
           0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 2, &
-         0, 0, 0, 0, 2, &
-         0, 0, 0, 1, 16 /), &
+         0, 0, 0, 0, 1, &
+         0, 0, 0, 0, 0, &
+         0, 0, 0, 4, 16 /), &
          (/nlon_surface,nlat_surface/)))
       allocate(expected_lake_fractions_field(nlat_surface,nlon_surface))
       expected_lake_fractions_field = transpose(reshape((/   &
@@ -5503,8 +5497,8 @@ subroutine testLakeFractionCalculationTest18
           0, 16, 0, 10, 3, &
          0, 0,  0,  0, 4, &
          1, 16, 1,  0, 11, &
-         4, 0,  2, 16, 0, &
-         1, 3,  0,  0, 0 /), &
+         4, 0,  1, 16, 0, &
+         1, 3,  0,  1, 0 /), &
          (/nlon_surface,nlat_surface/)))
       allocate(expected_lake_fractions_field(nlat_surface,nlon_surface))
       expected_lake_fractions_field = transpose(reshape((/   &
@@ -5795,56 +5789,56 @@ subroutine testLakeFractionCalculationTest19
           0, 16,  16,  0,  0, &
          0, 0,  0,  16, 16, &
          3, 16, 16, 16, 0, &
-         16, 0,  0,  16, 1, &
-         0, 16, 16, 0,  6 /), &
+         16, 0,  0,  16, 0, &
+         2, 16, 16, 1,  4 /), &
          (/nlon_surface,nlat_surface/)))
       allocate(expected_intermediate_lake_pixel_counts_field(nlat_surface,nlon_surface))
       expected_intermediate_lake_pixel_counts_field = transpose(reshape((/   &
-          0, 14,  12,  0,  0, &
-         0, 0,  0,  14, 14, &
-         0, 12, 11, 16, 0, &
-         13, 0,  0,  15, 0, &
-         0, 10, 11, 0,  0 /), &
+          0, 11,  15,  0,  0, &
+         0, 0,  0,  14, 15, &
+         0, 12, 14, 15, 0, &
+         10, 0,  0,  14, 0, &
+         0, 10, 12, 0,  0 /), &
          (/nlon_surface,nlat_surface/)))
       allocate(expected_lake_pixel_counts_field_after_cycle(nlat_surface,nlon_surface))
       expected_lake_pixel_counts_field_after_cycle = transpose(reshape((/   &
-          1, 16,  16,  0,  0, &
-         0, 2,  2,  16, 16, &
-         1, 16, 16, 16, 0, &
-         16, 0,  0,  16, 0, &
-         1, 16, 16, 1,  2 /), &
+          0, 16,  16,  0,  0, &
+         0, 2,  3,  16, 16, &
+         1, 16, 16, 16, 2, &
+         16, 0,  0,  16, 1, &
+         0, 16, 16, 1,  0 /), &
          (/nlon_surface,nlat_surface/)))
       allocate(expected_intermediate_lake_pixel_counts_field_two(nlat_surface,nlon_surface))
       expected_intermediate_lake_pixel_counts_field_two = transpose(reshape((/   &
-          0, 15,  12,  0,  0, &
-         0, 0,  0,  15, 15, &
-         0, 10, 11, 16, 0, &
-         13, 0,  0,  15, 0, &
-         0, 10, 10, 0,  0 /), &
+          0, 16,  14,  0,  0, &
+         0, 0,  0,  13, 16, &
+         0, 10, 12, 16, 0, &
+         11, 0,  0,  13, 0, &
+         0, 10, 11, 0,  0 /), &
          (/nlon_surface,nlat_surface/)))
       allocate(expected_intermediate_lake_pixel_counts_field_three(nlat_surface,nlon_surface))
       expected_intermediate_lake_pixel_counts_field_three = transpose(reshape((/   &
-          0, 14,  13,  0,  0, &
-         0, 0,  0,  15, 16, &
-         0, 10, 12, 16, 0, &
-         12, 0,  0,  15, 0, &
-         0, 7, 12, 0,  0 /), &
+          0, 14,  16,  0,  0, &
+         0, 0,  0,  14, 16, &
+         0, 10, 11, 16, 0, &
+         11, 0,  0,  15, 0, &
+         0, 10, 9, 0,  0 /), &
          (/nlon_surface,nlat_surface/)))
       allocate(expected_lake_pixel_counts_field_after_second_cycle(nlat_surface,nlon_surface))
       expected_lake_pixel_counts_field_after_second_cycle = transpose(reshape((/   &
-          2, 16,  16,  0,  0, &
-         0, 1,  2,  16, 16, &
-         1, 16, 16, 16, 0, &
-         16, 0,  1,  16, 1, &
-         1, 16, 16, 0,  1 /), &
+          0, 16,  16,  0,  0, &
+         1, 0,  3,  16, 16, &
+         1, 16, 16, 16, 1, &
+         16, 0,  1,  16, 0, &
+         0, 16, 16, 3,  0 /), &
          (/nlon_surface,nlat_surface/)))
       allocate(expected_lake_pixel_counts_field_after_third_cycle(nlat_surface,nlon_surface))
       expected_lake_pixel_counts_field_after_third_cycle = transpose(reshape((/   &
           0, 16,  16,  0,  0, &
          0, 0,  2,  16, 16, &
          1, 16, 16, 16, 0, &
-         16, 0,  4,  16, 0, &
-         0, 16, 16, 1,  2 /), &
+         16, 0,  2,  16, 1, &
+         2, 16, 16, 1,  1 /), &
          (/nlon_surface,nlat_surface/)))
       allocate(expected_lake_fractions_field(nlat_surface,nlon_surface))
       expected_lake_fractions_field = transpose(reshape((/   &
