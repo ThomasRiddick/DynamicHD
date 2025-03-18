@@ -2,8 +2,8 @@ module L2LakeModule
 
 using L2LakeModelDefsModule: Lake,LakeModelParameters,LakeModelPrognostics
 using L2LakeModelDefsModule: GridSpecificLakeModelParameters
-using L2LakeModelDefsModule: LatLonLakeModelParameters
-using L2LakeModelDefsModule: UnstructuredLakeModelParameters
+using L2LakeModelGridSpecificDefsModule: LatLonLakeModelParameters
+using L2LakeModelGridSpecificDefsModule: UnstructuredLakeModelParameters
 using L2LakeModelDefsModule: get_corresponding_surface_model_grid_cell
 using SplittableRootedTree: find_root,for_elements_in_set,get_label
 using SplittableRootedTree: make_new_link,split_set

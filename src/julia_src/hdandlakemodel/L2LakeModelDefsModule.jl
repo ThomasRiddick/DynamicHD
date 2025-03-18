@@ -4,19 +4,10 @@ using HierarchicalStateMachineModule: State
 using FieldModule: Field,set!
 using GridModule: Grid,for_all,for_all_fine_cells_in_coarse_cell
 using SplittableRootedTree: RootedTreeForest
+using L2LakeModelGridSpecificDefsModule: GridSpecificLakeModelParameters
+using L2LakeModelGridSpecificDefsModule: get_corresponding_surface_model_grid_cell
 
 abstract type Lake <: State end
-
-abstract type GridSpecificLakeModelParameters end
-
-struct LatLonLakeModelParameters <: GridSpecificLakeModelParameters
-  corresponding_surface_cell_lat_index::Field{Int64}
-  corresponding_surface_cell_lon_index::Field{Int64}
-end
-
-struct UnstructuredLakeModelParameters <: GridSpecificLakeModelParameters
-  corresponding_surface_cell_index::Field{Int64}
-end
 
 struct LakeModelSettings
   lake_retention_constant::Float64
@@ -143,21 +134,5 @@ mutable struct LakeModelDiagnostics
 end
 
 LakeModelDiagnostics() = LakeModelDiagnostics(0.0)
-
-function get_corresponding_surface_model_grid_cell(::CartesianIndex,
-                                                   ::GridSpecificLakeModelParameters)
- error()
-end
-
-function get_corresponding_surface_model_grid_cell(coords::CartesianIndex,
-                                                   grid_specific_lake_model_parameters::LatLonLakeModelParameters)
-  return CartesianIndex(grid_specific_lake_model_parameters.corresponding_surface_cell_lat_index(coords),
-                        grid_specific_lake_model_parameters.corresponding_surface_cell_lon_index(coords))
-end
-
-function get_corresponding_surface_model_grid_cell(coords::CartesianIndex,
-                                                   grid_specific_lake_model_parameters::UnstructuredLakeModelParameters)
-  return CartesianIndex(grid_specific_lake_model_parameters.corresponding_surface_cell_index(coords))
-end
 
 end

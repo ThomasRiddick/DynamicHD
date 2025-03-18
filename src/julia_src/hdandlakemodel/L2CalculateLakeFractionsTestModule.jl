@@ -5,9 +5,10 @@ using Test: @test, @testset
 using L2CalculateLakeFractionsModule: LakeInput, LakeProperties,Pixel
 using L2CalculateLakeFractionsModule: calculate_lake_fractions
 using L2CalculateLakeFractionsModule: setup_lake_for_fraction_calculation
-using L2CalculateLakeFractionsModule: add_pixel,remove_pixel
+using L2CalculateLakeFractionsModule: add_pixel_by_coords,remove_pixel_by_coords
+using L2CalculateLakeFractionsModule: LakeFractionCalculationPrognostics
 using L2LakeModelDefsModule: GridSpecificLakeModelParameters
-using L2LakeModelDefsModule: LatLonLakeModelParameters
+using L2LakeModelGridSpecificDefsModule: LatLonLakeModelParameters
 using FieldModule: Field,LatLonField, set!
 
 @testset "Lake Fraction Calculation Test 1" begin
@@ -1614,44 +1615,28 @@ end
                     potential_lake_pixel_coords_list,
                     cell_coords_list)
   push!(lakes,input)
-  lake_properties::Vector{LakeProperties},
-    pixel_numbers::Field{Int64},
-    pixels::Vector{Pixel},
-    lake_pixel_counts_field::Field{Int64} =
-      setup_lake_for_fraction_calculation(lakes,
-                                          cell_pixel_counts,
-                                          binary_lake_mask,
-                                          grid_specific_lake_model_parameters,
-                                          lake_grid,
-                                          surface_grid)
+  prognostics::LakeFractionCalculationPrognostics =
+    setup_lake_for_fraction_calculation(lakes,
+                                        cell_pixel_counts,
+                                        binary_lake_mask,
+                                        lake_pixel_mask,
+                                        grid_specific_lake_model_parameters,
+                                        lake_grid,
+                                        surface_grid)
+  lake_pixel_counts_field::Field{Int64} = Field{Int64}(surface_grid,0)
   for coords in lake_pixel_coords_list
-    lake::LakeProperties = lake_properties[1]
-    pixel_number = pixel_numbers(coords)
-    pixel::Pixel = pixels[pixel_number]
-    add_pixel(lake,pixel,lake_pixel_counts_field)
+    add_pixel_by_coords(coords,
+                        lake_pixel_counts_field,prognostics)
   end
   @test lake_pixel_counts_field == expected_lake_pixel_counts_field
   #@test lake_fractions_field == expected_lake_fractions_field
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,19))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  pixel_number = pixel_numbers(CartesianIndex(11,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  pixel_number = pixel_numbers(CartesianIndex(15,20))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
+  remove_pixel_by_coords(CartesianIndex(15,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(11,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(15,20),lake_pixel_counts_field,prognostics)
   @test lake_pixel_counts_field == expected_immediate_lake_pixel_counts_field
-  pixel_number = pixel_numbers(CartesianIndex(15,19))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  pixel_number = pixel_numbers(CartesianIndex(11,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  pixel_number = pixel_numbers(CartesianIndex(15,20))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
+  add_pixel_by_coords(CartesianIndex(15,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(11,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(15,20),lake_pixel_counts_field,prognostics)
   @test lake_pixel_counts_field == expected_lake_pixel_counts_field
 end
 
@@ -1787,397 +1772,118 @@ end
                       cell_coords_list)
     push!(lakes,input)
   end
-  lake_properties::Vector{LakeProperties},
-    pixel_numbers::Field{Int64},
-    pixels::Vector{Pixel},
-    lake_pixel_counts_field::Field{Int64}  =
-      setup_lake_for_fraction_calculation(lakes,
-                                          cell_pixel_counts,
-                                          binary_lake_mask,
-                                          grid_specific_lake_model_parameters,
-                                          lake_grid,
-                                          surface_grid)
+  prognostics::LakeFractionCalculationPrognostics =
+    setup_lake_for_fraction_calculation(lakes,
+                                        cell_pixel_counts,
+                                        binary_lake_mask,
+                                        lake_pixel_mask,
+                                        grid_specific_lake_model_parameters,
+                                        lake_grid,
+                                        surface_grid)
+  lake_pixel_counts_field::Field{Int64} = Field{Int64}(surface_grid,0)
   for lake_number::Int64=1:7
     lake_pixel_coords_list::Vector{CartesianIndex} = findall(x -> x == lake_number,
                                                              lake_pixel_mask.data)
-    lake::LakeProperties = lake_properties[lake_number]
     for coords in lake_pixel_coords_list
-      pixel_number = pixel_numbers(coords)
-      pixel::Pixel = pixels[pixel_number]
-      add_pixel(lake,pixel,lake_pixel_counts_field)
+      add_pixel_by_coords(coords,
+                          lake_pixel_counts_field,prognostics)
     end
   end
   @test lake_pixel_counts_field == expected_lake_pixel_counts_field
   #@test lake_fractions_field == expected_lake_fractions_field
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(2,2))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(3,3))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(10,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[5]
-  pixel_number = pixel_numbers(CartesianIndex(16,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[5]
-  pixel_number = pixel_numbers(CartesianIndex(19,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(8,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(5,19))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(6,17))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(3,17))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[7]
-  pixel_number = pixel_numbers(CartesianIndex(2,19))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(3,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[3]
-  pixel_number = pixel_numbers(CartesianIndex(3,12))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[3]
-  pixel_number = pixel_numbers(CartesianIndex(3,11))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(11,9))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(12,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(12,7))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(10,7))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(11,10))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(11,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(12,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(12,19))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(11,19))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(14,16))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,16))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,15))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(14,15))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(14,17))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,17))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,19))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(20,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,17))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,16))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,15))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,15))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(17,15))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(13,20))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(14,20))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,20))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(6,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(7,17))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(7,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(5,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(5,17))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(5,16))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
+  remove_pixel_by_coords(CartesianIndex(2,2),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(16,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(19,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(8,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(5,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(6,17),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,17),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(2,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,12),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(11,9),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(12,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(12,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(11,10),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(11,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(12,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(12,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(11,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(14,16),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(15,16),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(15,15),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(14,15),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(14,17),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(15,17),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(19,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(20,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(19,17),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(19,16),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(19,15),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,15),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,15),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(13,20),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(14,20),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(15,20),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(6,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(7,17),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(7,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(5,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(5,17),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(5,16),lake_pixel_counts_field,prognostics)
   @test lake_pixel_counts_field == expected_immediate_lake_pixel_counts_field
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(2,2))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(3,3))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(10,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[5]
-  pixel_number = pixel_numbers(CartesianIndex(16,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[5]
-  pixel_number = pixel_numbers(CartesianIndex(19,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(8,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(5,19))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(6,17))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(3,17))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[7]
-  pixel_number = pixel_numbers(CartesianIndex(2,19))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(3,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[3]
-  pixel_number = pixel_numbers(CartesianIndex(3,12))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[3]
-  pixel_number = pixel_numbers(CartesianIndex(3,11))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(11,9))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(12,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(12,7))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(10,7))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(11,10))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(11,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(12,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(12,19))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(11,19))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(14,16))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,16))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,15))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(14,15))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(14,17))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,17))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,19))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(20,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,17))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,16))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,15))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,15))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(17,15))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(13,20))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(14,20))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,20))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(6,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(7,17))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(7,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(5,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(5,17))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(5,16))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
+  add_pixel_by_coords(CartesianIndex(2,2),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(16,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(19,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(8,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(5,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(6,17),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,17),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(2,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,12),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(11,9),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(12,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(12,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(11,10),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(11,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(12,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(12,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(11,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(14,16),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(15,16),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(15,15),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(14,15),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(14,17),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(15,17),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(19,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(20,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(19,17),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(19,16),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(19,15),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,15),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,15),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(13,20),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(14,20),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(15,20),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(6,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(7,17),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(7,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(5,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(5,17),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(5,16),lake_pixel_counts_field,prognostics)
   @test lake_pixel_counts_field == expected_lake_pixel_counts_field
 end
 
@@ -2318,469 +2024,136 @@ end
                       cell_coords_list)
     push!(lakes,input)
   end
-  lake_properties::Vector{LakeProperties},
-    pixel_numbers::Field{Int64},
-    pixels::Vector{Pixel},
-    lake_pixel_counts_field::Field{Int64}  =
-      setup_lake_for_fraction_calculation(lakes,
-                                          cell_pixel_counts,
-                                          binary_lake_mask,
-                                          grid_specific_lake_model_parameters,
-                                          lake_grid,
-                                          surface_grid)
+  prognostics::LakeFractionCalculationPrognostics =
+    setup_lake_for_fraction_calculation(lakes,
+                                        cell_pixel_counts,
+                                        binary_lake_mask,
+                                        lake_pixel_mask,
+                                        grid_specific_lake_model_parameters,
+                                        lake_grid,
+                                        surface_grid)
+  lake_pixel_counts_field::Field{Int64} = Field{Int64}(surface_grid,0)
   for lake_number::Int64=1:9
     lake_pixel_coords_list::Vector{CartesianIndex} = findall(x -> x == lake_number,
                                                              lake_pixel_mask.data)
-    lake::LakeProperties = lake_properties[lake_number]
     for coords in lake_pixel_coords_list
-      pixel_number = pixel_numbers(coords)
-      pixel::Pixel = pixels[pixel_number]
-      add_pixel(lake,pixel,lake_pixel_counts_field)
+      add_pixel_by_coords(coords,
+                          lake_pixel_counts_field,prognostics)
     end
   end
   @test lake_pixel_counts_field == expected_lake_pixel_counts_field
   #@test lake_fractions_field == expected_lake_fractions_field
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(2,3))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,3))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(4,3))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,9))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(4,9))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(4,10))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,10))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,11))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(2,11))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(5,5))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(5,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(5,7))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(5,8))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(6,8))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(6,7))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(6,5))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(7,5))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(7,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(7,7))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(7,8))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(8,8))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(8,7))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(8,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(8,5))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(17,5))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(17,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(17,7))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(17,11))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(17,12))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(18,12))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(18,13))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(17,13))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(17,14))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[3]
-  pixel_number = pixel_numbers(CartesianIndex(14,14))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[3]
-  pixel_number = pixel_numbers(CartesianIndex(14,15))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[3]
-  pixel_number = pixel_numbers(CartesianIndex(13,15))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[3]
-  pixel_number = pixel_numbers(CartesianIndex(13,14))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[5]
-  pixel_number = pixel_numbers(CartesianIndex(17,17))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[5]
-  pixel_number = pixel_numbers(CartesianIndex(17,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[5]
-  pixel_number = pixel_numbers(CartesianIndex(18,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[9]
-  pixel_number = pixel_numbers(CartesianIndex(8,19))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[9]
-  pixel_number = pixel_numbers(CartesianIndex(8,20))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[9]
-  pixel_number = pixel_numbers(CartesianIndex(9,20))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[9]
-  pixel_number = pixel_numbers(CartesianIndex(9,19))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[9]
-  pixel_number = pixel_numbers(CartesianIndex(10,16))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[9]
-  pixel_number = pixel_numbers(CartesianIndex(10,17))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[8]
-  pixel_number = pixel_numbers(CartesianIndex(7,17))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[8]
-  pixel_number = pixel_numbers(CartesianIndex(8,17))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[8]
-  pixel_number = pixel_numbers(CartesianIndex(8,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[8]
-  pixel_number = pixel_numbers(CartesianIndex(7,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[7]
-  pixel_number = pixel_numbers(CartesianIndex(6,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[7]
-  pixel_number = pixel_numbers(CartesianIndex(5,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[7]
-  pixel_number = pixel_numbers(CartesianIndex(5,19))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[7]
-  pixel_number = pixel_numbers(CartesianIndex(6,19))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(10,11))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
+  remove_pixel_by_coords(CartesianIndex(2,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(4,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,9),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(4,9),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(4,10),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,10),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(2,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(5,5),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(5,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(5,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(5,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(6,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(6,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(6,5),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(7,5),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(7,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(7,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(7,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(8,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(8,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(8,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(8,5),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,5),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,12),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,12),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,13),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,13),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,14),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(14,14),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(14,15),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(13,15),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(13,14),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,17),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(8,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(8,20),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(9,20),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(9,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,16),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,17),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(7,17),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(8,17),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(8,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(7,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(6,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(5,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(5,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(6,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,11),lake_pixel_counts_field,prognostics)
   @test lake_pixel_counts_field == expected_intermediate_lake_pixel_counts_field
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(2,3))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,3))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(4,3))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,9))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(4,9))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(4,10))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,10))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,11))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(2,11))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(5,5))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(5,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(5,7))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(5,8))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(6,8))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(6,7))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(6,5))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(7,5))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(7,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(7,7))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(7,8))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(8,8))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(8,7))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(8,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(8,5))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(17,5))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(17,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(17,7))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(17,11))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(17,12))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(18,12))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(18,13))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(17,13))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[4]
-  pixel_number = pixel_numbers(CartesianIndex(17,14))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[3]
-  pixel_number = pixel_numbers(CartesianIndex(14,14))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[3]
-  pixel_number = pixel_numbers(CartesianIndex(14,15))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[3]
-  pixel_number = pixel_numbers(CartesianIndex(13,15))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[3]
-  pixel_number = pixel_numbers(CartesianIndex(13,14))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[5]
-  pixel_number = pixel_numbers(CartesianIndex(17,17))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[5]
-  pixel_number = pixel_numbers(CartesianIndex(17,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[5]
-  pixel_number = pixel_numbers(CartesianIndex(18,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[9]
-  pixel_number = pixel_numbers(CartesianIndex(8,19))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[9]
-  pixel_number = pixel_numbers(CartesianIndex(8,20))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[9]
-  pixel_number = pixel_numbers(CartesianIndex(9,20))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[9]
-  pixel_number = pixel_numbers(CartesianIndex(9,19))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[9]
-  pixel_number = pixel_numbers(CartesianIndex(10,16))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[9]
-  pixel_number = pixel_numbers(CartesianIndex(10,17))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[8]
-  pixel_number = pixel_numbers(CartesianIndex(7,17))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[8]
-  pixel_number = pixel_numbers(CartesianIndex(8,17))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[8]
-  pixel_number = pixel_numbers(CartesianIndex(8,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[8]
-  pixel_number = pixel_numbers(CartesianIndex(7,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[7]
-  pixel_number = pixel_numbers(CartesianIndex(6,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[7]
-  pixel_number = pixel_numbers(CartesianIndex(5,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[7]
-  pixel_number = pixel_numbers(CartesianIndex(5,19))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[7]
-  pixel_number = pixel_numbers(CartesianIndex(6,19))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[6]
-  pixel_number = pixel_numbers(CartesianIndex(10,11))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
+  add_pixel_by_coords(CartesianIndex(2,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(4,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,9),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(4,9),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(4,10),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,10),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(2,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(5,5),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(5,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(5,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(5,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(6,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(6,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(6,5),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(7,5),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(7,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(7,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(7,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(8,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(8,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(8,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(8,5),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,5),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,12),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,12),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,13),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,13),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,14),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(14,14),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(14,15),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(13,15),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(13,14),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,17),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(8,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(8,20),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(9,20),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(9,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,16),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,17),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(7,17),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(8,17),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(8,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(7,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(6,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(5,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(5,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(6,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,11),lake_pixel_counts_field,prognostics)
   @test lake_pixel_counts_field == expected_lake_pixel_counts_field_two
 end
 
@@ -2909,24 +2282,21 @@ end
                       cell_coords_list)
     push!(lakes,input)
   end
-  lake_properties::Vector{LakeProperties},
-    pixel_numbers::Field{Int64},
-    pixels::Vector{Pixel},
-    lake_pixel_counts_field::Field{Int64}  =
-      setup_lake_for_fraction_calculation(lakes,
-                                          cell_pixel_counts,
-                                          binary_lake_mask,
-                                          grid_specific_lake_model_parameters,
-                                          lake_grid,
-                                          surface_grid)
+  prognostics::LakeFractionCalculationPrognostics =
+    setup_lake_for_fraction_calculation(lakes,
+                                        cell_pixel_counts,
+                                        binary_lake_mask,
+                                        lake_pixel_mask,
+                                        grid_specific_lake_model_parameters,
+                                        lake_grid,
+                                        surface_grid)
+  lake_pixel_counts_field::Field{Int64} = Field{Int64}(surface_grid,0)
   for lake_number::Int64=1:2
     lake_pixel_coords_list::Vector{CartesianIndex} = findall(x -> x == lake_number,
                                                              lake_pixel_mask.data)
-    lake::LakeProperties = lake_properties[lake_number]
     for coords in lake_pixel_coords_list
-      pixel_number = pixel_numbers(coords)
-      pixel::Pixel = pixels[pixel_number]
-      add_pixel(lake,pixel,lake_pixel_counts_field)
+      add_pixel_by_coords(coords,
+                          lake_pixel_counts_field,prognostics)
     end
   end
   @test lake_pixel_counts_field == expected_lake_pixel_counts_field
@@ -3049,109 +2419,46 @@ end
                       cell_coords_list)
     push!(lakes,input)
   end
-  lake_properties::Vector{LakeProperties},
-    pixel_numbers::Field{Int64},
-    pixels::Vector{Pixel},
-    lake_pixel_counts_field::Field{Int64}  =
-      setup_lake_for_fraction_calculation(lakes,
-                                          cell_pixel_counts,
-                                          binary_lake_mask,
-                                          grid_specific_lake_model_parameters,
-                                          lake_grid,
-                                          surface_grid)
+  prognostics::LakeFractionCalculationPrognostics =
+    setup_lake_for_fraction_calculation(lakes,
+                                        cell_pixel_counts,
+                                        binary_lake_mask,
+                                        lake_pixel_mask,
+                                        grid_specific_lake_model_parameters,
+                                        lake_grid,
+                                        surface_grid)
+  lake_pixel_counts_field::Field{Int64} = Field{Int64}(surface_grid,0)
   for lake_number::Int64=1:2
     lake_pixel_coords_list::Vector{CartesianIndex} = findall(x -> x == lake_number,
                                                              lake_pixel_mask.data)
-    lake::LakeProperties = lake_properties[lake_number]
     for coords in lake_pixel_coords_list
-      pixel_number = pixel_numbers(coords)
-      pixel::Pixel = pixels[pixel_number]
-      add_pixel(lake,pixel,lake_pixel_counts_field)
+      add_pixel_by_coords(coords,
+                          lake_pixel_counts_field,prognostics)
     end
   end
   @test lake_pixel_counts_field == expected_lake_pixel_counts_field
   #@test lake_fractions_field == expected_lake_fractions_field
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(11,2))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(11,4))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(11,3))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(4,20))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(4,19))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(4,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(3,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(3,19))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(3,20))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(4,17))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
+  remove_pixel_by_coords(CartesianIndex(11,2),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(11,4),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(11,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(4,20),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(4,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(4,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,20),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(4,17),lake_pixel_counts_field,prognostics)
   @test lake_pixel_counts_field == expected_intermediate_lake_pixel_counts_field
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(11,2))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(11,4))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(11,3))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(4,20))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(4,19))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(4,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(3,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(3,19))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(3,20))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(4,17))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
+  add_pixel_by_coords(CartesianIndex(11,2),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(11,4),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(11,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(4,20),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(4,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(4,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,20),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(4,17),lake_pixel_counts_field,prognostics)
   @test lake_pixel_counts_field == expected_lake_pixel_counts_field
 end
 
@@ -3305,21 +2612,18 @@ end
                     potential_lake_pixel_coords_list,
                     cell_coords_list)
   push!(lakes,input)
-  lake_properties::Vector{LakeProperties},
-    pixel_numbers::Field{Int64},
-    pixels::Vector{Pixel},
-    lake_pixel_counts_field::Field{Int64} =
-      setup_lake_for_fraction_calculation(lakes,
-                                          cell_pixel_counts,
-                                          binary_lake_mask,
-                                          grid_specific_lake_model_parameters,
-                                          lake_grid,
-                                          surface_grid)
+  prognostics::LakeFractionCalculationPrognostics =
+    setup_lake_for_fraction_calculation(lakes,
+                                        cell_pixel_counts,
+                                        binary_lake_mask,
+                                        potential_lake_pixel_mask,
+                                        grid_specific_lake_model_parameters,
+                                        lake_grid,
+                                        surface_grid)
+  lake_pixel_counts_field::Field{Int64} = Field{Int64}(surface_grid,0)
   for coords in lake_pixel_coords_list
-    lake::LakeProperties = lake_properties[1]
-    pixel_number = pixel_numbers(coords)
-    pixel::Pixel = pixels[pixel_number]
-    add_pixel(lake,pixel,lake_pixel_counts_field)
+    add_pixel_by_coords(coords,
+                        lake_pixel_counts_field,prognostics)
   end
   @test lake_pixel_counts_field == expected_lake_pixel_counts_field
   #@test lake_fractions_field == expected_lake_fractions_field
@@ -3476,24 +2780,21 @@ end
                       cell_coords_list)
     push!(lakes,input)
   end
-  lake_properties::Vector{LakeProperties},
-    pixel_numbers::Field{Int64},
-    pixels::Vector{Pixel},
-    lake_pixel_counts_field::Field{Int64}  =
-      setup_lake_for_fraction_calculation(lakes,
-                                          cell_pixel_counts,
-                                          binary_lake_mask,
-                                          grid_specific_lake_model_parameters,
-                                          lake_grid,
-                                          surface_grid)
+  prognostics::LakeFractionCalculationPrognostics =
+    setup_lake_for_fraction_calculation(lakes,
+                                        cell_pixel_counts,
+                                        binary_lake_mask,
+                                        potential_lake_pixel_mask,
+                                        grid_specific_lake_model_parameters,
+                                        lake_grid,
+                                        surface_grid)
+  lake_pixel_counts_field::Field{Int64} = Field{Int64}(surface_grid,0)
   for lake_number::Int64=1:7
     lake_pixel_coords_list::Vector{CartesianIndex} = findall(x -> x == lake_number,
                                                              lake_pixel_mask.data)
-    lake::LakeProperties = lake_properties[lake_number]
     for coords in lake_pixel_coords_list
-      pixel_number = pixel_numbers(coords)
-      pixel::Pixel = pixels[pixel_number]
-      add_pixel(lake,pixel,lake_pixel_counts_field)
+      add_pixel_by_coords(coords,
+                          lake_pixel_counts_field,prognostics)
     end
   end
   @test lake_pixel_counts_field == expected_lake_pixel_counts_field
@@ -3651,24 +2952,21 @@ end
                       cell_coords_list)
     push!(lakes,input)
   end
-  lake_properties::Vector{LakeProperties},
-    pixel_numbers::Field{Int64},
-    pixels::Vector{Pixel},
-    lake_pixel_counts_field::Field{Int64}  =
-      setup_lake_for_fraction_calculation(lakes,
-                                          cell_pixel_counts,
-                                          binary_lake_mask,
-                                          grid_specific_lake_model_parameters,
-                                          lake_grid,
-                                          surface_grid)
+  prognostics::LakeFractionCalculationPrognostics =
+    setup_lake_for_fraction_calculation(lakes,
+                                        cell_pixel_counts,
+                                        binary_lake_mask,
+                                        potential_lake_pixel_mask,
+                                        grid_specific_lake_model_parameters,
+                                        lake_grid,
+                                        surface_grid)
+  lake_pixel_counts_field::Field{Int64} = Field{Int64}(surface_grid,0)
   for lake_number::Int64=1:9
     lake_pixel_coords_list::Vector{CartesianIndex} = findall(x -> x == lake_number,
                                                              lake_pixel_mask.data)
-    lake::LakeProperties = lake_properties[lake_number]
     for coords in lake_pixel_coords_list
-      pixel_number = pixel_numbers(coords)
-      pixel::Pixel = pixels[pixel_number]
-      add_pixel(lake,pixel,lake_pixel_counts_field)
+      add_pixel_by_coords(coords,
+                          lake_pixel_counts_field,prognostics)
     end
   end
   @test lake_pixel_counts_field == expected_lake_pixel_counts_field
@@ -3862,1089 +3160,294 @@ end
                       cell_coords_list)
     push!(lakes,input)
   end
-  lake_properties::Vector{LakeProperties},
-    pixel_numbers::Field{Int64},
-    pixels::Vector{Pixel},
-    lake_pixel_counts_field::Field{Int64}  =
-      setup_lake_for_fraction_calculation(lakes,
-                                          cell_pixel_counts,
-                                          binary_lake_mask,
-                                          grid_specific_lake_model_parameters,
-                                          lake_grid,
-                                          surface_grid)
+  prognostics::LakeFractionCalculationPrognostics =
+    setup_lake_for_fraction_calculation(lakes,
+                                        cell_pixel_counts,
+                                        binary_lake_mask,
+                                        potential_lake_pixel_mask,
+                                        grid_specific_lake_model_parameters,
+                                        lake_grid,
+                                        surface_grid)
+  lake_pixel_counts_field::Field{Int64} = Field{Int64}(surface_grid,0)
   for lake_number::Int64=1:2
     lake_pixel_coords_list::Vector{CartesianIndex} = findall(x -> x == lake_number,
                                                              lake_pixel_mask.data)
-    lake::LakeProperties = lake_properties[lake_number]
     for coords in lake_pixel_coords_list
-      pixel_number = pixel_numbers(coords)
-      pixel::Pixel = pixels[pixel_number]
-      add_pixel(lake,pixel,lake_pixel_counts_field)
+      add_pixel_by_coords(coords,
+                          lake_pixel_counts_field,prognostics)
     end
   end
   @test lake_pixel_counts_field == expected_lake_pixel_counts_field
   #@test lake_fractions_field == expected_lake_fractions_field
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(2,4))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(2,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(4,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(5,7))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(4,8))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,11))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,12))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,13))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,19))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(10,4))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(10,3))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(10,2))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(11,2))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,3))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(16,3))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(17,17))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(14,19))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(13,13))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(13,11))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(14,11))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,11))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,10))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(16,10))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(17,9))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(17,8))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,8))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,9))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,10))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,8))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(20,7))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(11,9))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(10,8))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(9,7))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(9,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(9,12))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(8,12))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(7,13))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(6,12))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
+  remove_pixel_by_coords(CartesianIndex(2,4),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(2,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(4,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(5,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(4,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,12),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,13),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,4),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,2),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(11,2),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(15,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(16,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,17),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(19,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(14,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(13,13),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(13,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(14,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(15,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(15,10),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(16,10),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,9),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,9),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,10),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(19,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(20,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(19,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(11,9),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(9,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(9,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(9,12),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(8,12),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(7,13),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(6,12),lake_pixel_counts_field,prognostics)
   @test lake_pixel_counts_field == expected_intermediate_lake_pixel_counts_field
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(2,4))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(2,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(4,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(5,7))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(4,8))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,11))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,12))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,13))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,19))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(10,4))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(10,3))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(10,2))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(11,2))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,3))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(16,3))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(17,17))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(14,19))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(13,13))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(13,11))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(14,11))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,11))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,10))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(16,10))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(17,9))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(17,8))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,8))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,9))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,10))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,8))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(20,7))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(11,9))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(10,8))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(9,7))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(9,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(9,12))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(8,12))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(7,13))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(6,12))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
+  add_pixel_by_coords(CartesianIndex(2,4),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(2,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(4,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(5,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(4,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,12),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,13),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,4),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,2),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(11,2),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(15,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(16,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,17),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(19,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(14,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(13,13),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(13,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(14,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(15,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(15,10),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(16,10),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,9),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,9),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,10),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(19,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(20,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(19,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(11,9),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(9,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(9,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(9,12),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(8,12),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(7,13),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(6,12),lake_pixel_counts_field,prognostics)
   @test lake_pixel_counts_field == expected_lake_pixel_counts_field_after_cycle
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(2,4))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(2,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(4,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(5,7))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(4,8))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,11))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,12))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,13))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,19))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(10,4))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(10,3))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(10,2))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(11,2))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,3))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(16,3))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(17,17))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(14,19))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(13,13))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(13,11))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(14,11))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,11))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,10))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(16,10))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(17,9))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(17,8))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,8))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,9))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,10))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,8))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(20,7))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(11,9))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(10,8))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(9,7))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(9,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(9,12))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(8,12))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(7,13))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(6,12))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
+  remove_pixel_by_coords(CartesianIndex(2,4),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(2,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(4,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(5,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(4,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,12),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,13),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,4),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,2),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(11,2),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(15,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(16,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,17),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(19,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(14,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(13,13),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(13,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(14,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(15,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(15,10),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(16,10),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,9),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,9),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,10),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(19,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(20,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(19,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(11,9),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(9,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(9,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(9,12),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(8,12),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(7,13),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(6,12),lake_pixel_counts_field,prognostics)
   @test lake_pixel_counts_field == expected_intermediate_lake_pixel_counts_field_two
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(2,4))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(2,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(4,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(5,7))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(4,8))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,11))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,12))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,13))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,19))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(10,4))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(10,3))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(10,2))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(11,2))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,3))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(16,3))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(17,17))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(14,19))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(13,13))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(13,11))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(14,11))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,11))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,10))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(16,10))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(17,9))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(17,8))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,8))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,9))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,10))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,8))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(20,7))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(11,9))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(10,8))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(9,7))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(9,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(9,12))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(8,12))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(7,13))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(6,12))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
+  add_pixel_by_coords(CartesianIndex(2,4),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(2,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(4,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(5,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(4,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,12),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,13),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,4),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,2),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(11,2),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(15,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(16,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,17),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(19,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(14,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(13,13),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(13,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(14,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(15,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(15,10),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(16,10),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,9),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,9),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,10),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(19,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(20,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(19,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(11,9),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(9,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(9,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(9,12),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(8,12),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(7,13),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(6,12),lake_pixel_counts_field,prognostics)
   @test lake_pixel_counts_field == expected_lake_pixel_counts_field_after_second_cycle
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(2,4))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(2,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(4,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(5,7))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(4,8))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,11))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,12))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,13))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,19))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(10,4))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(10,3))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(10,2))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(11,2))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,3))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(16,3))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(17,17))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,18))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(14,19))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(13,13))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(13,11))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(14,11))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,11))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,10))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(16,10))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(17,9))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(17,8))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,8))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,9))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,10))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,8))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(20,7))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(11,9))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(10,8))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(9,7))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(9,6))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(9,12))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(8,12))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(7,13))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(6,12))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
+  remove_pixel_by_coords(CartesianIndex(2,4),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(2,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(4,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(5,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(4,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,12),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,13),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,4),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,2),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(11,2),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(15,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(16,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,17),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(19,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(14,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(13,13),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(13,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(14,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(15,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(15,10),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(16,10),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,9),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,9),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,10),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(19,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(20,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(19,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(11,9),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(9,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(9,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(9,12),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(8,12),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(7,13),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(6,12),lake_pixel_counts_field,prognostics)
   @test lake_pixel_counts_field == expected_intermediate_lake_pixel_counts_field_three
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(2,4))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(2,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(4,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(5,7))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(4,8))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,11))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,12))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,13))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(3,19))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(10,4))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(10,3))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(10,2))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(11,2))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,3))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(16,3))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(17,17))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,18))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(14,19))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(13,13))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(13,11))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(14,11))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,11))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(15,10))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(16,10))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(17,9))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(17,8))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,8))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,9))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,10))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,8))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(20,7))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(19,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(18,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(11,9))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(10,8))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(9,7))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(9,6))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(9,12))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(8,12))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(7,13))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(6,12))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
+  add_pixel_by_coords(CartesianIndex(2,4),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(2,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(4,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(5,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(4,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,12),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,13),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,4),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,2),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(11,2),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(15,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(16,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,17),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(19,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(14,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(13,13),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(13,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(14,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(15,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(15,10),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(16,10),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,9),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,9),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,10),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(19,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(20,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(19,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(11,9),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(9,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(9,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(9,12),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(8,12),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(7,13),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(6,12),lake_pixel_counts_field,prognostics)
   @test lake_pixel_counts_field == expected_lake_pixel_counts_field_after_third_cycle
 end
 
@@ -5084,109 +3587,46 @@ end
                       cell_coords_list)
     push!(lakes,input)
   end
-  lake_properties::Vector{LakeProperties},
-    pixel_numbers::Field{Int64},
-    pixels::Vector{Pixel},
-    lake_pixel_counts_field::Field{Int64}  =
-      setup_lake_for_fraction_calculation(lakes,
-                                          cell_pixel_counts,
-                                          binary_lake_mask,
-                                          grid_specific_lake_model_parameters,
-                                          lake_grid,
-                                          surface_grid)
+  prognostics::LakeFractionCalculationPrognostics =
+    setup_lake_for_fraction_calculation(lakes,
+                                        cell_pixel_counts,
+                                        binary_lake_mask,
+                                        potential_lake_pixel_mask,
+                                        grid_specific_lake_model_parameters,
+                                        lake_grid,
+                                        surface_grid)
+  lake_pixel_counts_field::Field{Int64} = Field{Int64}(surface_grid,0)
   for lake_number::Int64=1:2
     lake_pixel_coords_list::Vector{CartesianIndex} = findall(x -> x == lake_number,
                                                              lake_pixel_mask.data)
-    lake::LakeProperties = lake_properties[lake_number]
     for coords in lake_pixel_coords_list
-      pixel_number = pixel_numbers(coords)
-      pixel::Pixel = pixels[pixel_number]
-      add_pixel(lake,pixel,lake_pixel_counts_field)
+      add_pixel_by_coords(coords,
+                          lake_pixel_counts_field,prognostics)
     end
   end
   @test lake_pixel_counts_field == expected_lake_pixel_counts_field
   #@test lake_fractions_field == expected_lake_fractions_field
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(12,1))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(12,2))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(12,3))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(13,3))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(13,2))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(13,1))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(6,19))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(6,20))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(4,20))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(3,20))
-  pixel = pixels[pixel_number]
-  remove_pixel(lake,pixel,lake_pixel_counts_field)
+  remove_pixel_by_coords(CartesianIndex(12,1),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(12,2),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(12,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(13,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(13,2),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(13,1),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(6,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(6,20),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(4,20),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,20),lake_pixel_counts_field,prognostics)
   @test lake_pixel_counts_field == expected_intermediate_lake_pixel_counts_field
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(12,1))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(12,2))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(12,3))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(13,3))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(13,2))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[1]
-  pixel_number = pixel_numbers(CartesianIndex(13,1))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(6,19))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(6,20))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(4,20))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
-  lake = lake_properties[2]
-  pixel_number = pixel_numbers(CartesianIndex(3,20))
-  pixel = pixels[pixel_number]
-  add_pixel(lake,pixel,lake_pixel_counts_field)
+  add_pixel_by_coords(CartesianIndex(12,1),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(12,2),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(12,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(13,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(13,2),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(13,1),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(6,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(6,20),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(4,20),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,20),lake_pixel_counts_field,prognostics)
   @test lake_pixel_counts_field == expected_lake_pixel_counts_field
 end
 

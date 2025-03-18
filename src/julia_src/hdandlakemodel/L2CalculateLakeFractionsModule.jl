@@ -3,8 +3,8 @@ module L2CalculateLakeFractionsModule
 using GridModule: Grid, for_all,for_all_fine_cells_in_coarse_cell,get
 using GridModule: find_coarse_cell_containing_fine_cell
 using FieldModule: Field,set!,elementwise_divide
-using L2LakeModelDefsModule: GridSpecificLakeModelParameters
-using L2LakeModelDefsModule: get_corresponding_surface_model_grid_cell
+using L2LakeModelGridSpecificDefsModule: GridSpecificLakeModelParameters
+using L2LakeModelGridSpecificDefsModule: get_corresponding_surface_model_grid_cell
 
 #pass in total all lake cell pixel count from outside then skip
 #lakes that are too small to change
@@ -56,14 +56,36 @@ mutable struct LakeInput
   cell_coords_list::Vector{CartesianIndex}
 end
 
-struct LakeProperties
+mutable struct LakeProperties
   lake_number::Int64
   cell_list::Vector{LakeCell}
   lake_pixel_count::Int64
+  has_cells_in_binary_mask::Bool
   function LakeProperties(lake_number::Int64,
                           cell_list::Vector{LakeCell},
                           lake_pixel_count::Int64)
-    return new(lake_number,cell_list,lake_pixel_count)
+    return new(lake_number,cell_list,lake_pixel_count,false)
+  end
+end
+
+struct LakeFractionCalculationPrognostics
+  lakes::Vector{LakeProperties}
+  pixel_numbers::Field{Int64}
+  pixels::Vector{Pixel}
+  primary_lake_numbers::Field{Int64}
+  lake_index::Field{Int64}
+  grid_specific_lake_model_parameters::GridSpecificLakeModelParameters
+  function LakeFractionCalculationPrognostics(
+      lakes::Vector{LakeProperties},
+      pixel_numbers::Field{Int64},
+      pixels::Vector{Pixel},
+      primary_lake_numbers::Field{Int64},
+      grid_specific_lake_model_parameters::GridSpecificLakeModelParameters,
+      lake_grid::Grid)
+    return new(lakes,pixel_numbers,pixels,
+               primary_lake_numbers,
+               Field{Int64}(lake_grid,0),
+               grid_specific_lake_model_parameters)
   end
 end
 
@@ -300,6 +322,7 @@ end
 function setup_lake_for_fraction_calculation(lakes::Vector{LakeInput},
                                              cell_pixel_counts::Field{Int64},
                                              binary_lake_mask::Field{Bool},
+                                             primary_lake_numbers::Field{Int64},
                                              grid_specific_lake_model_parameters::
                                              GridSpecificLakeModelParameters,
                                              lake_grid::Grid,
@@ -321,9 +344,17 @@ function setup_lake_for_fraction_calculation(lakes::Vector{LakeInput},
   for lake in lake_properties
     for cell in lake.cell_list
       cell.in_binary_mask = binary_lake_mask(cell.coarse_grid_coords)
+      if cell.in_binary_mask
+        lake.has_cells_in_binary_mask = true
+      end
     end
   end
-  return lake_properties,pixel_numbers,pixels,lake_pixel_counts_field
+  return LakeFractionCalculationPrognostics(lake_properties,
+                                            pixel_numbers,
+                                            pixels,
+                                            primary_lake_numbers,
+                                            grid_specific_lake_model_parameters,
+                                            lake_grid)
 end
 
 function add_pixel(lake::LakeProperties,pixel::Pixel,
@@ -420,6 +451,67 @@ function remove_pixel(lake::LakeProperties,pixel::Pixel,
       set!(lake_pixel_counts_field,cell.coarse_grid_coords,
        lake_pixel_counts_field(cell.coarse_grid_coords)+1)
     end
+  end
+end
+
+function add_pixel_by_coords(pixel_coords::CartesianIndex,
+                             lake_pixel_counts_field::Field{Int64},
+                             prognostics::
+                             LakeFractionCalculationPrognostics)
+  local lake_in::LakeProperties
+  lake_index::Int64 = prognostics.lake_index(pixel_coords)
+  if  lake_index == 0
+    lake_number = prognostics.primary_lake_numbers(pixel_coords)
+    for (i,working_lake) in pairs(IndexLinear(),prognostics.lakes)
+      if working_lake.lake_number == lake_number
+        lake_in = working_lake
+        set!(prognostics.lake_index,pixel_coords,i)
+      end
+    end
+  else
+    lake_in = prognostics.lakes[lake_index]
+  end
+  pixel_in::Pixel = prognostics.pixels[prognostics.pixel_numbers(pixel_coords)]
+  if lake_in.has_cells_in_binary_mask
+    add_pixel(lake_in,pixel_in,
+            lake_pixel_counts_field)
+  else
+    surface_model_coords::CartesianIndex =
+      get_corresponding_surface_model_grid_cell(pixel_coords,
+        prognostics.grid_specific_lake_model_parameters)
+      set!(lake_pixel_counts_field,surface_model_coords,
+           lake_pixel_counts_field(surface_model_coords) + 1)
+  end
+
+end
+
+function remove_pixel_by_coords(pixel_coords::CartesianIndex,
+                                lake_pixel_counts_field::Field{Int64},
+                                prognostics::
+                                LakeFractionCalculationPrognostics)
+  local lake_in::LakeProperties
+  lake_index::Int64 = prognostics.lake_index(pixel_coords)
+  if  lake_index == 0
+    lake_number = prognostics.primary_lake_numbers(pixel_coords)
+    for (i,working_lake) in pairs(IndexLinear(),prognostics.lakes)
+      if working_lake.lake_number == lake_number
+        lake_in = working_lake
+        set!(prognostics.lake_index,pixel_coords,i)
+      end
+    end
+  else
+    lake_in = prognostics.lakes[lake_index]
+  end
+  pixel_in::Pixel = prognostics.pixels[prognostics.pixel_numbers(pixel_coords)]
+  if lake_in.has_cells_in_binary_mask
+    remove_pixel(lake_in,pixel_in,
+                 lake_pixel_counts_field)
+  else
+    surface_model_coords::CartesianIndex =
+      get_corresponding_surface_model_grid_cell(pixel_coords,
+                                                prognostics.grid_specific_lake_model_parameters)
+      set!(lake_pixel_counts_field,surface_model_coords,
+           lake_pixel_counts_field(surface_model_coords) - 1)
   end
 end
 

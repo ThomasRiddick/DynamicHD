@@ -7,7 +7,8 @@ using FieldModule: Field,LatLonField,LatLonDirectionIndicators,set!,repeat
 using CoordsModule: LatLonCoords
 using L2LakeModule: Lake, OverflowingLake, FillingLake, SubsumedLake
 using L2LakeModule: get_lake_volume, get_lake_filled_cells
-using L2LakeModelDefsModule: LatLonLakeModelParameters,LakeModelParameters
+using L2LakeModelGridSpecificDefsModule: LatLonLakeModelParameters
+using L2LakeModelDefsModule: LakeModelParameters
 using L2LakeModelDefsModule: LakeModelSettings,LakeModelPrognostics
 using L2LakeModelDefsModule: LakeModelDiagnostics
 using L2LakeModelModule: calculate_lake_fraction_on_surface_grid
