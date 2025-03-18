@@ -106,6 +106,12 @@ function lakecellconstructor(_COORDS_ARG_coarse_grid_coords_, &
     constructor%in_binary_mask = .false.
 end function lakecellconstructor
 
+subroutine clean_lake_cell(lake_cell)
+  type(lakecell), pointer :: lake_cell
+    deallocate(lake_cell%lake_pixels)
+    deallocate(lake_cell%lake_pixels_added)
+end subroutine clean_lake_cell
+
 function lakeinputconstructor(lake_number, &
                               _INDICES_LIST_lake_pixel_coords_list_INDEX_NAME_, &
                               _INDICES_LIST_potential_lake_pixel_coords_list_INDEX_NAME_, &
@@ -341,6 +347,7 @@ subroutine setup_cells_lakes_and_pixels(lakes, &
           lakecell(_COORDS_ARG_cell_coords_, &
                    cell_pixel_counts(_COORDS_ARG_cell_coords_), &
                    potential_lake_pixel_count,pixels_in_cell)
+        deallocate(pixels_in_cell)
       end do
       lake_cell_pixel_count = size(lake_input%_INDICES_LIST_lake_pixel_coords_list_INDEX_NAME_FIRST_DIM_)
       lake_properties(lake_number) = &
@@ -568,6 +575,24 @@ subroutine calculate_lake_fractions(lakes, &
     elsewhere
       binary_lake_mask(:,:) = .false.
     end where
+    do i = 1,size(pixels)
+      deallocate(pixels(i)%pixel_pointer)
+    end do
+    deallocate(pixel_numbers)
+    deallocate(pixels)
+    do i = 1,size(lake_properties)
+      do j = 1,size(lake_properties(i)%lake_properties_pointer%cell_list)
+        call clean_lake_cell(lake_properties(i)%lake_properties_pointer%&
+                             &cell_list(j)%lake_cell_pointer)
+        deallocate(lake_properties(i)%lake_properties_pointer%&
+                   &cell_list(j)%lake_cell_pointer)
+      end do
+      deallocate(lake_properties(i)%lake_properties_pointer%cell_list)
+      deallocate(lake_properties(i)%lake_properties_pointer)
+    end do
+    deallocate(lake_properties)
+    deallocate(all_lake_potential_pixel_mask)
+    deallocate(all_lake_potential_pixel_counts)
 end subroutine calculate_lake_fractions
 
 subroutine setup_lake_for_fraction_calculation(lakes, &
@@ -621,6 +646,8 @@ subroutine setup_lake_for_fraction_calculation(lakes, &
         working_cell%in_binary_mask = binary_lake_mask(working_cell%_COORDS_ARG_coarse_grid_coords_)
       end do
     end do
+    deallocate(all_lake_potential_pixel_counts)
+    deallocate(all_lake_potential_pixel_mask)
 end subroutine setup_lake_for_fraction_calculation
 
 recursive subroutine add_pixel(lake,pixel_in,pixels,lake_pixel_counts_field)

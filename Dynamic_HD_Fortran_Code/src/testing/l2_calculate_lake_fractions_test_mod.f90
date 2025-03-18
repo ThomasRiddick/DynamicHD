@@ -190,9 +190,6 @@ subroutine testLakeFractionCalculationTest1
                                                potential_lake_pixel_coords_list_lon, &
                                                cell_coords_list_lat, &
                                                cell_coords_list_lon)
-      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
-      allocate(lake_fractions_field(nlat_surface,nlon_surface))
-      allocate(binary_lake_mask(nlat_surface,nlon_surface))
       call calculate_lake_fractions(lakes, &
                                     cell_pixel_counts, &
                                     lake_pixel_counts_field, &
@@ -208,6 +205,34 @@ subroutine testLakeFractionCalculationTest1
                          nlat_surface,nlon_surface)
       call assert_equals(binary_lake_mask, expected_binary_lake_mask, &
                          nlat_surface,nlon_surface)
+      do i = 1,size(lakes)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer)
+      end do
+      deallocate(lakes)
+      deallocate(lake_pixel_mask)
+      deallocate(cell_pixel_counts)
+      deallocate(corresponding_surface_cell_lat_index)
+      deallocate(corresponding_surface_cell_lon_index)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(binary_lake_mask)
+      deallocate(expected_lake_pixel_counts_field)
+      deallocate(expected_lake_fractions_field)
+      deallocate(expected_binary_lake_mask)
+      deallocate(cell_mask)
+      deallocate(mask)
 end subroutine testLakeFractionCalculationTest1
 
 subroutine testLakeFractionCalculationTest2
@@ -397,9 +422,6 @@ subroutine testLakeFractionCalculationTest2
           cell_coords_list_lat, &
           cell_coords_list_lon)
       end do
-      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
-      allocate(lake_fractions_field(nlat_surface,nlon_surface))
-      allocate(binary_lake_mask(nlat_surface,nlon_surface))
       call calculate_lake_fractions(lakes, &
                                     cell_pixel_counts, &
                                     lake_pixel_counts_field, &
@@ -415,6 +437,34 @@ subroutine testLakeFractionCalculationTest2
                                             nlat_surface,nlon_surface)
       call assert_equals(binary_lake_mask, expected_binary_lake_mask, &
                                             nlat_surface,nlon_surface)
+      do i = 1,size(lakes)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer)
+      end do
+      deallocate(lakes)
+      deallocate(lake_pixel_mask)
+      deallocate(cell_pixel_counts)
+      deallocate(corresponding_surface_cell_lat_index)
+      deallocate(corresponding_surface_cell_lon_index)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(binary_lake_mask)
+      deallocate(expected_lake_pixel_counts_field)
+      deallocate(expected_lake_fractions_field)
+      deallocate(expected_binary_lake_mask)
+      deallocate(cell_mask)
+      deallocate(mask)
 end subroutine testLakeFractionCalculationTest2
 
 subroutine testLakeFractionCalculationTest3
@@ -604,9 +654,6 @@ subroutine testLakeFractionCalculationTest3
           cell_coords_list_lat, &
           cell_coords_list_lon)
       end do
-      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
-      allocate(lake_fractions_field(nlat_surface,nlon_surface))
-      allocate(binary_lake_mask(nlat_surface,nlon_surface))
       call calculate_lake_fractions(lakes, &
                                     cell_pixel_counts, &
                                     lake_pixel_counts_field, &
@@ -622,6 +669,34 @@ subroutine testLakeFractionCalculationTest3
                                             nlat_surface,nlon_surface)
       call assert_equals(binary_lake_mask, expected_binary_lake_mask, &
                                             nlat_surface,nlon_surface)
+      do i = 1,size(lakes)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer)
+      end do
+      deallocate(lakes)
+      deallocate(lake_pixel_mask)
+      deallocate(cell_pixel_counts)
+      deallocate(corresponding_surface_cell_lat_index)
+      deallocate(corresponding_surface_cell_lon_index)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(binary_lake_mask)
+      deallocate(expected_lake_pixel_counts_field)
+      deallocate(expected_lake_fractions_field)
+      deallocate(expected_binary_lake_mask)
+      deallocate(cell_mask)
+      deallocate(mask)
 end subroutine testLakeFractionCalculationTest3
 
 subroutine testLakeFractionCalculationTest4
@@ -811,9 +886,6 @@ subroutine testLakeFractionCalculationTest4
           cell_coords_list_lat, &
           cell_coords_list_lon)
       end do
-      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
-      allocate(lake_fractions_field(nlat_surface,nlon_surface))
-      allocate(binary_lake_mask(nlat_surface,nlon_surface))
       call calculate_lake_fractions(lakes, &
                                     cell_pixel_counts, &
                                     lake_pixel_counts_field, &
@@ -829,6 +901,34 @@ subroutine testLakeFractionCalculationTest4
                                           nlat_surface,nlon_surface)
       call assert_equals(binary_lake_mask, expected_binary_lake_mask, &
                                             nlat_surface,nlon_surface)
+      do i = 1,size(lakes)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer)
+      end do
+      deallocate(lakes)
+      deallocate(lake_pixel_mask)
+      deallocate(cell_pixel_counts)
+      deallocate(corresponding_surface_cell_lat_index)
+      deallocate(corresponding_surface_cell_lon_index)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(binary_lake_mask)
+      deallocate(expected_lake_pixel_counts_field)
+      deallocate(expected_lake_fractions_field)
+      deallocate(expected_binary_lake_mask)
+      deallocate(cell_mask)
+      deallocate(mask)
 end subroutine testLakeFractionCalculationTest4
 
 subroutine testLakeFractionCalculationTest5
@@ -1003,9 +1103,6 @@ subroutine testLakeFractionCalculationTest5
           cell_coords_list_lat, &
           cell_coords_list_lon)
       end do
-      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
-      allocate(lake_fractions_field(nlat_surface,nlon_surface))
-      allocate(binary_lake_mask(nlat_surface,nlon_surface))
       call calculate_lake_fractions(lakes, &
                                     cell_pixel_counts, &
                                     lake_pixel_counts_field, &
@@ -1021,6 +1118,34 @@ subroutine testLakeFractionCalculationTest5
                                             nlat_surface,nlon_surface)
       call assert_equals(binary_lake_mask, expected_binary_lake_mask, &
                                             nlat_surface,nlon_surface)
+      do i = 1,size(lakes)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer)
+      end do
+      deallocate(lakes)
+      deallocate(lake_pixel_mask)
+      deallocate(cell_pixel_counts)
+      deallocate(corresponding_surface_cell_lat_index)
+      deallocate(corresponding_surface_cell_lon_index)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(binary_lake_mask)
+      deallocate(expected_lake_pixel_counts_field)
+      deallocate(expected_lake_fractions_field)
+      deallocate(expected_binary_lake_mask)
+      deallocate(cell_mask)
+      deallocate(mask)
 end subroutine testLakeFractionCalculationTest5
 
 subroutine testLakeFractionCalculationTest6
@@ -1242,9 +1367,6 @@ subroutine testLakeFractionCalculationTest6
                                                potential_lake_pixel_coords_list_lon, &
                                                cell_coords_list_lat, &
                                                cell_coords_list_lon)
-      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
-      allocate(lake_fractions_field(nlat_surface,nlon_surface))
-      allocate(binary_lake_mask(nlat_surface,nlon_surface))
       call calculate_lake_fractions(lakes, &
                                     cell_pixel_counts, &
                                     lake_pixel_counts_field, &
@@ -1260,6 +1382,35 @@ subroutine testLakeFractionCalculationTest6
                                             nlat_surface,nlon_surface)
       call assert_equals(binary_lake_mask, expected_binary_lake_mask, &
                                             nlat_surface,nlon_surface)
+      do i = 1,size(lakes)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer)
+      end do
+      deallocate(lakes)
+      deallocate(lake_pixel_mask)
+      deallocate(potential_lake_pixel_mask)
+      deallocate(cell_pixel_counts)
+      deallocate(corresponding_surface_cell_lat_index)
+      deallocate(corresponding_surface_cell_lon_index)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(binary_lake_mask)
+      deallocate(expected_lake_pixel_counts_field)
+      deallocate(expected_lake_fractions_field)
+      deallocate(expected_binary_lake_mask)
+      deallocate(cell_mask)
+      deallocate(mask)
 end subroutine testLakeFractionCalculationTest6
 
 subroutine testLakeFractionCalculationTest7
@@ -1483,9 +1634,6 @@ subroutine testLakeFractionCalculationTest7
                     cell_coords_list_lat, &
                     cell_coords_list_lon)
       end do
-      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
-      allocate(lake_fractions_field(nlat_surface,nlon_surface))
-      allocate(binary_lake_mask(nlat_surface,nlon_surface))
       call calculate_lake_fractions(lakes, &
                                     cell_pixel_counts, &
                                     lake_pixel_counts_field, &
@@ -1501,6 +1649,35 @@ subroutine testLakeFractionCalculationTest7
                          nlat_surface,nlon_surface)
       call assert_equals(binary_lake_mask, expected_binary_lake_mask, &
                          nlat_surface,nlon_surface)
+      do i = 1,size(lakes)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer)
+      end do
+      deallocate(lakes)
+      deallocate(lake_pixel_mask)
+      deallocate(potential_lake_pixel_mask)
+      deallocate(cell_pixel_counts)
+      deallocate(corresponding_surface_cell_lat_index)
+      deallocate(corresponding_surface_cell_lon_index)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(binary_lake_mask)
+      deallocate(expected_lake_pixel_counts_field)
+      deallocate(expected_lake_fractions_field)
+      deallocate(expected_binary_lake_mask)
+      deallocate(cell_mask)
+      deallocate(mask)
 end subroutine testLakeFractionCalculationTest7
 
 subroutine testLakeFractionCalculationTest8
@@ -1724,9 +1901,6 @@ subroutine testLakeFractionCalculationTest8
                     cell_coords_list_lat, &
                     cell_coords_list_lon)
       end do
-      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
-      allocate(lake_fractions_field(nlat_surface,nlon_surface))
-      allocate(binary_lake_mask(nlat_surface,nlon_surface))
       call calculate_lake_fractions(lakes, &
                                     cell_pixel_counts, &
                                     lake_pixel_counts_field, &
@@ -1742,6 +1916,35 @@ subroutine testLakeFractionCalculationTest8
                                             nlat_surface,nlon_surface)
       call assert_equals(binary_lake_mask, expected_binary_lake_mask, &
                                             nlat_surface,nlon_surface)
+      do i = 1,size(lakes)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer)
+      end do
+      deallocate(lakes)
+      deallocate(lake_pixel_mask)
+      deallocate(potential_lake_pixel_mask)
+      deallocate(cell_pixel_counts)
+      deallocate(corresponding_surface_cell_lat_index)
+      deallocate(corresponding_surface_cell_lon_index)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(binary_lake_mask)
+      deallocate(expected_lake_pixel_counts_field)
+      deallocate(expected_lake_fractions_field)
+      deallocate(expected_binary_lake_mask)
+      deallocate(cell_mask)
+      deallocate(mask)
 end subroutine testLakeFractionCalculationTest8
 
 subroutine testLakeFractionCalculationTest9
@@ -1965,9 +2168,6 @@ subroutine testLakeFractionCalculationTest9
                     cell_coords_list_lat, &
                     cell_coords_list_lon)
       end do
-      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
-      allocate(lake_fractions_field(nlat_surface,nlon_surface))
-      allocate(binary_lake_mask(nlat_surface,nlon_surface))
       call calculate_lake_fractions(lakes, &
                                     cell_pixel_counts, &
                                     lake_pixel_counts_field, &
@@ -1983,6 +2183,35 @@ subroutine testLakeFractionCalculationTest9
                                             nlat_surface,nlon_surface)
       call assert_equals(binary_lake_mask, expected_binary_lake_mask, &
                                             nlat_surface,nlon_surface)
+      do i = 1,size(lakes)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer)
+      end do
+      deallocate(lakes)
+      deallocate(lake_pixel_mask)
+      deallocate(potential_lake_pixel_mask)
+      deallocate(cell_pixel_counts)
+      deallocate(corresponding_surface_cell_lat_index)
+      deallocate(corresponding_surface_cell_lon_index)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(binary_lake_mask)
+      deallocate(expected_lake_pixel_counts_field)
+      deallocate(expected_lake_fractions_field)
+      deallocate(expected_binary_lake_mask)
+      deallocate(cell_mask)
+      deallocate(mask)
 end subroutine testLakeFractionCalculationTest9
 
 subroutine testLakeFractionCalculationTest10
@@ -2186,9 +2415,6 @@ subroutine testLakeFractionCalculationTest10
                     cell_coords_list_lat, &
                     cell_coords_list_lon)
       end do
-      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
-      allocate(lake_fractions_field(nlat_surface,nlon_surface))
-      allocate(binary_lake_mask(nlat_surface,nlon_surface))
       call calculate_lake_fractions(lakes, &
                                     cell_pixel_counts, &
                                     lake_pixel_counts_field, &
@@ -2204,6 +2430,35 @@ subroutine testLakeFractionCalculationTest10
                                             nlat_surface,nlon_surface)
       call assert_equals(binary_lake_mask, expected_binary_lake_mask, &
                                             nlat_surface,nlon_surface)
+      do i = 1,size(lakes)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer)
+      end do
+      deallocate(lakes)
+      deallocate(lake_pixel_mask)
+      deallocate(potential_lake_pixel_mask)
+      deallocate(cell_pixel_counts)
+      deallocate(corresponding_surface_cell_lat_index)
+      deallocate(corresponding_surface_cell_lon_index)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(binary_lake_mask)
+      deallocate(expected_lake_pixel_counts_field)
+      deallocate(expected_lake_fractions_field)
+      deallocate(expected_binary_lake_mask)
+      deallocate(cell_mask)
+      deallocate(mask)
 end subroutine testLakeFractionCalculationTest10
 
 subroutine testLakeFractionCalculationTest11
@@ -2402,7 +2657,6 @@ subroutine testLakeFractionCalculationTest11
                                                potential_lake_pixel_coords_list_lon, &
                                                cell_coords_list_lat, &
                                                cell_coords_list_lon)
-      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
       call setup_lake_for_fraction_calculation(lakes, &
                                                cell_pixel_counts, &
                                                binary_lake_mask, &
@@ -2453,6 +2707,50 @@ subroutine testLakeFractionCalculationTest11
                      working_pixel,pixels,lake_pixel_counts_field)
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field,nlat_surface,nlon_surface)
+      do i = 1,size(lakes)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer)
+      end do
+      deallocate(lakes)
+      deallocate(lake_pixel_mask)
+      deallocate(binary_lake_mask)
+      deallocate(cell_pixel_counts)
+      deallocate(corresponding_surface_cell_lat_index)
+      deallocate(corresponding_surface_cell_lon_index)
+      deallocate(lake_pixel_counts_field)
+      deallocate(expected_lake_pixel_counts_field)
+      deallocate(expected_lake_fractions_field)
+      deallocate(expected_immediate_lake_pixel_counts_field)
+      deallocate(cell_mask)
+      deallocate(mask)
+      deallocate(pixel_numbers)
+      do i = 1,size(pixels)
+        deallocate(pixels(i)%pixel_pointer)
+      end do
+      deallocate(pixels)
+      do i = 1,size(lake_properties)
+        do j = 1,size(lake_properties(i)%lake_properties_pointer%cell_list)
+          call clean_lake_cell(lake_properties(i)%lake_properties_pointer%&
+                               &cell_list(j)%lake_cell_pointer)
+          deallocate(lake_properties(i)%lake_properties_pointer%&
+                     &cell_list(j)%lake_cell_pointer)
+        end do
+        deallocate(lake_properties(i)%lake_properties_pointer%&
+                   &cell_list)
+        deallocate(lake_properties(i)%lake_properties_pointer)
+      end do
+      deallocate(lake_properties)
 end subroutine testLakeFractionCalculationTest11
 
 subroutine testLakeFractionCalculationTest12
@@ -2623,7 +2921,6 @@ subroutine testLakeFractionCalculationTest12
             end if
           end do
         end do
-        allocate(cell_mask(nlat_surface,nlon_surface))
         cell_mask(:,:) = .false.
         do i=1,size(potential_lake_pixel_coords_list_lat)
             lat = corresponding_surface_cell_lat_index( &
@@ -2655,7 +2952,6 @@ subroutine testLakeFractionCalculationTest12
                     cell_coords_list_lat, &
                     cell_coords_list_lon)
       end do
-      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
       call setup_lake_for_fraction_calculation(lakes, &
                                                cell_pixel_counts, &
                                                binary_lake_mask, &
@@ -2689,6 +2985,8 @@ subroutine testLakeFractionCalculationTest12
           working_pixel => pixels(pixel_number)%pixel_pointer
           call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
         end do
+        deallocate(potential_lake_pixel_coords_list_lat)
+        deallocate(potential_lake_pixel_coords_list_lon)
       end do
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field,nlat_surface,nlon_surface)
@@ -3065,6 +3363,50 @@ subroutine testLakeFractionCalculationTest12
       call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field,nlat_surface,nlon_surface)
+      do i = 1,size(lakes)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer)
+      end do
+      deallocate(lakes)
+      deallocate(lake_pixel_mask)
+      deallocate(binary_lake_mask)
+      deallocate(cell_pixel_counts)
+      deallocate(corresponding_surface_cell_lat_index)
+      deallocate(corresponding_surface_cell_lon_index)
+      deallocate(lake_pixel_counts_field)
+      deallocate(expected_lake_pixel_counts_field)
+      deallocate(expected_lake_fractions_field)
+      deallocate(expected_immediate_lake_pixel_counts_field)
+      deallocate(cell_mask)
+      deallocate(mask)
+      deallocate(pixel_numbers)
+      do i = 1,size(pixels)
+        deallocate(pixels(i)%pixel_pointer)
+      end do
+      deallocate(pixels)
+      do i = 1,size(lake_properties)
+        do j = 1,size(lake_properties(i)%lake_properties_pointer%cell_list)
+          call clean_lake_cell(lake_properties(i)%lake_properties_pointer%&
+                               &cell_list(j)%lake_cell_pointer)
+          deallocate(lake_properties(i)%lake_properties_pointer%&
+                     &cell_list(j)%lake_cell_pointer)
+        end do
+        deallocate(lake_properties(i)%lake_properties_pointer%&
+                   &cell_list)
+        deallocate(lake_properties(i)%lake_properties_pointer)
+      end do
+      deallocate(lake_properties)
 end subroutine testLakeFractionCalculationTest12
 
 subroutine testLakeFractionCalculationTest13
@@ -3228,7 +3570,6 @@ subroutine testLakeFractionCalculationTest13
       allocate(mask(nlat_lake,nlon_lake))
       allocate(cell_mask(nlat_surface,nlon_surface))
       do lake_number = 1,9
-        allocate(mask(nlat_lake,nlon_lake))
         mask = (lake_pixel_mask == lake_number)
         allocate(lake_pixel_coords_list_lat(0))
         allocate(lake_pixel_coords_list_lon(0))
@@ -3245,7 +3586,6 @@ subroutine testLakeFractionCalculationTest13
             end if
           end do
         end do
-        allocate(cell_mask(nlat_surface,nlon_surface))
         cell_mask(:,:) = .false.
         do i=1,size(potential_lake_pixel_coords_list_lat)
             lat = corresponding_surface_cell_lat_index( &
@@ -3277,7 +3617,6 @@ subroutine testLakeFractionCalculationTest13
                     cell_coords_list_lat, &
                     cell_coords_list_lon)
       end do
-      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
       call setup_lake_for_fraction_calculation(lakes, &
                                                cell_pixel_counts, &
                                                binary_lake_mask, &
@@ -3311,6 +3650,8 @@ subroutine testLakeFractionCalculationTest13
           working_pixel => pixels(pixel_number)%pixel_pointer
           call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
         end do
+        deallocate(potential_lake_pixel_coords_list_lat)
+        deallocate(potential_lake_pixel_coords_list_lon)
       end do
       do i = 1,nlat_surface
         write(*,*) (lake_pixel_counts_field(i,j), j =1,nlon_surface)
@@ -3764,6 +4105,51 @@ subroutine testLakeFractionCalculationTest13
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field_two,&
                          nlat_surface,nlon_surface)
+      do i = 1,size(lakes)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer)
+      end do
+      deallocate(lakes)
+      deallocate(lake_pixel_mask)
+      deallocate(binary_lake_mask)
+      deallocate(cell_pixel_counts)
+      deallocate(corresponding_surface_cell_lat_index)
+      deallocate(corresponding_surface_cell_lon_index)
+      deallocate(lake_pixel_counts_field)
+      deallocate(expected_lake_pixel_counts_field)
+      deallocate(expected_lake_pixel_counts_field_two)
+      deallocate(expected_lake_fractions_field)
+      deallocate(expected_intermediate_lake_pixel_counts_field)
+      deallocate(cell_mask)
+      deallocate(mask)
+      deallocate(pixel_numbers)
+      do i = 1,size(pixels)
+        deallocate(pixels(i)%pixel_pointer)
+      end do
+      deallocate(pixels)
+      do i = 1,size(lake_properties)
+        do j = 1,size(lake_properties(i)%lake_properties_pointer%cell_list)
+          call clean_lake_cell(lake_properties(i)%lake_properties_pointer%&
+                               &cell_list(j)%lake_cell_pointer)
+          deallocate(lake_properties(i)%lake_properties_pointer%&
+                     &cell_list(j)%lake_cell_pointer)
+        end do
+        deallocate(lake_properties(i)%lake_properties_pointer%&
+                   &cell_list)
+        deallocate(lake_properties(i)%lake_properties_pointer)
+      end do
+      deallocate(lake_properties)
 end subroutine testLakeFractionCalculationTest13
 
 subroutine testLakeFractionCalculationTest14
@@ -3909,7 +4295,6 @@ subroutine testLakeFractionCalculationTest14
       allocate(mask(nlat_lake,nlon_lake))
       allocate(cell_mask(nlat_surface,nlon_surface))
       do lake_number = 1,2
-        allocate(mask(nlat_lake,nlon_lake))
         mask = (lake_pixel_mask == lake_number)
         allocate(lake_pixel_coords_list_lat(0))
         allocate(lake_pixel_coords_list_lon(0))
@@ -3926,7 +4311,6 @@ subroutine testLakeFractionCalculationTest14
             end if
           end do
         end do
-        allocate(cell_mask(nlat_surface,nlon_surface))
         cell_mask(:,:) = .false.
         do i=1,size(potential_lake_pixel_coords_list_lat)
             lat = corresponding_surface_cell_lat_index( &
@@ -3958,7 +4342,6 @@ subroutine testLakeFractionCalculationTest14
                     cell_coords_list_lat, &
                     cell_coords_list_lon)
       end do
-      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
       call setup_lake_for_fraction_calculation(lakes, &
                                                cell_pixel_counts, &
                                                binary_lake_mask, &
@@ -3992,12 +4375,57 @@ subroutine testLakeFractionCalculationTest14
           working_pixel => pixels(pixel_number)%pixel_pointer
           call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
         end do
+        deallocate(potential_lake_pixel_coords_list_lat)
+        deallocate(potential_lake_pixel_coords_list_lon)
       end do
       do i=1,nlat_surface
         write(*,*) (lake_pixel_counts_field(i,j),j=1,nlon_surface)
       end do
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field,nlat_surface,nlon_surface)
+      do i = 1,size(lakes)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer)
+      end do
+      deallocate(lakes)
+      deallocate(lake_pixel_mask)
+      deallocate(binary_lake_mask)
+      deallocate(cell_pixel_counts)
+      deallocate(corresponding_surface_cell_lat_index)
+      deallocate(corresponding_surface_cell_lon_index)
+      deallocate(lake_pixel_counts_field)
+      deallocate(expected_lake_pixel_counts_field)
+      deallocate(expected_lake_fractions_field)
+      deallocate(cell_mask)
+      deallocate(mask)
+      deallocate(pixel_numbers)
+      do i = 1,size(pixels)
+        deallocate(pixels(i)%pixel_pointer)
+      end do
+      deallocate(pixels)
+      do i = 1,size(lake_properties)
+        do j = 1,size(lake_properties(i)%lake_properties_pointer%cell_list)
+          call clean_lake_cell(lake_properties(i)%lake_properties_pointer%&
+                               &cell_list(j)%lake_cell_pointer)
+          deallocate(lake_properties(i)%lake_properties_pointer%&
+                     &cell_list(j)%lake_cell_pointer)
+        end do
+        deallocate(lake_properties(i)%lake_properties_pointer%&
+                   &cell_list)
+        deallocate(lake_properties(i)%lake_properties_pointer)
+      end do
+      deallocate(lake_properties)
 end subroutine testLakeFractionCalculationTest14
 
 subroutine testLakeFractionCalculationTest15
@@ -4137,7 +4565,6 @@ subroutine testLakeFractionCalculationTest15
       allocate(mask(nlat_lake,nlon_lake))
       allocate(cell_mask(nlat_surface,nlon_surface))
       do lake_number = 1,2
-        allocate(mask(nlat_lake,nlon_lake))
         mask = (lake_pixel_mask == lake_number)
         allocate(lake_pixel_coords_list_lat(0))
         allocate(lake_pixel_coords_list_lon(0))
@@ -4154,7 +4581,6 @@ subroutine testLakeFractionCalculationTest15
             end if
           end do
         end do
-        allocate(cell_mask(nlat_surface,nlon_surface))
         cell_mask(:,:) = .false.
         do i=1,size(potential_lake_pixel_coords_list_lat)
             lat = corresponding_surface_cell_lat_index( &
@@ -4186,7 +4612,6 @@ subroutine testLakeFractionCalculationTest15
                     cell_coords_list_lat, &
                     cell_coords_list_lon)
       end do
-      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
       call setup_lake_for_fraction_calculation(lakes, &
                                                cell_pixel_counts, &
                                                binary_lake_mask, &
@@ -4220,6 +4645,8 @@ subroutine testLakeFractionCalculationTest15
           working_pixel => pixels(pixel_number)%pixel_pointer
           call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
         end do
+        deallocate(potential_lake_pixel_coords_list_lat)
+        deallocate(potential_lake_pixel_coords_list_lon)
       end do
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field, &
@@ -4310,6 +4737,50 @@ subroutine testLakeFractionCalculationTest15
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field,&
                          nlat_surface,nlon_surface)
+      do i = 1,size(lakes)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer)
+      end do
+      deallocate(lakes)
+      deallocate(lake_pixel_mask)
+      deallocate(binary_lake_mask)
+      deallocate(cell_pixel_counts)
+      deallocate(corresponding_surface_cell_lat_index)
+      deallocate(corresponding_surface_cell_lon_index)
+      deallocate(lake_pixel_counts_field)
+      deallocate(expected_lake_pixel_counts_field)
+      deallocate(expected_lake_fractions_field)
+      deallocate(expected_intermediate_lake_pixel_counts_field)
+      deallocate(cell_mask)
+      deallocate(mask)
+      deallocate(pixel_numbers)
+      do i = 1,size(pixels)
+        deallocate(pixels(i)%pixel_pointer)
+      end do
+      deallocate(pixels)
+      do i = 1,size(lake_properties)
+        do j = 1,size(lake_properties(i)%lake_properties_pointer%cell_list)
+          call clean_lake_cell(lake_properties(i)%lake_properties_pointer%&
+                               &cell_list(j)%lake_cell_pointer)
+          deallocate(lake_properties(i)%lake_properties_pointer%&
+                     &cell_list(j)%lake_cell_pointer)
+        end do
+        deallocate(lake_properties(i)%lake_properties_pointer%&
+                   &cell_list)
+        deallocate(lake_properties(i)%lake_properties_pointer)
+      end do
+      deallocate(lake_properties)
 end subroutine testLakeFractionCalculationTest15
 
 subroutine testLakeFractionCalculationTest16
@@ -4476,7 +4947,6 @@ subroutine testLakeFractionCalculationTest16
          0.0, 0.0, 0.0, 0.0, 0.3125, &
          0.0, 0.0, 0.0, 0.0, 1.0 /), &
          (/nlon_surface,nlat_surface/)))
-      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
       allocate(mask(nlat_lake,nlon_lake))
       mask = (potential_lake_pixel_mask == 1)
       allocate(lake_pixel_coords_list_lat(0))
@@ -4524,7 +4994,6 @@ subroutine testLakeFractionCalculationTest16
                                                potential_lake_pixel_coords_list_lon, &
                                                cell_coords_list_lat, &
                                                cell_coords_list_lon)
-      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
       call setup_lake_for_fraction_calculation(lakes, &
                                                cell_pixel_counts, &
                                                binary_lake_mask, &
@@ -4549,6 +5018,50 @@ subroutine testLakeFractionCalculationTest16
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field,&
                          nlat_surface,nlon_surface)
+      do i = 1,size(lakes)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer)
+      end do
+      deallocate(lakes)
+      deallocate(lake_pixel_mask)
+      deallocate(potential_lake_pixel_mask)
+      deallocate(binary_lake_mask)
+      deallocate(cell_pixel_counts)
+      deallocate(corresponding_surface_cell_lat_index)
+      deallocate(corresponding_surface_cell_lon_index)
+      deallocate(lake_pixel_counts_field)
+      deallocate(expected_lake_pixel_counts_field)
+      deallocate(expected_lake_fractions_field)
+      deallocate(cell_mask)
+      deallocate(mask)
+      deallocate(pixel_numbers)
+      do i = 1,size(pixels)
+        deallocate(pixels(i)%pixel_pointer)
+      end do
+      deallocate(pixels)
+      do i = 1,size(lake_properties)
+        do j = 1,size(lake_properties(i)%lake_properties_pointer%cell_list)
+          call clean_lake_cell(lake_properties(i)%lake_properties_pointer%&
+                               &cell_list(j)%lake_cell_pointer)
+          deallocate(lake_properties(i)%lake_properties_pointer%&
+                     &cell_list(j)%lake_cell_pointer)
+        end do
+        deallocate(lake_properties(i)%lake_properties_pointer%&
+                   &cell_list)
+        deallocate(lake_properties(i)%lake_properties_pointer)
+      end do
+      deallocate(lake_properties)
 end subroutine testLakeFractionCalculationTest16
 
 subroutine testLakeFractionCalculationTest17
@@ -4765,7 +5278,6 @@ subroutine testLakeFractionCalculationTest17
                     cell_coords_list_lat, &
                     cell_coords_list_lon)
       end do
-      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
       call setup_lake_for_fraction_calculation(lakes, &
                                                cell_pixel_counts, &
                                                binary_lake_mask, &
@@ -4792,6 +5304,50 @@ subroutine testLakeFractionCalculationTest17
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field, &
                          nlat_surface,nlon_surface)
+      do i = 1,size(lakes)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer)
+      end do
+      deallocate(lakes)
+      deallocate(lake_pixel_mask)
+      deallocate(potential_lake_pixel_mask)
+      deallocate(binary_lake_mask)
+      deallocate(cell_pixel_counts)
+      deallocate(corresponding_surface_cell_lat_index)
+      deallocate(corresponding_surface_cell_lon_index)
+      deallocate(lake_pixel_counts_field)
+      deallocate(expected_lake_pixel_counts_field)
+      deallocate(expected_lake_fractions_field)
+      deallocate(cell_mask)
+      deallocate(mask)
+      deallocate(pixel_numbers)
+      do i = 1,size(pixels)
+        deallocate(pixels(i)%pixel_pointer)
+      end do
+      deallocate(pixels)
+      do i = 1,size(lake_properties)
+        do j = 1,size(lake_properties(i)%lake_properties_pointer%cell_list)
+          call clean_lake_cell(lake_properties(i)%lake_properties_pointer%&
+                               &cell_list(j)%lake_cell_pointer)
+          deallocate(lake_properties(i)%lake_properties_pointer%&
+                     &cell_list(j)%lake_cell_pointer)
+        end do
+        deallocate(lake_properties(i)%lake_properties_pointer%&
+                   &cell_list)
+        deallocate(lake_properties(i)%lake_properties_pointer)
+      end do
+      deallocate(lake_properties)
 end subroutine testLakeFractionCalculationTest17
 
 subroutine testLakeFractionCalculationTest18
@@ -5008,7 +5564,6 @@ subroutine testLakeFractionCalculationTest18
                     cell_coords_list_lat, &
                     cell_coords_list_lon)
       end do
-      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
       call setup_lake_for_fraction_calculation(lakes, &
                                                cell_pixel_counts, &
                                                binary_lake_mask, &
@@ -5035,6 +5590,50 @@ subroutine testLakeFractionCalculationTest18
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field, &
                          nlat_surface,nlon_surface)
+      do i = 1,size(lakes)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer)
+      end do
+      deallocate(lakes)
+      deallocate(lake_pixel_mask)
+      deallocate(potential_lake_pixel_mask)
+      deallocate(binary_lake_mask)
+      deallocate(cell_pixel_counts)
+      deallocate(corresponding_surface_cell_lat_index)
+      deallocate(corresponding_surface_cell_lon_index)
+      deallocate(lake_pixel_counts_field)
+      deallocate(expected_lake_pixel_counts_field)
+      deallocate(expected_lake_fractions_field)
+      deallocate(cell_mask)
+      deallocate(mask)
+      deallocate(pixel_numbers)
+      do i = 1,size(pixels)
+        deallocate(pixels(i)%pixel_pointer)
+      end do
+      deallocate(pixels)
+      do i = 1,size(lake_properties)
+        do j = 1,size(lake_properties(i)%lake_properties_pointer%cell_list)
+          call clean_lake_cell(lake_properties(i)%lake_properties_pointer%&
+                               &cell_list(j)%lake_cell_pointer)
+          deallocate(lake_properties(i)%lake_properties_pointer%&
+                     &cell_list(j)%lake_cell_pointer)
+        end do
+        deallocate(lake_properties(i)%lake_properties_pointer%&
+                   &cell_list)
+        deallocate(lake_properties(i)%lake_properties_pointer)
+      end do
+      deallocate(lake_properties)
 end subroutine testLakeFractionCalculationTest18
 
 subroutine testLakeFractionCalculationTest19
@@ -5305,7 +5904,6 @@ subroutine testLakeFractionCalculationTest19
                     cell_coords_list_lat, &
                     cell_coords_list_lon)
       end do
-      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
       call setup_lake_for_fraction_calculation(lakes, &
                                                cell_pixel_counts, &
                                                binary_lake_mask, &
@@ -6406,6 +7004,56 @@ subroutine testLakeFractionCalculationTest19
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field_after_third_cycle, &
                          nlat_surface,nlon_surface)
+      do i = 1,size(lakes)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer)
+      end do
+      deallocate(lakes)
+      deallocate(lake_pixel_mask)
+      deallocate(potential_lake_pixel_mask)
+      deallocate(binary_lake_mask)
+      deallocate(cell_pixel_counts)
+      deallocate(corresponding_surface_cell_lat_index)
+      deallocate(corresponding_surface_cell_lon_index)
+      deallocate(lake_pixel_counts_field)
+      deallocate(expected_lake_pixel_counts_field)
+      deallocate(expected_lake_fractions_field)
+      deallocate(expected_lake_pixel_counts_field_after_cycle)
+      deallocate(expected_lake_pixel_counts_field_after_second_cycle)
+      deallocate(expected_lake_pixel_counts_field_after_third_cycle)
+      deallocate(expected_intermediate_lake_pixel_counts_field)
+      deallocate(expected_intermediate_lake_pixel_counts_field_two)
+      deallocate(expected_intermediate_lake_pixel_counts_field_three)
+      deallocate(cell_mask)
+      deallocate(mask)
+      deallocate(pixel_numbers)
+      do i = 1,size(pixels)
+        deallocate(pixels(i)%pixel_pointer)
+      end do
+      deallocate(pixels)
+      do i = 1,size(lake_properties)
+        do j = 1,size(lake_properties(i)%lake_properties_pointer%cell_list)
+          call clean_lake_cell(lake_properties(i)%lake_properties_pointer%&
+                               &cell_list(j)%lake_cell_pointer)
+          deallocate(lake_properties(i)%lake_properties_pointer%&
+                     &cell_list(j)%lake_cell_pointer)
+        end do
+        deallocate(lake_properties(i)%lake_properties_pointer%&
+                   &cell_list)
+        deallocate(lake_properties(i)%lake_properties_pointer)
+      end do
+      deallocate(lake_properties)
 end subroutine testLakeFractionCalculationTest19
 
 subroutine testLakeFractionCalculationTest20
@@ -6611,7 +7259,6 @@ subroutine testLakeFractionCalculationTest20
                     cell_coords_list_lat, &
                     cell_coords_list_lon)
       end do
-      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
       call setup_lake_for_fraction_calculation(lakes, &
                                                cell_pixel_counts, &
                                                binary_lake_mask, &
@@ -6724,6 +7371,51 @@ subroutine testLakeFractionCalculationTest20
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field,&
                          nlat_surface,nlon_surface)
+      do i = 1,size(lakes)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &potential_lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &lake_pixel_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lat)
+        deallocate(lakes(i)%lake_input_pointer%&
+                   &cell_coords_list_lon)
+        deallocate(lakes(i)%lake_input_pointer)
+      end do
+      deallocate(lakes)
+      deallocate(lake_pixel_mask)
+      deallocate(potential_lake_pixel_mask)
+      deallocate(binary_lake_mask)
+      deallocate(cell_pixel_counts)
+      deallocate(corresponding_surface_cell_lat_index)
+      deallocate(corresponding_surface_cell_lon_index)
+      deallocate(lake_pixel_counts_field)
+      deallocate(expected_lake_pixel_counts_field)
+      deallocate(expected_lake_fractions_field)
+      deallocate(expected_intermediate_lake_pixel_counts_field)
+      deallocate(cell_mask)
+      deallocate(mask)
+      deallocate(pixel_numbers)
+      do i = 1,size(pixels)
+        deallocate(pixels(i)%pixel_pointer)
+      end do
+      deallocate(pixels)
+      do i = 1,size(lake_properties)
+        do j = 1,size(lake_properties(i)%lake_properties_pointer%cell_list)
+          call clean_lake_cell(lake_properties(i)%lake_properties_pointer%&
+                               &cell_list(j)%lake_cell_pointer)
+          deallocate(lake_properties(i)%lake_properties_pointer%&
+                     &cell_list(j)%lake_cell_pointer)
+        end do
+        deallocate(lake_properties(i)%lake_properties_pointer%&
+                   &cell_list)
+        deallocate(lake_properties(i)%lake_properties_pointer)
+      end do
+      deallocate(lake_properties)
 end subroutine testLakeFractionCalculationTest20
 
 end module l2_calculate_lake_fractions_test_mod
