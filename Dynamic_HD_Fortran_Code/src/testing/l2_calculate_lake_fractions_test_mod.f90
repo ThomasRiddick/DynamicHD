@@ -2465,10 +2465,7 @@ subroutine testLakeFractionCalculationTest11
    use l2_calculate_lake_fractions_mod
    type(lakeinputpointer), dimension(:), pointer :: lakes
    integer :: lake_number
-   type(lakepropertiespointer), dimension(:), pointer :: lake_properties
-   integer, dimension(:,:), pointer :: pixel_numbers
-   type(pixelpointer), dimension(:), pointer :: pixels
-   type(pixel), pointer :: working_pixel
+   type(lakefractioncalculationprognostics), pointer :: prognostics
    integer,dimension(:,:), pointer :: lake_pixel_mask
    logical,dimension(:,:), pointer :: binary_lake_mask
    integer,dimension(:,:), pointer :: cell_pixel_counts
@@ -2490,7 +2487,6 @@ subroutine testLakeFractionCalculationTest11
    integer :: nlat_lake, nlon_lake
    integer :: nlat_surface, nlon_surface
    integer :: npixels, counter
-   integer :: pixel_number
    integer :: lat,lon
    integer :: i,j
 
@@ -2657,54 +2653,39 @@ subroutine testLakeFractionCalculationTest11
                                                potential_lake_pixel_coords_list_lon, &
                                                cell_coords_list_lat, &
                                                cell_coords_list_lon)
-      call setup_lake_for_fraction_calculation(lakes, &
-                                               cell_pixel_counts, &
-                                               binary_lake_mask, &
-                                               lake_properties, &
-                                               pixel_numbers, &
-                                               pixels, &
-                                               lake_pixel_counts_field, &
-                                               corresponding_surface_cell_lat_index, &
-                                               corresponding_surface_cell_lon_index, &
-                                               nlat_lake,nlon_lake, &
-                                               nlat_surface,nlon_surface)
+      prognostics => setup_lake_for_fraction_calculation(lakes, &
+                                                         cell_pixel_counts, &
+                                                         binary_lake_mask, &
+                                                         lake_pixel_mask, &
+                                                         corresponding_surface_cell_lat_index, &
+                                                         corresponding_surface_cell_lon_index, &
+                                                         nlat_lake,nlon_lake, &
+                                                         nlat_surface,nlon_surface)
+      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
+      lake_pixel_counts_field(:,:) = 0
       do i = 1,size(potential_lake_pixel_coords_list_lat)
-        pixel_number = pixel_numbers(potential_lake_pixel_coords_list_lat(i),&
-                                     potential_lake_pixel_coords_list_lon(i))
-        working_pixel => pixels(pixel_number)%pixel_pointer
-        call add_pixel(lake_properties(1)%lake_properties_pointer,&
-                       working_pixel,pixels,lake_pixel_counts_field)
+        call add_pixel_by_coords(potential_lake_pixel_coords_list_lat(i),&
+                                 potential_lake_pixel_coords_list_lon(i), &
+                                 lake_pixel_counts_field,prognostics)
       end do
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field,&
                          nlat_surface,nlon_surface)
-      pixel_number = pixel_numbers(15,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake_properties(1)%lake_properties_pointer,&
-                        working_pixel,pixels,lake_pixel_counts_field)
-      pixel_number = pixel_numbers(11,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake_properties(1)%lake_properties_pointer,&
-                        working_pixel,pixels,lake_pixel_counts_field)
-      pixel_number = pixel_numbers(15,20)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake_properties(1)%lake_properties_pointer,&
-                        working_pixel,pixels,lake_pixel_counts_field)
+      call remove_pixel_by_coords(15,19,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(11,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(15,20,lake_pixel_counts_field, &
+                                  prognostics)
       call assert_equals(lake_pixel_counts_field, &
                          expected_immediate_lake_pixel_counts_field, &
                          nlat_surface,nlon_surface)
-      pixel_number = pixel_numbers(15,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake_properties(1)%lake_properties_pointer,&
-                     working_pixel,pixels,lake_pixel_counts_field)
-      pixel_number = pixel_numbers(11,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake_properties(1)%lake_properties_pointer,&
-                     working_pixel,pixels,lake_pixel_counts_field)
-      pixel_number = pixel_numbers(15,20)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake_properties(1)%lake_properties_pointer,&
-                     working_pixel,pixels,lake_pixel_counts_field)
+      call add_pixel_by_coords(15,19,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(11,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(15,20,lake_pixel_counts_field, &
+                               prognostics)
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field,nlat_surface,nlon_surface)
       do i = 1,size(lakes)
@@ -2734,34 +2715,13 @@ subroutine testLakeFractionCalculationTest11
       deallocate(expected_immediate_lake_pixel_counts_field)
       deallocate(cell_mask)
       deallocate(mask)
-      deallocate(pixel_numbers)
-      do i = 1,size(pixels)
-        deallocate(pixels(i)%pixel_pointer)
-      end do
-      deallocate(pixels)
-      do i = 1,size(lake_properties)
-        do j = 1,size(lake_properties(i)%lake_properties_pointer%cell_list)
-          call clean_lake_cell(lake_properties(i)%lake_properties_pointer%&
-                               &cell_list(j)%lake_cell_pointer)
-          deallocate(lake_properties(i)%lake_properties_pointer%&
-                     &cell_list(j)%lake_cell_pointer)
-        end do
-        deallocate(lake_properties(i)%lake_properties_pointer%&
-                   &cell_list)
-        deallocate(lake_properties(i)%lake_properties_pointer)
-      end do
-      deallocate(lake_properties)
 end subroutine testLakeFractionCalculationTest11
 
 subroutine testLakeFractionCalculationTest12
    use l2_calculate_lake_fractions_mod
    type(lakeinputpointer), dimension(:), pointer :: lakes
+   type(lakefractioncalculationprognostics), pointer :: prognostics
    integer :: lake_number
-   type(lakepropertiespointer), dimension(:), pointer :: lake_properties
-   type(lakeproperties), pointer :: lake
-   integer, dimension(:,:), pointer :: pixel_numbers
-   type(pixelpointer), dimension(:), pointer :: pixels
-   type(pixel), pointer :: working_pixel
    integer,dimension(:,:), pointer :: lake_pixel_mask
    integer,dimension(:,:), pointer :: cell_pixel_counts
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
@@ -2783,7 +2743,6 @@ subroutine testLakeFractionCalculationTest12
    integer :: nlat_lake, nlon_lake
    integer :: nlat_surface, nlon_surface
    integer :: npixels, counter
-   integer :: pixel_number
    integer :: lat,lon
    integer :: i,j
 
@@ -2952,19 +2911,17 @@ subroutine testLakeFractionCalculationTest12
                     cell_coords_list_lat, &
                     cell_coords_list_lon)
       end do
-      call setup_lake_for_fraction_calculation(lakes, &
-                                               cell_pixel_counts, &
-                                               binary_lake_mask, &
-                                               lake_properties, &
-                                               pixel_numbers, &
-                                               pixels, &
-                                               lake_pixel_counts_field, &
-                                               corresponding_surface_cell_lat_index, &
-                                               corresponding_surface_cell_lon_index, &
-                                               nlat_lake,nlon_lake, &
-                                               nlat_surface,nlon_surface)
+      prognostics => setup_lake_for_fraction_calculation(lakes, &
+                                                         cell_pixel_counts, &
+                                                         binary_lake_mask, &
+                                                         lake_pixel_mask, &
+                                                         corresponding_surface_cell_lat_index, &
+                                                         corresponding_surface_cell_lon_index, &
+                                                         nlat_lake,nlon_lake, &
+                                                         nlat_surface,nlon_surface)
+      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
+      lake_pixel_counts_field(:,:) = 0
       do lake_number = 1,7
-        lake => lake_properties(lake_number)%lake_properties_pointer
         mask = (lake_pixel_mask == lake_number)
         npixels = count(mask)
         allocate(potential_lake_pixel_coords_list_lat(npixels))
@@ -2980,387 +2937,202 @@ subroutine testLakeFractionCalculationTest12
           end do
         end do
         do i = 1,size(potential_lake_pixel_coords_list_lat)
-          pixel_number = pixel_numbers(potential_lake_pixel_coords_list_lat(i),&
-                                       potential_lake_pixel_coords_list_lon(i))
-          working_pixel => pixels(pixel_number)%pixel_pointer
-          call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
+          call add_pixel_by_coords(potential_lake_pixel_coords_list_lat(i), &
+                                   potential_lake_pixel_coords_list_lon(i), &
+                                   lake_pixel_counts_field,prognostics)
         end do
         deallocate(potential_lake_pixel_coords_list_lat)
         deallocate(potential_lake_pixel_coords_list_lon)
       end do
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field,nlat_surface,nlon_surface)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(2,2)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(5)%lake_properties_pointer
-      pixel_number = pixel_numbers(16,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(5)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(7)%lake_properties_pointer
-      pixel_number = pixel_numbers(2,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(3)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(3)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(12,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(12,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(12,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(12,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,16)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,16)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,15)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,15)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(20,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,16)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,15)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,15)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,15)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,20)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,20)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,20)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(7,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(7,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,16)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
+      call remove_pixel_by_coords(2,2,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,3,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(10,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(16,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(19,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(8,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(5,19,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(6,17,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,17,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(2,19,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,12,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,11,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(11,9,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(12,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(12,7,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(10,7,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(11,10,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(11,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(12,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(12,19,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(11,19,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(14,16,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(15,16,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(15,15,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(14,15,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(14,17,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(15,17,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(18,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(18,19,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(19,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(20,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(19,17,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(19,16,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(19,15,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(18,15,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(17,15,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(13,20,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(14,20,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(15,20,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(6,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(7,17,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(7,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(5,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(5,17,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(5,16,lake_pixel_counts_field, &
+                                  prognostics)
       call assert_equals(lake_pixel_counts_field, &
                          expected_immediate_lake_pixel_counts_field, &
                          nlat_surface,nlon_surface)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(2,2)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(5)%lake_properties_pointer
-      pixel_number = pixel_numbers(16,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(5)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(7)%lake_properties_pointer
-      pixel_number = pixel_numbers(2,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(3)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(3)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(12,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(12,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(12,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(12,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,16)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,16)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,15)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,15)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(20,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,16)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,15)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,15)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,15)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,20)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,20)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,20)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(7,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(7,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,16)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
+      call add_pixel_by_coords(2,2,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,3,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(10,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(16,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(19,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(8,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(5,19,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(6,17,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,17,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(2,19,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,12,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,11,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(11,9,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(12,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(12,7,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(10,7,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(11,10,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(11,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(12,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(12,19,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(11,19,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(14,16,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(15,16,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(15,15,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(14,15,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(14,17,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(15,17,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(18,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(18,19,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(19,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(20,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(19,17,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(19,16,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(19,15,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(18,15,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(17,15,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(13,20,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(14,20,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(15,20,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(6,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(7,17,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(7,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(5,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(5,17,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(5,16,lake_pixel_counts_field, &
+                               prognostics)
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field,nlat_surface,nlon_surface)
       do i = 1,size(lakes)
@@ -3390,34 +3162,13 @@ subroutine testLakeFractionCalculationTest12
       deallocate(expected_immediate_lake_pixel_counts_field)
       deallocate(cell_mask)
       deallocate(mask)
-      deallocate(pixel_numbers)
-      do i = 1,size(pixels)
-        deallocate(pixels(i)%pixel_pointer)
-      end do
-      deallocate(pixels)
-      do i = 1,size(lake_properties)
-        do j = 1,size(lake_properties(i)%lake_properties_pointer%cell_list)
-          call clean_lake_cell(lake_properties(i)%lake_properties_pointer%&
-                               &cell_list(j)%lake_cell_pointer)
-          deallocate(lake_properties(i)%lake_properties_pointer%&
-                     &cell_list(j)%lake_cell_pointer)
-        end do
-        deallocate(lake_properties(i)%lake_properties_pointer%&
-                   &cell_list)
-        deallocate(lake_properties(i)%lake_properties_pointer)
-      end do
-      deallocate(lake_properties)
 end subroutine testLakeFractionCalculationTest12
 
 subroutine testLakeFractionCalculationTest13
    use l2_calculate_lake_fractions_mod
    type(lakeinputpointer), dimension(:), pointer :: lakes
+   type(lakefractioncalculationprognostics), pointer :: prognostics
    integer :: lake_number
-   type(lakepropertiespointer), dimension(:), pointer :: lake_properties
-   type(lakeproperties), pointer :: lake
-   integer, dimension(:,:), pointer :: pixel_numbers
-   type(pixelpointer), dimension(:), pointer :: pixels
-   type(pixel), pointer :: working_pixel
    integer,dimension(:,:), pointer :: lake_pixel_mask
    integer,dimension(:,:), pointer :: cell_pixel_counts
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
@@ -3440,7 +3191,6 @@ subroutine testLakeFractionCalculationTest13
    integer :: nlat_lake, nlon_lake
    integer :: nlat_surface, nlon_surface
    integer :: npixels, counter
-   integer :: pixel_number
    integer :: lat,lon
    integer :: i,j
 
@@ -3617,19 +3367,17 @@ subroutine testLakeFractionCalculationTest13
                     cell_coords_list_lat, &
                     cell_coords_list_lon)
       end do
-      call setup_lake_for_fraction_calculation(lakes, &
-                                               cell_pixel_counts, &
-                                               binary_lake_mask, &
-                                               lake_properties, &
-                                               pixel_numbers, &
-                                               pixels, &
-                                               lake_pixel_counts_field, &
-                                               corresponding_surface_cell_lat_index, &
-                                               corresponding_surface_cell_lon_index, &
-                                               nlat_lake,nlon_lake, &
-                                               nlat_surface,nlon_surface)
+      prognostics => setup_lake_for_fraction_calculation(lakes, &
+                                                         cell_pixel_counts, &
+                                                         binary_lake_mask, &
+                                                         lake_pixel_mask, &
+                                                         corresponding_surface_cell_lat_index, &
+                                                         corresponding_surface_cell_lon_index, &
+                                                         nlat_lake,nlon_lake, &
+                                                         nlat_surface,nlon_surface)
+      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
+      lake_pixel_counts_field(:,:) = 0
       do lake_number = 1,9
-        lake => lake_properties(lake_number)%lake_properties_pointer
         mask = (lake_pixel_mask == lake_number)
         npixels = count(mask)
         allocate(potential_lake_pixel_coords_list_lat(npixels))
@@ -3645,10 +3393,9 @@ subroutine testLakeFractionCalculationTest13
           end do
         end do
         do i = 1,size(potential_lake_pixel_coords_list_lat)
-          pixel_number = pixel_numbers(potential_lake_pixel_coords_list_lat(i),&
-                                       potential_lake_pixel_coords_list_lon(i))
-          working_pixel => pixels(pixel_number)%pixel_pointer
-          call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
+          call add_pixel_by_coords(potential_lake_pixel_coords_list_lat(i), &
+                                   potential_lake_pixel_coords_list_lon(i), &
+                                   lake_pixel_counts_field,prognostics)
         end do
         deallocate(potential_lake_pixel_coords_list_lat)
         deallocate(potential_lake_pixel_coords_list_lon)
@@ -3656,449 +3403,229 @@ subroutine testLakeFractionCalculationTest13
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field,&
                          nlat_surface,nlon_surface)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(2,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(2,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,5)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,5)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(7,5)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(7,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(7,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(7,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,5)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,5)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,13)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,13)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,14)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(3)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,14)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(3)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,15)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(3)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,15)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(3)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,14)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(5)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(5)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(5)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(9)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(9)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,20)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(9)%lake_properties_pointer
-      pixel_number = pixel_numbers(9,20)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(9)%lake_properties_pointer
-      pixel_number = pixel_numbers(9,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(9)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,16)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(9)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(8)%lake_properties_pointer
-      pixel_number = pixel_numbers(7,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(8)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(8)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(8)%lake_properties_pointer
-      pixel_number = pixel_numbers(7,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(7)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(7)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(7)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(7)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
+      call remove_pixel_by_coords(2,3,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,3,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(4,3,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,9,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(4,9,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(4,10,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,10,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,11,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(2,11,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(5,5,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(5,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(5,7,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(5,8,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(6,8,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(6,7,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(6,5,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(7,5,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(7,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(7,7,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(7,8,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(8,8,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(8,7,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(8,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(8,5,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(17,5,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(17,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(17,7,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(17,11,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(17,12,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(18,12,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(18,13,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(17,13,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(17,14,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(14,14,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(14,15,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(13,15,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(13,14,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(17,17,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(17,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(18,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(8,19,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(8,20,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(9,20,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(9,19,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(10,16,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(10,17,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(7,17,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(8,17,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(8,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(7,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(6,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(5,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(5,19,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(6,19,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(10,11,lake_pixel_counts_field, &
+                                  prognostics)
       call assert_equals(lake_pixel_counts_field, &
                          expected_intermediate_lake_pixel_counts_field,&
                          nlat_surface,nlon_surface)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(2,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(2,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,5)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,5)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(7,5)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(7,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(7,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(7,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,5)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,5)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,13)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,13)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(4)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,14)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(3)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,14)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(3)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,15)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(3)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,15)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(3)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,14)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(5)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(5)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(5)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(9)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(9)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,20)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(9)%lake_properties_pointer
-      pixel_number = pixel_numbers(9,20)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(9)%lake_properties_pointer
-      pixel_number = pixel_numbers(9,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(9)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,16)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(9)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(8)%lake_properties_pointer
-      pixel_number = pixel_numbers(7,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(8)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(8)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(8)%lake_properties_pointer
-      pixel_number = pixel_numbers(7,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(7)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(7)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(7)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(7)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(6)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
+      call add_pixel_by_coords(2,3,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,3,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(4,3,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,9,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(4,9,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(4,10,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,10,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,11,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(2,11,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(5,5,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(5,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(5,7,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(5,8,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(6,8,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(6,7,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(6,5,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(7,5,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(7,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(7,7,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(7,8,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(8,8,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(8,7,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(8,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(8,5,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(17,5,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(17,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(17,7,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(17,11,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(17,12,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(18,12,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(18,13,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(17,13,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(17,14,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(14,14,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(14,15,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(13,15,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(13,14,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(17,17,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(17,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(18,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(8,19,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(8,20,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(9,20,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(9,19,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(10,16,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(10,17,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(7,17,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(8,17,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(8,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(7,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(6,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(5,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(5,19,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(6,19,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(10,11,lake_pixel_counts_field, &
+                               prognostics)
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field_two,&
                          nlat_surface,nlon_surface)
@@ -4130,34 +3657,13 @@ subroutine testLakeFractionCalculationTest13
       deallocate(expected_intermediate_lake_pixel_counts_field)
       deallocate(cell_mask)
       deallocate(mask)
-      deallocate(pixel_numbers)
-      do i = 1,size(pixels)
-        deallocate(pixels(i)%pixel_pointer)
-      end do
-      deallocate(pixels)
-      do i = 1,size(lake_properties)
-        do j = 1,size(lake_properties(i)%lake_properties_pointer%cell_list)
-          call clean_lake_cell(lake_properties(i)%lake_properties_pointer%&
-                               &cell_list(j)%lake_cell_pointer)
-          deallocate(lake_properties(i)%lake_properties_pointer%&
-                     &cell_list(j)%lake_cell_pointer)
-        end do
-        deallocate(lake_properties(i)%lake_properties_pointer%&
-                   &cell_list)
-        deallocate(lake_properties(i)%lake_properties_pointer)
-      end do
-      deallocate(lake_properties)
 end subroutine testLakeFractionCalculationTest13
 
 subroutine testLakeFractionCalculationTest14
    use l2_calculate_lake_fractions_mod
    type(lakeinputpointer), dimension(:), pointer :: lakes
+   type(lakefractioncalculationprognostics), pointer :: prognostics
    integer :: lake_number
-   type(lakepropertiespointer), dimension(:), pointer :: lake_properties
-   type(lakeproperties), pointer :: lake
-   integer, dimension(:,:), pointer :: pixel_numbers
-   type(pixelpointer), dimension(:), pointer :: pixels
-   type(pixel), pointer :: working_pixel
    integer,dimension(:,:), pointer :: lake_pixel_mask
    integer,dimension(:,:), pointer :: cell_pixel_counts
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
@@ -4177,7 +3683,6 @@ subroutine testLakeFractionCalculationTest14
    logical, dimension(:,:), pointer :: mask
    integer :: nlat_lake, nlon_lake
    integer :: nlat_surface, nlon_surface
-   integer :: pixel_number
    integer :: npixels, counter
    integer :: lat,lon
    integer :: i,j
@@ -4339,19 +3844,17 @@ subroutine testLakeFractionCalculationTest14
                     cell_coords_list_lat, &
                     cell_coords_list_lon)
       end do
-      call setup_lake_for_fraction_calculation(lakes, &
-                                               cell_pixel_counts, &
-                                               binary_lake_mask, &
-                                               lake_properties, &
-                                               pixel_numbers, &
-                                               pixels, &
-                                               lake_pixel_counts_field, &
-                                               corresponding_surface_cell_lat_index, &
-                                               corresponding_surface_cell_lon_index, &
-                                               nlat_lake,nlon_lake, &
-                                               nlat_surface,nlon_surface)
+      prognostics => setup_lake_for_fraction_calculation(lakes, &
+                                                         cell_pixel_counts, &
+                                                         binary_lake_mask, &
+                                                         lake_pixel_mask, &
+                                                         corresponding_surface_cell_lat_index, &
+                                                         corresponding_surface_cell_lon_index, &
+                                                         nlat_lake,nlon_lake, &
+                                                         nlat_surface,nlon_surface)
+      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
+      lake_pixel_counts_field(:,:) = 0
       do lake_number = 1,2
-        lake => lake_properties(lake_number)%lake_properties_pointer
         mask = (lake_pixel_mask == lake_number)
         npixels = count(mask)
         allocate(potential_lake_pixel_coords_list_lat(npixels))
@@ -4367,10 +3870,9 @@ subroutine testLakeFractionCalculationTest14
           end do
         end do
         do i = 1,size(potential_lake_pixel_coords_list_lat)
-          pixel_number = pixel_numbers(potential_lake_pixel_coords_list_lat(i),&
-                                       potential_lake_pixel_coords_list_lon(i))
-          working_pixel => pixels(pixel_number)%pixel_pointer
-          call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
+          call add_pixel_by_coords(potential_lake_pixel_coords_list_lat(i), &
+                                   potential_lake_pixel_coords_list_lon(i), &
+                                   lake_pixel_counts_field,prognostics)
         end do
         deallocate(potential_lake_pixel_coords_list_lat)
         deallocate(potential_lake_pixel_coords_list_lon)
@@ -4403,34 +3905,13 @@ subroutine testLakeFractionCalculationTest14
       deallocate(expected_lake_fractions_field)
       deallocate(cell_mask)
       deallocate(mask)
-      deallocate(pixel_numbers)
-      do i = 1,size(pixels)
-        deallocate(pixels(i)%pixel_pointer)
-      end do
-      deallocate(pixels)
-      do i = 1,size(lake_properties)
-        do j = 1,size(lake_properties(i)%lake_properties_pointer%cell_list)
-          call clean_lake_cell(lake_properties(i)%lake_properties_pointer%&
-                               &cell_list(j)%lake_cell_pointer)
-          deallocate(lake_properties(i)%lake_properties_pointer%&
-                     &cell_list(j)%lake_cell_pointer)
-        end do
-        deallocate(lake_properties(i)%lake_properties_pointer%&
-                   &cell_list)
-        deallocate(lake_properties(i)%lake_properties_pointer)
-      end do
-      deallocate(lake_properties)
 end subroutine testLakeFractionCalculationTest14
 
 subroutine testLakeFractionCalculationTest15
    use l2_calculate_lake_fractions_mod
    type(lakeinputpointer), dimension(:), pointer :: lakes
+   type(lakefractioncalculationprognostics), pointer :: prognostics
    integer :: lake_number
-   type(lakepropertiespointer), dimension(:), pointer :: lake_properties
-   type(lakeproperties), pointer :: lake
-   integer, dimension(:,:), pointer :: pixel_numbers
-   type(pixelpointer), dimension(:), pointer :: pixels
-   type(pixel), pointer :: working_pixel
    integer,dimension(:,:), pointer :: lake_pixel_mask
    integer,dimension(:,:), pointer :: cell_pixel_counts
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
@@ -4452,7 +3933,6 @@ subroutine testLakeFractionCalculationTest15
    integer :: nlat_lake, nlon_lake
    integer :: nlat_surface, nlon_surface
    integer :: npixels, counter
-   integer :: pixel_number
    integer :: lat,lon
    integer :: i,j
 
@@ -4606,19 +4086,17 @@ subroutine testLakeFractionCalculationTest15
                     cell_coords_list_lat, &
                     cell_coords_list_lon)
       end do
-      call setup_lake_for_fraction_calculation(lakes, &
-                                               cell_pixel_counts, &
-                                               binary_lake_mask, &
-                                               lake_properties, &
-                                               pixel_numbers, &
-                                               pixels, &
-                                               lake_pixel_counts_field, &
-                                               corresponding_surface_cell_lat_index, &
-                                               corresponding_surface_cell_lon_index, &
-                                               nlat_lake,nlon_lake, &
-                                               nlat_surface,nlon_surface)
+      prognostics => setup_lake_for_fraction_calculation(lakes, &
+                                                         cell_pixel_counts, &
+                                                         binary_lake_mask, &
+                                                         lake_pixel_mask, &
+                                                         corresponding_surface_cell_lat_index, &
+                                                         corresponding_surface_cell_lon_index, &
+                                                         nlat_lake,nlon_lake, &
+                                                         nlat_surface,nlon_surface)
+      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
+      lake_pixel_counts_field(:,:) = 0
       do lake_number = 1,2
-        lake => lake_properties(lake_number)%lake_properties_pointer
         mask = (lake_pixel_mask == lake_number)
         npixels = count(mask)
         allocate(potential_lake_pixel_coords_list_lat(npixels))
@@ -4634,10 +4112,9 @@ subroutine testLakeFractionCalculationTest15
           end do
         end do
         do i = 1,size(potential_lake_pixel_coords_list_lat)
-          pixel_number = pixel_numbers(potential_lake_pixel_coords_list_lat(i),&
-                                       potential_lake_pixel_coords_list_lon(i))
-          working_pixel => pixels(pixel_number)%pixel_pointer
-          call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
+          call add_pixel_by_coords(potential_lake_pixel_coords_list_lat(i), &
+                                   potential_lake_pixel_coords_list_lon(i), &
+                                   lake_pixel_counts_field,prognostics)
         end do
         deallocate(potential_lake_pixel_coords_list_lat)
         deallocate(potential_lake_pixel_coords_list_lon)
@@ -4645,89 +4122,49 @@ subroutine testLakeFractionCalculationTest15
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field, &
                          nlat_surface,nlon_surface)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,2)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,4)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,20)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,20)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
+      call remove_pixel_by_coords(11,2,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(11,4,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(11,3,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(4,20,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(4,19,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(4,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,19,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,20,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(4,17,lake_pixel_counts_field, &
+                                  prognostics)
       call assert_equals(lake_pixel_counts_field, &
                          expected_intermediate_lake_pixel_counts_field, &
                          nlat_surface,nlon_surface)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,2)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,4)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,20)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,20)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
+      call add_pixel_by_coords(11,2,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(11,4,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(11,3,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(4,20,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(4,19,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(4,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,19,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,20,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(4,17,lake_pixel_counts_field, &
+                               prognostics)
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field,&
                          nlat_surface,nlon_surface)
@@ -4758,33 +4195,13 @@ subroutine testLakeFractionCalculationTest15
       deallocate(expected_intermediate_lake_pixel_counts_field)
       deallocate(cell_mask)
       deallocate(mask)
-      deallocate(pixel_numbers)
-      do i = 1,size(pixels)
-        deallocate(pixels(i)%pixel_pointer)
-      end do
-      deallocate(pixels)
-      do i = 1,size(lake_properties)
-        do j = 1,size(lake_properties(i)%lake_properties_pointer%cell_list)
-          call clean_lake_cell(lake_properties(i)%lake_properties_pointer%&
-                               &cell_list(j)%lake_cell_pointer)
-          deallocate(lake_properties(i)%lake_properties_pointer%&
-                     &cell_list(j)%lake_cell_pointer)
-        end do
-        deallocate(lake_properties(i)%lake_properties_pointer%&
-                   &cell_list)
-        deallocate(lake_properties(i)%lake_properties_pointer)
-      end do
-      deallocate(lake_properties)
 end subroutine testLakeFractionCalculationTest15
 
 subroutine testLakeFractionCalculationTest16
    use l2_calculate_lake_fractions_mod
    type(lakeinputpointer), dimension(:), pointer :: lakes
+   type(lakefractioncalculationprognostics), pointer :: prognostics
    integer :: lake_number
-   type(lakepropertiespointer), dimension(:), pointer :: lake_properties
-   integer, dimension(:,:), pointer :: pixel_numbers
-   type(pixelpointer), dimension(:), pointer :: pixels
-   type(pixel), pointer :: working_pixel
    integer,dimension(:,:), pointer :: potential_lake_pixel_mask
    integer,dimension(:,:), pointer :: lake_pixel_mask
    integer,dimension(:,:), pointer :: cell_pixel_counts
@@ -4806,7 +4223,6 @@ subroutine testLakeFractionCalculationTest16
    integer :: nlat_lake, nlon_lake
    integer :: nlat_surface, nlon_surface
    integer :: npixels, counter
-   integer :: pixel_number
    integer :: lat,lon
    integer :: i,j
 
@@ -4988,24 +4404,20 @@ subroutine testLakeFractionCalculationTest16
                                                potential_lake_pixel_coords_list_lon, &
                                                cell_coords_list_lat, &
                                                cell_coords_list_lon)
-      call setup_lake_for_fraction_calculation(lakes, &
-                                               cell_pixel_counts, &
-                                               binary_lake_mask, &
-                                               lake_properties, &
-                                               pixel_numbers, &
-                                               pixels, &
-                                               lake_pixel_counts_field, &
-                                               corresponding_surface_cell_lat_index, &
-                                               corresponding_surface_cell_lon_index, &
-                                               nlat_lake,nlon_lake, &
-                                               nlat_surface,nlon_surface)
+      prognostics => setup_lake_for_fraction_calculation(lakes, &
+                                                         cell_pixel_counts, &
+                                                         binary_lake_mask, &
+                                                         potential_lake_pixel_mask, &
+                                                         corresponding_surface_cell_lat_index, &
+                                                         corresponding_surface_cell_lon_index, &
+                                                         nlat_lake,nlon_lake, &
+                                                         nlat_surface,nlon_surface)
+      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
+      lake_pixel_counts_field(:,:) = 0
       do i = 1,nlat_lake
         do j = 1,nlon_lake
           if (lake_pixel_mask(i,j) == 1) then
-            pixel_number = pixel_numbers(i,j)
-            working_pixel => pixels(pixel_number)%pixel_pointer
-            call add_pixel(lake_properties(1)%lake_properties_pointer,&
-                           working_pixel,pixels,lake_pixel_counts_field)
+            call add_pixel_by_coords(i,j,lake_pixel_counts_field,prognostics)
           end if
         end do
       end do
@@ -5039,34 +4451,13 @@ subroutine testLakeFractionCalculationTest16
       deallocate(expected_lake_fractions_field)
       deallocate(cell_mask)
       deallocate(mask)
-      deallocate(pixel_numbers)
-      do i = 1,size(pixels)
-        deallocate(pixels(i)%pixel_pointer)
-      end do
-      deallocate(pixels)
-      do i = 1,size(lake_properties)
-        do j = 1,size(lake_properties(i)%lake_properties_pointer%cell_list)
-          call clean_lake_cell(lake_properties(i)%lake_properties_pointer%&
-                               &cell_list(j)%lake_cell_pointer)
-          deallocate(lake_properties(i)%lake_properties_pointer%&
-                     &cell_list(j)%lake_cell_pointer)
-        end do
-        deallocate(lake_properties(i)%lake_properties_pointer%&
-                   &cell_list)
-        deallocate(lake_properties(i)%lake_properties_pointer)
-      end do
-      deallocate(lake_properties)
 end subroutine testLakeFractionCalculationTest16
 
 subroutine testLakeFractionCalculationTest17
    use l2_calculate_lake_fractions_mod
    type(lakeinputpointer), dimension(:), pointer :: lakes
+   type(lakefractioncalculationprognostics), pointer :: prognostics
    integer :: lake_number
-   type(lakepropertiespointer), dimension(:), pointer :: lake_properties
-   type(lakeproperties), pointer :: lake
-   integer, dimension(:,:), pointer :: pixel_numbers
-   type(pixelpointer), dimension(:), pointer :: pixels
-   type(pixel), pointer :: working_pixel
    integer,dimension(:,:), pointer :: potential_lake_pixel_mask
    integer,dimension(:,:), pointer :: lake_pixel_mask
    integer,dimension(:,:), pointer :: cell_pixel_counts
@@ -5088,7 +4479,6 @@ subroutine testLakeFractionCalculationTest17
    integer :: nlat_lake, nlon_lake
    integer :: nlat_surface, nlon_surface
    integer :: npixels, counter
-   integer :: pixel_number
    integer :: lat,lon
    integer :: i,j
 
@@ -5272,25 +4662,21 @@ subroutine testLakeFractionCalculationTest17
                     cell_coords_list_lat, &
                     cell_coords_list_lon)
       end do
-      call setup_lake_for_fraction_calculation(lakes, &
-                                               cell_pixel_counts, &
-                                               binary_lake_mask, &
-                                               lake_properties, &
-                                               pixel_numbers, &
-                                               pixels, &
-                                               lake_pixel_counts_field, &
-                                               corresponding_surface_cell_lat_index, &
-                                               corresponding_surface_cell_lon_index, &
-                                               nlat_lake,nlon_lake, &
-                                               nlat_surface,nlon_surface)
+      prognostics => setup_lake_for_fraction_calculation(lakes, &
+                                                         cell_pixel_counts, &
+                                                         binary_lake_mask, &
+                                                         potential_lake_pixel_mask, &
+                                                         corresponding_surface_cell_lat_index, &
+                                                         corresponding_surface_cell_lon_index, &
+                                                         nlat_lake,nlon_lake, &
+                                                         nlat_surface,nlon_surface)
+      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
+      lake_pixel_counts_field(:,:) = 0
       do lake_number = 1,7
         do i = 1,nlat_lake
           do j = 1,nlon_lake
             if (lake_pixel_mask(i,j) == lake_number) then
-              pixel_number = pixel_numbers(i,j)
-              working_pixel => pixels(pixel_number)%pixel_pointer
-              call add_pixel(lake_properties(lake_number)%lake_properties_pointer,&
-                             working_pixel,pixels,lake_pixel_counts_field)
+              call add_pixel_by_coords(i,j,lake_pixel_counts_field,prognostics)
             end if
           end do
         end do
@@ -5325,34 +4711,13 @@ subroutine testLakeFractionCalculationTest17
       deallocate(expected_lake_fractions_field)
       deallocate(cell_mask)
       deallocate(mask)
-      deallocate(pixel_numbers)
-      do i = 1,size(pixels)
-        deallocate(pixels(i)%pixel_pointer)
-      end do
-      deallocate(pixels)
-      do i = 1,size(lake_properties)
-        do j = 1,size(lake_properties(i)%lake_properties_pointer%cell_list)
-          call clean_lake_cell(lake_properties(i)%lake_properties_pointer%&
-                               &cell_list(j)%lake_cell_pointer)
-          deallocate(lake_properties(i)%lake_properties_pointer%&
-                     &cell_list(j)%lake_cell_pointer)
-        end do
-        deallocate(lake_properties(i)%lake_properties_pointer%&
-                   &cell_list)
-        deallocate(lake_properties(i)%lake_properties_pointer)
-      end do
-      deallocate(lake_properties)
 end subroutine testLakeFractionCalculationTest17
 
 subroutine testLakeFractionCalculationTest18
    use l2_calculate_lake_fractions_mod
    type(lakeinputpointer), dimension(:), pointer :: lakes
+   type(lakefractioncalculationprognostics), pointer :: prognostics
    integer :: lake_number
-   type(lakepropertiespointer), dimension(:), pointer :: lake_properties
-   type(lakeproperties), pointer :: lake
-   integer, dimension(:,:), pointer :: pixel_numbers
-   type(pixelpointer), dimension(:), pointer :: pixels
-   type(pixel), pointer :: working_pixel
    integer,dimension(:,:), pointer :: potential_lake_pixel_mask
    integer,dimension(:,:), pointer :: lake_pixel_mask
    integer,dimension(:,:), pointer :: cell_pixel_counts
@@ -5374,7 +4739,6 @@ subroutine testLakeFractionCalculationTest18
    integer :: nlat_lake, nlon_lake
    integer :: nlat_surface, nlon_surface
    integer :: npixels, counter
-   integer :: pixel_number
    integer :: lat,lon
    integer :: i,j
 
@@ -5558,25 +4922,21 @@ subroutine testLakeFractionCalculationTest18
                     cell_coords_list_lat, &
                     cell_coords_list_lon)
       end do
-      call setup_lake_for_fraction_calculation(lakes, &
-                                               cell_pixel_counts, &
-                                               binary_lake_mask, &
-                                               lake_properties, &
-                                               pixel_numbers, &
-                                               pixels, &
-                                               lake_pixel_counts_field, &
-                                               corresponding_surface_cell_lat_index, &
-                                               corresponding_surface_cell_lon_index, &
-                                               nlat_lake,nlon_lake, &
-                                               nlat_surface,nlon_surface)
+      prognostics => setup_lake_for_fraction_calculation(lakes, &
+                                                         cell_pixel_counts, &
+                                                         binary_lake_mask, &
+                                                         potential_lake_pixel_mask, &
+                                                         corresponding_surface_cell_lat_index, &
+                                                         corresponding_surface_cell_lon_index, &
+                                                         nlat_lake,nlon_lake, &
+                                                         nlat_surface,nlon_surface)
+      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
+      lake_pixel_counts_field(:,:) = 0
       do lake_number = 1,9
         do i = 1,nlat_lake
           do j = 1,nlon_lake
             if (lake_pixel_mask(i,j) == lake_number) then
-              pixel_number = pixel_numbers(i,j)
-              working_pixel => pixels(pixel_number)%pixel_pointer
-              call add_pixel(lake_properties(lake_number)%lake_properties_pointer,&
-                             working_pixel,pixels,lake_pixel_counts_field)
+              call add_pixel_by_coords(i,j,lake_pixel_counts_field,prognostics)
             end if
           end do
         end do
@@ -5611,34 +4971,13 @@ subroutine testLakeFractionCalculationTest18
       deallocate(expected_lake_fractions_field)
       deallocate(cell_mask)
       deallocate(mask)
-      deallocate(pixel_numbers)
-      do i = 1,size(pixels)
-        deallocate(pixels(i)%pixel_pointer)
-      end do
-      deallocate(pixels)
-      do i = 1,size(lake_properties)
-        do j = 1,size(lake_properties(i)%lake_properties_pointer%cell_list)
-          call clean_lake_cell(lake_properties(i)%lake_properties_pointer%&
-                               &cell_list(j)%lake_cell_pointer)
-          deallocate(lake_properties(i)%lake_properties_pointer%&
-                     &cell_list(j)%lake_cell_pointer)
-        end do
-        deallocate(lake_properties(i)%lake_properties_pointer%&
-                   &cell_list)
-        deallocate(lake_properties(i)%lake_properties_pointer)
-      end do
-      deallocate(lake_properties)
 end subroutine testLakeFractionCalculationTest18
 
 subroutine testLakeFractionCalculationTest19
    use l2_calculate_lake_fractions_mod
    type(lakeinputpointer), dimension(:), pointer :: lakes
+   type(lakefractioncalculationprognostics), pointer :: prognostics
    integer :: lake_number
-   type(lakepropertiespointer), dimension(:), pointer :: lake_properties
-   type(lakeproperties), pointer :: lake
-   integer, dimension(:,:), pointer :: pixel_numbers
-   type(pixelpointer), dimension(:), pointer :: pixels
-   type(pixel), pointer :: working_pixel
    integer,dimension(:,:), pointer :: potential_lake_pixel_mask
    integer,dimension(:,:), pointer :: lake_pixel_mask
    integer,dimension(:,:), pointer :: cell_pixel_counts
@@ -5666,7 +5005,6 @@ subroutine testLakeFractionCalculationTest19
    integer :: nlat_lake, nlon_lake
    integer :: nlat_surface, nlon_surface
    integer :: npixels, counter
-   integer :: pixel_number
    integer :: lat,lon
    integer :: i,j
 
@@ -5898,25 +5236,21 @@ subroutine testLakeFractionCalculationTest19
                     cell_coords_list_lat, &
                     cell_coords_list_lon)
       end do
-      call setup_lake_for_fraction_calculation(lakes, &
-                                               cell_pixel_counts, &
-                                               binary_lake_mask, &
-                                               lake_properties, &
-                                               pixel_numbers, &
-                                               pixels, &
-                                               lake_pixel_counts_field, &
-                                               corresponding_surface_cell_lat_index, &
-                                               corresponding_surface_cell_lon_index, &
-                                               nlat_lake,nlon_lake, &
-                                               nlat_surface,nlon_surface)
+      prognostics => setup_lake_for_fraction_calculation(lakes, &
+                                                         cell_pixel_counts, &
+                                                         binary_lake_mask, &
+                                                         potential_lake_pixel_mask, &
+                                                         corresponding_surface_cell_lat_index, &
+                                                         corresponding_surface_cell_lon_index, &
+                                                         nlat_lake,nlon_lake, &
+                                                         nlat_surface,nlon_surface)
+      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
+      lake_pixel_counts_field(:,:) = 0
       do lake_number = 1,2
         do i = 1,nlat_lake
           do j = 1,nlon_lake
             if (lake_pixel_mask(i,j) == lake_number) then
-              pixel_number = pixel_numbers(i,j)
-              working_pixel => pixels(pixel_number)%pixel_pointer
-              call add_pixel(lake_properties(lake_number)%lake_properties_pointer,&
-                             working_pixel,pixels,lake_pixel_counts_field)
+              call add_pixel_by_coords(i,j,lake_pixel_counts_field,prognostics)
             end if
           end do
         end do
@@ -5924,1077 +5258,549 @@ subroutine testLakeFractionCalculationTest19
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field,&
                          nlat_surface,nlon_surface)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(2,4)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(2,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,13)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,4)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,2)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,2)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(16,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,13)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(16,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(20,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(9,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(9,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(9,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(7,13)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
+      call remove_pixel_by_coords(2,4,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(2,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(4,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(5,7,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(4,8,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,11,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,12,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,13,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,19,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(10,4,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(10,3,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(10,2,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(11,2,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(15,3,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(16,3,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(17,17,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(18,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(19,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(14,19,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(13,13,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(13,11,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(14,11,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(15,11,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(15,10,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(16,10,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(17,9,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(17,8,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(18,8,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(18,9,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(18,10,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(19,8,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(20,7,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(19,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(18,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(11,9,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(10,8,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(9,7,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(9,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(9,12,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(8,12,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(7,13,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(6,12,lake_pixel_counts_field, &
+                                  prognostics)
       call assert_equals(lake_pixel_counts_field, &
                          expected_intermediate_lake_pixel_counts_field, &
                          nlat_surface,nlon_surface)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(2,4)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(2,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,13)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,4)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,2)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,2)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(16,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,13)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(16,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(20,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(9,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(9,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(9,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(7,13)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
+      call add_pixel_by_coords(2,4,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(2,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(4,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(5,7,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(4,8,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,11,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,12,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,13,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,19,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(10,4,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(10,3,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(10,2,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(11,2,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(15,3,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(16,3,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(17,17,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(18,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(19,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(14,19,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(13,13,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(13,11,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(14,11,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(15,11,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(15,10,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(16,10,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(17,9,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(17,8,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(18,8,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(18,9,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(18,10,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(19,8,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(20,7,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(19,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(18,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(11,9,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(10,8,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(9,7,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(9,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(9,12,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(8,12,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(7,13,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(6,12,lake_pixel_counts_field, &
+                               prognostics)
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field_after_cycle, &
                          nlat_surface,nlon_surface)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(2,4)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(2,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,13)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,4)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,2)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,2)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(16,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,13)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(16,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(20,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(9,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(9,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(9,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(7,13)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
+      call remove_pixel_by_coords(2,4,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(2,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(4,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(5,7,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(4,8,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,11,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,12,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,13,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,19,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(10,4,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(10,3,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(10,2,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(11,2,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(15,3,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(16,3,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(17,17,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(18,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(19,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(14,19,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(13,13,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(13,11,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(14,11,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(15,11,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(15,10,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(16,10,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(17,9,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(17,8,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(18,8,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(18,9,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(18,10,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(19,8,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(20,7,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(19,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(18,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(11,9,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(10,8,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(9,7,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(9,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(9,12,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(8,12,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(7,13,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(6,12,lake_pixel_counts_field, &
+                                  prognostics)
       call assert_equals(lake_pixel_counts_field, &
                          expected_intermediate_lake_pixel_counts_field_two, &
                          nlat_surface,nlon_surface)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(2,4)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(2,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,13)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,4)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,2)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,2)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(16,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,13)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(16,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(20,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(9,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(9,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(9,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(7,13)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
+      call add_pixel_by_coords(2,4,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(2,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(4,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(5,7,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(4,8,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,11,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,12,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,13,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,19,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(10,4,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(10,3,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(10,2,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(11,2,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(15,3,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(16,3,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(17,17,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(18,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(19,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(14,19,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(13,13,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(13,11,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(14,11,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(15,11,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(15,10,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(16,10,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(17,9,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(17,8,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(18,8,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(18,9,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(18,10,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(19,8,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(20,7,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(19,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(18,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(11,9,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(10,8,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(9,7,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(9,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(9,12,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(8,12,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(7,13,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(6,12,lake_pixel_counts_field, &
+                               prognostics)
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field_after_second_cycle, &
                          nlat_surface,nlon_surface)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(2,4)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(2,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,13)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,4)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,2)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,2)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(16,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,13)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(16,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(20,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(9,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(9,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(9,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(7,13)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
+      call remove_pixel_by_coords(2,4,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(2,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(4,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(5,7,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(4,8,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,11,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,12,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,13,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,19,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(10,4,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(10,3,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(10,2,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(11,2,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(15,3,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(16,3,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(17,17,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(18,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(19,18,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(14,19,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(13,13,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(13,11,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(14,11,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(15,11,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(15,10,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(16,10,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(17,9,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(17,8,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(18,8,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(18,9,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(18,10,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(19,8,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(20,7,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(19,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(18,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(11,9,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(10,8,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(9,7,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(9,6,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(9,12,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(8,12,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(7,13,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(6,12,lake_pixel_counts_field, &
+                                  prognostics)
       call assert_equals(lake_pixel_counts_field, &
                          expected_intermediate_lake_pixel_counts_field_three, &
                          nlat_surface,nlon_surface)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(2,4)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(2,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(5,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,13)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,4)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,2)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,2)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(16,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,17)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,18)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,13)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(14,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,11)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(15,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(16,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(17,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,10)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(20,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(19,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(18,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(11,9)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(10,8)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(9,7)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(9,6)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(9,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(8,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(7,13)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,12)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
+      call add_pixel_by_coords(2,4,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(2,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(4,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(5,7,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(4,8,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,11,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,12,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,13,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,19,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(10,4,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(10,3,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(10,2,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(11,2,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(15,3,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(16,3,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(17,17,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(18,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(19,18,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(14,19,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(13,13,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(13,11,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(14,11,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(15,11,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(15,10,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(16,10,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(17,9,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(17,8,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(18,8,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(18,9,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(18,10,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(19,8,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(20,7,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(19,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(18,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(11,9,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(10,8,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(9,7,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(9,6,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(9,12,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(8,12,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(7,13,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(6,12,lake_pixel_counts_field, &
+                               prognostics)
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field_after_third_cycle, &
                          nlat_surface,nlon_surface)
@@ -7031,34 +5837,13 @@ subroutine testLakeFractionCalculationTest19
       deallocate(expected_intermediate_lake_pixel_counts_field_three)
       deallocate(cell_mask)
       deallocate(mask)
-      deallocate(pixel_numbers)
-      do i = 1,size(pixels)
-        deallocate(pixels(i)%pixel_pointer)
-      end do
-      deallocate(pixels)
-      do i = 1,size(lake_properties)
-        do j = 1,size(lake_properties(i)%lake_properties_pointer%cell_list)
-          call clean_lake_cell(lake_properties(i)%lake_properties_pointer%&
-                               &cell_list(j)%lake_cell_pointer)
-          deallocate(lake_properties(i)%lake_properties_pointer%&
-                     &cell_list(j)%lake_cell_pointer)
-        end do
-        deallocate(lake_properties(i)%lake_properties_pointer%&
-                   &cell_list)
-        deallocate(lake_properties(i)%lake_properties_pointer)
-      end do
-      deallocate(lake_properties)
 end subroutine testLakeFractionCalculationTest19
 
 subroutine testLakeFractionCalculationTest20
    use l2_calculate_lake_fractions_mod
    type(lakeinputpointer), dimension(:), pointer :: lakes
+   type(lakefractioncalculationprognostics), pointer :: prognostics
    integer :: lake_number
-   type(lakepropertiespointer), dimension(:), pointer :: lake_properties
-   type(lakeproperties), pointer :: lake
-   integer, dimension(:,:), pointer :: pixel_numbers
-   type(pixelpointer), dimension(:), pointer :: pixels
-   type(pixel), pointer :: working_pixel
    integer,dimension(:,:), pointer :: potential_lake_pixel_mask
    integer,dimension(:,:), pointer :: lake_pixel_mask
    integer,dimension(:,:), pointer :: cell_pixel_counts
@@ -7081,7 +5866,6 @@ subroutine testLakeFractionCalculationTest20
    integer :: nlat_lake, nlon_lake
    integer :: nlat_surface, nlon_surface
    integer :: npixels, counter
-   integer :: pixel_number
    integer :: lat,lon
    integer :: i,j
 
@@ -7253,25 +6037,21 @@ subroutine testLakeFractionCalculationTest20
                     cell_coords_list_lat, &
                     cell_coords_list_lon)
       end do
-      call setup_lake_for_fraction_calculation(lakes, &
-                                               cell_pixel_counts, &
-                                               binary_lake_mask, &
-                                               lake_properties, &
-                                               pixel_numbers, &
-                                               pixels, &
-                                               lake_pixel_counts_field, &
-                                               corresponding_surface_cell_lat_index, &
-                                               corresponding_surface_cell_lon_index, &
-                                               nlat_lake,nlon_lake, &
-                                               nlat_surface,nlon_surface)
+      prognostics => setup_lake_for_fraction_calculation(lakes, &
+                                                         cell_pixel_counts, &
+                                                         binary_lake_mask, &
+                                                         potential_lake_pixel_mask, &
+                                                         corresponding_surface_cell_lat_index, &
+                                                         corresponding_surface_cell_lon_index, &
+                                                         nlat_lake,nlon_lake, &
+                                                         nlat_surface,nlon_surface)
+      allocate(lake_pixel_counts_field(nlat_surface,nlon_surface))
+      lake_pixel_counts_field(:,:) = 0
       do lake_number = 1,2
         do i = 1,nlat_lake
           do j = 1,nlon_lake
             if (lake_pixel_mask(i,j) == lake_number) then
-              pixel_number = pixel_numbers(i,j)
-              working_pixel => pixels(pixel_number)%pixel_pointer
-              call add_pixel(lake_properties(lake_number)%lake_properties_pointer,&
-                             working_pixel,pixels,lake_pixel_counts_field)
+              call add_pixel_by_coords(i,j,lake_pixel_counts_field,prognostics)
             end if
           end do
         end do
@@ -7279,89 +6059,49 @@ subroutine testLakeFractionCalculationTest20
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field, &
                          nlat_surface,nlon_surface)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(12,1)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(12,2)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(12,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,2)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,1)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,20)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,20)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,20)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call remove_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
+      call remove_pixel_by_coords(12,1,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(12,2,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(12,3,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(13,3,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(13,2,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(13,1,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(6,19,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(6,20,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(4,20,lake_pixel_counts_field, &
+                                  prognostics)
+      call remove_pixel_by_coords(3,20,lake_pixel_counts_field, &
+                                  prognostics)
       call assert_equals(lake_pixel_counts_field, &
                          expected_intermediate_lake_pixel_counts_field, &
                          nlat_surface,nlon_surface)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(12,1)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(12,2)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(12,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,3)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,2)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(1)%lake_properties_pointer
-      pixel_number = pixel_numbers(13,1)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,19)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(6,20)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(4,20)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
-      lake => lake_properties(2)%lake_properties_pointer
-      pixel_number = pixel_numbers(3,20)
-      working_pixel => pixels(pixel_number)%pixel_pointer
-      call add_pixel(lake,working_pixel,pixels,lake_pixel_counts_field)
+      call add_pixel_by_coords(12,1,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(12,2,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(12,3,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(13,3,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(13,2,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(13,1,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(6,19,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(6,20,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(4,20,lake_pixel_counts_field, &
+                               prognostics)
+      call add_pixel_by_coords(3,20,lake_pixel_counts_field, &
+                               prognostics)
       call assert_equals(lake_pixel_counts_field, &
                          expected_lake_pixel_counts_field,&
                          nlat_surface,nlon_surface)
@@ -7393,23 +6133,6 @@ subroutine testLakeFractionCalculationTest20
       deallocate(expected_intermediate_lake_pixel_counts_field)
       deallocate(cell_mask)
       deallocate(mask)
-      deallocate(pixel_numbers)
-      do i = 1,size(pixels)
-        deallocate(pixels(i)%pixel_pointer)
-      end do
-      deallocate(pixels)
-      do i = 1,size(lake_properties)
-        do j = 1,size(lake_properties(i)%lake_properties_pointer%cell_list)
-          call clean_lake_cell(lake_properties(i)%lake_properties_pointer%&
-                               &cell_list(j)%lake_cell_pointer)
-          deallocate(lake_properties(i)%lake_properties_pointer%&
-                     &cell_list(j)%lake_cell_pointer)
-        end do
-        deallocate(lake_properties(i)%lake_properties_pointer%&
-                   &cell_list)
-        deallocate(lake_properties(i)%lake_properties_pointer)
-      end do
-      deallocate(lake_properties)
 end subroutine testLakeFractionCalculationTest20
 
 end module l2_calculate_lake_fractions_test_mod

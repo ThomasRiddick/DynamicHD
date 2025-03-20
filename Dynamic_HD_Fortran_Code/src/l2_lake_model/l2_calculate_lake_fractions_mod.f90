@@ -63,6 +63,7 @@ type :: lakeproperties
   integer :: lake_number
   type(lakecellpointer), dimension(:), pointer :: cell_list
   integer :: lake_pixel_count
+  logical :: has_cells_in_binary_mask
 end type lakeproperties
 
 interface lakeproperties
@@ -72,6 +73,19 @@ end interface lakeproperties
 type :: lakepropertiespointer
   type(lakeproperties), pointer :: lake_properties_pointer
 end type lakepropertiespointer
+
+type lakefractioncalculationprognostics
+  type(lakepropertiespointer), dimension(:), pointer :: lakes
+  integer, dimension(_DIMS_), pointer :: pixel_numbers
+  type(pixelpointer), dimension(:), pointer :: pixels
+  integer, dimension(_DIMS_), pointer ::primary_lake_numbers
+  integer, dimension(_DIMS_), pointer ::lake_index
+  _DEF_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_
+end type lakefractioncalculationprognostics
+
+interface lakefractioncalculationprognostics
+  procedure :: lakefractioncalculationprognosticsconstructor
+end interface lakefractioncalculationprognostics
 
 contains
 
@@ -143,6 +157,7 @@ function lakepropertiesconstructor(lake_number, &
     constructor%lake_number = lake_number
     constructor%cell_list => cell_list
     constructor%lake_pixel_count = lake_pixel_count
+    constructor%has_cells_in_binary_mask = .false.
 end function lakepropertiesconstructor
 
 function pixelconstructor(id,lake_number,filled, &
@@ -167,6 +182,29 @@ function pixelconstructor(id,lake_number,filled, &
     _ASSIGN_constructor%_COORDS_assigned_coarse_grid_coords_ = _COORDS_assigned_coarse_grid_coords_
     constructor%transferred = transferred
 end function pixelconstructor
+
+
+function lakefractioncalculationprognosticsconstructor( &
+    lakes,pixel_numbers,pixels,primary_lake_numbers, &
+    _INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_, &
+    _NPOINTS_LAKE_) result(constructor)
+  type(lakepropertiespointer), dimension(:), pointer :: lakes
+  integer, dimension(_DIMS_), pointer :: pixel_numbers
+  type(pixelpointer), dimension(:), pointer :: pixels
+  integer, dimension(_DIMS_), pointer :: primary_lake_numbers
+  _DEF_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ _INTENT_in_
+  _DEF_NPOINTS_LAKE_ _INTENT_in_
+  type(lakefractioncalculationprognostics), pointer :: constructor
+    allocate(constructor)
+    constructor%lakes => lakes
+    constructor%pixel_numbers => pixel_numbers
+    constructor%pixels => pixels
+    constructor%primary_lake_numbers => primary_lake_numbers
+    allocate(constructor%lake_index(_NPOINTS_LAKE_))
+    constructor%lake_index(_DIMS_) = 0
+    _ASSIGN_constructor%_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ => &
+      _INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_
+end function lakefractioncalculationprognosticsconstructor
 
 ! Utility routines
 
@@ -595,26 +633,24 @@ subroutine calculate_lake_fractions(lakes, &
     deallocate(all_lake_potential_pixel_counts)
 end subroutine calculate_lake_fractions
 
-subroutine setup_lake_for_fraction_calculation(lakes, &
-                                               cell_pixel_counts, &
-                                               binary_lake_mask, &
-                                               lake_properties, &
-                                               pixel_numbers, &
-                                               pixels, &
-                                               lake_pixel_counts_field, &
-                                                _INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_, &
-                                               _NPOINTS_LAKE_, &
-                                               _NPOINTS_SURFACE_)
+function setup_lake_for_fraction_calculation(lakes, &
+                                             cell_pixel_counts, &
+                                             binary_lake_mask, &
+                                             primary_lake_numbers, &
+                                              _INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_, &
+                                             _NPOINTS_LAKE_, &
+                                             _NPOINTS_SURFACE_) result(prognostics)
   type(lakeinputpointer), dimension(:), pointer :: lakes
   integer, dimension(_DIMS_), pointer :: cell_pixel_counts
   logical, dimension(_DIMS_), pointer :: binary_lake_mask
-  type(lakepropertiespointer), dimension(:), pointer :: lake_properties
-  integer, dimension(_DIMS_), pointer :: pixel_numbers
-  type(pixelpointer), dimension(:), pointer :: pixels
-  integer, dimension(_DIMS_), pointer :: lake_pixel_counts_field
+  integer, dimension(_DIMS_), pointer :: primary_lake_numbers
   _DEF_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ _INTENT_in_
   _DEF_NPOINTS_LAKE_ _INTENT_in_
   _DEF_NPOINTS_SURFACE_ _INTENT_in_
+  type(lakefractioncalculationprognostics), pointer :: prognostics
+  type(lakepropertiespointer), dimension(:), pointer :: lake_properties
+  integer, dimension(_DIMS_), pointer :: pixel_numbers
+  type(pixelpointer), dimension(:), pointer :: pixels
   integer, dimension(_DIMS_), pointer :: all_lake_potential_pixel_counts
   logical, dimension(_DIMS_), pointer :: all_lake_potential_pixel_mask
   type(lakeproperties), pointer :: lake
@@ -629,8 +665,6 @@ subroutine setup_lake_for_fraction_calculation(lakes, &
     pixel_numbers(_DIMS_) = 0
     allocate(all_lake_potential_pixel_counts(_NPOINTS_SURFACE_))
     all_lake_potential_pixel_counts(_DIMS_) = 0
-    allocate(lake_pixel_counts_field(_NPOINTS_SURFACE_))
-    lake_pixel_counts_field(_DIMS_) =  0
     call setup_cells_lakes_and_pixels(lakes,cell_pixel_counts, &
                                       all_lake_potential_pixel_mask, &
                                       lake_properties, &
@@ -644,11 +678,21 @@ subroutine setup_lake_for_fraction_calculation(lakes, &
       do i = 1,size(lake%cell_list)
         working_cell => lake%cell_list(i)%lake_cell_pointer
         working_cell%in_binary_mask = binary_lake_mask(working_cell%_COORDS_ARG_coarse_grid_coords_)
+        if (working_cell%in_binary_mask) then
+          lake%has_cells_in_binary_mask = .true.
+        end if
       end do
     end do
     deallocate(all_lake_potential_pixel_counts)
     deallocate(all_lake_potential_pixel_mask)
-end subroutine setup_lake_for_fraction_calculation
+    prognostics => &
+      lakefractioncalculationprognostics(lake_properties, &
+                                          pixel_numbers, &
+                                          pixels, &
+                                          primary_lake_numbers, &
+                                          _INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_, &
+                                          _NPOINTS_LAKE_)
+end function setup_lake_for_fraction_calculation
 
 recursive subroutine add_pixel(lake,pixel_in,pixels,lake_pixel_counts_field)
   type(lakeproperties), pointer :: lake
@@ -775,5 +819,82 @@ subroutine remove_pixel(lake,pixel_in,pixels,lake_pixel_counts_field)
       end if
     end if
 end subroutine remove_pixel
+
+subroutine add_pixel_by_coords(_COORDS_ARG_pixel_coords_, &
+                               lake_pixel_counts_field, &
+                               prognostics)
+  _DEF_COORDS_pixel_coords_
+  integer, dimension(_DIMS_), pointer :: lake_pixel_counts_field
+  type(lakefractioncalculationprognostics), pointer :: prognostics
+  type(lakeproperties), pointer ::  lake_in
+  type(lakeproperties), pointer ::  working_lake
+  type(pixel), pointer :: pixel_in
+  _DEF_COORDS_surface_model_coords_
+  integer :: lake_index
+  integer :: lake_number
+  integer :: i
+    lake_index = prognostics%lake_index(_COORDS_ARG_pixel_coords_)
+    if (lake_index == 0) then
+      lake_number = prognostics%primary_lake_numbers(_COORDS_ARG_pixel_coords_)
+      do i = 1,size(prognostics%lakes)
+        working_lake => prognostics%lakes(i)%lake_properties_pointer
+        if (working_lake%lake_number == lake_number) then
+          lake_in => working_lake
+          prognostics%lake_index(_COORDS_ARG_pixel_coords_) = i
+        end if
+      end do
+    else
+      lake_in => prognostics%lakes(lake_index)%lake_properties_pointer
+    end if
+    if (lake_in%has_cells_in_binary_mask) then
+      pixel_in => prognostics%&
+        &pixels(prognostics%pixel_numbers(_COORDS_ARG_pixel_coords_))%pixel_pointer
+      call add_pixel(lake_in,pixel_in,prognostics%pixels, &
+                     lake_pixel_counts_field)
+    else
+      _GET_COORDS_ _COORDS_surface_model_coords_ _FROM_ prognostics%_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ _COORDS_pixel_coords_
+      lake_pixel_counts_field(_COORDS_ARG_surface_model_coords_) = &
+        lake_pixel_counts_field(_COORDS_ARG_surface_model_coords_) + 1
+    end if
+end subroutine add_pixel_by_coords
+
+subroutine remove_pixel_by_coords(_COORDS_ARG_pixel_coords_, &
+                                  lake_pixel_counts_field, &
+                                   prognostics)
+  _DEF_COORDS_pixel_coords_
+  integer, dimension(_DIMS_), pointer :: lake_pixel_counts_field
+  type(lakefractioncalculationprognostics), pointer :: prognostics
+  type(lakeproperties), pointer ::  lake_in
+  type(lakeproperties), pointer ::  working_lake
+  type(pixel), pointer :: pixel_in
+  _DEF_COORDS_surface_model_coords_
+  integer :: lake_index
+  integer :: lake_number
+  integer :: i
+    lake_index = prognostics%lake_index(_COORDS_ARG_pixel_coords_)
+    if (lake_index == 0) then
+      lake_number = prognostics%primary_lake_numbers(_COORDS_ARG_pixel_coords_)
+      do i = 1,size(prognostics%lakes)
+        working_lake => prognostics%lakes(i)%lake_properties_pointer
+        if (working_lake%lake_number == lake_number) then
+          lake_in => working_lake
+          prognostics%lake_index(_COORDS_ARG_pixel_coords_) = i
+        end if
+      end do
+    else
+      lake_in => prognostics%lakes(lake_index)%lake_properties_pointer
+    end if
+    if (lake_in%has_cells_in_binary_mask) then
+      pixel_in => prognostics%&
+        &pixels(prognostics%pixel_numbers(_COORDS_ARG_pixel_coords_))%pixel_pointer
+      call remove_pixel(lake_in,pixel_in,prognostics%pixels,&
+                        lake_pixel_counts_field)
+    else
+      _GET_COORDS_ _COORDS_surface_model_coords_ _FROM_ prognostics%_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ _COORDS_pixel_coords_
+      lake_pixel_counts_field(_COORDS_ARG_surface_model_coords_) = &
+        lake_pixel_counts_field(_COORDS_ARG_surface_model_coords_) - 1
+    end if
+end subroutine remove_pixel_by_coords
+
 
 end module  l2_calculate_lake_fractions_mod
