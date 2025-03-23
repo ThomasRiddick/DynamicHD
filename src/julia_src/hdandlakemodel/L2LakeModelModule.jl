@@ -10,7 +10,10 @@ using L2LakeModule: CalculateEffectiveLakeVolumePerCell
 using L2LakeModule: handle_event, get_lake_volume
 using L2LakeModule: get_corresponding_surface_model_grid_cell
 using L2LakeModule: flood_height
+using L2LakeModule: find_top_level_primary_lake_number
 using L2LakeArrayDecoderModule: get_lake_parameters_from_array
+using L2CalculateLakeFractionsModule: add_pixel_by_coords, LakeInput
+using L2CalculateLakeFractionsModule: setup_lake_for_fraction_calculation
 using CoordsModule: Coords,is_lake
 using GridModule: LatLonGrid,UnstructuredGrid,for_all
 using GridModule: for_all_fine_cells_in_coarse_cell,for_all_with_line_breaks
@@ -109,19 +112,64 @@ function create_lakes(lake_model_parameters::LakeModelParameters,
                                     lake_model_prognostics,
                                     false)
     push!(lake_model_prognostics.lakes,lake)
-    if lake_parameters.is_leaf && (lake.current_height_type == flood_height
-                                   || length(lake_parameters.filling_order) == 1)
+
+  end
+  primary_lake_numbers::Field{Int64} = Field{Int64}(lake_model_parameters.lake_model_grid,0)
+  for lake::Lake in lake_model_prognostics.lakes
+    for cell in lake.parameters.filling_order
+      if cell.height_type == flood_height ||
+         (length(lake.parameters.filling_order) == 1 &&
+          lake.parameters.is_leaf)
+        top_level_primary_lake_number::Int64 = find_top_level_primary_lake_number(lake)
+        set!(primary_lake_numbers,cell.coords,top_level_primary_lake_number)
+      end
+    end
+  end
+  lake_fraction_calculation_input::Vector{LakeInput} = LakeInput[]
+  for lake_number::Int64=1:lake_model_parameters.number_of_lakes
+    potential_lake_pixel_coords_list::Vector{CartesianIndex} = findall(x -> x == lake_number,
+                                                                       primary_lake_numbers.data)
+    if length(potential_lake_pixel_coords_list) > 0
+      cell_mask::Field{Bool} = Field{Bool}(lake_model_parameters.lake_model_grid,false)
+      for pixel in potential_lake_pixel_coords_list
+        cell_coords::CartesianIndex =
+          get_corresponding_surface_model_grid_cell(pixel,
+                                                    lake_model_parameters.
+                                                    grid_specific_lake_model_parameters)
+        set!(cell_mask,cell_coords,true)
+      end
+      cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
+      input = LakeInput(lake_number,
+                        CartesianIndex[],
+                        potential_lake_pixel_coords_list,
+                        cell_coords_list)
+      push!(lake_fraction_calculation_input,input)
+    end
+  end
+  lake_model_prognostics.lake_fraction_prognostics =
+    setup_lake_for_fraction_calculation(lake_fraction_calculation_input,
+                                        lake_model_parameters.number_fine_grid_cells,
+                                        lake_model_parameters.binary_lake_mask,
+                                        primary_lake_numbers,
+                                        lake_model_parameters.
+                                        grid_specific_lake_model_parameters,
+                                        lake_model_parameters.lake_model_grid,
+                                        lake_model_parameters.surface_model_grid)
+  for lake::Lake in lake_model_prognostics.lakes
+    set!(lake_model_parameters.lake_centers,lake.parameters.center_coords,true)
+    if lake.parameters.is_leaf && (lake.current_height_type == flood_height
+                                   || length(lake.parameters.filling_order) == 1)
       surface_model_coords =
         get_corresponding_surface_model_grid_cell(lake.current_cell_to_fill,
                                                   lake_model_parameters.grid_specific_lake_model_parameters)
       set!(lake_model_prognostics.lake_cell_count,surface_model_coords,
            lake_model_prognostics.lake_cell_count(surface_model_coords) + 1)
+      add_pixel_by_coords(lake.current_cell_to_fill,
+                          lake_model_prognostics.adjusted_lake_cell_count,
+                          lake_model_prognostics.lake_fraction_prognostics)
       set!(lake_model_prognostics.lake_numbers,lake.current_cell_to_fill,
            lake.parameters.lake_number)
     end
-  end
-  for lake::Lake in lake_model_prognostics.lakes
-      set!(lake_model_parameters.lake_centers,lake.parameters.center_coords,true)
   end
   for_all(lake_model_parameters.hd_model_grid;
           use_cartesian_index=true) do coords::CartesianIndex
@@ -343,7 +391,7 @@ end
 
 function calculate_lake_fraction_on_surface_grid(lake_model_parameters::LakeModelParameters,
                                                  lake_model_prognostics::LakeModelPrognostics)
-  return elementwise_divide(lake_model_prognostics.lake_cell_count,
+  return elementwise_divide(lake_model_prognostics.adjusted_lake_cell_count,
                             lake_model_parameters.number_fine_grid_cells)::Field{Float64}
 end
 

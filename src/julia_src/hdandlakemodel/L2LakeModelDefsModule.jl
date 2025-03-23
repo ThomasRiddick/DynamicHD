@@ -6,6 +6,7 @@ using GridModule: Grid,for_all,for_all_fine_cells_in_coarse_cell
 using SplittableRootedTree: RootedTreeForest
 using L2LakeModelGridSpecificDefsModule: GridSpecificLakeModelParameters
 using L2LakeModelGridSpecificDefsModule: get_corresponding_surface_model_grid_cell
+using L2CalculateLakeFractionsModule: LakeFractionCalculationPrognostics
 
 abstract type Lake <: State end
 
@@ -35,6 +36,7 @@ struct LakeModelParameters
   number_fine_grid_cells::Field{Int64}
   surface_cell_to_fine_cell_maps::Vector{Vector{CartesianIndex}}
   surface_cell_to_fine_cell_map_numbers::Field{Int64}
+  binary_lake_mask::Field{Bool}
   function LakeModelParameters(grid_specific_lake_model_parameters::GridSpecificLakeModelParameters,
                                lake_model_grid::Grid,
                                hd_model_grid::Grid,
@@ -42,7 +44,8 @@ struct LakeModelParameters
                                cell_areas_on_surface_model_grid::Field{Float64},
                                lake_model_settings::LakeModelSettings,
                                number_of_lakes::Int64,
-                               is_lake::Field{Bool})
+                               is_lake::Field{Bool},
+                               binary_lake_mask::Field{Bool})
     number_fine_grid_cells::Field{Int64} =
       Field{Int64}(surface_model_grid,0)
     surface_cell_to_fine_cell_maps::Vector{Vector{CartesianIndex}} = CartesianIndex[]
@@ -85,14 +88,16 @@ struct LakeModelParameters
         lake_centers,
         number_fine_grid_cells,
         surface_cell_to_fine_cell_maps,
-        surface_cell_to_fine_cell_map_numbers)
+        surface_cell_to_fine_cell_map_numbers,
+        binary_lake_mask)
   end
 end
 
-struct LakeModelPrognostics
+mutable struct LakeModelPrognostics
   lakes::Vector{Lake}
   lake_numbers::Field{Int64}
   lake_cell_count::Field{Int64}
+  adjusted_lake_cell_count::Field{Int64}
   effective_volume_per_cell_on_surface_grid::Field{Float64}
   effective_lake_height_on_surface_grid_to_lakes::Field{Float64}
   water_to_lakes::Field{Float64}
@@ -101,6 +106,7 @@ struct LakeModelPrognostics
   evaporation_from_lakes::Array{Float64,1}
   evaporation_applied::BitArray{1}
   set_forest::RootedTreeForest
+  lake_fraction_prognostics::LakeFractionCalculationPrognostics
   function LakeModelPrognostics(lake_model_parameters::LakeModelParameters)
     lakes::Vector{Lake} = Lake[]
     lake_numbers = Field{Int64}(lake_model_parameters.lake_model_grid,0)
@@ -116,16 +122,23 @@ struct LakeModelPrognostics
       Field{Float64}(lake_model_parameters.hd_model_grid,0.0)
     lake_cell_count::Field{Int64} =
       Field{Int64}(lake_model_parameters.surface_model_grid,0)
+    adjusted_lake_cell_count::Field{Int64} =
+      Field{Int64}(lake_model_parameters.surface_model_grid,0)
     evaporation_from_lakes::Array{Float64,1} =
       zeros(Float64,lake_model_parameters.number_of_lakes)
     evaporation_applied = falses(lake_model_parameters.number_of_lakes)
     set_forest::RootedTreeForest = RootedTreeForest()
+    lake_fraction_prognostics::LakeFractionCalculationPrognostics =
+      LakeFractionCalculationPrognostics(lake_model_parameters.
+                                         grid_specific_lake_model_parameters,
+                                         lake_model_parameters.lake_model_grid)
     new(lakes,lake_numbers,lake_cell_count,
+        adjusted_lake_cell_count,
         effective_volume_per_cell_on_surface_grid,
         effective_lake_height_on_surface_grid_to_lakes,
         water_to_lakes,water_to_hd,lake_water_from_ocean,
         evaporation_from_lakes,evaporation_applied,
-        set_forest)
+        set_forest,lake_fraction_prognostics)
   end
 end
 

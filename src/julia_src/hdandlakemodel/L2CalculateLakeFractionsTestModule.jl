@@ -1,6 +1,6 @@
 module L2CalculateLakeFractionsTestModule
 
-using GridModule: Grid, LatLonGrid, find_coarse_cell_containing_fine_cell
+using GridModule: Grid, LatLonGrid
 using Test: @test, @testset
 using L2CalculateLakeFractionsModule: LakeInput, LakeProperties,Pixel
 using L2CalculateLakeFractionsModule: calculate_lake_fractions
@@ -9,6 +9,7 @@ using L2CalculateLakeFractionsModule: add_pixel_by_coords,remove_pixel_by_coords
 using L2CalculateLakeFractionsModule: LakeFractionCalculationPrognostics
 using L2LakeModelDefsModule: GridSpecificLakeModelParameters
 using L2LakeModelGridSpecificDefsModule: LatLonLakeModelParameters
+using L2LakeModelGridSpecificDefsModule: get_corresponding_surface_model_grid_cell
 using FieldModule: Field,LatLonField, set!
 
 @testset "Lake Fraction Calculation Test 1" begin
@@ -125,8 +126,8 @@ using FieldModule: Field,LatLonField, set!
   cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
   for pixel in potential_lake_pixel_coords_list
     cell_coords::CartesianIndex =
-      find_coarse_cell_containing_fine_cell(lake_grid,surface_grid,
-                                            pixel)
+      get_corresponding_surface_model_grid_cell(pixel,
+                                                grid_specific_lake_model_parameters)
     set!(cell_mask,cell_coords,true)
   end
   cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
@@ -262,8 +263,8 @@ end
     cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
     for pixel in potential_lake_pixel_coords_list
       cell_coords::CartesianIndex =
-        find_coarse_cell_containing_fine_cell(lake_grid,surface_grid,
-                                              pixel)
+        get_corresponding_surface_model_grid_cell(pixel,
+                                                  grid_specific_lake_model_parameters)
       set!(cell_mask,cell_coords,true)
     end
     cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
@@ -400,8 +401,8 @@ end
     cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
     for pixel in potential_lake_pixel_coords_list
       cell_coords::CartesianIndex =
-        find_coarse_cell_containing_fine_cell(lake_grid,surface_grid,
-                                              pixel)
+        get_corresponding_surface_model_grid_cell(pixel,
+                                                  grid_specific_lake_model_parameters)
       set!(cell_mask,cell_coords,true)
     end
     cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
@@ -538,8 +539,8 @@ end
     cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
     for pixel in potential_lake_pixel_coords_list
       cell_coords::CartesianIndex =
-        find_coarse_cell_containing_fine_cell(lake_grid,surface_grid,
-                                              pixel)
+        get_corresponding_surface_model_grid_cell(pixel,
+                                                  grid_specific_lake_model_parameters)
       set!(cell_mask,cell_coords,true)
     end
     cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
@@ -661,8 +662,8 @@ end
     cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
     for pixel in potential_lake_pixel_coords_list
       cell_coords::CartesianIndex =
-        find_coarse_cell_containing_fine_cell(lake_grid,surface_grid,
-                                              pixel)
+        get_corresponding_surface_model_grid_cell(pixel,
+                                                  grid_specific_lake_model_parameters)
       set!(cell_mask,cell_coords,true)
     end
     cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
@@ -825,8 +826,8 @@ end
   cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
   for pixel in potential_lake_pixel_coords_list
     cell_coords::CartesianIndex =
-      find_coarse_cell_containing_fine_cell(lake_grid,surface_grid,
-                                            pixel)
+      get_corresponding_surface_model_grid_cell(pixel,
+                                                grid_specific_lake_model_parameters)
     set!(cell_mask,cell_coords,true)
   end
   cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
@@ -988,8 +989,8 @@ end
     cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
     for pixel in potential_lake_pixel_coords_list
       cell_coords::CartesianIndex =
-        find_coarse_cell_containing_fine_cell(lake_grid,surface_grid,
-                                              pixel)
+        get_corresponding_surface_model_grid_cell(pixel,
+                                                  grid_specific_lake_model_parameters)
       set!(cell_mask,cell_coords,true)
     end
     cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
@@ -1152,8 +1153,8 @@ end
     cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
     for pixel in potential_lake_pixel_coords_list
       cell_coords::CartesianIndex =
-        find_coarse_cell_containing_fine_cell(lake_grid,surface_grid,
-                                              pixel)
+        get_corresponding_surface_model_grid_cell(pixel,
+                                                  grid_specific_lake_model_parameters)
       set!(cell_mask,cell_coords,true)
     end
     cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
@@ -1316,8 +1317,8 @@ end
     cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
     for pixel in potential_lake_pixel_coords_list
       cell_coords::CartesianIndex =
-        find_coarse_cell_containing_fine_cell(lake_grid,surface_grid,
-                                              pixel)
+        get_corresponding_surface_model_grid_cell(pixel,
+                                                  grid_specific_lake_model_parameters)
       set!(cell_mask,cell_coords,true)
     end
     cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
@@ -1460,8 +1461,8 @@ end
     cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
     for pixel in potential_lake_pixel_coords_list
       cell_coords::CartesianIndex =
-        find_coarse_cell_containing_fine_cell(lake_grid,surface_grid,
-                                              pixel)
+        get_corresponding_surface_model_grid_cell(pixel,
+                                                  grid_specific_lake_model_parameters)
       set!(cell_mask,cell_coords,true)
     end
     cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
@@ -1605,8 +1606,8 @@ end
   cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
   for pixel in potential_lake_pixel_coords_list
     cell_coords::CartesianIndex =
-      find_coarse_cell_containing_fine_cell(lake_grid,surface_grid,
-                                            pixel)
+      get_corresponding_surface_model_grid_cell(pixel,
+                                                grid_specific_lake_model_parameters)
     set!(cell_mask,cell_coords,true)
   end
   cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
@@ -1761,8 +1762,8 @@ end
     cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
     for pixel in potential_lake_pixel_coords_list
       cell_coords::CartesianIndex =
-        find_coarse_cell_containing_fine_cell(lake_grid,surface_grid,
-                                              pixel)
+        get_corresponding_surface_model_grid_cell(pixel,
+                                                  grid_specific_lake_model_parameters)
       set!(cell_mask,cell_coords,true)
     end
     cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
@@ -2013,8 +2014,8 @@ end
     cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
     for pixel in potential_lake_pixel_coords_list
       cell_coords::CartesianIndex =
-        find_coarse_cell_containing_fine_cell(lake_grid,surface_grid,
-                                              pixel)
+        get_corresponding_surface_model_grid_cell(pixel,
+                                                  grid_specific_lake_model_parameters)
       set!(cell_mask,cell_coords,true)
     end
     cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
@@ -2271,8 +2272,8 @@ end
     cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
     for pixel in potential_lake_pixel_coords_list
       cell_coords::CartesianIndex =
-        find_coarse_cell_containing_fine_cell(lake_grid,surface_grid,
-                                              pixel)
+        get_corresponding_surface_model_grid_cell(pixel,
+                                                  grid_specific_lake_model_parameters)
       set!(cell_mask,cell_coords,true)
     end
     cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
@@ -2408,8 +2409,8 @@ end
     cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
     for pixel in potential_lake_pixel_coords_list
       cell_coords::CartesianIndex =
-        find_coarse_cell_containing_fine_cell(lake_grid,surface_grid,
-                                              pixel)
+        get_corresponding_surface_model_grid_cell(pixel,
+                                                  grid_specific_lake_model_parameters)
       set!(cell_mask,cell_coords,true)
     end
     cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
@@ -2602,8 +2603,8 @@ end
   cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
   for pixel in potential_lake_pixel_coords_list
     cell_coords::CartesianIndex =
-      find_coarse_cell_containing_fine_cell(lake_grid,surface_grid,
-                                            pixel)
+      get_corresponding_surface_model_grid_cell(pixel,
+                                                grid_specific_lake_model_parameters)
     set!(cell_mask,cell_coords,true)
   end
   cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
@@ -2769,8 +2770,8 @@ end
     cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
     for pixel in potential_lake_pixel_coords_list
       cell_coords::CartesianIndex =
-        find_coarse_cell_containing_fine_cell(lake_grid,surface_grid,
-                                              pixel)
+        get_corresponding_surface_model_grid_cell(pixel,
+                                                  grid_specific_lake_model_parameters)
       set!(cell_mask,cell_coords,true)
     end
     cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
@@ -2941,8 +2942,8 @@ end
     cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
     for pixel in potential_lake_pixel_coords_list
       cell_coords::CartesianIndex =
-        find_coarse_cell_containing_fine_cell(lake_grid,surface_grid,
-                                              pixel)
+        get_corresponding_surface_model_grid_cell(pixel,
+                                                  grid_specific_lake_model_parameters)
       set!(cell_mask,cell_coords,true)
     end
     cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
@@ -3149,8 +3150,8 @@ end
     cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
     for pixel in potential_lake_pixel_coords_list
       cell_coords::CartesianIndex =
-        find_coarse_cell_containing_fine_cell(lake_grid,surface_grid,
-                                              pixel)
+        get_corresponding_surface_model_grid_cell(pixel,
+                                                  grid_specific_lake_model_parameters)
       set!(cell_mask,cell_coords,true)
     end
     cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
@@ -3576,8 +3577,8 @@ end
     cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
     for pixel in potential_lake_pixel_coords_list
       cell_coords::CartesianIndex =
-        find_coarse_cell_containing_fine_cell(lake_grid,surface_grid,
-                                              pixel)
+        get_corresponding_surface_model_grid_cell(pixel,
+                                                  grid_specific_lake_model_parameters)
       set!(cell_mask,cell_coords,true)
     end
     cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
@@ -3627,6 +3628,149 @@ end
   add_pixel_by_coords(CartesianIndex(6,20),lake_pixel_counts_field,prognostics)
   add_pixel_by_coords(CartesianIndex(4,20),lake_pixel_counts_field,prognostics)
   add_pixel_by_coords(CartesianIndex(3,20),lake_pixel_counts_field,prognostics)
+  @test lake_pixel_counts_field == expected_lake_pixel_counts_field
+end
+
+@testset "Lake Fraction Calculation Test 21" begin
+  #Two lake example taken from lake tests 22
+  lake_grid::Grid = LatLonGrid(20,20,true)
+  surface_grid::Grid = LatLonGrid(3,3,true)
+  lakes::Vector{LakeInput} = LakeInput[]
+  potential_lake_pixel_mask::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+           0 0 0 1 1 1 0 1 1 0 1 1 1 1 0 0 1 1 1 0
+           0 2 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0
+           0 2 0 1 1 1 0 1 1 1 1 1 1 1 0 0 1 1 1 0
+           0 2 0 0 0 0 0 0 0 0 0 1 1 1 0 0 1 1 1 0
+           0 2 0 0 0 0 0 0 0 0 0 1 1 1 0 0 0 1 0 0
+           0 2 0 0 0 0 0 0 0 0 0 0 1 0 0 0 1 1 1 0
+           0 2 0 0 0 0 0 0 0 0 0 1 1 1 0 0 1 1 1 0
+           0 2 0 0 0 0 0 0 0 0 0 1 1 1 0 0 1 1 1 0
+           0 2 0 0 0 0 0 0 0 0 0 1 1 1 0 0 1 1 1 0
+           0 2 0 0 0 0 0 0 0 0 0 1 1 1 0 0 1 1 1 0
+           0 2 0 0 0 0 0 0 0 0 0 1 1 1 0 0 1 1 1 0
+           0 2 0 0 0 0 0 0 0 0 0 1 1 1 0 0 1 1 1 0
+           0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+           0 2 2 2 2 2 2 2 2 2 0 0 0 0 0 0 0 0 0 0
+           0 2 2 2 2 2 2 2 2 2 2 2 2 0 0 0 0 0 0 0
+           0 2 2 2 2 2 2 2 2 2 2 2 2 0 0 0 0 0 0 0
+           0 2 2 2 2 2 2 2 2 2 2 2 2 0 0 0 0 0 0 0
+           0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+           0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0])
+  lake_pixel_mask::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+           0 0 0 1 1 1 0 1 1 0 1 1 1 1 0 0 1 1 1 0
+           0 2 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0
+           0 2 0 1 1 1 0 1 1 1 1 1 1 1 0 0 1 1 1 0
+           0 2 0 0 0 0 0 0 0 0 0 1 1 1 0 0 1 1 1 0
+           0 2 0 0 0 0 0 0 0 0 0 1 1 1 0 0 0 1 0 0
+           0 2 0 0 0 0 0 0 0 0 0 0 1 0 0 0 1 1 1 0
+           0 2 0 0 0 0 0 0 0 0 0 1 1 1 0 0 1 1 1 0
+           0 2 0 0 0 0 0 0 0 0 0 1 1 1 0 0 1 1 1 0
+           0 2 0 0 0 0 0 0 0 0 0 1 1 1 0 0 1 1 1 0
+           0 2 0 0 0 0 0 0 0 0 0 1 1 1 0 0 1 1 1 0
+           0 2 0 0 0 0 0 0 0 0 0 1 1 1 0 0 1 1 1 0
+           0 2 0 0 0 0 0 0 0 0 0 1 1 1 0 0 1 1 1 0
+           0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+           0 2 2 2 2 2 2 2 2 2 0 0 0 0 0 0 0 0 0 0
+           0 2 2 2 2 2 2 2 2 2 2 2 2 0 0 0 0 0 0 0
+           0 2 2 2 2 2 2 2 2 2 2 2 2 0 0 0 0 0 0 0
+           0 2 2 2 2 2 2 2 2 2 2 2 2 0 0 0 0 0 0 0
+           0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+           0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ])
+  cell_pixel_counts::Field{Int64} = LatLonField{Int64}(surface_grid,
+    Int64[ 36 48 36
+           48 64 48
+           36 48 36  ])
+    corresponding_surface_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[ 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+           1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+           1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+           1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+           1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+           1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+           2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+           2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+           2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+           2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+           2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+           2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+           2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+           2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+           3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+           3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+           3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+           3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+           3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+           3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 ])
+  corresponding_surface_cell_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[ 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 ])
+  binary_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,
+    Bool[ false true false
+          false false false
+          false  true false  ])
+  expected_lake_pixel_counts_field::Field{Int64} = LatLonField{Int64}(surface_grid,
+    Int64[ 1  48 15
+           0   6 21
+           8  48 0 ])
+  grid_specific_lake_model_parameters::LatLonLakeModelParameters =
+    LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
+                              corresponding_surface_cell_lon_index)
+  for lake_number::Int64=1:2
+    lake_pixel_coords_list::Vector{CartesianIndex} = findall(x -> x == lake_number,
+                                                             lake_pixel_mask.data)
+    potential_lake_pixel_coords_list::Vector{CartesianIndex} =
+      findall(x -> x == lake_number,potential_lake_pixel_mask.data)
+    cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
+    for pixel in potential_lake_pixel_coords_list
+      cell_coords::CartesianIndex =
+        get_corresponding_surface_model_grid_cell(pixel,
+                                                  grid_specific_lake_model_parameters)
+      set!(cell_mask,cell_coords,true)
+    end
+    cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
+    input = LakeInput(lake_number,
+                      CartesianIndex[],
+                      potential_lake_pixel_coords_list,
+                      cell_coords_list)
+    push!(lakes,input)
+  end
+  prognostics::LakeFractionCalculationPrognostics =
+    setup_lake_for_fraction_calculation(lakes,
+                                        cell_pixel_counts,
+                                        binary_lake_mask,
+                                        potential_lake_pixel_mask,
+                                        grid_specific_lake_model_parameters,
+                                        lake_grid,
+                                        surface_grid)
+  lake_pixel_counts_field::Field{Int64} = Field{Int64}(surface_grid,0)
+  for lake_number::Int64=1:2
+    lake_pixel_coords_list::Vector{CartesianIndex} = findall(x -> x == lake_number,
+                                                             lake_pixel_mask.data)
+    for coords in lake_pixel_coords_list
+      add_pixel_by_coords(coords,
+                          lake_pixel_counts_field,prognostics)
+    end
+  end
   @test lake_pixel_counts_field == expected_lake_pixel_counts_field
 end
 

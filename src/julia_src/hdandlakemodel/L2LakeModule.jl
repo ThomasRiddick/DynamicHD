@@ -5,6 +5,7 @@ using L2LakeModelDefsModule: GridSpecificLakeModelParameters
 using L2LakeModelGridSpecificDefsModule: LatLonLakeModelParameters
 using L2LakeModelGridSpecificDefsModule: UnstructuredLakeModelParameters
 using L2LakeModelDefsModule: get_corresponding_surface_model_grid_cell
+using L2CalculateLakeFractionsModule: add_pixel_by_coords,remove_pixel_by_coords
 using SplittableRootedTree: find_root,for_elements_in_set,get_label
 using SplittableRootedTree: make_new_link,split_set
 using FieldModule: set!
@@ -187,9 +188,14 @@ function handle_event(lake::FillingLake,add_water::AddWater)
        ! lake_parameters.is_leaf && lake.current_height_type == flood_height
       surface_model_coords =
         get_corresponding_surface_model_grid_cell(lake.current_cell_to_fill,
-                                                  lake_model_parameters.grid_specific_lake_model_parameters)
+                                                  lake_model_parameters.
+                                                  grid_specific_lake_model_parameters)
       set!(lake_model_prognostics.lake_cell_count,surface_model_coords,
            lake_model_prognostics.lake_cell_count(surface_model_coords) + 1)
+
+      add_pixel_by_coords(lake.current_cell_to_fill,
+                          lake_model_prognostics.adjusted_lake_cell_count,
+                          lake_model_prognostics.lake_fraction_prognostics)
       set!(lake_model_prognostics.lake_numbers,lake.current_cell_to_fill,
              lake.parameters.lake_number)
     end
@@ -222,9 +228,13 @@ function handle_event(lake::FillingLake,add_water::AddWater)
          lake_model_prognostics.lake_numbers(lake.current_cell_to_fill) == 0
         surface_model_coords =
           get_corresponding_surface_model_grid_cell(lake.current_cell_to_fill,
-                                                    lake_model_parameters.grid_specific_lake_model_parameters)
+                                                    lake_model_parameters.
+                                                    grid_specific_lake_model_parameters)
         set!(lake_model_prognostics.lake_cell_count,surface_model_coords,
-             lake_model_prognostics.lake_cell_count(surface_model_coords) + 1)
+           lake_model_prognostics.lake_cell_count(surface_model_coords) + 1)
+        add_pixel_by_coords(lake.current_cell_to_fill,
+                            lake_model_prognostics.adjusted_lake_cell_count,
+                            lake_model_prognostics.lake_fraction_prognostics)
         set!(lake_model_prognostics.lake_numbers,lake.current_cell_to_fill,
              lake.parameters.lake_number)
       end
@@ -315,9 +325,13 @@ function handle_event(lake::FillingLake,remove_water::RemoveWater)
           ! lake_parameters.is_leaf && lake.current_height_type == flood_height
         surface_model_coords =
           get_corresponding_surface_model_grid_cell(lake.current_cell_to_fill,
-                                                    lake_model_parameters.grid_specific_lake_model_parameters)
+                                                    lake_model_parameters.
+                                                    grid_specific_lake_model_parameters)
         set!(lake_model_prognostics.lake_cell_count,surface_model_coords,
              lake_model_prognostics.lake_cell_count(surface_model_coords) - 1)
+        remove_pixel_by_coords(lake.current_cell_to_fill,
+                               lake_model_prognostics.adjusted_lake_cell_count,
+                               lake_model_prognostics.lake_fraction_prognostics)
         set!(lake_model_prognostics.lake_numbers,lake.current_cell_to_fill,0)
       end
     elseif new_lake_volume >= minimum_new_lake_volume &&
@@ -331,9 +345,13 @@ function handle_event(lake::FillingLake,remove_water::RemoveWater)
          lake_model_prognostics.lake_numbers(lake.current_cell_to_fill) == lake.parameters.lake_number
         surface_model_coords =
           get_corresponding_surface_model_grid_cell(lake.current_cell_to_fill,
-                                                    lake_model_parameters.grid_specific_lake_model_parameters)
+                                                    lake_model_parameters.
+                                                    grid_specific_lake_model_parameters)
         set!(lake_model_prognostics.lake_cell_count,surface_model_coords,
              lake_model_prognostics.lake_cell_count(surface_model_coords) - 1)
+        remove_pixel_by_coords(lake.current_cell_to_fill,
+                               lake_model_prognostics.adjusted_lake_cell_count,
+                               lake_model_prognostics.lake_fraction_prognostics)
         set!(lake_model_prognostics.lake_numbers,lake.current_cell_to_fill,0)
       end
       lake.current_filling_cell_index -= 1
@@ -622,6 +640,15 @@ get_lake_filled_cells(lake::FillingLake) =
 get_lake_filled_cells(lake::Union{OverflowingLake,SubsumedLake}) =
   map(f->f.coords,lake.parameters.filling_order)
 
+function find_top_level_primary_lake_number(lake::Lake)
+  if lake.parameters.is_primary
+    return lake.parameters.lake_number
+  else
+    primary_lake::Lake = lake.lake_model_prognostics.lakes[lake.parameters.primary_lake]
+    return find_top_level_primary_lake_number(primary_lake)
+  end
+end
+
 function handle_event(lake::Union{OverflowingLake,FillingLake},
     calculate_effective_lake_volume_per_cell::CalculateEffectiveLakeVolumePerCell)
   lake_parameters::LakeParameters,lake_variables::LakeVariables,
@@ -670,6 +697,7 @@ function show(io::IO,lake::Lake)
   println(io,"Unprocessed water: "*string(lake_variables.unprocessed_water))
   println(io,"Active Lake: "*string(lake_variables.active_lake))
   println(io,"Center cell coarse coords: "*string(lake_parameters.center_cell_coarse_coords))
+  println(io,"Primary lake: "*string(lake_parameters.primary_lake))
   if isa(lake,OverflowingLake)
     println(io,"O")
     println(io,"Excess water: "*string(lake.excess_water))

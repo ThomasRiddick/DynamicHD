@@ -13,6 +13,7 @@ import Base.*
 import Base./
 import Base.+
 import Base.-
+import Base.>=
 import Base.==
 import Base.isapprox
 import Base.fill!
@@ -53,7 +54,7 @@ for operator in (:+, :-, Symbol("=="))
   @eval function $operator(lfield::Field,rfield::Field) throw(UserError()) end
 end
 
-for operator in (:*, :/)
+for operator in (:*, :/, :>=)
   @eval function $operator(lfield::Field,value::T) where {T<:Number} throw(UserError()) end
 end
 
@@ -236,6 +237,10 @@ for field_type in (:LatLonField,:UnstructuredField)
 
     function *(lfield::$(field_type),value::T) where {T<:Number}
       return $(field_type){T}(lfield.grid,lfield.data * value)
+    end
+
+    function >=(lfield::$(field_type),value::T) where {T<:Number}
+      return $(field_type){Bool}(lfield.grid,lfield.data .>= value)
     end
 
     function /(lfield::$(field_type),value::T) where {T<:Number}
