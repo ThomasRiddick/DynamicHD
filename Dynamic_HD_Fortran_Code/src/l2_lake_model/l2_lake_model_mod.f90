@@ -1,6 +1,12 @@
 module l2_lake_model_mod
 
 use latlon_lake_model_tree_mod
+use l2_calculate_lake_fractions_mod, only: add_pixel_by_coords,remove_pixel_by_coords
+use l2_calculate_lake_fractions_mod, only: lakeinputpointer, lakeinput
+use l2_calculate_lake_fractions_mod, only: setup_lake_for_fraction_calculation
+use l2_calculate_lake_fractions_mod, only: lakefractioncalculationprognostics
+use l2_calculate_lake_fractions_mod, only: clean_lake_fraction_calculation_prognostics
+use l2_calculate_lake_fractions_mod, only: clean_lake_input
 
 implicit none
 
@@ -133,6 +139,7 @@ type :: lakemodelparameters
   integer, pointer, dimension(_DIMS_) :: number_fine_grid_cells
   type(coordslist), pointer, dimension(:) :: surface_cell_to_fine_cell_maps
   integer, pointer, dimension(_DIMS_) :: surface_cell_to_fine_cell_map_numbers
+  logical, pointer, dimension(_DIMS_) :: binary_lake_mask
 end type lakemodelparameters
 
 interface lakemodelparameters
@@ -143,6 +150,7 @@ type :: lakemodelprognostics
   type(lakepointer), pointer, dimension(:) :: lakes
   integer, pointer, dimension(_DIMS_) :: lake_numbers
   integer, pointer, dimension(_DIMS_) :: lake_cell_count
+  integer, pointer, dimension(_DIMS_) :: adjusted_lake_cell_count
   real(dp) :: total_lake_volume
   real(dp), pointer, dimension(_DIMS_) :: effective_volume_per_cell_on_surface_grid
   real(dp), pointer, dimension(_DIMS_) :: effective_lake_height_on_surface_grid_to_lakes
@@ -155,6 +163,7 @@ type :: lakemodelprognostics
   real(dp), pointer, dimension(:) :: evaporation_from_lakes
   logical, pointer, dimension(:) :: evaporation_applied
   type(rooted_tree_forest), pointer :: set_forest
+  type(lakefractioncalculationprognostics), pointer :: lake_fraction_prognostics
 end type lakemodelprognostics
 
 interface lakemodelprognostics
@@ -270,6 +279,7 @@ function lakemodelparametersconstructor( &
     cell_areas_on_surface_model_grid, &
     number_of_lakes, &
     is_lake, &
+    binary_lake_mask, &
     _NPOINTS_HD_, &
     _NPOINTS_LAKE_, &
     _NPOINTS_SURFACE_, &
@@ -282,6 +292,7 @@ function lakemodelparametersconstructor( &
   _DEF_NPOINTS_SURFACE_ _INTENT_in_
   _DEF_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ _INTENT_in_
   real(dp), pointer, dimension(_DIMS_), intent(in) :: cell_areas_on_surface_model_grid
+  logical, pointer, dimension(_DIMS_), intent(in) :: binary_lake_mask
   real(dp), intent(inout), optional :: lake_retention_constant
   real(dp), intent(inout), optional :: minimum_lake_volume_threshold
   type(lakemodelparameters), pointer :: constructor
@@ -385,6 +396,7 @@ function lakemodelparametersconstructor( &
     constructor%number_fine_grid_cells => number_fine_grid_cells
     constructor%surface_cell_to_fine_cell_maps => surface_cell_to_fine_cell_maps
     constructor%surface_cell_to_fine_cell_map_numbers => surface_cell_to_fine_cell_map_numbers
+    constructor%binary_lake_mask => binary_lake_mask
 end function lakemodelparametersconstructor
 
 subroutine clean_lake_model_parameters(lake_model_parameters)
@@ -414,6 +426,8 @@ function lakemodelprognosticsconstructor(lake_model_parameters) result(construct
       constructor%lake_numbers(_DIMS_) = 0
       allocate(constructor%lake_cell_count(lake_model_parameters%_NPOINTS_SURFACE_))
       constructor%lake_cell_count(_DIMS_) = 0
+      allocate(constructor%adjusted_lake_cell_count(lake_model_parameters%_NPOINTS_SURFACE_))
+      constructor%adjusted_lake_cell_count(_DIMS_) = 0
       constructor%total_lake_volume = 0.0_dp
       allocate(constructor%effective_volume_per_cell_on_surface_grid(lake_model_parameters%_NPOINTS_SURFACE_))
       constructor%effective_volume_per_cell_on_surface_grid(_DIMS_) = 0.0_dp
@@ -436,6 +450,7 @@ function lakemodelprognosticsconstructor(lake_model_parameters) result(construct
       allocate(constructor%evaporation_applied(lake_model_parameters%number_of_lakes))
       constructor%evaporation_applied(:) = .false.
       constructor%set_forest => rooted_tree_forest()
+      constructor%lake_fraction_prognostics => null()
 end function lakemodelprognosticsconstructor
 
 subroutine clean_lake_model_prognostics(lake_model_prognostics)
@@ -449,6 +464,7 @@ subroutine clean_lake_model_prognostics(lake_model_prognostics)
     deallocate(lake_model_prognostics%lakes)
     deallocate(lake_model_prognostics%lake_numbers)
     deallocate(lake_model_prognostics%lake_cell_count)
+    deallocate(lake_model_prognostics%adjusted_lake_cell_count)
     deallocate(lake_model_prognostics%effective_volume_per_cell_on_surface_grid)
     deallocate(lake_model_prognostics%effective_lake_height_on_surface_grid_to_lakes)
     deallocate(lake_model_prognostics%effective_lake_height_on_surface_grid_from_lakes)
@@ -461,6 +477,9 @@ subroutine clean_lake_model_prognostics(lake_model_prognostics)
     deallocate(lake_model_prognostics%evaporation_applied)
     call lake_model_prognostics%set_forest%rooted_tree_forest_destructor()
     deallocate(lake_model_prognostics%set_forest)
+    call clean_lake_fraction_calculation_prognostics(&
+      lake_model_prognostics%lake_fraction_prognostics)
+    deallocate(lake_model_prognostics%lake_fraction_prognostics)
 end subroutine clean_lake_model_prognostics
 
 function cellconstructor(_COORDS_ARG_coords_, &
@@ -778,6 +797,9 @@ recursive subroutine add_water(lake,inflow,store_water)
           _GET_COORDS_ _COORDS_surface_model_coords_ _FROM_ lake_model_parameters%_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ lake%_COORDS_current_cell_to_fill_
           lake_model_prognostics%lake_cell_count(_COORDS_ARG_surface_model_coords_) = &
             lake_model_prognostics%lake_cell_count(_COORDS_ARG_surface_model_coords_) + 1
+          call add_pixel_by_coords(lake%_COORDS_ARG_current_cell_to_fill_, &
+                                   lake_model_prognostics%adjusted_lake_cell_count, &
+                                   lake_model_prognostics%lake_fraction_prognostics)
           lake_model_prognostics%lake_numbers(lake%_COORDS_ARG_current_cell_to_fill_) = &
             lake%parameters%lake_number
         end if
@@ -807,9 +829,12 @@ recursive subroutine add_water(lake,inflow,store_water)
             lake%parameters%filling_order(lake%current_filling_cell_index)%cell_pointer%height_type
           if (lake%current_height_type == flood_height .and. &
               lake_model_prognostics%lake_numbers(lake%_COORDS_ARG_current_cell_to_fill_) == 0) then
-          _GET_COORDS_ _COORDS_surface_model_coords_ _FROM_ lake_model_parameters%_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ lake%_COORDS_current_cell_to_fill_
+            _GET_COORDS_ _COORDS_surface_model_coords_ _FROM_ lake_model_parameters%_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ lake%_COORDS_current_cell_to_fill_
             lake_model_prognostics%lake_cell_count(_COORDS_ARG_surface_model_coords_) = &
               lake_model_prognostics%lake_cell_count(_COORDS_ARG_surface_model_coords_) + 1
+            call add_pixel_by_coords(lake%_COORDS_ARG_current_cell_to_fill_, &
+                                     lake_model_prognostics%adjusted_lake_cell_count, &
+                                     lake_model_prognostics%lake_fraction_prognostics)
             lake_model_prognostics%lake_numbers(lake%_COORDS_ARG_current_cell_to_fill_) = &
               lake%parameters%lake_number
           end if
@@ -906,6 +931,9 @@ recursive subroutine remove_water(lake,outflow,store_water)
             _GET_COORDS_ _COORDS_surface_model_coords_ _FROM_ lake_model_parameters%_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ lake%_COORDS_current_cell_to_fill_
             lake_model_prognostics%lake_cell_count(_COORDS_ARG_surface_model_coords_) = &
               lake_model_prognostics%lake_cell_count(_COORDS_ARG_surface_model_coords_) - 1
+            call remove_pixel_by_coords(lake%_COORDS_ARG_current_cell_to_fill_, &
+                                        lake_model_prognostics%adjusted_lake_cell_count, &
+                                        lake_model_prognostics%lake_fraction_prognostics)
             lake_model_prognostics%lake_numbers(lake%_COORDS_ARG_current_cell_to_fill_) = 0
           end if
         else if (new_lake_volume >= minimum_new_lake_volume .and. &
@@ -921,6 +949,9 @@ recursive subroutine remove_water(lake,outflow,store_water)
             _GET_COORDS_ _COORDS_surface_model_coords_ _FROM_ lake_model_parameters%_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ lake%_COORDS_current_cell_to_fill_
             lake_model_prognostics%lake_cell_count(_COORDS_ARG_surface_model_coords_) = &
               lake_model_prognostics%lake_cell_count(_COORDS_ARG_surface_model_coords_) - 1
+            call remove_pixel_by_coords(lake%_COORDS_ARG_current_cell_to_fill_, &
+                                        lake_model_prognostics%adjusted_lake_cell_count, &
+                                        lake_model_prognostics%lake_fraction_prognostics)
             lake_model_prognostics%lake_numbers(lake%_COORDS_ARG_current_cell_to_fill_) = 0
           end if
           lake%current_filling_cell_index = lake%current_filling_cell_index - 1
@@ -1264,6 +1295,19 @@ function get_lake_volume(lake) result(lake_volume)
     end if
 end function get_lake_volume
 
+recursive function find_top_level_primary_lake_number(lake) result(top_level_primary_lake)
+  type(lakeprognostics), pointer, intent(inout) :: lake
+  type(lakeprognostics), pointer :: primary_lake
+  integer :: top_level_primary_lake
+    if (lake%parameters%is_primary) then
+      top_level_primary_lake = lake%parameters%lake_number
+    else
+      primary_lake => &
+        lake%lake_model_prognostics%lakes(lake%parameters%primary_lake)%lake_pointer
+      top_level_primary_lake = find_top_level_primary_lake_number(primary_lake)
+    end if
+end function find_top_level_primary_lake_number
+
 subroutine calculate_effective_lake_volume_per_cell(lake)
   type(lakeprognostics), pointer, intent(inout) :: lake
   type(lakeparameters), pointer :: lake_parameters
@@ -1352,6 +1396,7 @@ subroutine show(lake)
     write(*,*) "Unprocessed water: ", lake%unprocessed_water
     write(*,*) "Active Lake: ", lake%active_lake
     write(*,*) "Center cell coarse coords: ", lake_parameters%_COORDS_ARG_center_cell_coarse_coords_
+    write(*,*) "Primary lake: ", lake_parameters%primary_lake
     if (lake%lake_type == overflowing_lake_type) then
       write(*,*) "O"
       write(*,*) "Excess water: ", lake%excess_water
@@ -1383,20 +1428,37 @@ subroutine create_lakes(lake_model_parameters, &
   type(lakemodelprognostics), pointer, intent(inout) :: lake_model_prognostics
   type(lakeparameterspointer), dimension(:), pointer, intent(inout) :: lake_parameters_array
   type(integerlist), pointer, dimension(:) :: basins_temp
+  type(lakeinputpointer), pointer, dimension(:) :: lake_fraction_calculation_input_temp
+  type(lakeinputpointer), pointer, dimension(:) :: lake_fraction_calculation_input
+  _DEF_INDICES_LIST_potential_lake_pixel_coords_list_INDEX_NAME_
+  _DEF_INDICES_LIST_lake_pixel_coords_list_INDEX_NAME_
+  _DEF_INDICES_LIST_cell_coords_list_INDEX_NAME_
   integer, dimension(:), pointer :: basins_in_coarse_cell
   integer, dimension(:), allocatable :: basins_in_coarse_cell_temp
+  integer, dimension(_DIMS_), pointer :: primary_lake_numbers
+  logical, dimension(_DIMS_), pointer :: mask
+  logical, dimension(_DIMS_), pointer :: cell_mask
   _DEF_INDICES_LIST_cells_with_lakes_temp_INDEX_NAME_
   type(lakeparameters), pointer :: lake_parameters
   type(lakeprognostics), pointer :: lake
+  type(cell), pointer :: working_cell
   _DEF_COORDS_surface_model_coords_
   _DEF_COORDS_fine_coords_
+  _DEF_COORDS_cell_coords_
+  _DEF_COORDS_pixel_
   _DEF_SCALE_FACTORS_scale_factor_
   _DEF_LOOP_INDEX_HD_
+  _DEF_LOOP_INDEX_LAKE_
+  _DEF_LOOP_INDEX_SURFACE_
   integer :: basin_number
   integer :: cells_with_lakes_count
   integer :: number_of_basins_in_coarse_cell
+  integer :: top_level_primary_lake_number
   logical :: contains_lake
   logical :: basins_found
+  integer :: counter, pixel_counter, cell_counter
+  integer :: lake_number
+  integer :: npixels
   integer :: i
     do i = 1,size(lake_parameters_array)
       lake_parameters => lake_parameters_array(i)%lake_parameters_pointer
@@ -1409,19 +1471,103 @@ subroutine create_lakes(lake_model_parameters, &
                               lake_model_parameters, &
                               lake_model_prognostics)
       lake_model_prognostics%lakes(i) = lakepointer(lake)
-      if (lake_parameters%is_leaf .and. (lake%current_height_type == flood_height &
-                                  .or. size(lake_parameters%filling_order) == 1)) then
-        _GET_COORDS_ _COORDS_surface_model_coords_ _FROM_ lake_model_parameters%_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ lake%_COORDS_current_cell_to_fill_
-        lake_model_prognostics%lake_cell_count(_COORDS_ARG_surface_model_coords_) = &
-          lake_model_prognostics%lake_cell_count(_COORDS_ARG_surface_model_coords_) + 1
-        lake_model_prognostics%lake_numbers(lake%_COORDS_ARG_current_cell_to_fill_) = &
-          lake%parameters%lake_number
-      end if
     end do
     deallocate(lake_parameters_array)
+    allocate(primary_lake_numbers(lake_model_parameters%_NPOINTS_LAKE_))
+    primary_lake_numbers(_DIMS_) = 0
+    do lake_number = 1,lake_model_parameters%number_of_lakes
+      lake => lake_model_prognostics%lakes(lake_number)%lake_pointer
+      do i = 1,size(lake%parameters%filling_order)
+        working_cell => lake%parameters%filling_order(i)%cell_pointer
+        if (working_cell%height_type == flood_height .or. &
+            (size(lake%parameters%filling_order) == 1 .and. &
+             lake%parameters%is_leaf)) then
+          top_level_primary_lake_number = find_top_level_primary_lake_number(lake)
+          primary_lake_numbers(working_cell%_COORDS_ARG_coords_) = top_level_primary_lake_number
+        end if
+      end do
+    end do
+    allocate(lake_fraction_calculation_input_temp(lake_model_parameters%number_of_lakes))
+    allocate(mask(lake_model_parameters%_NPOINTS_LAKE_))
+    allocate(cell_mask(lake_model_parameters%_NPOINTS_LAKE_))
+    counter = 0
+    do lake_number = 1,lake_model_parameters%number_of_lakes
+      where (primary_lake_numbers == lake_number)
+        mask(_DIMS_) = .true.
+      elsewhere
+        mask(_DIMS_) = .false.
+      endwhere
+      npixels = count(mask)
+      allocate(_INDICES_LIST_potential_lake_pixel_coords_list_INDEX_NAME(npixels)_)
+      pixel_counter = 1
+      _LOOP_OVER_LAKE_GRID_ _COORDS_LAKE_ _lake_model_parameters%_
+        if (mask(_COORDS_LAKE_)) then
+          _ASSIGN_INDICES_LIST_potential_lake_pixel_coords_list_INDEX_NAME(pixel_counter)_ = &
+            _COORDS_LAKE_
+          pixel_counter = pixel_counter + 1
+        end if
+      _LOOP_OVER_LAKE_GRID_END_
+      if (size(_INDICES_LIST_potential_lake_pixel_coords_list_INDEX_NAME_FIRST_DIM_) > 0) then
+        counter = counter + 1
+        cell_mask(_DIMS_) = .false.
+        do i = 1,size(_INDICES_LIST_potential_lake_pixel_coords_list_INDEX_NAME_FIRST_DIM_)
+          _GET_COORDS_ _COORDS_pixel_ _FROM_ _INDICES_LIST_potential_lake_pixel_coords_list_INDEX_NAME_ i
+          _GET_COORDS_ _COORDS_cell_coords_ _FROM_ lake_model_parameters%_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ _COORDS_pixel_
+          cell_mask(_COORDS_ARG_cell_coords_) = .true.
+        end do
+        allocate(_INDICES_LIST_cell_coords_list_INDEX_NAME(count(cell_mask))_)
+        cell_counter = 1
+        _LOOP_OVER_SURFACE_GRID_ _COORDS_SURFACE_ _lake_model_parameters%_
+          if (cell_mask(_COORDS_SURFACE_)) then
+            _ASSIGN_INDICES_LIST_cell_coords_list_INDEX_NAME(cell_counter)_ = _COORDS_SURFACE_
+            cell_counter = cell_counter + 1
+          end if
+        _LOOP_OVER_SURFACE_GRID_END_
+        allocate(_INDICES_LIST_lake_pixel_coords_list_INDEX_NAME(0)_)
+        lake_fraction_calculation_input_temp(counter)%lake_input_pointer => &
+            lakeinput(lake_number, &
+                     _INDICES_LIST_lake_pixel_coords_list_INDEX_NAME_, &
+                     _INDICES_LIST_potential_lake_pixel_coords_list_INDEX_NAME_, &
+                     _INDICES_LIST_cell_coords_list_INDEX_NAME_)
+      else
+        deallocate(_INDICES_LIST_potential_lake_pixel_coords_list_INDEX_NAME_)
+      end if
+    end do
+    deallocate(mask)
+    deallocate(cell_mask)
+    allocate(lake_fraction_calculation_input(counter))
+    do i = 1,counter
+      lake_fraction_calculation_input(i)%lake_input_pointer => &
+        lake_fraction_calculation_input_temp(i)%lake_input_pointer
+    end do
+    deallocate(lake_fraction_calculation_input_temp)
+    lake_model_prognostics%lake_fraction_prognostics => &
+      setup_lake_for_fraction_calculation( &
+        lake_fraction_calculation_input, &
+        lake_model_parameters%number_fine_grid_cells, &
+        lake_model_parameters%binary_lake_mask, &
+        primary_lake_numbers, &
+        lake_model_parameters%_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_, &
+        lake_model_parameters%_NPOINTS_LAKE_,lake_model_parameters%_NPOINTS_SURFACE_)
+    do i = 1,size(lake_fraction_calculation_input)
+      call clean_lake_input(lake_fraction_calculation_input(i)%lake_input_pointer)
+      deallocate(lake_fraction_calculation_input(i)%lake_input_pointer)
+    end do
+    deallocate(lake_fraction_calculation_input)
     do i=1,size(lake_model_prognostics%lakes)
       lake => lake_model_prognostics%lakes(i)%lake_pointer
       lake_model_parameters%lake_centers(lake%parameters%_COORDS_ARG_center_coords_) = .true.
+      if (lake%parameters%is_leaf .and. (lake%current_height_type == flood_height &
+                                  .or. size(lake%parameters%filling_order) == 1)) then
+        _GET_COORDS_ _COORDS_surface_model_coords_ _FROM_ lake_model_parameters%_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ lake%_COORDS_current_cell_to_fill_
+        lake_model_prognostics%lake_cell_count(_COORDS_ARG_surface_model_coords_) = &
+          lake_model_prognostics%lake_cell_count(_COORDS_ARG_surface_model_coords_) + 1
+        call add_pixel_by_coords(lake%_COORDS_ARG_current_cell_to_fill_, &
+                                 lake_model_prognostics%adjusted_lake_cell_count, &
+                                 lake_model_prognostics%lake_fraction_prognostics)
+        lake_model_prognostics%lake_numbers(lake%_COORDS_ARG_current_cell_to_fill_) = &
+          lake%parameters%lake_number
+      end if
     end do
     allocate(basins_in_coarse_cell_temp((lake_model_parameters%_NPOINTS_TOTAL_LAKE_)&
                                         /(lake_model_parameters%_NPOINTS_TOTAL_HD_)))
@@ -1672,8 +1818,8 @@ subroutine calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_fraction_on_surface_grid)
   type(lakemodelparameters), pointer, intent(in) :: lake_model_parameters
   type(lakemodelprognostics), pointer, intent(inout) :: lake_model_prognostics
-  real(dp), dimension(:,:), allocatable, intent(inout) :: lake_fraction_on_surface_grid
-    lake_fraction_on_surface_grid(_DIMS_) = real(lake_model_prognostics%lake_cell_count(_DIMS_))&
+  real(dp), dimension(_DIMS_), allocatable, intent(inout) :: lake_fraction_on_surface_grid
+    lake_fraction_on_surface_grid(_DIMS_) = real(lake_model_prognostics%adjusted_lake_cell_count(_DIMS_))&
                                          /real(lake_model_parameters%number_fine_grid_cells(_DIMS_))
 end subroutine calculate_lake_fraction_on_surface_grid
 
@@ -1738,7 +1884,7 @@ function calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
     result(diagnostic_lake_volumes)
   type(lakemodelparameters), intent(in), pointer :: lake_model_parameters
   type(lakemodelprognostics), intent(inout), pointer :: lake_model_prognostics
-  real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
+  real(dp), dimension(_DIMS_), pointer :: diagnostic_lake_volumes
   real(dp), dimension(:), allocatable :: lake_volumes_by_lake_number
   type(lakeprognostics), pointer :: lake
   type(rooted_tree), pointer :: x

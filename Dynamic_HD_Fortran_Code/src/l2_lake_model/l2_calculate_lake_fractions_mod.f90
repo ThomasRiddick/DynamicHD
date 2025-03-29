@@ -78,7 +78,7 @@ type lakefractioncalculationprognostics
   type(lakepropertiespointer), dimension(:), pointer :: lakes
   integer, dimension(_DIMS_), pointer :: pixel_numbers
   type(pixelpointer), dimension(:), pointer :: pixels
-  integer, dimension(_DIMS_), pointer ::primary_lake_numbers
+  integer, dimension(_DIMS_), pointer :: primary_lake_numbers
   integer, dimension(_DIMS_), pointer ::lake_index
   _DEF_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_
 end type lakefractioncalculationprognostics
@@ -145,6 +145,13 @@ function lakeinputconstructor(lake_number, &
        _INDICES_LIST_cell_coords_list_INDEX_NAME_
 end
 
+subroutine clean_lake_input(lake_input)
+  type(lakeinput), pointer :: lake_input
+    deallocate(lake_input%_INDICES_LIST_potential_lake_pixel_coords_list_INDEX_NAME_)
+    deallocate(lake_input%_INDICES_LIST_lake_pixel_coords_list_INDEX_NAME_)
+    deallocate(lake_input%_INDICES_LIST_cell_coords_list_INDEX_NAME_)
+end subroutine clean_lake_input
+
 function lakepropertiesconstructor(lake_number, &
                                    cell_list, &
                                    lake_pixel_count) &
@@ -205,6 +212,30 @@ function lakefractioncalculationprognosticsconstructor( &
     _ASSIGN_constructor%_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ => &
       _INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_
 end function lakefractioncalculationprognosticsconstructor
+
+subroutine clean_lake_fraction_calculation_prognostics(prognostics)
+  type(lakefractioncalculationprognostics), pointer :: prognostics
+  integer :: i,j
+    deallocate(prognostics%pixel_numbers)
+    do i = 1,size(prognostics%pixels)
+      deallocate(prognostics%pixels(i)%pixel_pointer)
+    end do
+    deallocate(prognostics%pixels)
+    do i = 1,size(prognostics%lakes)
+      do j = 1,size(prognostics%lakes(i)%lake_properties_pointer%cell_list)
+        call clean_lake_cell(prognostics%lakes(i)%lake_properties_pointer%&
+                             &cell_list(j)%lake_cell_pointer)
+        deallocate(prognostics%lakes(i)%lake_properties_pointer%&
+                   &cell_list(j)%lake_cell_pointer)
+      end do
+      deallocate(prognostics%lakes(i)%lake_properties_pointer%&
+                 &cell_list)
+      deallocate(prognostics%lakes(i)%lake_properties_pointer)
+    end do
+    deallocate(prognostics%lakes)
+    deallocate(prognostics%lake_index)
+    deallocate(prognostics%primary_lake_numbers)
+end subroutine
 
 ! Utility routines
 
@@ -399,11 +430,11 @@ subroutine setup_cells_lakes_and_pixels(lakes, &
     end do
     deallocate(pixels_temp)
     _LOOP_OVER_LAKE_GRID_ _COORDS_LAKE_
-        if (all_lake_potential_pixel_mask(_COORDS_LAKE_)) then
-          _GET_COORDS_ _COORDS_working_coarse_coords_ _FROM_ _INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ _COORDS_LAKE_
-          all_lake_potential_pixel_counts(_COORDS_ARG_working_coarse_coords_) = &
-            all_lake_potential_pixel_counts(_COORDS_ARG_working_coarse_coords_) + 1
-        end if
+      if (all_lake_potential_pixel_mask(_COORDS_LAKE_)) then
+        _GET_COORDS_ _COORDS_working_coarse_coords_ _FROM_ _INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ _COORDS_LAKE_
+        all_lake_potential_pixel_counts(_COORDS_ARG_working_coarse_coords_) = &
+          all_lake_potential_pixel_counts(_COORDS_ARG_working_coarse_coords_) + 1
+      end if
     _LOOP_OVER_LAKE_GRID_END_
     do lake_number = 1,size(lake_properties)
       lake => lake_properties(lake_number)%lake_properties_pointer
@@ -606,12 +637,12 @@ subroutine calculate_lake_fractions(lakes, &
     end do
     allocate(lake_fractions_field(_NPOINTS_SURFACE_))
     lake_fractions_field = &
-      real(lake_pixel_counts_field(:,:),dp)/real(cell_pixel_counts(:,:),dp)
+      real(lake_pixel_counts_field(_DIMS_),dp)/real(cell_pixel_counts(_DIMS_),dp)
     allocate(binary_lake_mask(_NPOINTS_SURFACE_))
     where (lake_fractions_field >= 0.5_dp)
-      binary_lake_mask(:,:) = .true.
+      binary_lake_mask(_DIMS_) = .true.
     elsewhere
-      binary_lake_mask(:,:) = .false.
+      binary_lake_mask(_DIMS_) = .false.
     end where
     do i = 1,size(pixels)
       deallocate(pixels(i)%pixel_pointer)

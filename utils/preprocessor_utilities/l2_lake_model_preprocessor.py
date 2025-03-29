@@ -270,8 +270,8 @@ for line in filtered_lines:
                   f'\\1integer, dimension(:), pointer :: \\2{dim2}\\3\\4',line)
     line = re.sub(r'(\s*)_DEF_COORDS_(\w*)_( _INTENT_\w*_)?',
                   f'\\1integer :: \\2_{dim1}\\3\\n\\1integer :: \\2_{dim2}\\3',line)
-    line = re.sub(r'_INDICES_(?:FIELD|LIST)_(\w*)INDEX_NAME(\w*)_',
-                  f'\\1{dim1}\\2,\\1{dim2}\\2',
+    line = re.sub(r'(\w+%)?_INDICES_(?:FIELD|LIST)_(\w*)INDEX_NAME(\w*)_',
+                  f'\\1\\2{dim1}\\3,\\1\\2{dim2}\\3',
                   line)
     line = re.sub(r'(\s*)(.*)_EQUALS_?(\w+%)?(\w+%)?_COORDS_(\w*)_ == _COORDS_(HD|LAKE|SURFACE)_',
                   f'\\1\\2(\\3\\4\\5_{dim1} == {dim1}_\\6) .and. &\\n'
