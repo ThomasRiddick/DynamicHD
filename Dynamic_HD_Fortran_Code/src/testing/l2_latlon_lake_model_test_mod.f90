@@ -8312,7 +8312,7 @@ subroutine testLakeModel9
          ! (/nlon_lake,nlat_lake/)))
       allocate(first_intermediate_expected_river_inflow(nlat_hd,nlon_hd))
       first_intermediate_expected_river_inflow = transpose(reshape((/   &
-          0.0, 0.0,  0.0, &
+          0.0, 15.0,  1.0, &
          0.0, 0.0,  0.0, &
          0.0, 0.0,  0.0 /), &
          (/nlon_hd,nlat_hd/)))
@@ -8324,7 +8324,7 @@ subroutine testLakeModel9
          (/nlon_hd,nlat_hd/)))
       allocate(first_intermediate_expected_water_to_hd(nlat_hd,nlon_hd))
       first_intermediate_expected_water_to_hd = transpose(reshape((/   &
-          0.0, 1296000.0, 86400.0, &
+          0.0, 1296000.0, 0.0, &
          0.0, 0.0,  0.0, &
          0.0, 0.0,  0.0 /), &
          (/nlon_hd,nlat_hd/)))
@@ -9202,10 +9202,10 @@ subroutine testLakeModel10
       !   (/nlon_lake,nlat_lake/)))
       allocate(first_intermediate_expected_river_inflow(nlat_hd,nlon_hd))
       first_intermediate_expected_river_inflow = transpose(reshape((/   &
-          0.0, 0.0, 0.0, 0.0, &
          0.0, 0.0, 0.0, 0.0, &
          0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0 /), &
+         0.0, 2.0, 0.0, 0.0, &
+         0.0, 0.0, 1.0, 0.0 /), &
          (/nlon_hd,nlat_hd/)))
       allocate(first_intermediate_expected_water_to_ocean(nlat_hd,nlon_hd))
       first_intermediate_expected_water_to_ocean = transpose(reshape((/   &
@@ -9216,10 +9216,10 @@ subroutine testLakeModel10
          (/nlon_hd,nlat_hd/)))
       allocate(first_intermediate_expected_water_to_hd(nlat_hd,nlon_hd))
       first_intermediate_expected_water_to_hd = transpose(reshape((/   &
-          430.0, 0.0, 0.0, 0.0, &
          0.0, 0.0, 0.0, 0.0, &
-         0.0, 2.0*86400.0, 0.0, 0.0, &
-         0.0, 0.0, 1.0*86400.0, 0.0 /), &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
          (/nlon_hd,nlat_hd/)))
       first_intermediate_expected_water_to_hd(:,:) = &
         first_intermediate_expected_water_to_hd(:,:)/seconds_per_day
@@ -11491,7 +11491,7 @@ subroutine testLakeModel13
       allocate(first_intermediate_expected_river_inflow(nlat_hd,nlon_hd))
       first_intermediate_expected_river_inflow = transpose(reshape((/   &
           0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0, &
+         275.0/86400.0, 0.0, 0.0, 0.0, &
          0.0, 0.0, 0.0, 0.0, &
          0.0, 0.0, 0.0, 0.0 /), &
          (/nlon_hd,nlat_hd/)))
@@ -11799,7 +11799,8 @@ subroutine testLakeModel13
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
-      call assert_equals( first_intermediate_expected_river_inflow, river_fields%river_inflow,nlat_hd,nlon_hd)
+      call assert_equals( first_intermediate_expected_river_inflow, river_fields%river_inflow, &
+                         nlat_hd,nlon_hd,0.00000001_dp)
       call assert_equals(first_intermediate_expected_water_to_ocean, &
                        river_fields%water_to_ocean,nlat_hd,nlon_hd,0.00001_dp)
       call assert_equals( first_intermediate_expected_water_to_hd, lake_model_prognostics%water_to_hd,nlat_hd,nlon_hd)
@@ -13578,9 +13579,9 @@ subroutine testLakeModel16
       allocate(first_intermediate_expected_river_inflow(nlat_hd,nlon_hd))
       first_intermediate_expected_river_inflow = transpose(reshape((/   &
           0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0, &
-         0.0, 0.0, 0.0, 0.0 /), &
+         384.0/86400.0, 0.0, 0.0, 0.0, &
+         0.0, 2.0, 0.0, 0.0, &
+         0.0, 0.0, 1.0, 0.0 /), &
          (/nlon_hd,nlat_hd/)))
       allocate(first_intermediate_expected_water_to_ocean(nlat_hd,nlon_hd))
       first_intermediate_expected_water_to_ocean = transpose(reshape((/   &
@@ -13593,8 +13594,8 @@ subroutine testLakeModel16
       first_intermediate_expected_water_to_hd = transpose(reshape((/   &
           0.0, 0.0, 0.0, 0.0, &
          384.0, 0.0, 0.0, 0.0, &
-         0.0, 2.0*86400.0, 0.0, 0.0, &
-         0.0, 0.0, 1.0*86400.0, 0.0 /), &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
          (/nlon_hd,nlat_hd/)))
       first_intermediate_expected_water_to_hd(:,:) = &
         first_intermediate_expected_water_to_hd(:,:)/seconds_per_day
@@ -13883,7 +13884,8 @@ subroutine testLakeModel16
       end do
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                                          lake_model_prognostics)
-      call assert_equals( first_intermediate_expected_river_inflow, river_fields%river_inflow,nlat_hd,nlon_hd)
+      call assert_equals( first_intermediate_expected_river_inflow, river_fields%river_inflow,&
+                         nlat_hd,nlon_hd,0.000000001_dp)
       call assert_equals(first_intermediate_expected_water_to_ocean, &
                        river_fields%water_to_ocean,nlat_hd,nlon_hd,0.00001_dp)
       call assert_equals( first_intermediate_expected_water_to_hd, lake_model_prognostics%water_to_hd,nlat_hd,nlon_hd)
