@@ -14,6 +14,7 @@ using L2LakeModelDefsModule: LakeModelDiagnostics
 using L2LakeModelModule: calculate_lake_fraction_on_surface_grid
 using L2LakeModelModule: calculate_diagnostic_lake_volumes_field
 using L2LakeModelModule: calculate_effective_lake_height_on_surface_grid
+using L2LakeModelModule: calculate_binary_lake_mask
 
 function print_results(river_fields::RiverPrognosticFields,
                        lake_model_parameters::LakeModelParameters,
@@ -201,6 +202,15 @@ end
   #                   0    0    0    0    0    0    0    0    0
   #                   0    0    0    0    0    0    0    0    0
   #                   0    0    0    0    0    0    0    0    0 ])
+  expected_lake_pixel_counts_field::Field{Int64} =
+    LatLonField{Int64}(surface_model_grid,
+                          Int64[ 0 0 0
+                                 0 1 0
+                                 0 0 0 ])
+  expected_binary_lake_mask::Field{Bool} = LatLonField{Bool}(surface_model_grid,
+                                                              Bool[ false false false
+                                                                    false false false
+                                                                    false false false ])
   intermediate_expected_river_inflow::Field{Float64} = LatLonField{Float64}(hd_grid,
                                                                Float64[ 0.0 2.0  4.0
                                                                         0.0 0.0  6.0
@@ -257,6 +267,16 @@ end
   #                   0    0    0    0    0    0    0    0    0
   #                   0    0    0    0    0    0    0    0    0
   #                   0    0    0    0    0    0    0    0    0 ])
+  intermediate_expected_lake_pixel_counts_field::Field{Int64} =
+    LatLonField{Int64}(surface_model_grid,
+                       Int64[ 0 3 0
+                              4 4 0
+                              0 0 0 ])
+  intermediate_expected_binary_lake_mask::Field{Bool} =
+    LatLonField{Bool}(surface_model_grid,
+                      Bool[ false true false
+                            true  true false
+                            false false false ])
   river_fields::RiverPrognosticFields,
     lake_model_prognostics::LakeModelPrognostics,
     lake_model_diagnostics::LakeModelDiagnostics =
@@ -268,6 +288,10 @@ end
   lake_fractions::Field{Float64} =
     calculate_lake_fraction_on_surface_grid(lake_model_parameters,
                                             lake_model_prognostics)
+  lake_pixel_counts_field::Field{Int64},_,
+    output_binary_lake_mask::Field{Bool} =
+    calculate_binary_lake_mask(lake_model_parameters,
+                               lake_model_prognostics)
   lake_types::LatLonField{Int64} = LatLonField{Int64}(lake_grid,0)
   for i = 1:6
     for j = 1:6
@@ -305,6 +329,8 @@ end
   @test intermediate_expected_number_lake_cells == lake_model_prognostics.lake_cell_count
   @test intermediate_expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test intermediate_expected_true_lake_depths == lake_model_parameters.true_lake_depths
+  @test intermediate_expected_binary_lake_mask == output_binary_lake_mask
+  @test intermediate_expected_lake_pixel_counts_field == lake_pixel_counts_field
   river_fields,lake_model_prognostics,_ =
     drive_hd_and_lake_model(river_parameters,
                             river_fields,
@@ -319,6 +345,9 @@ end
   lake_fractions =
     calculate_lake_fraction_on_surface_grid(lake_model_parameters,
                                             lake_model_prognostics)
+  lake_pixel_counts_field,_,output_binary_lake_mask =
+    calculate_binary_lake_mask(lake_model_parameters,
+                               lake_model_prognostics)
   lake_types = LatLonField{Int64}(lake_grid,0)
   for i = 1:6
     for j = 1:6
@@ -355,6 +384,8 @@ end
   @test expected_number_lake_cells == lake_model_prognostics.lake_cell_count
   @test expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test expected_true_lake_depths == lake_model_parameters.true_lake_depths
+  @test expected_binary_lake_mask == output_binary_lake_mask
+  @test expected_lake_pixel_counts_field == lake_pixel_counts_field
 end
 
 @testset "Lake model tests 2" begin
@@ -9443,7 +9474,15 @@ end
   #                0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
   #                0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
   #                0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0 ])
-
+  expected_lake_pixel_counts_field::Field{Int64} =
+    LatLonField{Int64}(surface_model_grid,
+                          Int64[ 0 0 0
+                                 0 1 0
+                                 0 0 0 ])
+  expected_binary_lake_mask::Field{Bool} = LatLonField{Bool}(surface_model_grid,
+                                                              Bool[ false false false
+                                                                    false false false
+                                                                    false false false ])
 
   first_intermediate_expected_river_inflow::Field{Float64} =
     LatLonField{Float64}(hd_grid,
@@ -9580,6 +9619,16 @@ end
   #                0 4 4 4 4 4 4 4 4 4 4 4 4 4 0 0 0 0 0 0
   #                0 3 4 4 4 4 4 4 4 4 4 4 4 4 0 0 0 0 0 0
   #                0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ])
+  first_intermediate_expected_lake_pixel_counts_field::Field{Int64} =
+    LatLonField{Int64}(surface_model_grid,
+                       Int64[ 36 48  2
+                              48 64 48
+                              0 48 0 ])
+  first_intermediate_expected_binary_lake_mask::Field{Bool} =
+    LatLonField{Bool}(surface_model_grid,
+                      Bool[ true true false
+                            true true  true
+                            false true false ])
 
   second_intermediate_expected_river_inflow::Field{Float64} =
     LatLonField{Float64}(hd_grid,
@@ -10104,6 +10153,10 @@ end
   lake_fractions =
     calculate_lake_fraction_on_surface_grid(lake_model_parameters,
                                             lake_model_prognostics)
+  lake_pixel_counts_field::Field{Int64},_,
+    output_binary_lake_mask::Field{Bool} =
+    calculate_binary_lake_mask(lake_model_parameters,
+                               lake_model_prognostics)
   for lake::Lake in lake_model_prognostics.lakes
     append!(lake_volumes,get_lake_volume(lake))
   end
@@ -10122,6 +10175,8 @@ end
   @test first_intermediate_expected_number_lake_cells == lake_model_prognostics.lake_cell_count
   @test first_intermediate_expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test first_intermediate_expected_true_lake_depths == lake_model_parameters.true_lake_depths
+  @test first_intermediate_expected_binary_lake_mask == output_binary_lake_mask
+  @test first_intermediate_expected_lake_pixel_counts_field == lake_pixel_counts_field
   river_fields,lake_model_prognostics,lake_model_diagnostics =
     drive_hd_and_lake_model(river_parameters,river_fields,
                             lake_model_parameters,
@@ -10494,6 +10549,9 @@ end
   lake_fractions =
     calculate_lake_fraction_on_surface_grid(lake_model_parameters,
                                             lake_model_prognostics)
+  lake_pixel_counts_field,_,output_binary_lake_mask =
+    calculate_binary_lake_mask(lake_model_parameters,
+                               lake_model_prognostics)
   for lake::Lake in lake_model_prognostics.lakes
     append!(lake_volumes,get_lake_volume(lake))
   end
@@ -10512,6 +10570,8 @@ end
   @test expected_number_lake_cells == lake_model_prognostics.lake_cell_count
   @test expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test expected_true_lake_depths == lake_model_parameters.true_lake_depths
+  @test expected_binary_lake_mask == output_binary_lake_mask
+  @test expected_lake_pixel_counts_field == lake_pixel_counts_field
 end
 
 @testset "Lake model tests 18" begin
@@ -11163,6 +11223,15 @@ end
   #                0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
   #                0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
   #                0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0 ])
+  expected_lake_pixel_counts_field::Field{Int64} =
+    LatLonField{Int64}(surface_model_grid,
+                          Int64[ 2 1 1
+                                 0 1 1
+                                 1 0 0  ])
+  expected_binary_lake_mask::Field{Bool} = LatLonField{Bool}(surface_model_grid,
+                                                              Bool[ false false false
+                                                                    false false false
+                                                                    false false false ])
   expected_lake_volumes_all_timesteps::Vector{Vector{Float64}} =
     [[45.0, 63.0, 18.0, 66.0, 48.0, 104.0, 27.0, 52.333333333333336, 34.0, 45.0, 55.0, 85.14583333333331],
      [45.0, 63.0, 18.0, 66.0, 48.0, 104.0, 27.0, 48.666666666666664, 34.0, 45.0, 55.0, 79.29166666666666],
@@ -11393,6 +11462,15 @@ end
   #                0.0 2.0 2.0 2.0 2.0 2.0 2.0 2.0 2.0 2.0 2.0 2.0 2.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
   #                0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
   #                0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 ])
+  first_intermediate_expected_lake_pixel_counts_field::Field{Int64} =
+    LatLonField{Int64}(surface_model_grid,
+                          Int64[ 0 48  0
+                                 0  0 43
+                                36 20 0])
+  first_intermediate_expected_binary_lake_mask::Field{Bool} = LatLonField{Bool}(surface_model_grid,
+                                                              Bool[ false  true false
+                                                                    false false  true
+                                                                     true false false ])
 
   second_intermediate_expected_river_inflow::Field{Float64} =
     LatLonField{Float64}(hd_grid,
@@ -11510,6 +11588,15 @@ end
   #                0.0 1.02 1.02 1.02 1.02 1.02 1.02 1.02 1.02 1.02 1.02 1.02 1.02 0.00 0.00 0.00 0.00 0.00 0.00 0.00
   #                0.0 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00
   #                0.0 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 ])
+  second_intermediate_expected_lake_pixel_counts_field::Field{Int64} =
+    LatLonField{Int64}(surface_model_grid,
+                          Int64[  0 48  0
+                                  0  0 43
+                                 36 20  0 ])
+  second_intermediate_expected_binary_lake_mask::Field{Bool} = LatLonField{Bool}(surface_model_grid,
+                                                              Bool[ false  true false
+                                                                    false false  true
+                                                                     true false false ])
 
   third_intermediate_expected_river_inflow::Field{Float64} =
     LatLonField{Float64}(hd_grid,
@@ -11628,6 +11715,15 @@ end
   #                0.0 0.97 0.97 0.97 0.97 0.97 0.97 0.97 0.97 0.97 0.97 0.97 0.97 0.00 0.0 0.0 0.00 0.00 0.00 0.0
   #                0.0 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.0 0.0 0.00 0.00 0.00 0.0
   #                0.0  0.0 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.0 0.0 0.00 0.00 0.00 0.0  ])
+  third_intermediate_expected_lake_pixel_counts_field::Field{Int64} =
+    LatLonField{Int64}(surface_model_grid,
+                          Int64[  0 48  0
+                                  0  0 41
+                                 36 20  0  ])
+  third_intermediate_expected_binary_lake_mask::Field{Bool} = LatLonField{Bool}(surface_model_grid,
+                                                              Bool[ false  true false
+                                                                    false false  true
+                                                                     true false false ])
 
   fourth_intermediate_expected_river_inflow::Field{Float64} =
     LatLonField{Float64}(hd_grid,
@@ -11746,6 +11842,15 @@ end
   #                0.0 0.90 0.9 0.90 0.90 0.90 0.90 0.90 0.90 0.90 0.90 0.90 0.90 0.00 0.0 0.0 0.00 0.00 0.00 0.0
   #                0.0 0.00 0.0 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.0 0.0 0.00 0.00 0.00 0.0
   #                0.0 0.00 0.0 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.0 0.0 0.00 0.00 0.00 0.0  ])
+  fourth_intermediate_expected_lake_pixel_counts_field::Field{Int64} =
+    LatLonField{Int64}(surface_model_grid,
+                          Int64[  0 48  0
+                                  0  0 41
+                                 36 20  0  ])
+  fourth_intermediate_expected_binary_lake_mask::Field{Bool} = LatLonField{Bool}(surface_model_grid,
+                                                              Bool[ false  true false
+                                                                    false false  true
+                                                                     true false false ])
 
   fifth_intermediate_expected_river_inflow::Field{Float64} =
     LatLonField{Float64}(hd_grid,
@@ -11864,6 +11969,15 @@ end
   #                0.0 0.00 0.0 0.0 0.0 0.0 0.0 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.0 0.0 0.00 0.00 0.00 0.0
   #                0.0 0.00 0.0 0.0 0.0 0.0 0.0 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.0 0.0 0.00 0.00 0.00 0.0
   #                0.0 0.00 0.0 0.0 0.0 0.0 0.0 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.0 0.0 0.00 0.00 0.00 0.0 ])
+  fifth_intermediate_expected_lake_pixel_counts_field::Field{Int64} =
+    LatLonField{Int64}(surface_model_grid,
+                          Int64[4 41  0
+                                7  0  0
+                                1  0  0 ])
+  fifth_intermediate_expected_binary_lake_mask::Field{Bool} = LatLonField{Bool}(surface_model_grid,
+                                                              Bool[ false  true false
+                                                                    false false false
+                                                                    false false false ])
 
   sixth_intermediate_expected_river_inflow::Field{Float64} =
     LatLonField{Float64}(hd_grid,
@@ -11982,6 +12096,15 @@ end
   #                0.0 0.00 0.0 0.0 0.0 0.0 0.0 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.0 0.0 0.0 0.0 0.0 0.0
   #                0.0 0.00 0.0 0.0 0.0 0.0 0.0 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.0 0.0 0.0 0.0 0.0 0.0
   #                0.0 0.00 0.0 0.0 0.0 0.0 0.0 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.0 0.0 0.0 0.0 0.0 0.0 ])
+  sixth_intermediate_expected_lake_pixel_counts_field::Field{Int64} =
+    LatLonField{Int64}(surface_model_grid,
+                          Int64[ 4 41 0
+                                 7  0 0
+                                 1  0 0 ])
+  sixth_intermediate_expected_binary_lake_mask::Field{Bool} = LatLonField{Bool}(surface_model_grid,
+                                                              Bool[ false  true false
+                                                                    false false false
+                                                                    false false false ])
   seventh_intermediate_expected_river_inflow::Field{Float64} =
     LatLonField{Float64}(hd_grid,
                          Float64[ 0.0 0.0 0.0 0.0
@@ -12099,6 +12222,15 @@ end
   #                0.0 0.00 0.0 0.0 0.0 0.0 0.0 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.0 0.0 0.00 0.00 0.00 0.0
   #                0.0 0.00 0.0 0.0 0.0 0.0 0.0 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.0 0.0 0.00 0.00 0.00 0.0
   #                0.0 0.00 0.0 0.0 0.0 0.0 0.0 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.0 0.0 0.00 0.00 0.00 0.0 ])
+  seventh_intermediate_expected_lake_pixel_counts_field::Field{Int64} =
+    LatLonField{Int64}(surface_model_grid,
+                          Int64[ 4 41  0
+                                 7  0  0
+                                 1  0  0 ])
+  seventh_intermediate_expected_binary_lake_mask::Field{Bool} = LatLonField{Bool}(surface_model_grid,
+                                                              Bool[ false  true false
+                                                                    false false false
+                                                                    false false false ])
   lake_volumes_all_timesteps::Vector{Vector{Float64}} = []
   river_fields::RiverPrognosticFields,
     lake_model_prognostics::LakeModelPrognostics,
@@ -12136,6 +12268,10 @@ end
   lake_fractions =
     calculate_lake_fraction_on_surface_grid(lake_model_parameters,
                                             lake_model_prognostics)
+  lake_pixel_counts_field::Field{Int64},_,
+    output_binary_lake_mask::Field{Bool} =
+    calculate_binary_lake_mask(lake_model_parameters,
+                               lake_model_prognostics)
   for lake::Lake in lake_model_prognostics.lakes
     append!(lake_volumes,get_lake_volume(lake))
   end
@@ -12155,6 +12291,8 @@ end
   @test first_intermediate_expected_number_lake_cells == lake_model_prognostics.lake_cell_count
   @test first_intermediate_expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test first_intermediate_expected_true_lake_depths == lake_model_parameters.true_lake_depths
+  @test first_intermediate_expected_binary_lake_mask == output_binary_lake_mask
+  @test first_intermediate_expected_lake_pixel_counts_field == lake_pixel_counts_field
   river_fields,lake_model_prognostics,lake_model_diagnostics =
     drive_hd_and_lake_model(river_parameters,river_fields,
                             lake_model_parameters,
@@ -12193,6 +12331,9 @@ end
   lake_fractions =
     calculate_lake_fraction_on_surface_grid(lake_model_parameters,
                                             lake_model_prognostics)
+  lake_pixel_counts_field,_,output_binary_lake_mask =
+    calculate_binary_lake_mask(lake_model_parameters,
+                               lake_model_prognostics)
   for lake::Lake in lake_model_prognostics.lakes
     append!(lake_volumes,get_lake_volume(lake))
   end
@@ -12212,6 +12353,8 @@ end
   @test second_intermediate_expected_number_lake_cells == lake_model_prognostics.lake_cell_count
   @test second_intermediate_expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test isapprox(second_intermediate_expected_true_lake_depths,lake_model_parameters.true_lake_depths,rtol=0.0,atol=0.1)
+  @test second_intermediate_expected_binary_lake_mask == output_binary_lake_mask
+  @test second_intermediate_expected_lake_pixel_counts_field == lake_pixel_counts_field
   river_fields,lake_model_prognostics,lake_model_diagnostics =
     drive_hd_and_lake_model(river_parameters,river_fields,
                             lake_model_parameters,
@@ -12250,6 +12393,9 @@ end
   lake_fractions =
     calculate_lake_fraction_on_surface_grid(lake_model_parameters,
                                             lake_model_prognostics)
+  lake_pixel_counts_field,_,output_binary_lake_mask =
+    calculate_binary_lake_mask(lake_model_parameters,
+                               lake_model_prognostics)
   for lake::Lake in lake_model_prognostics.lakes
     append!(lake_volumes,get_lake_volume(lake))
   end
@@ -12269,6 +12415,8 @@ end
   @test third_intermediate_expected_number_lake_cells == lake_model_prognostics.lake_cell_count
   @test third_intermediate_expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test isapprox(third_intermediate_expected_true_lake_depths,lake_model_parameters.true_lake_depths,rtol=0.0,atol=0.1)
+  @test third_intermediate_expected_binary_lake_mask == output_binary_lake_mask
+  @test third_intermediate_expected_lake_pixel_counts_field == lake_pixel_counts_field
   river_fields,lake_model_prognostics,lake_model_diagnostics =
     drive_hd_and_lake_model(river_parameters,river_fields,
                             lake_model_parameters,
@@ -12307,6 +12455,9 @@ end
   lake_fractions =
     calculate_lake_fraction_on_surface_grid(lake_model_parameters,
                                             lake_model_prognostics)
+  lake_pixel_counts_field,_,output_binary_lake_mask =
+    calculate_binary_lake_mask(lake_model_parameters,
+                               lake_model_prognostics)
   for lake::Lake in lake_model_prognostics.lakes
     append!(lake_volumes,get_lake_volume(lake))
   end
@@ -12326,6 +12477,8 @@ end
   @test fourth_intermediate_expected_number_lake_cells == lake_model_prognostics.lake_cell_count
   @test fourth_intermediate_expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test isapprox(fourth_intermediate_expected_true_lake_depths,lake_model_parameters.true_lake_depths,rtol=0.0,atol=0.1)
+  @test fourth_intermediate_expected_binary_lake_mask == output_binary_lake_mask
+  @test fourth_intermediate_expected_lake_pixel_counts_field == lake_pixel_counts_field
   river_fields,lake_model_prognostics,lake_model_diagnostics =
     drive_hd_and_lake_model(river_parameters,river_fields,
                             lake_model_parameters,
@@ -12364,6 +12517,9 @@ end
   lake_fractions =
     calculate_lake_fraction_on_surface_grid(lake_model_parameters,
                                             lake_model_prognostics)
+  lake_pixel_counts_field,_,output_binary_lake_mask =
+    calculate_binary_lake_mask(lake_model_parameters,
+                               lake_model_prognostics)
   for lake::Lake in lake_model_prognostics.lakes
     append!(lake_volumes,get_lake_volume(lake))
   end
@@ -12383,6 +12539,8 @@ end
   @test fifth_intermediate_expected_number_lake_cells == lake_model_prognostics.lake_cell_count
   @test fifth_intermediate_expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test isapprox(fifth_intermediate_expected_true_lake_depths,lake_model_parameters.true_lake_depths,rtol=0.0,atol=0.1)
+  @test fifth_intermediate_expected_binary_lake_mask == output_binary_lake_mask
+  @test fifth_intermediate_expected_lake_pixel_counts_field == lake_pixel_counts_field
   river_fields,lake_model_prognostics,lake_model_diagnostics =
     drive_hd_and_lake_model(river_parameters,river_fields,
                             lake_model_parameters,
@@ -12421,6 +12579,9 @@ end
   lake_fractions =
     calculate_lake_fraction_on_surface_grid(lake_model_parameters,
                                             lake_model_prognostics)
+  lake_pixel_counts_field,_,output_binary_lake_mask =
+    calculate_binary_lake_mask(lake_model_parameters,
+                               lake_model_prognostics)
   for lake::Lake in lake_model_prognostics.lakes
     append!(lake_volumes,get_lake_volume(lake))
   end
@@ -12440,6 +12601,8 @@ end
   @test sixth_intermediate_expected_number_lake_cells == lake_model_prognostics.lake_cell_count
   @test sixth_intermediate_expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test isapprox(sixth_intermediate_expected_true_lake_depths,lake_model_parameters.true_lake_depths,rtol=0.0,atol=0.1)
+  @test sixth_intermediate_expected_binary_lake_mask == output_binary_lake_mask
+  @test sixth_intermediate_expected_lake_pixel_counts_field == lake_pixel_counts_field
   river_fields,lake_model_prognostics,lake_model_diagnostics =
     drive_hd_and_lake_model(river_parameters,river_fields,
                             lake_model_parameters,
@@ -12478,6 +12641,9 @@ end
   lake_fractions =
     calculate_lake_fraction_on_surface_grid(lake_model_parameters,
                                             lake_model_prognostics)
+  lake_pixel_counts_field,_,output_binary_lake_mask =
+    calculate_binary_lake_mask(lake_model_parameters,
+                               lake_model_prognostics)
   for lake::Lake in lake_model_prognostics.lakes
     append!(lake_volumes,get_lake_volume(lake))
   end
@@ -12497,6 +12663,8 @@ end
   @test seventh_intermediate_expected_number_lake_cells == lake_model_prognostics.lake_cell_count
   @test seventh_intermediate_expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test isapprox(seventh_intermediate_expected_true_lake_depths,lake_model_parameters.true_lake_depths,rtol=0.0,atol=0.1)
+  @test seventh_intermediate_expected_binary_lake_mask == output_binary_lake_mask
+  @test seventh_intermediate_expected_lake_pixel_counts_field == lake_pixel_counts_field
   river_fields,lake_model_prognostics,_ =
     drive_hd_and_lake_model(river_parameters,river_fields,
                             lake_model_parameters,
@@ -12539,6 +12707,9 @@ end
   lake_fractions =
     calculate_lake_fraction_on_surface_grid(lake_model_parameters,
                                             lake_model_prognostics)
+  lake_pixel_counts_field,_,output_binary_lake_mask =
+    calculate_binary_lake_mask(lake_model_parameters,
+                               lake_model_prognostics)
   for lake::Lake in lake_model_prognostics.lakes
     append!(lake_volumes,get_lake_volume(lake))
   end
@@ -12557,6 +12728,8 @@ end
   @test expected_number_lake_cells == lake_model_prognostics.lake_cell_count
   @test expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test expected_true_lake_depths == lake_model_parameters.true_lake_depths
+  @test expected_binary_lake_mask == output_binary_lake_mask
+  @test expected_lake_pixel_counts_field == lake_pixel_counts_field
 end
 
 @testset "Lake model tests 20" begin
@@ -13221,6 +13394,15 @@ end
   #                0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
   #                0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
   #                0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0 ])
+  expected_lake_pixel_counts_field::Field{Int64} =
+    LatLonField{Int64}(surface_model_grid,
+                          Int64[ 0 0 0
+                                 0 56 0
+                                 0 0 0 ])
+  expected_binary_lake_mask::Field{Bool} = LatLonField{Bool}(surface_model_grid,
+                                                              Bool[ false false false
+                                                                    false  true false
+                                                                    false false false ])
   expected_lake_volumes_all_timesteps::Vector{Vector{Float64}} =
     [[0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0,#=
    =# 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0,#=
@@ -13970,7 +14152,15 @@ end
   #                0.0 2.0 2.0 2.0 2.0 2.0 2.0 2.0 2.0 2.0 2.0 2.0 2.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
   #                0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
   #                0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 ])
-
+  intermediate_expected_lake_pixel_counts_field::Field{Int64} =
+    LatLonField{Int64}(surface_model_grid,
+                          Int64[  0 24 0
+                                  0 64 0
+                                  0  0 0])
+  intermediate_expected_binary_lake_mask::Field{Bool} = LatLonField{Bool}(surface_model_grid,
+                                                              Bool[ false  true false
+                                                                    false  true false
+                                                                    false false false ])
   lake_volumes_all_timesteps::Vector{Vector{Float64}} = []
   river_fields::RiverPrognosticFields,
     lake_model_prognostics::LakeModelPrognostics,
@@ -14009,6 +14199,10 @@ end
   lake_fractions =
     calculate_lake_fraction_on_surface_grid(lake_model_parameters,
                                             lake_model_prognostics)
+  lake_pixel_counts_field::Field{Int64},_,
+    output_binary_lake_mask::Field{Bool} =
+    calculate_binary_lake_mask(lake_model_parameters,
+                               lake_model_prognostics)
   for lake::Lake in lake_model_prognostics.lakes
     append!(lake_volumes,get_lake_volume(lake))
     local type_code::Int64
@@ -14040,6 +14234,8 @@ end
   @test intermediate_expected_number_lake_cells == lake_model_prognostics.lake_cell_count
   @test intermediate_expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test intermediate_expected_true_lake_depths == lake_model_parameters.true_lake_depths
+  @test intermediate_expected_binary_lake_mask == output_binary_lake_mask
+  @test intermediate_expected_lake_pixel_counts_field == lake_pixel_counts_field
   river_fields,lake_model_prognostics,_ =
     drive_hd_and_lake_model(river_parameters,river_fields,
                             lake_model_parameters,
@@ -14083,6 +14279,9 @@ end
   lake_fractions =
     calculate_lake_fraction_on_surface_grid(lake_model_parameters,
                                             lake_model_prognostics)
+  lake_pixel_counts_field,_,output_binary_lake_mask =
+    calculate_binary_lake_mask(lake_model_parameters,
+                               lake_model_prognostics)
   for lake::Lake in lake_model_prognostics.lakes
     append!(lake_volumes,get_lake_volume(lake))
     local type_code::Int64
@@ -14113,6 +14312,8 @@ end
   @test expected_number_lake_cells == lake_model_prognostics.lake_cell_count
   @test expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test expected_true_lake_depths == lake_model_parameters.true_lake_depths
+  @test expected_binary_lake_mask == output_binary_lake_mask
+  @test expected_lake_pixel_counts_field == lake_pixel_counts_field
 end
 
 @testset "Lake model tests 21" begin
@@ -14441,6 +14642,15 @@ end
   #                0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
   #                0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
   #                0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0 ])
+  expected_lake_pixel_counts_field::Field{Int64} =
+    LatLonField{Int64}(surface_model_grid,
+                          Int64[ 2 5 1
+                                 5 5 1
+                                 0 0 0 ])
+  expected_binary_lake_mask::Field{Bool} = LatLonField{Bool}(surface_model_grid,
+                                                              Bool[ false false false
+                                                                    false false false
+                                                                    false false false ])
 
   first_intermediate_expected_river_inflow::Field{Float64} =
     LatLonField{Float64}(hd_grid,
@@ -14558,6 +14768,15 @@ end
   #                0.0 2.0 2.0 2.0 2.0 2.0 2.0 2.0 2.0 2.0 2.0 2.0 2.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
   #                0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
   #                0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 ])
+  first_intermediate_expected_lake_pixel_counts_field::Field{Int64} =
+    LatLonField{Int64}(surface_model_grid,
+                          Int64[ 2 5 1
+                                 2 1 1
+                                 0 0 0 ])
+  first_intermediate_expected_binary_lake_mask::Field{Bool} = LatLonField{Bool}(surface_model_grid,
+                                                              Bool[ false false false
+                                                                    false false false
+                                                                    false false false ])
 
   second_intermediate_expected_river_inflow::Field{Float64} =
     LatLonField{Float64}(hd_grid,
@@ -14675,6 +14894,15 @@ end
   #                0.0 1.02 1.02 1.02 1.02 1.02 1.02 1.02 1.02 1.02 1.02 1.02 1.02 0.00 0.00 0.00 0.00 0.00 0.00 0.00
   #                0.0 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00
   #                0.0 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 ])
+  second_intermediate_expected_lake_pixel_counts_field::Field{Int64} =
+    LatLonField{Int64}(surface_model_grid,
+                          Int64[ 2 5 1
+                                 5 3 1
+                                 0 0 0 ])
+  second_intermediate_expected_binary_lake_mask::Field{Bool} = LatLonField{Bool}(surface_model_grid,
+                                                              Bool[ false false false
+                                                                    false false false
+                                                                    false false false ])
 
   third_intermediate_expected_river_inflow::Field{Float64} =
     LatLonField{Float64}(hd_grid,
@@ -14792,6 +15020,15 @@ end
   #                0.0 0.97 0.97 0.97 0.97 0.97 0.97 0.97 0.97 0.97 0.97 0.97 0.97 0.00 0.0 0.0 0.00 0.00 0.00 0.0
   #                0.0 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.0 0.0 0.00 0.00 0.00 0.0
   #                0.0  0.0 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.0 0.0 0.00 0.00 0.00 0.0  ])
+  third_intermediate_expected_lake_pixel_counts_field::Field{Int64} =
+    LatLonField{Int64}(surface_model_grid,
+                          Int64[ 2 5 1
+                                 5 5 1
+                                 0 0 0  ])
+  third_intermediate_expected_binary_lake_mask::Field{Bool} = LatLonField{Bool}(surface_model_grid,
+                                                              Bool[ false false false
+                                                                    false false false
+                                                                    false false false ])
 
   river_fields::RiverPrognosticFields,
     lake_model_prognostics::LakeModelPrognostics,
@@ -14827,6 +15064,10 @@ end
   lake_fractions =
     calculate_lake_fraction_on_surface_grid(lake_model_parameters,
                                             lake_model_prognostics)
+  lake_pixel_counts_field::Field{Int64},_,
+    output_binary_lake_mask::Field{Bool} =
+    calculate_binary_lake_mask(lake_model_parameters,
+                               lake_model_prognostics)
   for lake::Lake in lake_model_prognostics.lakes
     append!(lake_volumes,get_lake_volume(lake))
   end
@@ -14846,6 +15087,8 @@ end
   @test first_intermediate_expected_number_lake_cells == lake_model_prognostics.lake_cell_count
   @test first_intermediate_expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test first_intermediate_expected_true_lake_depths == lake_model_parameters.true_lake_depths
+  @test first_intermediate_expected_binary_lake_mask == output_binary_lake_mask
+  @test first_intermediate_expected_lake_pixel_counts_field == lake_pixel_counts_field
   river_fields,lake_model_prognostics,lake_model_diagnostics =
     drive_hd_and_lake_model(river_parameters,river_fields,
                             lake_model_parameters,
@@ -14882,6 +15125,9 @@ end
   lake_fractions =
     calculate_lake_fraction_on_surface_grid(lake_model_parameters,
                                             lake_model_prognostics)
+  lake_pixel_counts_field,_,output_binary_lake_mask =
+    calculate_binary_lake_mask(lake_model_parameters,
+                               lake_model_prognostics)
   for lake::Lake in lake_model_prognostics.lakes
     append!(lake_volumes,get_lake_volume(lake))
   end
@@ -14901,6 +15147,8 @@ end
   @test second_intermediate_expected_number_lake_cells == lake_model_prognostics.lake_cell_count
   @test second_intermediate_expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test second_intermediate_expected_true_lake_depths == lake_model_parameters.true_lake_depths
+  @test second_intermediate_expected_binary_lake_mask == output_binary_lake_mask
+  @test second_intermediate_expected_lake_pixel_counts_field == lake_pixel_counts_field
   river_fields,lake_model_prognostics,lake_model_diagnostics =
     drive_hd_and_lake_model(river_parameters,river_fields,
                             lake_model_parameters,
@@ -14937,6 +15185,9 @@ end
   lake_fractions =
     calculate_lake_fraction_on_surface_grid(lake_model_parameters,
                                             lake_model_prognostics)
+  lake_pixel_counts_field,_,output_binary_lake_mask =
+    calculate_binary_lake_mask(lake_model_parameters,
+                               lake_model_prognostics)
   for lake::Lake in lake_model_prognostics.lakes
     append!(lake_volumes,get_lake_volume(lake))
   end
@@ -14957,6 +15208,8 @@ end
   @test third_intermediate_expected_number_lake_cells == lake_model_prognostics.lake_cell_count
   @test third_intermediate_expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test third_intermediate_expected_true_lake_depths == lake_model_parameters.true_lake_depths
+  @test third_intermediate_expected_binary_lake_mask == output_binary_lake_mask
+  @test third_intermediate_expected_lake_pixel_counts_field == lake_pixel_counts_field
   river_fields,lake_model_prognostics,_ =
     drive_hd_and_lake_model(river_parameters,river_fields,
                             lake_model_parameters,
@@ -14993,6 +15246,9 @@ end
   lake_fractions =
     calculate_lake_fraction_on_surface_grid(lake_model_parameters,
                                             lake_model_prognostics)
+  lake_pixel_counts_field,_,output_binary_lake_mask =
+    calculate_binary_lake_mask(lake_model_parameters,
+                               lake_model_prognostics)
   for lake::Lake in lake_model_prognostics.lakes
     append!(lake_volumes,get_lake_volume(lake))
   end
@@ -15014,6 +15270,8 @@ end
   @test expected_number_lake_cells == lake_model_prognostics.lake_cell_count
   @test expected_number_fine_grid_cells == lake_model_parameters.number_fine_grid_cells
   #@test expected_true_lake_depths == lake_model_parameters.true_lake_depths
+  @test expected_binary_lake_mask == output_binary_lake_mask
+  @test expected_lake_pixel_counts_field == lake_pixel_counts_field
 end
 
 @testset "Lake model tests 22" begin
