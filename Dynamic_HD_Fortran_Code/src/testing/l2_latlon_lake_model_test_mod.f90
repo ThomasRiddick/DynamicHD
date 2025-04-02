@@ -329,6 +329,7 @@ subroutine testLakeModel1
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
+                                calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
@@ -377,6 +378,8 @@ subroutine testLakeModel1
    integer,dimension(:,:), pointer :: expected_number_lake_cells
    integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
    real(dp),dimension(:), pointer :: expected_lake_volumes
+   integer,dimension(:,:), pointer :: expected_lake_pixel_counts_field
+   logical,dimension(:,:), pointer :: expected_binary_lake_mask
    real(dp),dimension(:,:), pointer :: intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: intermediate_expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: intermediate_expected_water_to_hd
@@ -387,10 +390,15 @@ subroutine testLakeModel1
    integer,dimension(:,:), pointer :: intermediate_expected_number_lake_cells
    integer,dimension(:,:), pointer :: intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:), pointer :: intermediate_expected_lake_volumes
+   integer,dimension(:,:), pointer :: intermediate_expected_lake_pixel_counts_field
+   logical,dimension(:,:), pointer :: intermediate_expected_binary_lake_mask
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp),dimension(:,:), allocatable :: lake_fractions
+   integer,dimension(:,:), pointer :: lake_pixel_counts_field
+   real(dp),dimension(:,:), pointer :: lake_fractions_field
+   logical,dimension(:,:), pointer :: output_binary_lake_mask
    real :: step_length
    integer :: lake_number
    integer :: lake_type
@@ -594,6 +602,18 @@ subroutine testLakeModel1
          !                  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
          !                  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0 /), &
          ! (/nlon_lake,nlat_lake/)))
+      allocate(expected_lake_pixel_counts_field(nlat_surface,nlon_surface))
+      expected_lake_pixel_counts_field = &
+        transpose(reshape((/ 0,0,0, &
+                             0,1,0, &
+                             0,0,0 /), &
+        (/nlon_surface,nlat_surface/)))
+      allocate(expected_binary_lake_mask(nlat_surface,nlon_surface))
+      expected_binary_lake_mask = &
+        transpose(reshape((/ .False.,.False.,.False., &
+                             .False.,.False.,.False., &
+                             .False.,.False.,.False. /), &
+        (/nlon_surface,nlat_surface/)))
       allocate(intermediate_expected_river_inflow(nlat_hd,nlon_hd))
       intermediate_expected_river_inflow = transpose(reshape((/   &
           0.0, 2.0,  4.0, &
@@ -674,6 +694,18 @@ subroutine testLakeModel1
          !                  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
          !                  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0 /), &
          ! (/nlon_lake,nlat_lake/)))
+      allocate(intermediate_expected_lake_pixel_counts_field(nlat_surface,nlon_surface))
+      intermediate_expected_lake_pixel_counts_field = &
+        transpose(reshape((/ 0,4,0, &
+                             3,4,0, &
+                             0,0,0 /), &
+        (/nlon_surface,nlat_surface/)))
+      allocate(intermediate_expected_binary_lake_mask(nlat_surface,nlon_surface))
+      intermediate_expected_binary_lake_mask = &
+        transpose(reshape((/ .false.,.true.,.false., &
+                             .true., .true.,.false., &
+                             .false.,.false.,.false. /), &
+        (/nlon_surface,nlat_surface/)))
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array)
@@ -683,6 +715,9 @@ subroutine testLakeModel1
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
+                                      lake_pixel_counts_field,lake_fractions_field, &
+                                      output_binary_lake_mask)
       allocate(lake_types(nlat_lake,nlon_lake))
       lake_types(:,:) = 0
       do i = 1,nlat_lake
@@ -725,6 +760,10 @@ subroutine testLakeModel1
       call assert_equals( intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test intermediate_expected_true_lake_depths, lake_model_parameters%true_lake_depths
+      call assert_equals( intermediate_expected_binary_lake_mask, &
+                          output_binary_lake_mask,nlat_surface,nlon_surface)
+      call assert_equals( intermediate_expected_lake_pixel_counts_field, &
+                          lake_pixel_counts_field,nlat_surface,nlon_surface)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       deallocate(lake_volumes)
@@ -742,6 +781,9 @@ subroutine testLakeModel1
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
+                                      lake_pixel_counts_field,lake_fractions_field, &
+                                      output_binary_lake_mask)
       allocate(lake_types(nlat_lake,nlon_lake))
       lake_types(:,:) = 0
       do i = 1,nlat_lake
@@ -783,6 +825,10 @@ subroutine testLakeModel1
       call assert_equals( expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test expected_true_lake_depths, lake_model_parameters.true_lake_depths
+      call assert_equals( expected_binary_lake_mask,output_binary_lake_mask, &
+                          nlat_surface,nlon_surface)
+      call assert_equals( expected_lake_pixel_counts_field,lake_pixel_counts_field, &
+                          nlat_surface,nlon_surface)
       deallocate(drainages)
       deallocate(runoffs)
       deallocate(drainage)
@@ -14079,6 +14125,7 @@ subroutine testLakeModel17
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
+                                calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
@@ -14127,6 +14174,8 @@ subroutine testLakeModel17
    integer,dimension(:,:), pointer :: expected_number_lake_cells
    integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
    real(dp),dimension(:), pointer :: expected_lake_volumes
+   logical,dimension(:,:), pointer :: expected_binary_lake_mask
+   integer,dimension(:,:), pointer :: expected_lake_pixel_counts_field
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_hd
@@ -14137,6 +14186,8 @@ subroutine testLakeModel17
    integer,dimension(:,:), pointer :: first_intermediate_expected_number_lake_cells
    integer,dimension(:,:), pointer :: first_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:), pointer :: first_intermediate_expected_lake_volumes
+   logical,dimension(:,:), pointer :: first_intermediate_expected_binary_lake_mask
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_pixel_counts_field
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_hd
@@ -14180,6 +14231,9 @@ subroutine testLakeModel17
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp),dimension(:,:), allocatable :: lake_fractions
+   integer,dimension(:,:), pointer :: lake_pixel_counts_field
+   real(dp),dimension(:,:), pointer :: lake_fractions_field
+   logical,dimension(:,:), pointer :: output_binary_lake_mask
    integer :: lake_number
    integer :: lake_type
    integer :: i,j
@@ -14584,6 +14638,18 @@ subroutine testLakeModel17
          !               0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, &
          !               0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0 /), &
          ! (/nlon_lake,nlat_lake/)))
+      allocate(expected_lake_pixel_counts_field(nlat_surface,nlon_surface))
+      expected_lake_pixel_counts_field = &
+            transpose(reshape((/ 0,0,0, &
+                                 0,1,0, &
+                                 0,0,0 /), &
+            (/nlon_surface,nlat_surface/)))
+      allocate(expected_binary_lake_mask(nlat_surface,nlon_surface))
+      expected_binary_lake_mask = &
+            transpose(reshape((/ .false.,.false.,.false., &
+                                 .false.,.false.,.false., &
+                                 .false.,.false.,.false. /), &
+            (/nlon_surface,nlat_surface/)))
       allocate(first_intermediate_expected_river_inflow(nlat_hd,nlon_hd))
       first_intermediate_expected_river_inflow = transpose(reshape((/   &
           0.0, 0.0, 0.0, 0.0, &
@@ -14735,6 +14801,18 @@ subroutine testLakeModel17
          !               0.0, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,0.0,0.0,0.0,0.0,0.0,0.0, &
          !               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0 /), &
          !(/nlon_lake,nlat_lake/)))
+      allocate(first_intermediate_expected_lake_pixel_counts_field(nlat_surface,nlon_surface))
+      first_intermediate_expected_lake_pixel_counts_field = &
+        transpose(reshape((/ 36,48, 2, &
+                             48,64,48, &
+                              0,48, 0 /), &
+        (/nlon_surface,nlat_surface/)))
+      allocate(first_intermediate_expected_binary_lake_mask(nlat_surface,nlon_surface))
+      first_intermediate_expected_binary_lake_mask = &
+        transpose(reshape((/ .true.,.true.,.false., &
+                             .true.,.true., .true., &
+                             .false.,.true.,.false. /), &
+        (/nlon_surface,nlat_surface/)))
       allocate(second_intermediate_expected_river_inflow(nlat_hd,nlon_hd))
       second_intermediate_expected_river_inflow = transpose(reshape((/   &
           0.0, 0.0, 0.0, 0.0, &
@@ -15271,6 +15349,9 @@ subroutine testLakeModel17
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
+                                      lake_pixel_counts_field,lake_fractions_field, &
+                                      output_binary_lake_mask)
       allocate(lake_types(nlat_lake,nlon_lake))
       lake_types(:,:) = 0
       do i = 1,nlat_lake
@@ -15313,6 +15394,11 @@ subroutine testLakeModel17
       call assert_equals( first_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test first_intermediate_expected_true_lake_depths, lake_model_parameters%true_lake_depths
+      call assert_equals( first_intermediate_expected_binary_lake_mask, &
+                          output_binary_lake_mask,nlat_surface,nlon_surface)
+      call assert_equals( first_intermediate_expected_lake_pixel_counts_field, &
+                          lake_pixel_counts_field,nlat_surface,nlon_surface)
+
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       deallocate(lake_volumes)
@@ -15723,6 +15809,9 @@ subroutine testLakeModel17
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
+                                      lake_pixel_counts_field,lake_fractions_field, &
+                                      output_binary_lake_mask)
       allocate(lake_types(nlat_lake,nlon_lake))
       lake_types(:,:) = 0
       do i = 1,nlat_lake
@@ -15765,6 +15854,10 @@ subroutine testLakeModel17
       call assert_equals( expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test expected_true_lake_depths, lake_model_parameters%true_lake_depths
+      call assert_equals( expected_binary_lake_mask, &
+                          output_binary_lake_mask,nlat_surface,nlon_surface)
+      call assert_equals( expected_lake_pixel_counts_field, &
+                          lake_pixel_counts_field,nlat_surface,nlon_surface)
       deallocate(drainages)
       deallocate(runoffs)
       deallocate(drainage)
@@ -16285,6 +16378,7 @@ subroutine testLakeModel19
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
+                                calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
@@ -16335,6 +16429,8 @@ subroutine testLakeModel19
    integer,dimension(:,:), pointer :: expected_number_lake_cells
    integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
    real(dp),dimension(:), pointer :: expected_lake_volumes
+   logical,dimension(:,:), pointer :: expected_binary_lake_mask
+   integer,dimension(:,:), pointer :: expected_lake_pixel_counts_field
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_hd
@@ -16345,6 +16441,8 @@ subroutine testLakeModel19
    integer,dimension(:,:), pointer :: first_intermediate_expected_number_lake_cells
    integer,dimension(:,:), pointer :: first_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:), pointer :: first_intermediate_expected_lake_volumes
+   logical,dimension(:,:), pointer :: first_intermediate_expected_binary_lake_mask
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_pixel_counts_field
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_hd
@@ -16355,6 +16453,8 @@ subroutine testLakeModel19
    integer,dimension(:,:), pointer :: second_intermediate_expected_number_lake_cells
    integer,dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:), pointer :: second_intermediate_expected_lake_volumes
+   logical,dimension(:,:), pointer :: second_intermediate_expected_binary_lake_mask
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_pixel_counts_field
    real(dp),dimension(:,:), pointer :: third_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_hd
@@ -16365,6 +16465,8 @@ subroutine testLakeModel19
    integer,dimension(:,:), pointer :: third_intermediate_expected_number_lake_cells
    integer,dimension(:,:), pointer :: third_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:), pointer :: third_intermediate_expected_lake_volumes
+   logical,dimension(:,:), pointer :: third_intermediate_expected_binary_lake_mask
+   integer,dimension(:,:), pointer :: third_intermediate_expected_lake_pixel_counts_field
    real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_hd
@@ -16375,6 +16477,8 @@ subroutine testLakeModel19
    integer,dimension(:,:), pointer :: fourth_intermediate_expected_number_lake_cells
    integer,dimension(:,:), pointer :: fourth_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:), pointer :: fourth_intermediate_expected_lake_volumes
+   logical,dimension(:,:), pointer :: fourth_intermediate_expected_binary_lake_mask
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_lake_pixel_counts_field
    real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_water_to_hd
@@ -16385,6 +16489,8 @@ subroutine testLakeModel19
    integer,dimension(:,:), pointer :: fifth_intermediate_expected_number_lake_cells
    integer,dimension(:,:), pointer :: fifth_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:), pointer :: fifth_intermediate_expected_lake_volumes
+   logical,dimension(:,:), pointer :: fifth_intermediate_expected_binary_lake_mask
+   integer,dimension(:,:), pointer :: fifth_intermediate_expected_lake_pixel_counts_field
    real(dp),dimension(:,:), pointer :: sixth_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: sixth_intermediate_expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: sixth_intermediate_expected_water_to_hd
@@ -16395,6 +16501,8 @@ subroutine testLakeModel19
    integer,dimension(:,:), pointer :: sixth_intermediate_expected_number_lake_cells
    integer,dimension(:,:), pointer :: sixth_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:), pointer :: sixth_intermediate_expected_lake_volumes
+   logical,dimension(:,:), pointer :: sixth_intermediate_expected_binary_lake_mask
+   integer,dimension(:,:), pointer :: sixth_intermediate_expected_lake_pixel_counts_field
    real(dp),dimension(:,:), pointer :: seventh_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: seventh_intermediate_expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: seventh_intermediate_expected_water_to_hd
@@ -16405,12 +16513,17 @@ subroutine testLakeModel19
    integer,dimension(:,:), pointer :: seventh_intermediate_expected_number_lake_cells
    integer,dimension(:,:), pointer :: seventh_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:), pointer :: seventh_intermediate_expected_lake_volumes
+   logical,dimension(:,:), pointer :: seventh_intermediate_expected_binary_lake_mask
+   integer,dimension(:,:), pointer :: seventh_intermediate_expected_lake_pixel_counts_field
    real(dp),dimension(:,:), pointer :: expected_lake_volumes_all_timesteps
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp),dimension(:,:), pointer :: lake_volumes_all_timesteps
    real(dp),dimension(:,:), allocatable :: lake_fractions
+   integer,dimension(:,:), pointer :: lake_pixel_counts_field
+   real(dp),dimension(:,:), pointer :: lake_fractions_field
+   logical,dimension(:,:), pointer :: output_binary_lake_mask
    integer :: lake_number
    integer :: lake_type
    logical :: use_realistic_surface_coupling
@@ -16894,6 +17007,18 @@ subroutine testLakeModel19
          !               0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, &
          !               0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0 /), &
          ! (/nlon_lake,nlat_lake/)))
+      allocate(expected_lake_pixel_counts_field(nlat_surface,nlon_surface))
+      expected_lake_pixel_counts_field = &
+        transpose(reshape((/ 2,1,1, &
+                             0,1,1, &
+                             1,0,0 /), &
+        (/nlon_surface,nlat_surface/)))
+      allocate(expected_binary_lake_mask(nlat_surface,nlon_surface))
+      expected_binary_lake_mask = &
+        transpose(reshape((/ .false.,.false.,.false., &
+                             .false.,.false.,.false., &
+                             .false.,.false.,.false. /), &
+        (/nlon_surface,nlat_surface/)))
       allocate(expected_lake_volumes_all_timesteps(12,112))
       expected_lake_volumes_all_timesteps = reshape((/ &
       45.0, 63.0, 18.0, 66.0, 48.0, 104.0, 27.0, 52.333333333333336, 34.0, 45.0, 55.0, 85.14583333333331, &
@@ -17204,6 +17329,18 @@ subroutine testLakeModel19
          !                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          !                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 /), &
          ! (/nlon_lake,nlat_lake/)))
+      allocate(first_intermediate_expected_lake_pixel_counts_field(nlat_surface,nlon_surface))
+      first_intermediate_expected_lake_pixel_counts_field = &
+        transpose(reshape((/ 0,48, 0, &
+                             0, 0,43, &
+                             36,20,0 /), &
+        (/nlon_surface,nlat_surface/)))
+      allocate(first_intermediate_expected_binary_lake_mask(nlat_surface,nlon_surface))
+      first_intermediate_expected_binary_lake_mask = &
+        transpose(reshape((/ .false.,.true.,.false., &
+                             .false.,.false.,.true., &
+                              .true.,.false.,.false. /), &
+        (/nlon_surface,nlat_surface/)))
       allocate(second_intermediate_expected_river_inflow(nlat_hd,nlon_hd))
       second_intermediate_expected_river_inflow = transpose(reshape((/   &
           0.0, 0.0, 0.0, 0.0, &
@@ -17360,6 +17497,18 @@ subroutine testLakeModel19
          !                0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, &
          !                0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0 /), &
          ! (/nlon_lake,nlat_lake/)))
+      allocate(second_intermediate_expected_lake_pixel_counts_field(nlat_surface,nlon_surface))
+      second_intermediate_expected_lake_pixel_counts_field = &
+        transpose(reshape((/ 0,48, 0, &
+                             0, 0,43, &
+                            36,20, 0 /), &
+        (/nlon_surface,nlat_surface/)))
+      allocate(second_intermediate_expected_binary_lake_mask(nlat_surface,nlon_surface))
+      second_intermediate_expected_binary_lake_mask = &
+        transpose(reshape((/ .false.,.true.,.false., &
+                             .false.,.false.,.true., &
+                              .true.,.false.,.false.  /), &
+        (/nlon_surface,nlat_surface/)))
       allocate(third_intermediate_expected_river_inflow(nlat_hd,nlon_hd))
       third_intermediate_expected_river_inflow = transpose(reshape((/   &
           0.0, 0.0, 0.0, 0.0, &
@@ -17517,6 +17666,18 @@ subroutine testLakeModel19
          !                0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0, 0.0, 0.00, 0.00, 0.00, 0.0, &
          !                0.0,  0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0, 0.0, 0.00, 0.00, 0.00, 0.0  /), &
          !(/nlon_lake,nlat_lake/)))
+      allocate(third_intermediate_expected_lake_pixel_counts_field(nlat_surface,nlon_surface))
+      third_intermediate_expected_lake_pixel_counts_field = &
+        transpose(reshape((/  0,48, 0, &
+                              0, 0,41, &
+                             36,20, 0 /), &
+        (/nlon_surface,nlat_surface/)))
+      allocate(third_intermediate_expected_binary_lake_mask(nlat_surface,nlon_surface))
+      third_intermediate_expected_binary_lake_mask = &
+        transpose(reshape((/ .false.,.true.,.false., &
+                             .false.,.false.,.true., &
+                             .true.,.false.,.false. /), &
+        (/nlon_surface,nlat_surface/)))
       allocate(fourth_intermediate_expected_river_inflow(nlat_hd,nlon_hd))
       fourth_intermediate_expected_river_inflow = transpose(reshape((/   &
           0.0, 0.0, 0.0, 0.0, &
@@ -17674,6 +17835,18 @@ subroutine testLakeModel19
          !                0.0, 0.00, 0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0, 0.0, 0.00, 0.00, 0.00, 0.0, &
          !                0.0, 0.00, 0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0, 0.0, 0.00, 0.00, 0.00, 0.0  /), &
          !(/nlon_lake,nlat_lake/)))
+      allocate(fourth_intermediate_expected_lake_pixel_counts_field(nlat_surface,nlon_surface))
+      fourth_intermediate_expected_lake_pixel_counts_field = &
+        transpose(reshape((/  0,48, 0, &
+                              0, 0,41, &
+                             36,20, 0 /), &
+        (/nlon_surface,nlat_surface/)))
+      allocate(fourth_intermediate_expected_binary_lake_mask(nlat_surface,nlon_surface))
+      fourth_intermediate_expected_binary_lake_mask = &
+        transpose(reshape((/ .false.,.true.,.false., &
+                             .false.,.false.,.true., &
+                             .true.,.false.,.false. /), &
+        (/nlon_surface,nlat_surface/)))
       allocate(fifth_intermediate_expected_river_inflow(nlat_hd,nlon_hd))
       fifth_intermediate_expected_river_inflow = transpose(reshape((/   &
           0.0, 0.0, 0.0, 0.0, &
@@ -17811,6 +17984,18 @@ subroutine testLakeModel19
          !                0.0, 0.00, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0, 0.0, 0.00, 0.00, 0.00, 0.0, &
          !                0.0, 0.00, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0, 0.0, 0.00, 0.00, 0.00, 0.0 /), &
          !(/nlon_lake,nlat_lake/)))
+      allocate(fifth_intermediate_expected_lake_pixel_counts_field(nlat_surface,nlon_surface))
+      fifth_intermediate_expected_lake_pixel_counts_field = &
+        transpose(reshape((/ 4,41, 0, &
+                             7, 0, 0, &
+                             1, 0, 0 /), &
+        (/nlon_surface,nlat_surface/)))
+      allocate(fifth_intermediate_expected_binary_lake_mask(nlat_surface,nlon_surface))
+      fifth_intermediate_expected_binary_lake_mask = &
+        transpose(reshape((/ .false.,.true.,.false., &
+                             .false.,.false.,.false., &
+                             .false.,.false.,.false. /), &
+        (/nlon_surface,nlat_surface/)))
       allocate(sixth_intermediate_expected_river_inflow(nlat_hd,nlon_hd))
       sixth_intermediate_expected_river_inflow = transpose(reshape((/   &
           0.0, 0.0, 0.0, 0.0, &
@@ -17948,6 +18133,18 @@ subroutine testLakeModel19
          !                0.0, 0.00, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          !                0.0, 0.00, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 /), &
          !(/nlon_lake,nlat_lake/)))
+      allocate(sixth_intermediate_expected_lake_pixel_counts_field(nlat_surface,nlon_surface))
+      sixth_intermediate_expected_lake_pixel_counts_field = &
+        transpose(reshape((/ 4,41,0, &
+                             7, 0,0, &
+                             1, 0,0 /), &
+        (/nlon_surface,nlat_surface/)))
+      allocate(sixth_intermediate_expected_binary_lake_mask(nlat_surface,nlon_surface))
+      sixth_intermediate_expected_binary_lake_mask = &
+        transpose(reshape((/ .false., .true.,.false., &
+                             .false., .false.,.false., &
+                             .false., .false.,.false. /), &
+        (/nlon_surface,nlat_surface/)))
       allocate(seventh_intermediate_expected_river_inflow(nlat_hd,nlon_hd))
       seventh_intermediate_expected_river_inflow = transpose(reshape((/   &
           0.0, 0.0, 0.0, 0.0, &
@@ -18085,6 +18282,18 @@ subroutine testLakeModel19
          !                0.0, 0.00, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0, 0.0, 0.00, 0.00, 0.00, 0.0, &
          !                0.0, 0.00, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0, 0.0, 0.00, 0.00, 0.00, 0.0 /), &
          !(/nlon_lake,nlat_lake/)))
+      allocate(seventh_intermediate_expected_lake_pixel_counts_field(nlat_surface,nlon_surface))
+      seventh_intermediate_expected_lake_pixel_counts_field = &
+        transpose(reshape((/ 4,41, 0, &
+                             7, 0, 0, &
+                             1, 0, 0 /), &
+         (/nlon_surface,nlat_surface/)))
+      allocate(seventh_intermediate_expected_binary_lake_mask(nlat_surface,nlon_surface))
+      seventh_intermediate_expected_binary_lake_mask = &
+        transpose(reshape((/ .false., .true.,.false., &
+                             .false.,.false.,.false., &
+                             .false.,.false.,.false. /), &
+         (/nlon_surface,nlat_surface/)))
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array, &
@@ -18098,6 +18307,9 @@ subroutine testLakeModel19
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
+                                      lake_pixel_counts_field,lake_fractions_field, &
+                                      output_binary_lake_mask)
       allocate(lake_types(nlat_lake,nlon_lake))
       lake_types(:,:) = 0
       do i = 1,nlat_lake
@@ -18141,6 +18353,10 @@ subroutine testLakeModel19
       call assert_equals( first_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test first_intermediate_expected_true_lake_depths, lake_model_parameters%true_lake_depths
+      call assert_equals( first_intermediate_expected_binary_lake_mask, &
+                          output_binary_lake_mask,nlat_surface,nlon_surface)
+      call assert_equals( first_intermediate_expected_lake_pixel_counts_field, &
+                          lake_pixel_counts_field,nlat_surface,nlon_surface)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       deallocate(lake_volumes)
@@ -18161,6 +18377,9 @@ subroutine testLakeModel19
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
+                                      lake_pixel_counts_field,lake_fractions_field, &
+                                      output_binary_lake_mask)
       allocate(lake_types(nlat_lake,nlon_lake))
       lake_types(:,:) = 0
       do i = 1,nlat_lake
@@ -18205,6 +18424,10 @@ subroutine testLakeModel19
       call assert_equals( second_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testsecond_intermediate_expected_true_lake_depths,lake_model_parameters%true_lake_depths,nlat_lake,nlon_lake,0.1)
+      call assert_equals( second_intermediate_expected_binary_lake_mask, &
+                          output_binary_lake_mask,nlat_surface,nlon_surface)
+      call assert_equals( second_intermediate_expected_lake_pixel_counts_field, &
+                          lake_pixel_counts_field,nlat_surface,nlon_surface)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       deallocate(lake_volumes)
@@ -18225,6 +18448,9 @@ subroutine testLakeModel19
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
+                                      lake_pixel_counts_field,lake_fractions_field, &
+                                      output_binary_lake_mask)
       allocate(lake_types(nlat_lake,nlon_lake))
       lake_types(:,:) = 0
       do i = 1,nlat_lake
@@ -18268,6 +18494,10 @@ subroutine testLakeModel19
       call assert_equals( third_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testthird_intermediate_expected_true_lake_depths,lake_model_parameters%true_lake_depths,nlat_lake,nlon_lake,0.1)
+      call assert_equals( third_intermediate_expected_binary_lake_mask, &
+                          output_binary_lake_mask,nlat_surface,nlon_surface)
+      call assert_equals( third_intermediate_expected_lake_pixel_counts_field, &
+                          lake_pixel_counts_field,nlat_surface,nlon_surface)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       deallocate(lake_volumes)
@@ -18288,6 +18518,9 @@ subroutine testLakeModel19
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
+                                      lake_pixel_counts_field,lake_fractions_field, &
+                                      output_binary_lake_mask)
       allocate(lake_types(nlat_lake,nlon_lake))
       lake_types(:,:) = 0
       do i = 1,nlat_lake
@@ -18332,6 +18565,10 @@ subroutine testLakeModel19
       call assert_equals( fourth_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testfourth_intermediate_expected_true_lake_depths,lake_model_parameters%true_lake_depths,nlat_lake,nlon_lake,0.1)
+      call assert_equals( fourth_intermediate_expected_binary_lake_mask, &
+                          output_binary_lake_mask,nlat_surface,nlon_surface)
+      call assert_equals( fourth_intermediate_expected_lake_pixel_counts_field, &
+                          lake_pixel_counts_field,nlat_surface,nlon_surface)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       deallocate(lake_volumes)
@@ -18352,6 +18589,9 @@ subroutine testLakeModel19
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
+                                      lake_pixel_counts_field,lake_fractions_field, &
+                                      output_binary_lake_mask)
       allocate(lake_types(nlat_lake,nlon_lake))
       lake_types(:,:) = 0
       do i = 1,nlat_lake
@@ -18396,6 +18636,10 @@ subroutine testLakeModel19
       call assert_equals( fifth_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testfifth_intermediate_expected_true_lake_depths,lake_model_parameters%true_lake_depths,nlat_lake,nlon_lake,0.1)
+      call assert_equals( fifth_intermediate_expected_binary_lake_mask, &
+                          output_binary_lake_mask,nlat_surface,nlon_surface)
+      call assert_equals( fifth_intermediate_expected_lake_pixel_counts_field, &
+                          lake_pixel_counts_field,nlat_surface,nlon_surface)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       deallocate(lake_volumes)
@@ -18416,6 +18660,9 @@ subroutine testLakeModel19
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
+                                      lake_pixel_counts_field,lake_fractions_field, &
+                                      output_binary_lake_mask)
       allocate(lake_types(nlat_lake,nlon_lake))
       lake_types(:,:) = 0
       do i = 1,nlat_lake
@@ -18460,6 +18707,10 @@ subroutine testLakeModel19
       call assert_equals( sixth_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testsixth_intermediate_expected_true_lake_depths,lake_model_parameters%true_lake_depths,nlat_lake,nlon_lake,0.1)
+      call assert_equals( sixth_intermediate_expected_binary_lake_mask, &
+                          output_binary_lake_mask,nlat_surface,nlon_surface)
+      call assert_equals( sixth_intermediate_expected_lake_pixel_counts_field, &
+                          lake_pixel_counts_field,nlat_surface,nlon_surface)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       deallocate(lake_volumes)
@@ -18480,6 +18731,9 @@ subroutine testLakeModel19
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
+                                      lake_pixel_counts_field,lake_fractions_field, &
+                                      output_binary_lake_mask)
       allocate(lake_types(nlat_lake,nlon_lake))
       lake_types(:,:) = 0
       do i = 1,nlat_lake
@@ -18524,6 +18778,10 @@ subroutine testLakeModel19
       call assert_equals( seventh_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@testseventh_intermediate_expected_true_lake_depths,lake_model_parameters%true_lake_depths,nlat_lake,nlon_lake,0.1)
+      call assert_equals( seventh_intermediate_expected_binary_lake_mask, &
+                          output_binary_lake_mask,nlat_surface,nlon_surface)
+      call assert_equals( seventh_intermediate_expected_lake_pixel_counts_field, &
+                          lake_pixel_counts_field,nlat_surface,nlon_surface)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       deallocate(lake_volumes)
@@ -18548,6 +18806,9 @@ subroutine testLakeModel19
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
+                                      lake_pixel_counts_field,lake_fractions_field, &
+                                      output_binary_lake_mask)
       allocate(lake_types(nlat_lake,nlon_lake))
       lake_types(:,:) = 0
       do i = 1,nlat_lake
@@ -18590,6 +18851,10 @@ subroutine testLakeModel19
       call assert_equals( expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test expected_true_lake_depths, lake_model_parameters%true_lake_depths
+      call assert_equals( expected_binary_lake_mask,output_binary_lake_mask, &
+                          nlat_surface,nlon_surface)
+      call assert_equals( expected_lake_pixel_counts_field,lake_pixel_counts_field, &
+                          nlat_surface,nlon_surface)
       deallocate(drainages)
       deallocate(runoffs)
       deallocate(drainage)
@@ -18699,6 +18964,7 @@ subroutine testLakeModel20
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
+                                calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
@@ -18749,6 +19015,8 @@ subroutine testLakeModel20
    integer,dimension(:,:), pointer :: expected_number_lake_cells
    integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
    real(dp),dimension(:), pointer :: expected_lake_volumes
+   logical, dimension(:,:), pointer :: expected_binary_lake_mask
+   integer, dimension(:,:), pointer :: expected_lake_pixel_counts_field
    real(dp),dimension(:,:), pointer :: intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: intermediate_expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: intermediate_expected_water_to_hd
@@ -18759,11 +19027,16 @@ subroutine testLakeModel20
    integer,dimension(:,:), pointer :: intermediate_expected_number_lake_cells
    integer,dimension(:,:), pointer :: intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:), pointer :: intermediate_expected_lake_volumes
+   logical, dimension(:,:), pointer :: intermediate_expected_binary_lake_mask
+   integer, dimension(:,:), pointer :: intermediate_expected_lake_pixel_counts_field
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp),dimension(:,:), pointer :: lake_volumes_all_timesteps
    real(dp),dimension(:,:), allocatable :: lake_fractions
+   integer,dimension(:,:), pointer :: lake_pixel_counts_field
+   real(dp),dimension(:,:), pointer :: lake_fractions_field
+   logical,dimension(:,:), pointer :: output_binary_lake_mask
    real(dp),dimension(:,:), pointer :: expected_lake_volumes_all_timesteps
    integer, dimension(:), pointer :: intermediate_expected_lake_types_list
    integer, dimension(:), pointer :: expected_lake_types_list
@@ -19415,6 +19688,18 @@ subroutine testLakeModel20
          !               0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, &
          !               0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0 /), &
          !(/nlon_lake,nlat_lake/)))
+      allocate(expected_lake_pixel_counts_field(nlat_surface,nlon_surface))
+      expected_lake_pixel_counts_field = &
+        transpose(reshape((/  0,0,0,  &
+                              0,56,0, &
+                              0,0,0 /), &
+        (/nlon_surface,nlat_surface/)))
+      allocate(expected_binary_lake_mask(nlat_surface,nlon_surface))
+      expected_binary_lake_mask = &
+        transpose(reshape((/ .false.,.false.,.false., &
+                             .false., .true.,.false., &
+                             .false.,.false.,.false. /), &
+        (/nlon_surface,nlat_surface/)))
       allocate(expected_lake_volumes_all_timesteps(68,80))
       expected_lake_volumes_all_timesteps =  reshape( &
         (/ 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0,  0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, &
@@ -19900,6 +20185,18 @@ subroutine testLakeModel20
          !                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          !                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 /), &
          !(/nlon_lake,nlat_lake/)))
+      allocate(intermediate_expected_lake_pixel_counts_field(nlat_surface,nlon_surface))
+      intermediate_expected_lake_pixel_counts_field = &
+        transpose(reshape((/  0,24,0, &
+                              0,64,0, &
+                              0, 0,0 /), &
+        (/nlon_surface,nlat_surface/)))
+      allocate(intermediate_expected_binary_lake_mask(nlat_surface,nlon_surface))
+      intermediate_expected_binary_lake_mask = &
+        transpose(reshape((/  .false., .true.,.false., &
+                              .false., .true.,.false., &
+                              .false.,.false.,.false. /), &
+        (/nlon_surface,nlat_surface/)))
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array, &
@@ -19914,6 +20211,9 @@ subroutine testLakeModel20
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
+                                      lake_pixel_counts_field,lake_fractions_field, &
+                                      output_binary_lake_mask)
       allocate(lake_types(nlat_lake,nlon_lake))
       lake_types(:,:) = 0
       lake_types_list(:) = 0
@@ -19960,6 +20260,10 @@ subroutine testLakeModel20
       call assert_equals( intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test intermediate_expected_true_lake_depths, lake_model_parameters%true_lake_depths
+      call assert_equals( intermediate_expected_binary_lake_mask, &
+                          output_binary_lake_mask,nlat_surface,nlon_surface)
+      call assert_equals( intermediate_expected_lake_pixel_counts_field, &
+                          lake_pixel_counts_field,nlat_surface,nlon_surface)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       deallocate(lake_volumes)
@@ -19984,6 +20288,9 @@ subroutine testLakeModel20
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
+                                      lake_pixel_counts_field,lake_fractions_field, &
+                                      output_binary_lake_mask)
       allocate(lake_types(nlat_lake,nlon_lake))
       lake_types(:,:) = 0
       lake_types_list(:) = 0
@@ -20029,6 +20336,10 @@ subroutine testLakeModel20
       call assert_equals( expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test expected_true_lake_depths, lake_model_parameters%true_lake_depths
+      call assert_equals( expected_binary_lake_mask, output_binary_lake_mask, &
+                          nlat_surface,nlon_surface)
+      call assert_equals( expected_lake_pixel_counts_field, lake_pixel_counts_field, &
+                          nlat_surface,nlon_surface)
       deallocate(drainages)
       deallocate(runoffs)
       deallocate(drainage)
@@ -20082,6 +20393,7 @@ subroutine testLakeModel21
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
                                 calculate_diagnostic_lake_volumes_field, &
+                                calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
@@ -20131,6 +20443,8 @@ subroutine testLakeModel21
    integer,dimension(:,:), pointer :: expected_number_lake_cells
    integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
    real(dp),dimension(:), pointer :: expected_lake_volumes
+   integer,dimension(:,:), pointer :: expected_lake_pixel_counts_field
+   logical,dimension(:,:), pointer :: expected_binary_lake_mask
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_hd
@@ -20141,6 +20455,8 @@ subroutine testLakeModel21
    integer,dimension(:,:), pointer :: first_intermediate_expected_number_lake_cells
    integer,dimension(:,:), pointer :: first_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:), pointer :: first_intermediate_expected_lake_volumes
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_pixel_counts_field
+   logical,dimension(:,:), pointer :: first_intermediate_expected_binary_lake_mask
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_hd
@@ -20151,6 +20467,8 @@ subroutine testLakeModel21
    integer,dimension(:,:), pointer :: second_intermediate_expected_number_lake_cells
    integer,dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:), pointer :: second_intermediate_expected_lake_volumes
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_pixel_counts_field
+   logical,dimension(:,:), pointer :: second_intermediate_expected_binary_lake_mask
    real(dp),dimension(:,:), pointer :: third_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_hd
@@ -20161,10 +20479,15 @@ subroutine testLakeModel21
    integer,dimension(:,:), pointer :: third_intermediate_expected_number_lake_cells
    integer,dimension(:,:), pointer :: third_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:), pointer :: third_intermediate_expected_lake_volumes
+   integer,dimension(:,:), pointer :: third_intermediate_expected_lake_pixel_counts_field
+   logical,dimension(:,:), pointer :: third_intermediate_expected_binary_lake_mask
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp),dimension(:,:), allocatable :: lake_fractions
+   integer,dimension(:,:), pointer :: lake_pixel_counts_field
+   real(dp),dimension(:,:), pointer :: lake_fractions_field
+   logical,dimension(:,:), pointer :: output_binary_lake_mask
    integer :: lake_number
    integer :: lake_type
    integer :: i,j
@@ -20519,6 +20842,18 @@ subroutine testLakeModel21
          !               0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, &
          !               0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0 /), &
          !(/nlon_lake,nlat_lake/)))
+      allocate(expected_lake_pixel_counts_field(nlat_surface,nlon_surface))
+      expected_lake_pixel_counts_field = &
+        transpose(reshape((/ 2,5,1, &
+                             5,5,1, &
+                             0,0,0 /), &
+         (/nlon_surface,nlat_surface/)))
+      allocate(expected_binary_lake_mask(nlat_surface,nlon_surface))
+      expected_binary_lake_mask = &
+        transpose(reshape((/ .false.,.false.,.false., &
+                             .false.,.false.,.false., &
+                             .false.,.false.,.false. /), &
+         (/nlon_surface,nlat_surface/)))
       allocate(first_intermediate_expected_river_inflow(nlat_hd,nlon_hd))
       first_intermediate_expected_river_inflow = transpose(reshape((/   &
           0.0, 0.0, 0.0, 0.0, &
@@ -20654,6 +20989,18 @@ subroutine testLakeModel21
          !                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          !                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 /), &
          ! (/nlon_lake,nlat_lake/)))
+      allocate(first_intermediate_expected_lake_pixel_counts_field(nlat_surface,nlon_surface))
+      first_intermediate_expected_lake_pixel_counts_field = &
+        transpose(reshape((/  2,5,1, &
+                              2,1,1, &
+                              0,0,0 /), &
+        (/nlon_surface,nlat_surface/)))
+      allocate(first_intermediate_expected_binary_lake_mask(nlat_surface,nlon_surface))
+      first_intermediate_expected_binary_lake_mask = &
+        transpose(reshape((/ .false.,.false.,.false., &
+                             .false.,.false.,.false., &
+                             .false.,.false.,.false. /), &
+        (/nlon_surface,nlat_surface/)))
       allocate(second_intermediate_expected_river_inflow(nlat_hd,nlon_hd))
       second_intermediate_expected_river_inflow = transpose(reshape((/   &
           0.0, 0.0, 0.0, 0.0, &
@@ -20789,6 +21136,18 @@ subroutine testLakeModel21
          !                0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, &
          !                0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0 /), &
          ! (/nlon_lake,nlat_lake/)))
+      allocate(second_intermediate_expected_lake_pixel_counts_field(nlat_surface,nlon_surface))
+      second_intermediate_expected_lake_pixel_counts_field = &
+        transpose(reshape((/ 2,5,1, &
+                             5,3,1, &
+                             0,0,0 /), &
+        (/nlon_surface,nlat_surface/)))
+      allocate(second_intermediate_expected_binary_lake_mask(nlat_surface,nlon_surface))
+      second_intermediate_expected_binary_lake_mask = &
+        transpose(reshape((/ .false.,.false.,.false., &
+                             .false.,.false.,.false., &
+                             .false.,.false.,.false. /), &
+        (/nlon_surface,nlat_surface/)))
       allocate(third_intermediate_expected_river_inflow(nlat_hd,nlon_hd))
       third_intermediate_expected_river_inflow = transpose(reshape((/   &
           0.0, 0.0, 0.0, 0.0, &
@@ -20925,6 +21284,18 @@ subroutine testLakeModel21
          !                0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0, 0.0, 0.00, 0.00, 0.00, 0.0, &
          !                0.0,  0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0, 0.0, 0.00, 0.00, 0.00, 0.0  /), &
          ! (/nlon_lake,nlat_lake/)))
+      allocate(third_intermediate_expected_lake_pixel_counts_field(nlat_surface,nlon_surface))
+      third_intermediate_expected_lake_pixel_counts_field = &
+        transpose(reshape((/ 2,5,1, &
+                             5,5,1, &
+                             0,0,0 /), &
+        (/nlon_surface,nlat_surface/)))
+      allocate(third_intermediate_expected_binary_lake_mask(nlat_surface,nlon_surface))
+      third_intermediate_expected_binary_lake_mask = &
+        transpose(reshape((/ .false.,.false.,.false., &
+                             .false.,.false.,.false., &
+                             .false.,.false.,.false. /), &
+        (/nlon_surface,nlat_surface/)))
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array, &
@@ -20937,6 +21308,9 @@ subroutine testLakeModel21
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
+                                      lake_pixel_counts_field,lake_fractions_field, &
+                                      output_binary_lake_mask)
       allocate(lake_types(nlat_lake,nlon_lake))
       lake_types(:,:) = 0
       do i = 1,nlat_lake
@@ -20980,6 +21354,10 @@ subroutine testLakeModel21
       call assert_equals( first_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test first_intermediate_expected_true_lake_depths, lake_model_parameters%true_lake_depths
+      call assert_equals( first_intermediate_expected_binary_lake_mask, &
+                          output_binary_lake_mask,nlat_surface,nlon_surface)
+      call assert_equals( first_intermediate_expected_lake_pixel_counts_field, &
+                          lake_pixel_counts_field,nlat_surface,nlon_surface)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       deallocate(lake_volumes)
@@ -21000,6 +21378,9 @@ subroutine testLakeModel21
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
+                                      lake_pixel_counts_field,lake_fractions_field, &
+                                      output_binary_lake_mask)
       allocate(lake_types(nlat_lake,nlon_lake))
       lake_types(:,:) = 0
       do i = 1,nlat_lake
@@ -21043,6 +21424,10 @@ subroutine testLakeModel21
       call assert_equals( second_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test second_intermediate_expected_true_lake_depths, lake_model_parameters%true_lake_depths
+      call assert_equals( second_intermediate_expected_binary_lake_mask, &
+                          output_binary_lake_mask,nlat_surface,nlon_surface)
+      call assert_equals( second_intermediate_expected_lake_pixel_counts_field, &
+                          lake_pixel_counts_field,nlat_surface,nlon_surface)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       deallocate(lake_volumes)
@@ -21063,6 +21448,9 @@ subroutine testLakeModel21
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
+                                      lake_pixel_counts_field,lake_fractions_field, &
+                                      output_binary_lake_mask)
       allocate(lake_types(nlat_lake,nlon_lake))
       lake_types(:,:) = 0
       do i = 1,nlat_lake
@@ -21108,6 +21496,10 @@ subroutine testLakeModel21
       call assert_equals( third_intermediate_expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test third_intermediate_expected_true_lake_depths, lake_model_parameters%true_lake_depths
+      call assert_equals( third_intermediate_expected_binary_lake_mask, &
+                          output_binary_lake_mask,nlat_surface,nlon_surface)
+      call assert_equals( third_intermediate_expected_lake_pixel_counts_field, &
+                          lake_pixel_counts_field,nlat_surface,nlon_surface)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       deallocate(lake_volumes)
@@ -21128,6 +21520,9 @@ subroutine testLakeModel21
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
+                                      lake_pixel_counts_field,lake_fractions_field, &
+                                      output_binary_lake_mask)
       allocate(lake_types(nlat_lake,nlon_lake))
       lake_types(:,:) = 0
       do i = 1,nlat_lake
@@ -21172,6 +21567,10 @@ subroutine testLakeModel21
       call assert_equals( expected_number_fine_grid_cells, &
                           lake_model_parameters%number_fine_grid_cells,nlat_surface,nlon_surface)
       !@test expected_true_lake_depths, lake_model_parameters%true_lake_depths
+      call assert_equals( expected_binary_lake_mask,output_binary_lake_mask, &
+                          nlat_surface,nlon_surface)
+      call assert_equals( expected_lake_pixel_counts_field,lake_pixel_counts_field, &
+                          nlat_surface,nlon_surface)
       deallocate(drainage)
       deallocate(runoff)
       deallocate(evaporation)
