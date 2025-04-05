@@ -829,8 +829,8 @@ class LatLonEvaluateBasin:
                                              catchments_from_sink_filling_in)
         alg.evaluate_basins()
         output = {"lakes_as_array":alg.get_lakes_as_array(),
-                "number_of_lakes":alg.get_number_of_lakes(),
-                "lake_mask":alg.get_lake_mask()}
+                  "number_of_lakes":alg.get_number_of_lakes(),
+                  "lake_mask":alg.get_lake_mask()}
         if return_algorithm_object:
             return output,alg
         else:
