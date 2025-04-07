@@ -2073,9 +2073,11 @@ subroutine calculate_binary_lake_mask(lake_model_parameters,lake_model_prognosti
                      _INDICES_LIST_potential_lake_pixel_coords_list_INDEX_NAME_, &
                      _INDICES_LIST_cell_coords_list_INDEX_NAME_)
       else
+        deallocate(_INDICES_LIST_lake_pixel_coords_list_INDEX_NAME_)
         deallocate(_INDICES_LIST_potential_lake_pixel_coords_list_INDEX_NAME_)
       end if
     end do
+    deallocate(primary_lake_numbers)
     deallocate(filled_cells_by_primary_lake_number)
     deallocate(mask)
     deallocate(filled_mask)
@@ -2094,6 +2096,11 @@ subroutine calculate_binary_lake_mask(lake_model_parameters,lake_model_prognosti
                                   lake_model_parameters%_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_, &
                                   lake_model_parameters%_NPOINTS_LAKE_, &
                                   lake_model_parameters%_NPOINTS_SURFACE_)
+    do i = 1,size(lake_fraction_calculation_input)
+      call clean_lake_input(lake_fraction_calculation_input(i)%lake_input_pointer)
+      deallocate(lake_fraction_calculation_input(i)%lake_input_pointer)
+    end do
+    deallocate(lake_fraction_calculation_input)
 end subroutine calculate_binary_lake_mask
 
 

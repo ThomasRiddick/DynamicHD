@@ -781,6 +781,9 @@ subroutine testLakeModel1
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(output_binary_lake_mask)
       call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
                                       lake_pixel_counts_field,lake_fractions_field, &
                                       output_binary_lake_mask)
@@ -839,6 +842,9 @@ subroutine testLakeModel1
       deallocate(cell_areas_on_surface_model_grid)
       deallocate(is_lake)
       deallocate(binary_lake_mask)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(output_binary_lake_mask)
       deallocate(corresponding_surface_cell_lat_index)
       deallocate(corresponding_surface_cell_lon_index)
       deallocate(lake_parameters_as_array)
@@ -855,6 +861,8 @@ subroutine testLakeModel1
       deallocate(expected_lake_fractions)
       deallocate(expected_number_lake_cells)
       deallocate(expected_number_fine_grid_cells)
+      deallocate(expected_binary_lake_mask)
+      deallocate(expected_lake_pixel_counts_field)
       deallocate(intermediate_expected_river_inflow)
       deallocate(intermediate_expected_water_to_ocean)
       deallocate(intermediate_expected_water_to_hd)
@@ -865,6 +873,8 @@ subroutine testLakeModel1
       deallocate(intermediate_expected_number_lake_cells)
       deallocate(intermediate_expected_number_fine_grid_cells)
       deallocate(intermediate_expected_lake_volumes)
+      deallocate(intermediate_expected_binary_lake_mask)
+      deallocate(intermediate_expected_lake_pixel_counts_field)
       call clean_hd_model()
       call clean_lake_model()
 end subroutine testLakeModel1
@@ -15809,6 +15819,9 @@ subroutine testLakeModel17
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(output_binary_lake_mask)
       call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
                                       lake_pixel_counts_field,lake_fractions_field, &
                                       output_binary_lake_mask)
@@ -15869,6 +15882,9 @@ subroutine testLakeModel17
       deallocate(cell_areas_on_surface_model_grid)
       deallocate(is_lake)
       deallocate(binary_lake_mask)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(output_binary_lake_mask)
       deallocate(corresponding_surface_cell_lat_index)
       deallocate(corresponding_surface_cell_lon_index)
       deallocate(lake_parameters_as_array)
@@ -15885,6 +15901,8 @@ subroutine testLakeModel17
       deallocate(expected_lake_fractions)
       deallocate(expected_number_lake_cells)
       deallocate(expected_number_fine_grid_cells)
+      deallocate(expected_binary_lake_mask)
+      deallocate(expected_lake_pixel_counts_field)
       deallocate(first_intermediate_expected_river_inflow)
       deallocate(first_intermediate_expected_water_to_ocean)
       deallocate(first_intermediate_expected_water_to_hd)
@@ -15895,6 +15913,8 @@ subroutine testLakeModel17
       deallocate(first_intermediate_expected_number_lake_cells)
       deallocate(first_intermediate_expected_number_fine_grid_cells)
       deallocate(first_intermediate_expected_lake_volumes)
+      deallocate(first_intermediate_expected_binary_lake_mask)
+      deallocate(first_intermediate_expected_lake_pixel_counts_field)
       deallocate(second_intermediate_expected_river_inflow)
       deallocate(second_intermediate_expected_water_to_ocean)
       deallocate(second_intermediate_expected_water_to_hd)
@@ -18377,6 +18397,9 @@ subroutine testLakeModel19
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(output_binary_lake_mask)
       call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
                                       lake_pixel_counts_field,lake_fractions_field, &
                                       output_binary_lake_mask)
@@ -18448,6 +18471,9 @@ subroutine testLakeModel19
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(output_binary_lake_mask)
       call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
                                       lake_pixel_counts_field,lake_fractions_field, &
                                       output_binary_lake_mask)
@@ -18518,6 +18544,9 @@ subroutine testLakeModel19
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(output_binary_lake_mask)
       call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
                                       lake_pixel_counts_field,lake_fractions_field, &
                                       output_binary_lake_mask)
@@ -18589,6 +18618,9 @@ subroutine testLakeModel19
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(output_binary_lake_mask)
       call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
                                       lake_pixel_counts_field,lake_fractions_field, &
                                       output_binary_lake_mask)
@@ -18660,6 +18692,9 @@ subroutine testLakeModel19
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(output_binary_lake_mask)
       call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
                                       lake_pixel_counts_field,lake_fractions_field, &
                                       output_binary_lake_mask)
@@ -18731,6 +18766,9 @@ subroutine testLakeModel19
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(output_binary_lake_mask)
       call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
                                       lake_pixel_counts_field,lake_fractions_field, &
                                       output_binary_lake_mask)
@@ -18806,6 +18844,9 @@ subroutine testLakeModel19
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(output_binary_lake_mask)
       call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
                                       lake_pixel_counts_field,lake_fractions_field, &
                                       output_binary_lake_mask)
@@ -18866,6 +18907,9 @@ subroutine testLakeModel19
       deallocate(cell_areas_on_surface_model_grid)
       deallocate(is_lake)
       deallocate(binary_lake_mask)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(output_binary_lake_mask)
       deallocate(corresponding_surface_cell_lat_index)
       deallocate(corresponding_surface_cell_lon_index)
       deallocate(lake_parameters_as_array)
@@ -18884,6 +18928,8 @@ subroutine testLakeModel19
       deallocate(expected_lake_fractions)
       deallocate(expected_number_lake_cells)
       deallocate(expected_number_fine_grid_cells)
+      deallocate(expected_binary_lake_mask)
+      deallocate(expected_lake_pixel_counts_field)
       deallocate(first_intermediate_expected_river_inflow)
       deallocate(first_intermediate_expected_water_to_ocean)
       deallocate(first_intermediate_expected_water_to_hd)
@@ -18894,6 +18940,8 @@ subroutine testLakeModel19
       deallocate(first_intermediate_expected_number_lake_cells)
       deallocate(first_intermediate_expected_number_fine_grid_cells)
       deallocate(first_intermediate_expected_lake_volumes)
+      deallocate(first_intermediate_expected_binary_lake_mask)
+      deallocate(first_intermediate_expected_lake_pixel_counts_field)
       deallocate(second_intermediate_expected_river_inflow)
       deallocate(second_intermediate_expected_water_to_ocean)
       deallocate(second_intermediate_expected_water_to_hd)
@@ -18904,6 +18952,8 @@ subroutine testLakeModel19
       deallocate(second_intermediate_expected_number_lake_cells)
       deallocate(second_intermediate_expected_number_fine_grid_cells)
       deallocate(second_intermediate_expected_lake_volumes)
+      deallocate(second_intermediate_expected_binary_lake_mask)
+      deallocate(second_intermediate_expected_lake_pixel_counts_field)
       deallocate(third_intermediate_expected_river_inflow)
       deallocate(third_intermediate_expected_water_to_ocean)
       deallocate(third_intermediate_expected_water_to_hd)
@@ -18914,6 +18964,8 @@ subroutine testLakeModel19
       deallocate(third_intermediate_expected_number_lake_cells)
       deallocate(third_intermediate_expected_number_fine_grid_cells)
       deallocate(third_intermediate_expected_lake_volumes)
+      deallocate(third_intermediate_expected_binary_lake_mask)
+      deallocate(third_intermediate_expected_lake_pixel_counts_field)
       deallocate(fourth_intermediate_expected_river_inflow)
       deallocate(fourth_intermediate_expected_water_to_ocean)
       deallocate(fourth_intermediate_expected_water_to_hd)
@@ -18924,6 +18976,8 @@ subroutine testLakeModel19
       deallocate(fourth_intermediate_expected_number_lake_cells)
       deallocate(fourth_intermediate_expected_number_fine_grid_cells)
       deallocate(fourth_intermediate_expected_lake_volumes)
+      deallocate(fourth_intermediate_expected_binary_lake_mask)
+      deallocate(fourth_intermediate_expected_lake_pixel_counts_field)
       deallocate(fifth_intermediate_expected_river_inflow)
       deallocate(fifth_intermediate_expected_water_to_ocean)
       deallocate(fifth_intermediate_expected_water_to_hd)
@@ -18934,6 +18988,8 @@ subroutine testLakeModel19
       deallocate(fifth_intermediate_expected_number_lake_cells)
       deallocate(fifth_intermediate_expected_number_fine_grid_cells)
       deallocate(fifth_intermediate_expected_lake_volumes)
+      deallocate(fifth_intermediate_expected_binary_lake_mask)
+      deallocate(fifth_intermediate_expected_lake_pixel_counts_field)
       deallocate(sixth_intermediate_expected_river_inflow)
       deallocate(sixth_intermediate_expected_water_to_ocean)
       deallocate(sixth_intermediate_expected_water_to_hd)
@@ -18944,6 +19000,8 @@ subroutine testLakeModel19
       deallocate(sixth_intermediate_expected_number_lake_cells)
       deallocate(sixth_intermediate_expected_number_fine_grid_cells)
       deallocate(sixth_intermediate_expected_lake_volumes)
+      deallocate(sixth_intermediate_expected_binary_lake_mask)
+      deallocate(sixth_intermediate_expected_lake_pixel_counts_field)
       deallocate(seventh_intermediate_expected_river_inflow)
       deallocate(seventh_intermediate_expected_water_to_ocean)
       deallocate(seventh_intermediate_expected_water_to_hd)
@@ -18954,6 +19012,8 @@ subroutine testLakeModel19
       deallocate(seventh_intermediate_expected_number_lake_cells)
       deallocate(seventh_intermediate_expected_number_fine_grid_cells)
       deallocate(seventh_intermediate_expected_lake_volumes)
+      deallocate(seventh_intermediate_expected_binary_lake_mask)
+      deallocate(seventh_intermediate_expected_lake_pixel_counts_field)
       call clean_hd_model()
       call clean_lake_model()
 end subroutine testLakeModel19
@@ -20288,6 +20348,9 @@ subroutine testLakeModel20
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(output_binary_lake_mask)
       call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
                                       lake_pixel_counts_field,lake_fractions_field, &
                                       output_binary_lake_mask)
@@ -20352,6 +20415,9 @@ subroutine testLakeModel20
       deallocate(cell_areas_on_surface_model_grid)
       deallocate(is_lake)
       deallocate(binary_lake_mask)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(output_binary_lake_mask)
       deallocate(corresponding_surface_cell_lat_index)
       deallocate(corresponding_surface_cell_lon_index)
       deallocate(lake_parameters_as_array)
@@ -20371,6 +20437,8 @@ subroutine testLakeModel20
       deallocate(expected_number_fine_grid_cells)
       deallocate(expected_lake_volumes_all_timesteps)
       deallocate(expected_lake_types_list)
+      deallocate(expected_binary_lake_mask)
+      deallocate(expected_lake_pixel_counts_field)
       deallocate(intermediate_expected_river_inflow)
       deallocate(intermediate_expected_water_to_ocean)
       deallocate(intermediate_expected_water_to_hd)
@@ -20382,6 +20450,8 @@ subroutine testLakeModel20
       deallocate(intermediate_expected_number_fine_grid_cells)
       deallocate(intermediate_expected_lake_volumes)
       deallocate(intermediate_expected_lake_types_list)
+      deallocate(intermediate_expected_binary_lake_mask)
+      deallocate(intermediate_expected_lake_pixel_counts_field)
       deallocate(lake_volumes_all_timesteps)
       call clean_hd_model()
       call clean_lake_model()
@@ -21378,6 +21448,9 @@ subroutine testLakeModel21
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(output_binary_lake_mask)
       call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
                                       lake_pixel_counts_field,lake_fractions_field, &
                                       output_binary_lake_mask)
@@ -21448,6 +21521,9 @@ subroutine testLakeModel21
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(output_binary_lake_mask)
       call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
                                       lake_pixel_counts_field,lake_fractions_field, &
                                       output_binary_lake_mask)
@@ -21520,6 +21596,9 @@ subroutine testLakeModel21
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fractions)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(output_binary_lake_mask)
       call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
                                       lake_pixel_counts_field,lake_fractions_field, &
                                       output_binary_lake_mask)
@@ -21582,6 +21661,9 @@ subroutine testLakeModel21
       deallocate(cell_areas_on_surface_model_grid)
       deallocate(is_lake)
       deallocate(binary_lake_mask)
+      deallocate(lake_pixel_counts_field)
+      deallocate(lake_fractions_field)
+      deallocate(output_binary_lake_mask)
       deallocate(corresponding_surface_cell_lat_index)
       deallocate(corresponding_surface_cell_lon_index)
       deallocate(lake_parameters_as_array)
@@ -21598,6 +21680,8 @@ subroutine testLakeModel21
       deallocate(expected_lake_fractions)
       deallocate(expected_number_lake_cells)
       deallocate(expected_number_fine_grid_cells)
+      deallocate(expected_binary_lake_mask)
+      deallocate(expected_lake_pixel_counts_field)
       deallocate(first_intermediate_expected_river_inflow)
       deallocate(first_intermediate_expected_water_to_ocean)
       deallocate(first_intermediate_expected_water_to_hd)
@@ -21608,6 +21692,8 @@ subroutine testLakeModel21
       deallocate(first_intermediate_expected_number_lake_cells)
       deallocate(first_intermediate_expected_number_fine_grid_cells)
       deallocate(first_intermediate_expected_lake_volumes)
+      deallocate(first_intermediate_expected_binary_lake_mask)
+      deallocate(first_intermediate_expected_lake_pixel_counts_field)
       deallocate(second_intermediate_expected_river_inflow)
       deallocate(second_intermediate_expected_water_to_ocean)
       deallocate(second_intermediate_expected_water_to_hd)
@@ -21618,6 +21704,8 @@ subroutine testLakeModel21
       deallocate(second_intermediate_expected_number_lake_cells)
       deallocate(second_intermediate_expected_number_fine_grid_cells)
       deallocate(second_intermediate_expected_lake_volumes)
+      deallocate(second_intermediate_expected_binary_lake_mask)
+      deallocate(second_intermediate_expected_lake_pixel_counts_field)
       deallocate(third_intermediate_expected_river_inflow)
       deallocate(third_intermediate_expected_water_to_ocean)
       deallocate(third_intermediate_expected_water_to_hd)
@@ -21628,6 +21716,8 @@ subroutine testLakeModel21
       deallocate(third_intermediate_expected_number_lake_cells)
       deallocate(third_intermediate_expected_number_fine_grid_cells)
       deallocate(third_intermediate_expected_lake_volumes)
+      deallocate(third_intermediate_expected_binary_lake_mask)
+      deallocate(third_intermediate_expected_lake_pixel_counts_field)
       call clean_hd_model()
       call clean_lake_model()
 end subroutine testLakeModel21
