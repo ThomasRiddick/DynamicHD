@@ -531,7 +531,6 @@ end subroutine testLakeInputTests1
          36, 48, 36  /), &
          (/nlon_surface,nlat_surface/)))
       allocate(expected_binary_lake_mask(nlat_surface,nlon_surface))
-      expected_binary_lake_mask(:,:) = .false.
       expected_binary_lake_mask = transpose(reshape((/   &
          .true.,.false.,.true., &
          .false.,.true.,.false., &

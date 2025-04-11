@@ -91,7 +91,11 @@ subroutine read_coords(decoder,_COORDS_ARG_coords_out_)
       coords_as_array  => decoder%array(decoder%current_index:decoder%current_index+1)
       entry_length = 2
     _END_IF_USE_SINGLE_INDEX_
-    _GET_COORDS_ _COORDS_coords_out_ _FROM_ _ARRAY_coords_as_array_
+    _IF_USE_LONLAT_
+      _GET_SWITCHED_COORDS_ _COORDS_coords_out_ _FROM_ _ARRAY_coords_as_array_
+    _ELSE_IF_NOT_USE_LONLAT_
+      _GET_COORDS_ _COORDS_coords_out_ _FROM_ _ARRAY_coords_as_array_
+    _END_IF_USE_LONLAT_
     decoder%current_index = decoder%current_index + entry_length
 end subroutine read_coords
 
@@ -147,7 +151,11 @@ function read_outflow_points_dict(decoder) result(outflow_points)
       lake_number = nint(entry(1))
       is_local = (entry(3+offset) == 1.0_dp)
       if (.not. is_local) then
-        _GET_COORDS_ _COORDS_coords_ _FROM_ _ARRAY_entry_ _OFFSET_1_
+        _IF_USE_LONLAT_
+          _GET_SWITCHED_COORDS_ _COORDS_coords_ _FROM_ _ARRAY_entry_ _OFFSET_1_
+        _ELSE_IF_NOT_USE_LONLAT_
+          _GET_COORDS_ _COORDS_coords_ _FROM_ _ARRAY_entry_ _OFFSET_1_
+        _END_IF_USE_LONLAT_
       else
         _ASSIGN_COORDS_coords_ = _VALUE_-1_
       end if
@@ -185,7 +193,11 @@ function read_filling_order(decoder) result(filling_order)
       entry => &
         decoder%array(decoder%current_index:decoder%current_index+entry_length-1)
       decoder%current_index = decoder%current_index + entry_length
-      _GET_COORDS_ _COORDS_coords_ _FROM_ _ARRAY_entry_
+      _IF_USE_LONLAT_
+        _GET_SWITCHED_COORDS_ _COORDS_coords_ _FROM_ _ARRAY_entry_
+      _ELSE_IF_NOT_USE_LONLAT_
+        _GET_COORDS_ _COORDS_coords_ _FROM_ _ARRAY_entry_
+      _END_IF_USE_LONLAT_
       height_type_original = nint(entry(2+offset))
       if (height_type_original == 1) then
         height_type = flood_height

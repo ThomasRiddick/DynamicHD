@@ -4,19 +4,42 @@ import sys
 input_file=sys.argv[1]
 output_file=sys.argv[2]
 
+swapindices=False
 print(f"Preprocessing file: {input_file}")
+if swapindices:
+  print("Indices swapped")
 
 with open(input_file,'r') as f:
     lines = f.readlines()
-
-dim1="lat"
-dim2="lon"
+if swapindices:
+  dim1="lon"
+  dim2="lat"
+else:
+  dim1="lat"
+  dim2="lon"
 modified_txt = ""
 extended_line = None
 in_lake_grid_loop = False
 in_hd_grid_loop = False
 in_surface_grid_loop = False
 ignore_following_lines = False
+filtered_lines = []
+for line in lines:
+    if re.match(r'\s*_IF_USE_LONLAT_',line):
+        ignore_following_lines = not swapindices
+        continue
+    elif re.match(r'\s*_ELSE_IF_NOT_USE_LONLAT_',line):
+        ignore_following_lines = swapindices
+        continue
+    elif re.match(r'\s*_END_IF_USE_LONLAT_',line):
+        ignore_following_lines = False
+        continue
+    elif ignore_following_lines:
+        continue
+    else:
+        filtered_lines.append(line)
+ignore_following_line = False
+lines = filtered_lines
 filtered_lines = []
 for line in lines:
     if re.match(r'\s*_IF_USE_SINGLE_INDEX_',line):
@@ -142,6 +165,14 @@ for line in filtered_lines:
                              f' 1,{m.group(4) if m.group(4) else ""}n{dim1}_{m.group(2)}\n'
                              f'{m.group(1)}  do {dim2}_{m.group(3)} = '
                              f'1,{m.group(4) if m.group(4) else ""}n{dim2}_{m.group(2)}'.lower(),
+                  line)
+    line = re.sub(r'(\s*)_GET_SWITCHED_COORDS_\s+_COORDS_(\w+)_\s+_FROM_\s+_ARRAY_(\w*)_\s*_OFFSET_(\d*)_',
+                  f'\\1\\2_{dim2} = \\3(1+\\4)\\n'
+                  f'\\1\\2_{dim1} = \\3(2+\\4)',
+                  line)
+    line = re.sub(r'(\s*)_GET_SWITCHED_COORDS_\s+_COORDS_(\w+)_\s+_FROM_\s+_ARRAY_(\w*)_',
+                  f'\\1\\2_{dim2} = \\3(1)\\n'
+                  f'\\1\\2_{dim1} = \\3(2)',
                   line)
     line = re.sub(r'(\s*)_GET_COORDS_\s+_COORDS_(\w+)_\s+_FROM_\s+_ARRAY_(\w*)_\s*_OFFSET_(\d*)_',
                   f'\\1\\2_{dim1} = \\3(1+\\4)\\n'

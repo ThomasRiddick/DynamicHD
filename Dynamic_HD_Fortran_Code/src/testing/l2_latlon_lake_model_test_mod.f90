@@ -328,12 +328,17 @@ subroutine testLakeModel1
                                             init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_diagnostic_lake_volumes_field, &
                                 calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
                                 clean_lakes
+#ifdef TRANSPOSED_LAKE_MODEL
+   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                   calculate_diagnostic_lake_volumes_field
+#else
+   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+#endif
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid, &
                                           clean_lake_model
@@ -482,6 +487,18 @@ subroutine testLakeModel1
          (/nlon_lake,nlat_lake/)))
       allocate(binary_lake_mask(nlat_surface,nlon_surface))
       binary_lake_mask(:,:) = .False.
+#ifdef TRANSPOSED_LAKE_MODEL
+      lake_model_parameters => &
+        transposedlakemodelparameters(corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
+                                      cell_areas_on_surface_model_grid, &
+                                      1, &
+                                      is_lake, &
+                                      binary_lake_mask, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_lake,nlon_lake, &
+                                      nlat_surface,nlon_surface)
+#else
       lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
@@ -492,6 +509,7 @@ subroutine testLakeModel1
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+#endif
       allocate(lake_parameters_as_array(68))
       lake_parameters_as_array = &
         (/ 1.0, 66.0, 1.0, -1.0, 0.0, 4.0, 3.0, 11.0, 4.0, 3.0, 1.0, 0.0, 5.0, 4.0, 4.0, 1.0, 0.0, &
@@ -706,6 +724,26 @@ subroutine testLakeModel1
                              .true., .true.,.false., &
                              .false.,.false.,.false. /), &
         (/nlon_surface,nlat_surface/)))
+#ifdef TRANSPOSED_LAKE_MODEL
+      expected_water_to_hd = transpose(expected_water_to_hd)
+      expected_lake_numbers = transpose(expected_lake_numbers)
+      expected_lake_types = transpose(expected_lake_types)
+      expected_lake_fractions = &
+        transpose(expected_lake_fractions)
+      expected_number_lake_cells = &
+        transpose(expected_number_lake_cells)
+      expected_number_fine_grid_cells = &
+        transpose(expected_number_fine_grid_cells)
+      intermediate_expected_water_to_hd = transpose(intermediate_expected_water_to_hd)
+      intermediate_expected_lake_numbers = transpose(intermediate_expected_lake_numbers)
+      intermediate_expected_lake_types = transpose(intermediate_expected_lake_types)
+      intermediate_expected_lake_fractions = &
+        transpose(intermediate_expected_lake_fractions)
+      intermediate_expected_number_lake_cells = &
+        transpose(intermediate_expected_number_lake_cells)
+      intermediate_expected_number_fine_grid_cells = &
+        transpose(intermediate_expected_number_fine_grid_cells)
+#endif
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array)
@@ -884,11 +922,17 @@ subroutine testLakeModel2
                                             init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_diagnostic_lake_volumes_field, &
+                                calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
                                 clean_lakes
+#ifdef TRANSPOSED_LAKE_MODEL
+   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                   calculate_diagnostic_lake_volumes_field
+#else
+   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+#endif
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid, &
                                           clean_lake_model
@@ -1068,6 +1112,18 @@ subroutine testLakeModel2
          (/nlon_lake,nlat_lake/)))
       allocate(binary_lake_mask(nlat_surface,nlon_surface))
       binary_lake_mask(:,:) = .False.
+#ifdef TRANSPOSED_LAKE_MODEL
+      lake_model_parameters => &
+        transposedlakemodelparameters(corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
+                                      cell_areas_on_surface_model_grid, &
+                                      3, &
+                                      is_lake, &
+                                      binary_lake_mask, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_lake,nlon_lake, &
+                                      nlat_surface,nlon_surface)
+#else
       lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
@@ -1078,6 +1134,7 @@ subroutine testLakeModel2
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+#endif
       allocate(lake_parameters_as_array(94))
       lake_parameters_as_array = &
         (/ 3.0, 21.0, 1.0, 3.0, 0.0, 4.0, 5.0, 2.0, 4.0, 5.0, 1.0, 0.0, 5.0, 3.0, 5.0, 1.0, 6.0, 8.0, 1.0, 2.0, &
@@ -1596,6 +1653,67 @@ subroutine testLakeModel2
       !                   0    0    0    0    0    0    0    0    0
       !                   0    0    0    0    0    0    0    0    0
       !                   0    0    0    0    0    0    0    0    0 )
+#ifdef TRANSPOSED_LAKE_MODEL
+      expected_water_to_hd = transpose(expected_water_to_hd)
+      expected_lake_numbers = transpose(expected_lake_numbers)
+      expected_lake_types = transpose(expected_lake_types)
+      expected_lake_fractions = &
+        transpose(expected_lake_fractions)
+      expected_number_lake_cells = &
+        transpose(expected_number_lake_cells)
+      expected_number_fine_grid_cells = &
+        transpose(expected_number_fine_grid_cells)
+      first_intermediate_expected_water_to_hd = &
+        transpose(first_intermediate_expected_water_to_hd)
+      first_intermediate_expected_lake_numbers = &
+        transpose(first_intermediate_expected_lake_numbers)
+      first_intermediate_expected_lake_types = &
+        transpose(first_intermediate_expected_lake_types)
+      first_intermediate_expected_lake_fractions = &
+        transpose(first_intermediate_expected_lake_fractions)
+      first_intermediate_expected_number_lake_cells = &
+        transpose(first_intermediate_expected_number_lake_cells)
+      second_intermediate_expected_water_to_hd = &
+        transpose(second_intermediate_expected_water_to_hd)
+      second_intermediate_expected_lake_numbers = &
+        transpose(second_intermediate_expected_lake_numbers)
+      second_intermediate_expected_lake_types = &
+        transpose(second_intermediate_expected_lake_types)
+      second_intermediate_expected_lake_fractions = &
+        transpose(second_intermediate_expected_lake_fractions)
+      second_intermediate_expected_number_lake_cells = &
+        transpose(second_intermediate_expected_number_lake_cells)
+      third_intermediate_expected_water_to_hd = &
+        transpose(third_intermediate_expected_water_to_hd)
+      third_intermediate_expected_lake_numbers = &
+        transpose(third_intermediate_expected_lake_numbers)
+      third_intermediate_expected_lake_types = &
+        transpose(third_intermediate_expected_lake_types)
+      third_intermediate_expected_lake_fractions = &
+        transpose(third_intermediate_expected_lake_fractions)
+      third_intermediate_expected_number_lake_cells = &
+        transpose(third_intermediate_expected_number_lake_cells)
+      fourth_intermediate_expected_water_to_hd = &
+        transpose(fourth_intermediate_expected_water_to_hd)
+      fourth_intermediate_expected_lake_numbers = &
+        transpose(fourth_intermediate_expected_lake_numbers)
+      fourth_intermediate_expected_lake_types = &
+        transpose(fourth_intermediate_expected_lake_types)
+      fourth_intermediate_expected_lake_fractions = &
+        transpose(fourth_intermediate_expected_lake_fractions)
+      fourth_intermediate_expected_number_lake_cells = &
+        transpose(fourth_intermediate_expected_number_lake_cells)
+      fifth_intermediate_expected_water_to_hd = &
+        transpose(fifth_intermediate_expected_water_to_hd)
+      fifth_intermediate_expected_lake_numbers = &
+        transpose(fifth_intermediate_expected_lake_numbers)
+      fifth_intermediate_expected_lake_types = &
+        transpose(fifth_intermediate_expected_lake_types)
+      fifth_intermediate_expected_lake_fractions = &
+        transpose(fifth_intermediate_expected_lake_fractions)
+      fifth_intermediate_expected_number_lake_cells = &
+        transpose(fifth_intermediate_expected_number_lake_cells)
+#endif
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array)
@@ -2033,11 +2151,17 @@ subroutine testLakeModel3
                                             init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_diagnostic_lake_volumes_field, &
+                                calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
                                 clean_lakes
+#ifdef TRANSPOSED_LAKE_MODEL
+   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                   calculate_diagnostic_lake_volumes_field
+#else
+   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+#endif
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid, &
                                           clean_lake_model
@@ -2174,6 +2298,18 @@ subroutine testLakeModel3
          (/nlon_lake,nlat_lake/)))
       allocate(binary_lake_mask(nlat_surface,nlon_surface))
       binary_lake_mask(:,:) = .False.
+#ifdef TRANSPOSED_LAKE_MODEL
+      lake_model_parameters => &
+        transposedlakemodelparameters(corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
+                                      cell_areas_on_surface_model_grid, &
+                                      1, &
+                                      is_lake, &
+                                      binary_lake_mask, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_lake,nlon_lake, &
+                                      nlat_surface,nlon_surface)
+#else
       lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
@@ -2184,6 +2320,7 @@ subroutine testLakeModel3
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+#endif
       allocate(lake_parameters_as_array(53))
       lake_parameters_as_array = &
         (/ 1.0, 51.0, 1.0, -1.0, 0.0, 3.0, 3.0, 8.0, 3.0, 3.0, 1.0, 1.0, 2.0, 4.0, 4.0, 1.0, 1.0, 2.0, 4.0, &
@@ -2300,6 +2437,17 @@ subroutine testLakeModel3
          !                  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
          !                  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0 /), &
          ! (/nlon_lake,nlat_lake/)))
+#ifdef TRANSPOSED_LAKE_MODEL
+      expected_water_to_hd = transpose(expected_water_to_hd)
+      expected_lake_numbers = transpose(expected_lake_numbers)
+      expected_lake_types = transpose(expected_lake_types)
+      expected_lake_fractions = &
+        transpose(expected_lake_fractions)
+      expected_number_lake_cells = &
+        transpose(expected_number_lake_cells)
+      expected_number_fine_grid_cells = &
+        transpose(expected_number_fine_grid_cells)
+#endif
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array)
@@ -2387,11 +2535,17 @@ subroutine testLakeModel4
                                             init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_diagnostic_lake_volumes_field, &
+                                calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
                                 clean_lakes
+#ifdef TRANSPOSED_LAKE_MODEL
+   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                   calculate_diagnostic_lake_volumes_field
+#else
+   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+#endif
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid, &
                                           clean_lake_model
@@ -2586,6 +2740,18 @@ subroutine testLakeModel4
          (/nlon_lake,nlat_lake/)))
       allocate(binary_lake_mask(nlat_surface,nlon_surface))
       binary_lake_mask(:,:) = .False.
+#ifdef TRANSPOSED_LAKE_MODEL
+      lake_model_parameters => &
+        transposedlakemodelparameters(corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
+                                      cell_areas_on_surface_model_grid, &
+                                      9, &
+                                      is_lake, &
+                                      binary_lake_mask, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_lake,nlon_lake, &
+                                      nlat_surface,nlon_surface)
+#else
       lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
@@ -2596,6 +2762,7 @@ subroutine testLakeModel4
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+#endif
       allocate(lake_parameters_as_array(1185))
       lake_parameters_as_array = &
         (/ 9.0, 16.0, 1.0, -1.0, 0.0, 16.0, 4.0, 1.0, 16.0, 4.0, 1.0, 1.0, 3.0, 1.0, -1.0, 4.0, 2.0, 0.0, 46.0, 2.0, &
@@ -2814,6 +2981,17 @@ subroutine testLakeModel4
          !                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          !                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 /), &
          ! (/nlon_lake,nlat_lake/)))
+#ifdef TRANSPOSED_LAKE_MODEL
+      expected_water_to_hd = transpose(expected_water_to_hd)
+      expected_lake_numbers = transpose(expected_lake_numbers)
+      expected_lake_types = transpose(expected_lake_types)
+      expected_lake_fractions = &
+        transpose(expected_lake_fractions)
+      expected_number_lake_cells = &
+        transpose(expected_number_lake_cells)
+      expected_number_fine_grid_cells = &
+        transpose(expected_number_fine_grid_cells)
+#endif
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array)
@@ -2899,11 +3077,17 @@ subroutine testLakeModel5
                                             init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_diagnostic_lake_volumes_field, &
+                                calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
                                 clean_lakes
+#ifdef TRANSPOSED_LAKE_MODEL
+   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                   calculate_diagnostic_lake_volumes_field
+#else
+   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+#endif
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid, &
                                           clean_lake_model
@@ -3109,6 +3293,18 @@ subroutine testLakeModel5
          (/nlon_lake,nlat_lake/)))
       allocate(binary_lake_mask(nlat_surface,nlon_surface))
       binary_lake_mask(:,:) = .False.
+#ifdef TRANSPOSED_LAKE_MODEL
+      lake_model_parameters => &
+        transposedlakemodelparameters(corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
+                                      cell_areas_on_surface_model_grid, &
+                                      9, &
+                                      is_lake, &
+                                      binary_lake_mask, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_lake,nlon_lake, &
+                                      nlat_surface,nlon_surface)
+#else
       lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
@@ -3119,6 +3315,7 @@ subroutine testLakeModel5
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+#endif
       allocate(lake_parameters_as_array(1185))
       lake_parameters_as_array = &
         (/ 9.0, 16.0, 1.0, -1.0, 0.0, 16.0, 4.0, 1.0, 16.0, 4.0, 1.0, 1.0, 3.0, 1.0, -1.0, 4.0, 2.0, 0.0, 46.0, 2.0, -1.0, 0.0, &
@@ -3481,6 +3678,29 @@ subroutine testLakeModel5
          (/nlon_surface,nlat_surface/)))
       allocate(expected_intermediate_lake_volumes(9))
       expected_intermediate_lake_volumes = (/ 1.0, 10.0, 1.0, 38.0, 6.0, 46.0, 55.0, 55.0, 229.0 /)
+#ifdef TRANSPOSED_LAKE_MODEL
+      expected_water_to_hd = transpose(expected_water_to_hd)
+      expected_lake_numbers = transpose(expected_lake_numbers)
+      expected_lake_types = transpose(expected_lake_types)
+      expected_lake_fractions = &
+        transpose(expected_lake_fractions)
+      expected_number_lake_cells = &
+        transpose(expected_number_lake_cells)
+      expected_number_fine_grid_cells = &
+        transpose(expected_number_fine_grid_cells)
+      expected_intermediate_water_to_hd = &
+        transpose(expected_intermediate_water_to_hd)
+      expected_intermediate_lake_numbers = &
+        transpose(expected_intermediate_lake_numbers)
+      expected_intermediate_lake_types = &
+        transpose(expected_intermediate_lake_types)
+      expected_intermediate_lake_fractions = &
+        transpose(expected_intermediate_lake_fractions)
+      expected_intermediate_number_lake_cells = &
+        transpose(expected_intermediate_number_lake_cells)
+      expected_intermediate_number_fine_grid_cells = &
+        transpose(expected_intermediate_number_fine_grid_cells)
+#endif
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array)
@@ -3638,11 +3858,17 @@ subroutine testLakeModel6
                                             init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_diagnostic_lake_volumes_field, &
+                                calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
                                 clean_lakes
+#ifdef TRANSPOSED_LAKE_MODEL
+   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                   calculate_diagnostic_lake_volumes_field
+#else
+   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+#endif
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid, &
                                           clean_lake_model
@@ -3819,6 +4045,18 @@ subroutine testLakeModel6
          (/nlon_lake,nlat_lake/)))
       allocate(binary_lake_mask(nlat_surface,nlon_surface))
       binary_lake_mask(:,:) = .False.
+#ifdef TRANSPOSED_LAKE_MODEL
+      lake_model_parameters => &
+        transposedlakemodelparameters(corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
+                                      cell_areas_on_surface_model_grid, &
+                                      1, &
+                                      is_lake, &
+                                      binary_lake_mask, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_lake,nlon_lake, &
+                                      nlat_surface,nlon_surface)
+#else
       lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
@@ -3829,6 +4067,7 @@ subroutine testLakeModel6
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+#endif
       allocate(lake_parameters_as_array(53))
       lake_parameters_as_array = &
         (/ 1.0, 51.0, 1.0, -1.0, 0.0, 3.0, 3.0, 8.0, 3.0, 3.0, 1.0, 0.0, 2.0, 4.0, 4.0, 1.0, 0.0, 2.0, &
@@ -4287,6 +4526,59 @@ subroutine testLakeModel6
          !                  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
          !                  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,    0/), &
          ! (/nlon_lake,nlat_lake/)))
+#ifdef TRANSPOSED_LAKE_MODEL
+      expected_water_to_hd = transpose(expected_water_to_hd)
+      expected_lake_numbers = transpose(expected_lake_numbers)
+      expected_lake_types = transpose(expected_lake_types)
+      expected_lake_fractions = &
+        transpose(expected_lake_fractions)
+      expected_number_lake_cells = &
+        transpose(expected_number_lake_cells)
+      expected_number_fine_grid_cells = &
+        transpose(expected_number_fine_grid_cells)
+      first_intermediate_expected_water_to_hd = &
+        transpose(first_intermediate_expected_water_to_hd)
+      first_intermediate_expected_lake_numbers = &
+        transpose(first_intermediate_expected_lake_numbers)
+      first_intermediate_expected_lake_types = &
+        transpose(first_intermediate_expected_lake_types)
+      first_intermediate_expected_lake_fractions = &
+        transpose(first_intermediate_expected_lake_fractions)
+      first_intermediate_expected_number_lake_cells = &
+        transpose(first_intermediate_expected_number_lake_cells)
+      second_intermediate_expected_water_to_hd = &
+        transpose(second_intermediate_expected_water_to_hd)
+      second_intermediate_expected_lake_numbers = &
+        transpose(second_intermediate_expected_lake_numbers)
+      second_intermediate_expected_lake_types = &
+        transpose(second_intermediate_expected_lake_types)
+      second_intermediate_expected_lake_fractions = &
+        transpose(second_intermediate_expected_lake_fractions)
+      second_intermediate_expected_number_lake_cells = &
+        transpose(second_intermediate_expected_number_lake_cells)
+      third_intermediate_expected_water_to_hd = &
+        transpose(third_intermediate_expected_water_to_hd)
+      third_intermediate_expected_lake_numbers = &
+        transpose(third_intermediate_expected_lake_numbers)
+      third_intermediate_expected_lake_types = &
+        transpose(third_intermediate_expected_lake_types)
+      third_intermediate_expected_lake_fractions = &
+        transpose(third_intermediate_expected_lake_fractions)
+      third_intermediate_expected_number_lake_cells = &
+        transpose(third_intermediate_expected_number_lake_cells)
+      fourth_intermediate_expected_water_to_hd = &
+        transpose(fourth_intermediate_expected_water_to_hd)
+      fourth_intermediate_expected_lake_fractions = &
+        transpose(fourth_intermediate_expected_lake_fractions)
+      fourth_intermediate_expected_number_lake_cells = &
+        transpose(fourth_intermediate_expected_number_lake_cells)
+      fifth_intermediate_expected_water_to_hd = &
+        transpose(fifth_intermediate_expected_water_to_hd)
+      fifth_intermediate_expected_lake_fractions = &
+        transpose(fifth_intermediate_expected_lake_fractions)
+      fifth_intermediate_expected_number_lake_cells = &
+        transpose(fifth_intermediate_expected_number_lake_cells)
+#endif
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array)
@@ -4708,11 +5000,17 @@ subroutine testLakeModel7
                                             init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_diagnostic_lake_volumes_field, &
+                                calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
                                 clean_lakes
+#ifdef TRANSPOSED_LAKE_MODEL
+   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                   calculate_diagnostic_lake_volumes_field
+#else
+   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+#endif
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid, &
                                           clean_lake_model
@@ -4889,6 +5187,18 @@ subroutine testLakeModel7
          (/nlon_lake,nlat_lake/)))
       allocate(binary_lake_mask(nlat_surface,nlon_surface))
       binary_lake_mask(:,:) = .False.
+#ifdef TRANSPOSED_LAKE_MODEL
+      lake_model_parameters => &
+        transposedlakemodelparameters(corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
+                                      cell_areas_on_surface_model_grid, &
+                                      1, &
+                                      is_lake, &
+                                      binary_lake_mask, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_lake,nlon_lake, &
+                                      nlat_surface,nlon_surface)
+#else
       lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
@@ -4899,6 +5209,7 @@ subroutine testLakeModel7
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+#endif
       allocate(lake_parameters_as_array(53))
       lake_parameters_as_array = &
         (/ 1.0, 51.0, 1.0, -1.0, 0.0, 3.0, 3.0, 8.0, 3.0, 3.0, 1.0, 0.0, 2.0, 4.0, 4.0, 1.0, 0.0, 2.0, &
@@ -5357,6 +5668,59 @@ subroutine testLakeModel7
          !              0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
          !              0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,    0/), &
          ! (/nlon_lake,nlat_lake/)))
+#ifdef TRANSPOSED_LAKE_MODEL
+      expected_water_to_hd = transpose(expected_water_to_hd)
+      expected_lake_numbers = transpose(expected_lake_numbers)
+      expected_lake_types = transpose(expected_lake_types)
+      expected_lake_fractions = &
+        transpose(expected_lake_fractions)
+      expected_number_lake_cells = &
+        transpose(expected_number_lake_cells)
+      expected_number_fine_grid_cells = &
+        transpose(expected_number_fine_grid_cells)
+      first_intermediate_expected_water_to_hd = &
+        transpose(first_intermediate_expected_water_to_hd)
+      first_intermediate_expected_lake_numbers = &
+        transpose(first_intermediate_expected_lake_numbers)
+      first_intermediate_expected_lake_types = &
+        transpose(first_intermediate_expected_lake_types)
+      first_intermediate_expected_lake_fractions = &
+        transpose(first_intermediate_expected_lake_fractions)
+      first_intermediate_expected_number_lake_cells = &
+        transpose(first_intermediate_expected_number_lake_cells)
+      second_intermediate_expected_water_to_hd = &
+        transpose(second_intermediate_expected_water_to_hd)
+      second_intermediate_expected_lake_numbers = &
+        transpose(second_intermediate_expected_lake_numbers)
+      second_intermediate_expected_lake_types = &
+        transpose(second_intermediate_expected_lake_types)
+      second_intermediate_expected_lake_fractions = &
+        transpose(second_intermediate_expected_lake_fractions)
+      second_intermediate_expected_number_lake_cells = &
+        transpose(second_intermediate_expected_number_lake_cells)
+      third_intermediate_expected_water_to_hd = &
+        transpose(third_intermediate_expected_water_to_hd)
+      third_intermediate_expected_lake_numbers = &
+        transpose(third_intermediate_expected_lake_numbers)
+      third_intermediate_expected_lake_types = &
+        transpose(third_intermediate_expected_lake_types)
+      third_intermediate_expected_lake_fractions = &
+        transpose(third_intermediate_expected_lake_fractions)
+      third_intermediate_expected_number_lake_cells = &
+        transpose(third_intermediate_expected_number_lake_cells)
+      fourth_intermediate_expected_water_to_hd = &
+        transpose(fourth_intermediate_expected_water_to_hd)
+      fourth_intermediate_expected_lake_fractions = &
+        transpose(fourth_intermediate_expected_lake_fractions)
+      fourth_intermediate_expected_number_lake_cells = &
+        transpose(fourth_intermediate_expected_number_lake_cells)
+      fifth_intermediate_expected_water_to_hd = &
+        transpose(fifth_intermediate_expected_water_to_hd)
+      fifth_intermediate_expected_lake_fractions = &
+        transpose(fifth_intermediate_expected_lake_fractions)
+      fifth_intermediate_expected_number_lake_cells = &
+        transpose(fifth_intermediate_expected_number_lake_cells)
+#endif
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array)
@@ -5777,11 +6141,17 @@ subroutine testLakeModel8
                                             init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_diagnostic_lake_volumes_field, &
+                                calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
                                 clean_lakes
+#ifdef TRANSPOSED_LAKE_MODEL
+   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                   calculate_diagnostic_lake_volumes_field
+#else
+   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+#endif
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid, &
                                           clean_lake_model
@@ -6030,6 +6400,18 @@ subroutine testLakeModel8
          (/nlon_lake,nlat_lake/)))
       allocate(binary_lake_mask(nlat_surface,nlon_surface))
       binary_lake_mask(:,:) = .False.
+#ifdef TRANSPOSED_LAKE_MODEL
+      lake_model_parameters => &
+        transposedlakemodelparameters(corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
+                                      cell_areas_on_surface_model_grid, &
+                                      1, &
+                                      is_lake, &
+                                      binary_lake_mask, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_lake,nlon_lake, &
+                                      nlat_surface,nlon_surface)
+#else
       lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
@@ -6040,6 +6422,7 @@ subroutine testLakeModel8
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+#endif
       allocate(lake_parameters_as_array(53))
       lake_parameters_as_array = &
         (/ 1.0, 51.0, 1.0, -1.0, 0.0, 3.0, 3.0, 8.0, 3.0, 3.0, 1.0, 0.0, 2.0, 4.0, 4.0, &
@@ -7098,6 +7481,129 @@ subroutine testLakeModel8
           ! 0 0 0 0 0 0 0 0 0 &
           ! 0 0 0 0 0 0 0 0 0 &
           ! 0 0 0 0 0 0 0 0 0)
+#ifdef TRANSPOSED_LAKE_MODEL
+      expected_water_to_hd = transpose(expected_water_to_hd)
+      expected_lake_numbers = transpose(expected_lake_numbers)
+      expected_lake_types = transpose(expected_lake_types)
+      expected_lake_fractions = &
+        transpose(expected_lake_fractions)
+      expected_number_lake_cells = &
+        transpose(expected_number_lake_cells)
+      expected_number_fine_grid_cells = &
+        transpose(expected_number_fine_grid_cells)
+      first_intermediate_expected_water_to_hd = &
+        transpose(first_intermediate_expected_water_to_hd)
+      first_intermediate_expected_lake_numbers = &
+        transpose(first_intermediate_expected_lake_numbers)
+      first_intermediate_expected_lake_types = &
+        transpose(first_intermediate_expected_lake_types)
+      first_intermediate_expected_lake_fractions = &
+        transpose(first_intermediate_expected_lake_fractions)
+      first_intermediate_expected_number_lake_cells = &
+        transpose(first_intermediate_expected_number_lake_cells)
+      second_intermediate_expected_water_to_hd = &
+        transpose(second_intermediate_expected_water_to_hd)
+      second_intermediate_expected_lake_numbers = &
+        transpose(second_intermediate_expected_lake_numbers)
+      second_intermediate_expected_lake_types = &
+        transpose(second_intermediate_expected_lake_types)
+      second_intermediate_expected_lake_fractions = &
+        transpose(second_intermediate_expected_lake_fractions)
+      second_intermediate_expected_number_lake_cells = &
+        transpose(second_intermediate_expected_number_lake_cells)
+      third_intermediate_expected_water_to_hd = &
+        transpose(third_intermediate_expected_water_to_hd)
+      third_intermediate_expected_lake_numbers = &
+        transpose(third_intermediate_expected_lake_numbers)
+      third_intermediate_expected_lake_types = &
+        transpose(third_intermediate_expected_lake_types)
+      third_intermediate_expected_lake_fractions = &
+        transpose(third_intermediate_expected_lake_fractions)
+      third_intermediate_expected_number_lake_cells = &
+        transpose(third_intermediate_expected_number_lake_cells)
+      fourth_intermediate_expected_water_to_hd = &
+        transpose(fourth_intermediate_expected_water_to_hd)
+      fourth_intermediate_expected_lake_fractions = &
+        transpose(fourth_intermediate_expected_lake_fractions)
+      fourth_intermediate_expected_number_lake_cells = &
+        transpose(fourth_intermediate_expected_number_lake_cells)
+      fifth_intermediate_expected_water_to_hd = &
+        transpose(fifth_intermediate_expected_water_to_hd)
+      fifth_intermediate_expected_lake_fractions = &
+        transpose(fifth_intermediate_expected_lake_fractions)
+      fifth_intermediate_expected_number_lake_cells = &
+        transpose(fifth_intermediate_expected_number_lake_cells)
+      sixth_intermediate_expected_water_to_hd = &
+        transpose(sixth_intermediate_expected_water_to_hd)
+      sixth_intermediate_expected_lake_numbers = &
+        transpose(sixth_intermediate_expected_lake_numbers)
+      sixth_intermediate_expected_lake_types = &
+        transpose(sixth_intermediate_expected_lake_types)
+      sixth_intermediate_expected_lake_fractions = &
+        transpose(sixth_intermediate_expected_lake_fractions)
+      sixth_intermediate_expected_number_lake_cells = &
+        transpose(sixth_intermediate_expected_number_lake_cells)
+      seven_intermediate_expected_water_to_hd = &
+        transpose(seven_intermediate_expected_water_to_hd)
+      seven_intermediate_expected_lake_numbers = &
+        transpose(seven_intermediate_expected_lake_numbers)
+      seven_intermediate_expected_lake_types = &
+        transpose(seven_intermediate_expected_lake_types)
+      seven_intermediate_expected_lake_fractions = &
+        transpose(seven_intermediate_expected_lake_fractions)
+      seven_intermediate_expected_number_lake_cells = &
+        transpose(seven_intermediate_expected_number_lake_cells)
+      eight_intermediate_expected_water_to_hd = &
+        transpose(eight_intermediate_expected_water_to_hd)
+      eight_intermediate_expected_lake_numbers = &
+        transpose(eight_intermediate_expected_lake_numbers)
+      eight_intermediate_expected_lake_types = &
+        transpose(eight_intermediate_expected_lake_types)
+      eight_intermediate_expected_lake_fractions = &
+        transpose(eight_intermediate_expected_lake_fractions)
+      eight_intermediate_expected_number_lake_cells = &
+        transpose(eight_intermediate_expected_number_lake_cells)
+      nine_intermediate_expected_water_to_hd = &
+        transpose(nine_intermediate_expected_water_to_hd)
+      nine_intermediate_expected_lake_numbers = &
+        transpose(nine_intermediate_expected_lake_numbers)
+      nine_intermediate_expected_lake_types = &
+        transpose(nine_intermediate_expected_lake_types)
+      nine_intermediate_expected_lake_fractions = &
+        transpose(nine_intermediate_expected_lake_fractions)
+      nine_intermediate_expected_number_lake_cells = &
+        transpose(nine_intermediate_expected_number_lake_cells)
+      ten_intermediate_expected_water_to_hd = &
+        transpose(ten_intermediate_expected_water_to_hd)
+      ten_intermediate_expected_lake_numbers = &
+        transpose(ten_intermediate_expected_lake_numbers)
+      ten_intermediate_expected_lake_types = &
+        transpose(ten_intermediate_expected_lake_types)
+      ten_intermediate_expected_lake_fractions = &
+        transpose(ten_intermediate_expected_lake_fractions)
+      ten_intermediate_expected_number_lake_cells = &
+        transpose(ten_intermediate_expected_number_lake_cells)
+      eleven_intermediate_expected_water_to_hd = &
+        transpose(eleven_intermediate_expected_water_to_hd)
+      eleven_intermediate_expected_lake_numbers = &
+        transpose(eleven_intermediate_expected_lake_numbers)
+      eleven_intermediate_expected_lake_types = &
+        transpose(eleven_intermediate_expected_lake_types)
+      eleven_intermediate_expected_lake_fractions = &
+        transpose(eleven_intermediate_expected_lake_fractions)
+      eleven_intermediate_expected_number_lake_cells = &
+        transpose(eleven_intermediate_expected_number_lake_cells)
+      twelve_intermediate_expected_water_to_hd = &
+        transpose(twelve_intermediate_expected_water_to_hd)
+      twelve_intermediate_expected_lake_numbers = &
+        transpose(twelve_intermediate_expected_lake_numbers)
+      twelve_intermediate_expected_lake_types = &
+        transpose(twelve_intermediate_expected_lake_types)
+      twelve_intermediate_expected_lake_fractions = &
+        transpose(twelve_intermediate_expected_lake_fractions)
+      twelve_intermediate_expected_number_lake_cells = &
+        transpose(twelve_intermediate_expected_number_lake_cells)
+#endif
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array)
@@ -8064,11 +8570,17 @@ subroutine testLakeModel9
                                             init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_diagnostic_lake_volumes_field, &
+                                calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
                                 clean_lakes
+#ifdef TRANSPOSED_LAKE_MODEL
+   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                   calculate_diagnostic_lake_volumes_field
+#else
+   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+#endif
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid, &
                                           clean_lake_model
@@ -8227,6 +8739,18 @@ subroutine testLakeModel9
          (/nlon_lake,nlat_lake/)))
       allocate(binary_lake_mask(nlat_surface,nlon_surface))
       binary_lake_mask(:,:) = .False.
+#ifdef TRANSPOSED_LAKE_MODEL
+      lake_model_parameters => &
+        transposedlakemodelparameters(corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
+                                      cell_areas_on_surface_model_grid, &
+                                      1, &
+                                      is_lake, &
+                                      binary_lake_mask, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_lake,nlon_lake, &
+                                      nlat_surface,nlon_surface)
+#else
       lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
@@ -8237,6 +8761,7 @@ subroutine testLakeModel9
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+#endif
       allocate(lake_parameters_as_array(53))
       lake_parameters_as_array = &
         (/ 1.0, 51.0, 1.0, -1.0, 0.0, 3.0, 3.0, 8.0, 3.0, 3.0, 1.0, 0.0, 2.0, 4.0, 4.0, 1.0, &
@@ -8542,6 +9067,41 @@ subroutine testLakeModel9
          !              0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
          !              0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,    0/), &
          ! (/nlon_lake,nlat_lake/)))
+#ifdef TRANSPOSED_LAKE_MODEL
+      expected_water_to_hd = transpose(expected_water_to_hd)
+      expected_lake_numbers = transpose(expected_lake_numbers)
+      expected_lake_types = transpose(expected_lake_types)
+      expected_lake_fractions = &
+        transpose(expected_lake_fractions)
+      expected_number_lake_cells = &
+        transpose(expected_number_lake_cells)
+      expected_number_fine_grid_cells = &
+        transpose(expected_number_fine_grid_cells)
+      first_intermediate_expected_water_to_hd = &
+        transpose(first_intermediate_expected_water_to_hd)
+      first_intermediate_expected_lake_numbers = &
+        transpose(first_intermediate_expected_lake_numbers)
+      first_intermediate_expected_lake_types = &
+        transpose(first_intermediate_expected_lake_types)
+      first_intermediate_expected_lake_fractions = &
+        transpose(first_intermediate_expected_lake_fractions)
+      first_intermediate_expected_number_lake_cells = &
+        transpose(first_intermediate_expected_number_lake_cells)
+      first_intermediate_expected_number_fine_grid_cells = &
+        transpose(first_intermediate_expected_number_fine_grid_cells)
+      second_intermediate_expected_water_to_hd = &
+        transpose(second_intermediate_expected_water_to_hd)
+      second_intermediate_expected_lake_numbers = &
+        transpose(second_intermediate_expected_lake_numbers)
+      second_intermediate_expected_lake_types = &
+        transpose(second_intermediate_expected_lake_types)
+      second_intermediate_expected_lake_fractions = &
+        transpose(second_intermediate_expected_lake_fractions)
+      second_intermediate_expected_number_lake_cells = &
+        transpose(second_intermediate_expected_number_lake_cells)
+      second_intermediate_expected_number_fine_grid_cells = &
+        transpose(second_intermediate_expected_number_fine_grid_cells)
+#endif
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array, &
@@ -8772,11 +9332,17 @@ subroutine testLakeModel10
                                             init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_diagnostic_lake_volumes_field, &
+                                calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
                                 clean_lakes
+#ifdef TRANSPOSED_LAKE_MODEL
+   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                   calculate_diagnostic_lake_volumes_field
+#else
+   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+#endif
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid, &
                                           clean_lake_model
@@ -9002,6 +9568,18 @@ subroutine testLakeModel10
          (/nlon_lake,nlat_lake/)))
       allocate(binary_lake_mask(nlat_surface,nlon_surface))
       binary_lake_mask(:,:) = .False.
+#ifdef TRANSPOSED_LAKE_MODEL
+      lake_model_parameters => &
+        transposedlakemodelparameters(corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
+                                      cell_areas_on_surface_model_grid, &
+                                      9, &
+                                      is_lake, &
+                                      binary_lake_mask, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_lake,nlon_lake, &
+                                      nlat_surface,nlon_surface)
+#else
       lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
@@ -9012,6 +9590,7 @@ subroutine testLakeModel10
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+#endif
       allocate(lake_parameters_as_array(1185))
       lake_parameters_as_array = &
         (/ 9.0, 16.0, 1.0, -1.0, 0.0, 16.0, 4.0, 1.0, 16.0, 4.0, 1.0, 1.0, 3.0, 1.0, -1.0, 4.0, 2.0, 0.0, 46.0, 2.0, &
@@ -9661,6 +10240,53 @@ subroutine testLakeModel10
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0/), &
          ! (/nlon_lake,nlat_lake/)))
+#ifdef TRANSPOSED_LAKE_MODEL
+      expected_water_to_hd = transpose(expected_water_to_hd)
+      expected_lake_numbers = transpose(expected_lake_numbers)
+      expected_lake_types = transpose(expected_lake_types)
+      expected_lake_fractions = &
+        transpose(expected_lake_fractions)
+      expected_number_lake_cells = &
+        transpose(expected_number_lake_cells)
+      expected_number_fine_grid_cells = &
+        transpose(expected_number_fine_grid_cells)
+      first_intermediate_expected_water_to_hd = &
+        transpose(first_intermediate_expected_water_to_hd)
+      first_intermediate_expected_lake_numbers = &
+        transpose(first_intermediate_expected_lake_numbers)
+      first_intermediate_expected_lake_types = &
+        transpose(first_intermediate_expected_lake_types)
+      first_intermediate_expected_lake_fractions = &
+        transpose(first_intermediate_expected_lake_fractions)
+      first_intermediate_expected_number_lake_cells = &
+        transpose(first_intermediate_expected_number_lake_cells)
+      first_intermediate_expected_number_fine_grid_cells = &
+        transpose(first_intermediate_expected_number_fine_grid_cells)
+      second_intermediate_expected_water_to_hd = &
+        transpose(second_intermediate_expected_water_to_hd)
+      second_intermediate_expected_lake_numbers = &
+        transpose(second_intermediate_expected_lake_numbers)
+      second_intermediate_expected_lake_types = &
+        transpose(second_intermediate_expected_lake_types)
+      second_intermediate_expected_lake_fractions = &
+        transpose(second_intermediate_expected_lake_fractions)
+      second_intermediate_expected_number_lake_cells = &
+        transpose(second_intermediate_expected_number_lake_cells)
+      second_intermediate_expected_number_fine_grid_cells = &
+        transpose(second_intermediate_expected_number_fine_grid_cells)
+      third_intermediate_expected_water_to_hd = &
+        transpose(third_intermediate_expected_water_to_hd)
+      third_intermediate_expected_lake_numbers = &
+        transpose(third_intermediate_expected_lake_numbers)
+      third_intermediate_expected_lake_types = &
+        transpose(third_intermediate_expected_lake_types)
+      third_intermediate_expected_lake_fractions = &
+        transpose(third_intermediate_expected_lake_fractions)
+      third_intermediate_expected_number_lake_cells = &
+        transpose(third_intermediate_expected_number_lake_cells)
+      third_intermediate_expected_number_fine_grid_cells = &
+        transpose(third_intermediate_expected_number_fine_grid_cells)
+#endif
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array, &
@@ -9963,11 +10589,17 @@ subroutine testLakeModel11
                                             init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_diagnostic_lake_volumes_field, &
+                                calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
                                 clean_lakes
+#ifdef TRANSPOSED_LAKE_MODEL
+   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                   calculate_diagnostic_lake_volumes_field
+#else
+   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+#endif
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid, &
                                           clean_lake_model
@@ -10165,6 +10797,18 @@ subroutine testLakeModel11
          (/nlon_lake,nlat_lake/)))
       allocate(binary_lake_mask(nlat_surface,nlon_surface))
       binary_lake_mask(:,:) = .False.
+#ifdef TRANSPOSED_LAKE_MODEL
+      lake_model_parameters => &
+        transposedlakemodelparameters(corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
+                                      cell_areas_on_surface_model_grid, &
+                                      9, &
+                                      is_lake, &
+                                      binary_lake_mask, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_lake,nlon_lake, &
+                                      nlat_surface,nlon_surface)
+#else
       lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
@@ -10175,6 +10819,7 @@ subroutine testLakeModel11
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+#endif
       allocate(lake_parameters_as_array(1185))
       lake_parameters_as_array = &
        (/ 9.0, 16.0, 1.0, -1.0, 0.0, 16.0, 4.0, 1.0, 16.0, 4.0, 1.0, 1.0, 3.0, 1.0, -1.0, 4.0, 2.0, &
@@ -10431,6 +11076,16 @@ subroutine testLakeModel11
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0/), &
          ! (/nlon_lake,nlat_lake/)))
+#ifdef TRANSPOSED_LAKE_MODEL
+      expected_lake_numbers = transpose(expected_lake_numbers)
+      expected_lake_types = transpose(expected_lake_types)
+      expected_lake_fractions = &
+        transpose(expected_lake_fractions)
+      expected_number_lake_cells = &
+        transpose(expected_number_lake_cells)
+      expected_number_fine_grid_cells = &
+        transpose(expected_number_fine_grid_cells)
+#endif
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array, &
@@ -10520,11 +11175,17 @@ subroutine testLakeModel12
                                             init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_diagnostic_lake_volumes_field, &
+                                calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
                                 clean_lakes
+#ifdef TRANSPOSED_LAKE_MODEL
+   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                   calculate_diagnostic_lake_volumes_field
+#else
+   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+#endif
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid, &
                                           clean_lake_model
@@ -10720,6 +11381,18 @@ subroutine testLakeModel12
          (/nlon_lake,nlat_lake/)))
       allocate(binary_lake_mask(nlat_surface,nlon_surface))
       binary_lake_mask(:,:) = .False.
+#ifdef TRANSPOSED_LAKE_MODEL
+      lake_model_parameters => &
+        transposedlakemodelparameters(corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
+                                      cell_areas_on_surface_model_grid, &
+                                      9, &
+                                      is_lake, &
+                                      binary_lake_mask, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_lake,nlon_lake, &
+                                      nlat_surface,nlon_surface)
+#else
       lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
@@ -10730,6 +11403,7 @@ subroutine testLakeModel12
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+#endif
       allocate(lake_parameters_as_array(1185))
       lake_parameters_as_array = &
         (/ 9.0, 16.0, 1.0, -1.0, 0.0, 16.0, 4.0, 1.0, 16.0, 4.0, 1.0, 1.0, 3.0, 1.0, -1.0, 4.0, 2.0, 0.0, 46.0, 2.0, -1.0, 0.0, &
@@ -10966,6 +11640,16 @@ subroutine testLakeModel12
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0/), &
          ! (/nlon_lake,nlat_lake/)))
+#ifdef TRANSPOSED_LAKE_MODEL
+      expected_lake_numbers = transpose(expected_lake_numbers)
+      expected_lake_types = transpose(expected_lake_types)
+      expected_lake_fractions = &
+        transpose(expected_lake_fractions)
+      expected_number_lake_cells = &
+        transpose(expected_number_lake_cells)
+      expected_number_fine_grid_cells = &
+        transpose(expected_number_fine_grid_cells)
+#endif
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array, &
@@ -11054,11 +11738,17 @@ subroutine testLakeModel13
                                             init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_diagnostic_lake_volumes_field, &
+                                calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
                                 clean_lakes
+#ifdef TRANSPOSED_LAKE_MODEL
+   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                   calculate_diagnostic_lake_volumes_field
+#else
+   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+#endif
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid, &
                                           clean_lake_model
@@ -11277,6 +11967,18 @@ subroutine testLakeModel13
          (/nlon_lake,nlat_lake/)))
       allocate(binary_lake_mask(nlat_surface,nlon_surface))
       binary_lake_mask(:,:) = .False.
+#ifdef TRANSPOSED_LAKE_MODEL
+      lake_model_parameters => &
+        transposedlakemodelparameters(corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
+                                      cell_areas_on_surface_model_grid, &
+                                      9, &
+                                      is_lake, &
+                                      binary_lake_mask, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_lake,nlon_lake, &
+                                      nlat_surface,nlon_surface)
+#else
       lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
@@ -11287,6 +11989,7 @@ subroutine testLakeModel13
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+#endif
       allocate(lake_parameters_as_array(1185))
       lake_parameters_as_array = &
         (/ 9.0, 16.0, 1.0, -1.0, 0.0, 16.0, 4.0, 1.0, 16.0, 4.0, 1.0, 1.0, 3.0, 1.0, -1.0, 4.0, &
@@ -11817,6 +12520,41 @@ subroutine testLakeModel13
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0/), &
          ! (/nlon_lake,nlat_lake/)))
+#ifdef TRANSPOSED_LAKE_MODEL
+      expected_water_to_hd = transpose(expected_water_to_hd)
+      expected_lake_numbers = transpose(expected_lake_numbers)
+      expected_lake_types = transpose(expected_lake_types)
+      expected_lake_fractions = &
+        transpose(expected_lake_fractions)
+      expected_number_lake_cells = &
+        transpose(expected_number_lake_cells)
+      expected_number_fine_grid_cells = &
+        transpose(expected_number_fine_grid_cells)
+      first_intermediate_expected_water_to_hd = &
+        transpose(first_intermediate_expected_water_to_hd)
+      first_intermediate_expected_lake_numbers = &
+        transpose(first_intermediate_expected_lake_numbers)
+      first_intermediate_expected_lake_types = &
+        transpose(first_intermediate_expected_lake_types)
+      first_intermediate_expected_lake_fractions = &
+        transpose(first_intermediate_expected_lake_fractions)
+      first_intermediate_expected_number_lake_cells = &
+        transpose(first_intermediate_expected_number_lake_cells)
+      first_intermediate_expected_number_fine_grid_cells = &
+        transpose(first_intermediate_expected_number_fine_grid_cells)
+      second_intermediate_expected_water_to_hd = &
+        transpose(second_intermediate_expected_water_to_hd)
+      second_intermediate_expected_lake_numbers = &
+        transpose(second_intermediate_expected_lake_numbers)
+      second_intermediate_expected_lake_types = &
+        transpose(second_intermediate_expected_lake_types)
+      second_intermediate_expected_lake_fractions = &
+        transpose(second_intermediate_expected_lake_fractions)
+      second_intermediate_expected_number_lake_cells = &
+        transpose(second_intermediate_expected_number_lake_cells)
+      second_intermediate_expected_number_fine_grid_cells = &
+        transpose(second_intermediate_expected_number_fine_grid_cells)
+#endif
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array, &
@@ -12048,11 +12786,17 @@ subroutine testLakeModel14
                                             init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_diagnostic_lake_volumes_field, &
+                                calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
                                 clean_lakes
+#ifdef TRANSPOSED_LAKE_MODEL
+   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                   calculate_diagnostic_lake_volumes_field
+#else
+   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+#endif
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid, &
                                           clean_lake_model
@@ -12250,6 +12994,18 @@ subroutine testLakeModel14
          (/nlon_lake,nlat_lake/)))
       allocate(binary_lake_mask(nlat_surface,nlon_surface))
       binary_lake_mask(:,:) = .False.
+#ifdef TRANSPOSED_LAKE_MODEL
+      lake_model_parameters => &
+        transposedlakemodelparameters(corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
+                                      cell_areas_on_surface_model_grid, &
+                                      9, &
+                                      is_lake, &
+                                      binary_lake_mask, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_lake,nlon_lake, &
+                                      nlat_surface,nlon_surface)
+#else
       lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
@@ -12260,6 +13016,7 @@ subroutine testLakeModel14
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+#endif
       allocate(lake_parameters_as_array(1185))
       lake_parameters_as_array = &
         (/ 9.0, 16.0, 1.0, -1.0, 0.0, 16.0, 4.0, 1.0, 16.0, 4.0, 1.0, 1.0, 3.0, 1.0, -1.0, 4.0, &
@@ -12508,6 +13265,16 @@ subroutine testLakeModel14
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0/), &
          ! (/nlon_lake,nlat_lake/)))
+#ifdef TRANSPOSED_LAKE_MODEL
+      expected_lake_numbers = transpose(expected_lake_numbers)
+      expected_lake_types = transpose(expected_lake_types)
+      expected_lake_fractions = &
+        transpose(expected_lake_fractions)
+      expected_number_lake_cells = &
+        transpose(expected_number_lake_cells)
+      expected_number_fine_grid_cells = &
+        transpose(expected_number_fine_grid_cells)
+#endif
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array, &
@@ -12597,11 +13364,17 @@ subroutine testLakeModel15
                                             init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_diagnostic_lake_volumes_field, &
+                                calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
                                 clean_lakes
+#ifdef TRANSPOSED_LAKE_MODEL
+   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                   calculate_diagnostic_lake_volumes_field
+#else
+   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+#endif
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid, &
                                           clean_lake_model
@@ -12797,6 +13570,18 @@ subroutine testLakeModel15
          (/nlon_lake,nlat_lake/)))
       allocate(binary_lake_mask(nlat_surface,nlon_surface))
       binary_lake_mask(:,:) = .False.
+#ifdef TRANSPOSED_LAKE_MODEL
+      lake_model_parameters => &
+        transposedlakemodelparameters(corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
+                                      cell_areas_on_surface_model_grid, &
+                                      9, &
+                                      is_lake, &
+                                      binary_lake_mask, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_lake,nlon_lake, &
+                                      nlat_surface,nlon_surface)
+#else
       lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
@@ -12807,6 +13592,7 @@ subroutine testLakeModel15
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+#endif
       allocate(lake_parameters_as_array(1185))
       lake_parameters_as_array = &
         (/ 9.0, 16.0, 1.0, -1.0, 0.0, 16.0, 4.0, 1.0, 16.0, 4.0, 1.0, 1.0, 3.0, 1.0, -1.0, 4.0, &
@@ -13058,6 +13844,17 @@ subroutine testLakeModel15
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0/), &
          !(/nlon_lake,nlat_lake/)))
+#ifdef TRANSPOSED_LAKE_MODEL
+      expected_water_to_hd = transpose(expected_water_to_hd)
+      expected_lake_numbers = transpose(expected_lake_numbers)
+      expected_lake_types = transpose(expected_lake_types)
+      expected_lake_fractions = &
+        transpose(expected_lake_fractions)
+      expected_number_lake_cells = &
+        transpose(expected_number_lake_cells)
+      expected_number_fine_grid_cells = &
+        transpose(expected_number_fine_grid_cells)
+#endif
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array, &
@@ -13146,11 +13943,17 @@ subroutine testLakeModel16
                                             init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_diagnostic_lake_volumes_field, &
+                                calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
                                 clean_lakes
+#ifdef TRANSPOSED_LAKE_MODEL
+   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                   calculate_diagnostic_lake_volumes_field
+#else
+   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+#endif
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid, &
                                           clean_lake_model
@@ -13367,6 +14170,18 @@ subroutine testLakeModel16
          (/nlon_lake,nlat_lake/)))
       allocate(binary_lake_mask(nlat_surface,nlon_surface))
       binary_lake_mask(:,:) = .False.
+#ifdef TRANSPOSED_LAKE_MODEL
+      lake_model_parameters => &
+        transposedlakemodelparameters(corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
+                                      cell_areas_on_surface_model_grid, &
+                                      9, &
+                                      is_lake, &
+                                      binary_lake_mask, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_lake,nlon_lake, &
+                                      nlat_surface,nlon_surface)
+#else
       lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
@@ -13377,6 +14192,7 @@ subroutine testLakeModel16
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+#endif
       allocate(lake_parameters_as_array(1185))
       lake_parameters_as_array = &
         (/ 9.0, 16.0, 1.0, -1.0, 0.0, 16.0, 4.0, 1.0, 16.0, 4.0, 1.0, 1.0, 3.0, 1.0, -1.0, 4.0, 2.0, &
@@ -13902,6 +14718,41 @@ subroutine testLakeModel16
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          !               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0/), &
          ! (/nlon_lake,nlat_lake/)))
+#ifdef TRANSPOSED_LAKE_MODEL
+      expected_water_to_hd = transpose(expected_water_to_hd)
+      expected_lake_numbers = transpose(expected_lake_numbers)
+      expected_lake_types = transpose(expected_lake_types)
+      expected_lake_fractions = &
+        transpose(expected_lake_fractions)
+      expected_number_lake_cells = &
+        transpose(expected_number_lake_cells)
+      expected_number_fine_grid_cells = &
+        transpose(expected_number_fine_grid_cells)
+      first_intermediate_expected_water_to_hd = &
+        transpose(first_intermediate_expected_water_to_hd)
+      first_intermediate_expected_lake_numbers = &
+        transpose(first_intermediate_expected_lake_numbers)
+      first_intermediate_expected_lake_types = &
+        transpose(first_intermediate_expected_lake_types)
+      first_intermediate_expected_lake_fractions = &
+        transpose(first_intermediate_expected_lake_fractions)
+      first_intermediate_expected_number_lake_cells = &
+        transpose(first_intermediate_expected_number_lake_cells)
+      first_intermediate_expected_number_fine_grid_cells = &
+        transpose(first_intermediate_expected_number_fine_grid_cells)
+      second_intermediate_expected_water_to_hd = &
+        transpose(second_intermediate_expected_water_to_hd)
+      second_intermediate_expected_lake_numbers = &
+        transpose(second_intermediate_expected_lake_numbers)
+      second_intermediate_expected_lake_types = &
+        transpose(second_intermediate_expected_lake_types)
+      second_intermediate_expected_lake_fractions = &
+        transpose(second_intermediate_expected_lake_fractions)
+      second_intermediate_expected_number_lake_cells = &
+        transpose(second_intermediate_expected_number_lake_cells)
+      second_intermediate_expected_number_fine_grid_cells = &
+        transpose(second_intermediate_expected_number_fine_grid_cells)
+#endif
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array, &
@@ -14134,12 +14985,17 @@ subroutine testLakeModel17
                                             init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_diagnostic_lake_volumes_field, &
                                 calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
                                 clean_lakes
+#ifdef TRANSPOSED_LAKE_MODEL
+   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                   calculate_diagnostic_lake_volumes_field
+#else
+   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+#endif
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid, &
                                           clean_lake_model
@@ -14388,6 +15244,18 @@ subroutine testLakeModel17
          (/nlon_lake,nlat_lake/)))
       allocate(binary_lake_mask(nlat_surface,nlon_surface))
       binary_lake_mask(:,:) = .False.
+#ifdef TRANSPOSED_LAKE_MODEL
+      lake_model_parameters => &
+        transposedlakemodelparameters(corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
+                                      cell_areas_on_surface_model_grid, &
+                                      1, &
+                                      is_lake, &
+                                      binary_lake_mask, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_lake,nlon_lake, &
+                                      nlat_surface,nlon_surface)
+#else
       lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
@@ -14398,6 +15266,7 @@ subroutine testLakeModel17
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+#endif
       allocate(lake_parameters_as_array(1483))
       lake_parameters_as_array = &
         (/ 1.0, 1481.0, 1.0, -1.0, 0.0, 10.0, 11.0, 294.0, 10.0, 11.0, 1.0, 0.0, 1.0, 11.0, 12.0, 1.0, 0.0, 1.0, 9.0, 12.0, &
@@ -15329,6 +16198,73 @@ subroutine testLakeModel17
          !                  0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00, &
          !                  0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.0  /), &
          ! (/nlon_lake,nlat_lake/)))
+#ifdef TRANSPOSED_LAKE_MODEL
+      expected_water_to_hd = transpose(expected_water_to_hd)
+      expected_lake_numbers = transpose(expected_lake_numbers)
+      expected_lake_types = transpose(expected_lake_types)
+      expected_lake_fractions = &
+        transpose(expected_lake_fractions)
+      expected_number_lake_cells = &
+        transpose(expected_number_lake_cells)
+      expected_number_fine_grid_cells = &
+        transpose(expected_number_fine_grid_cells)
+      expected_binary_lake_mask = &
+        transpose(expected_binary_lake_mask)
+      expected_lake_pixel_counts_field = &
+        transpose(expected_lake_pixel_counts_field)
+      first_intermediate_expected_water_to_hd = &
+        transpose(first_intermediate_expected_water_to_hd)
+      first_intermediate_expected_lake_numbers = &
+        transpose(first_intermediate_expected_lake_numbers)
+      first_intermediate_expected_lake_types = &
+        transpose(first_intermediate_expected_lake_types)
+      first_intermediate_expected_lake_fractions = &
+        transpose(first_intermediate_expected_lake_fractions)
+      first_intermediate_expected_number_lake_cells = &
+        transpose(first_intermediate_expected_number_lake_cells)
+      first_intermediate_expected_number_fine_grid_cells = &
+        transpose(first_intermediate_expected_number_fine_grid_cells)
+      first_intermediate_expected_binary_lake_mask = &
+        transpose(first_intermediate_expected_binary_lake_mask)
+      first_intermediate_expected_lake_pixel_counts_field = &
+        transpose(first_intermediate_expected_lake_pixel_counts_field)
+      second_intermediate_expected_water_to_hd = &
+        transpose(second_intermediate_expected_water_to_hd)
+      second_intermediate_expected_lake_numbers = &
+        transpose(second_intermediate_expected_lake_numbers)
+      second_intermediate_expected_lake_types = &
+        transpose(second_intermediate_expected_lake_types)
+      second_intermediate_expected_lake_fractions = &
+        transpose(second_intermediate_expected_lake_fractions)
+      second_intermediate_expected_number_lake_cells = &
+        transpose(second_intermediate_expected_number_lake_cells)
+      second_intermediate_expected_number_fine_grid_cells = &
+        transpose(second_intermediate_expected_number_fine_grid_cells)
+      third_intermediate_expected_water_to_hd = &
+        transpose(third_intermediate_expected_water_to_hd)
+      third_intermediate_expected_lake_numbers = &
+        transpose(third_intermediate_expected_lake_numbers)
+      third_intermediate_expected_lake_types = &
+        transpose(third_intermediate_expected_lake_types)
+      third_intermediate_expected_lake_fractions = &
+        transpose(third_intermediate_expected_lake_fractions)
+      third_intermediate_expected_number_lake_cells = &
+        transpose(third_intermediate_expected_number_lake_cells)
+      third_intermediate_expected_number_fine_grid_cells = &
+        transpose(third_intermediate_expected_number_fine_grid_cells)
+      fourth_intermediate_expected_water_to_hd = &
+        transpose(fourth_intermediate_expected_water_to_hd)
+      fourth_intermediate_expected_lake_numbers = &
+        transpose(fourth_intermediate_expected_lake_numbers)
+      fourth_intermediate_expected_lake_types = &
+        transpose(fourth_intermediate_expected_lake_types)
+      fourth_intermediate_expected_lake_fractions = &
+        transpose(fourth_intermediate_expected_lake_fractions)
+      fourth_intermediate_expected_number_lake_cells = &
+        transpose(fourth_intermediate_expected_number_lake_cells)
+      fourth_intermediate_expected_number_fine_grid_cells = &
+        transpose(fourth_intermediate_expected_number_fine_grid_cells)
+#endif
       allocate(fifth_intermediate_expected_lake_volumes(1))
       fifth_intermediate_expected_lake_volumes = (/ 130.0971746259524 /)
       allocate(sixth_intermediate_expected_lake_volumes(1))
@@ -15963,11 +16899,17 @@ subroutine testLakeModel18
                                             init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_diagnostic_lake_volumes_field, &
+                                calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
                                 clean_lakes
+#ifdef TRANSPOSED_LAKE_MODEL
+   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                   calculate_diagnostic_lake_volumes_field
+#else
+   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+#endif
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid, &
                                           clean_lake_model
@@ -16150,6 +17092,18 @@ subroutine testLakeModel18
          (/nlon_lake,nlat_lake/)))
       allocate(binary_lake_mask(nlat_surface,nlon_surface))
       binary_lake_mask(:,:) = .False.
+#ifdef TRANSPOSED_LAKE_MODEL
+      lake_model_parameters => &
+        transposedlakemodelparameters(corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
+                                      cell_areas_on_surface_model_grid, &
+                                      1, &
+                                      is_lake, &
+                                      binary_lake_mask, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_lake,nlon_lake, &
+                                      nlat_surface,nlon_surface)
+#else
       lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
@@ -16160,6 +17114,7 @@ subroutine testLakeModel18
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+#endif
       allocate(lake_parameters_as_array(1483))
       lake_parameters_as_array = &
         (/ 1.0, 1481.0, 1.0, -1.0, 0.0, 10.0, 11.0, 294.0, 10.0, 11.0, 1.0, 0.0, 1.0, 11.0, 12.0, 1.0, 0.0, 1.0, 9.0, &
@@ -16397,12 +17352,17 @@ subroutine testLakeModel19
                                             init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_diagnostic_lake_volumes_field, &
                                 calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
                                 clean_lakes
+#ifdef TRANSPOSED_LAKE_MODEL
+   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                   calculate_diagnostic_lake_volumes_field
+#else
+   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+#endif
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid, &
                                           clean_lake_model
@@ -16688,6 +17648,18 @@ subroutine testLakeModel19
          (/nlon_lake,nlat_lake/)))
       allocate(binary_lake_mask(nlat_surface,nlon_surface))
       binary_lake_mask(:,:) = .False.
+#ifdef TRANSPOSED_LAKE_MODEL
+      lake_model_parameters => &
+        transposedlakemodelparameters(corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
+                                      cell_areas_on_surface_model_grid, &
+                                      12, &
+                                      is_lake, &
+                                      binary_lake_mask, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_lake,nlon_lake, &
+                                      nlat_surface,nlon_surface)
+#else
       lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
@@ -16698,6 +17670,7 @@ subroutine testLakeModel19
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+#endif
       allocate(lake_parameters_as_array(2275))
       lake_parameters_as_array = &
         (/ 12.0, 236.0, 1.0, 8.0, 0.0, 15.0, 2.0, 45.0, 15.0, 2.0, 1.0, 0.0, 6.0, 16.0, 3.0, 1.0, &
@@ -18314,6 +19287,133 @@ subroutine testLakeModel19
                              .false.,.false.,.false., &
                              .false.,.false.,.false. /), &
          (/nlon_surface,nlat_surface/)))
+#ifdef TRANSPOSED_LAKE_MODEL
+      expected_water_to_hd = transpose(expected_water_to_hd)
+      expected_lake_numbers = transpose(expected_lake_numbers)
+      expected_lake_types = transpose(expected_lake_types)
+      expected_lake_fractions = &
+        transpose(expected_lake_fractions)
+      expected_number_lake_cells = &
+        transpose(expected_number_lake_cells)
+      expected_number_fine_grid_cells = &
+        transpose(expected_number_fine_grid_cells)
+      expected_binary_lake_mask = &
+        transpose(expected_binary_lake_mask)
+      expected_lake_pixel_counts_field = &
+        transpose(expected_lake_pixel_counts_field)
+      first_intermediate_expected_water_to_hd = &
+        transpose(first_intermediate_expected_water_to_hd)
+      first_intermediate_expected_lake_numbers = &
+        transpose(first_intermediate_expected_lake_numbers)
+      first_intermediate_expected_lake_types = &
+        transpose(first_intermediate_expected_lake_types)
+      first_intermediate_expected_lake_fractions = &
+        transpose(first_intermediate_expected_lake_fractions)
+      first_intermediate_expected_number_lake_cells = &
+        transpose(first_intermediate_expected_number_lake_cells)
+      first_intermediate_expected_number_fine_grid_cells = &
+        transpose(first_intermediate_expected_number_fine_grid_cells)
+      first_intermediate_expected_binary_lake_mask = &
+        transpose(first_intermediate_expected_binary_lake_mask)
+      first_intermediate_expected_lake_pixel_counts_field = &
+        transpose(first_intermediate_expected_lake_pixel_counts_field)
+      second_intermediate_expected_water_to_hd = &
+        transpose(second_intermediate_expected_water_to_hd)
+      second_intermediate_expected_lake_numbers = &
+        transpose(second_intermediate_expected_lake_numbers)
+      second_intermediate_expected_lake_types = &
+        transpose(second_intermediate_expected_lake_types)
+      second_intermediate_expected_lake_fractions = &
+        transpose(second_intermediate_expected_lake_fractions)
+      second_intermediate_expected_number_lake_cells = &
+        transpose(second_intermediate_expected_number_lake_cells)
+      second_intermediate_expected_number_fine_grid_cells = &
+        transpose(second_intermediate_expected_number_fine_grid_cells)
+      second_intermediate_expected_binary_lake_mask = &
+        transpose(second_intermediate_expected_binary_lake_mask)
+      second_intermediate_expected_lake_pixel_counts_field = &
+        transpose(second_intermediate_expected_lake_pixel_counts_field)
+      third_intermediate_expected_water_to_hd = &
+        transpose(third_intermediate_expected_water_to_hd)
+      third_intermediate_expected_lake_numbers = &
+        transpose(third_intermediate_expected_lake_numbers)
+      third_intermediate_expected_lake_types = &
+        transpose(third_intermediate_expected_lake_types)
+      third_intermediate_expected_lake_fractions = &
+        transpose(third_intermediate_expected_lake_fractions)
+      third_intermediate_expected_number_lake_cells = &
+        transpose(third_intermediate_expected_number_lake_cells)
+      third_intermediate_expected_number_fine_grid_cells = &
+        transpose(third_intermediate_expected_number_fine_grid_cells)
+      third_intermediate_expected_binary_lake_mask = &
+        transpose(third_intermediate_expected_binary_lake_mask)
+      third_intermediate_expected_lake_pixel_counts_field = &
+        transpose(third_intermediate_expected_lake_pixel_counts_field)
+      fourth_intermediate_expected_water_to_hd = &
+        transpose(fourth_intermediate_expected_water_to_hd)
+      fourth_intermediate_expected_lake_numbers = &
+        transpose(fourth_intermediate_expected_lake_numbers)
+      fourth_intermediate_expected_lake_types = &
+        transpose(fourth_intermediate_expected_lake_types)
+      fourth_intermediate_expected_lake_fractions = &
+        transpose(fourth_intermediate_expected_lake_fractions)
+      fourth_intermediate_expected_number_lake_cells = &
+        transpose(fourth_intermediate_expected_number_lake_cells)
+      fourth_intermediate_expected_number_fine_grid_cells = &
+        transpose(fourth_intermediate_expected_number_fine_grid_cells)
+      fourth_intermediate_expected_binary_lake_mask = &
+        transpose(fourth_intermediate_expected_binary_lake_mask)
+      fourth_intermediate_expected_lake_pixel_counts_field = &
+        transpose(fourth_intermediate_expected_lake_pixel_counts_field)
+      fifth_intermediate_expected_water_to_hd = &
+        transpose(fifth_intermediate_expected_water_to_hd)
+      fifth_intermediate_expected_lake_numbers = &
+        transpose(fifth_intermediate_expected_lake_numbers)
+      fifth_intermediate_expected_lake_types = &
+        transpose(fifth_intermediate_expected_lake_types)
+      fifth_intermediate_expected_lake_fractions = &
+        transpose(fifth_intermediate_expected_lake_fractions)
+      fifth_intermediate_expected_number_lake_cells = &
+        transpose(fifth_intermediate_expected_number_lake_cells)
+      fifth_intermediate_expected_number_fine_grid_cells = &
+        transpose(fifth_intermediate_expected_number_fine_grid_cells)
+      fifth_intermediate_expected_binary_lake_mask = &
+        transpose(fifth_intermediate_expected_binary_lake_mask)
+      fifth_intermediate_expected_lake_pixel_counts_field = &
+        transpose(fifth_intermediate_expected_lake_pixel_counts_field)
+      sixth_intermediate_expected_water_to_hd = &
+        transpose(sixth_intermediate_expected_water_to_hd)
+      sixth_intermediate_expected_lake_numbers = &
+        transpose(sixth_intermediate_expected_lake_numbers)
+      sixth_intermediate_expected_lake_types = &
+        transpose(sixth_intermediate_expected_lake_types)
+      sixth_intermediate_expected_lake_fractions = &
+        transpose(sixth_intermediate_expected_lake_fractions)
+      sixth_intermediate_expected_number_lake_cells = &
+        transpose(sixth_intermediate_expected_number_lake_cells)
+      sixth_intermediate_expected_number_fine_grid_cells = &
+        transpose(sixth_intermediate_expected_number_fine_grid_cells)
+      sixth_intermediate_expected_binary_lake_mask = &
+        transpose(sixth_intermediate_expected_binary_lake_mask)
+      sixth_intermediate_expected_lake_pixel_counts_field = &
+        transpose(sixth_intermediate_expected_lake_pixel_counts_field)
+      seventh_intermediate_expected_water_to_hd = &
+        transpose(seventh_intermediate_expected_water_to_hd)
+      seventh_intermediate_expected_lake_numbers = &
+        transpose(seventh_intermediate_expected_lake_numbers)
+      seventh_intermediate_expected_lake_types = &
+        transpose(seventh_intermediate_expected_lake_types)
+      seventh_intermediate_expected_lake_fractions = &
+        transpose(seventh_intermediate_expected_lake_fractions)
+      seventh_intermediate_expected_number_lake_cells = &
+        transpose(seventh_intermediate_expected_number_lake_cells)
+      seventh_intermediate_expected_number_fine_grid_cells = &
+        transpose(seventh_intermediate_expected_number_fine_grid_cells)
+      seventh_intermediate_expected_binary_lake_mask = &
+        transpose(seventh_intermediate_expected_binary_lake_mask)
+      seventh_intermediate_expected_lake_pixel_counts_field = &
+        transpose(seventh_intermediate_expected_lake_pixel_counts_field)
+#endif
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array, &
@@ -19023,12 +20123,17 @@ subroutine testLakeModel20
                                             init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_diagnostic_lake_volumes_field, &
                                 calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
                                 clean_lakes
+#ifdef TRANSPOSED_LAKE_MODEL
+   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                   calculate_diagnostic_lake_volumes_field
+#else
+   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+#endif
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid, &
                                           clean_lake_model
@@ -19245,6 +20350,18 @@ subroutine testLakeModel20
          (/nlon_lake,nlat_lake/)))
       allocate(binary_lake_mask(nlat_surface,nlon_surface))
       binary_lake_mask(:,:) = .False.
+#ifdef TRANSPOSED_LAKE_MODEL
+      lake_model_parameters => &
+        transposedlakemodelparameters(corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
+                                      cell_areas_on_surface_model_grid, &
+                                      68, &
+                                      is_lake, &
+                                      binary_lake_mask, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_lake,nlon_lake, &
+                                      nlat_surface,nlon_surface)
+#else
       lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
@@ -19255,6 +20372,7 @@ subroutine testLakeModel20
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+#endif
       allocate(lake_parameters_as_array(3539))
       lake_parameters_as_array = &
        (/ 68.0, 24.0, 1.0, 57.0, 0.0, 20.0, 9.0, 1.0, 20.0, 9.0,  1.0, 1.0, 2.0, 3.0, 2.0, -1.0, -1.0, 1.0, 6.0, -1.0, &
@@ -20257,6 +21375,37 @@ subroutine testLakeModel20
                               .false., .true.,.false., &
                               .false.,.false.,.false. /), &
         (/nlon_surface,nlat_surface/)))
+#ifdef TRANSPOSED_LAKE_MODEL
+      expected_water_to_hd = transpose(expected_water_to_hd)
+      expected_lake_numbers = transpose(expected_lake_numbers)
+      expected_lake_types = transpose(expected_lake_types)
+      expected_lake_fractions = &
+        transpose(expected_lake_fractions)
+      expected_number_lake_cells = &
+        transpose(expected_number_lake_cells)
+      expected_number_fine_grid_cells = &
+        transpose(expected_number_fine_grid_cells)
+      expected_binary_lake_mask = &
+        transpose(expected_binary_lake_mask)
+      expected_lake_pixel_counts_field = &
+        transpose(expected_lake_pixel_counts_field)
+      intermediate_expected_water_to_hd = &
+        transpose(intermediate_expected_water_to_hd)
+      intermediate_expected_lake_numbers = &
+        transpose(intermediate_expected_lake_numbers)
+      intermediate_expected_lake_types = &
+        transpose(intermediate_expected_lake_types)
+      intermediate_expected_lake_fractions = &
+        transpose(intermediate_expected_lake_fractions)
+      intermediate_expected_number_lake_cells = &
+        transpose(intermediate_expected_number_lake_cells)
+      intermediate_expected_number_fine_grid_cells = &
+        transpose(intermediate_expected_number_fine_grid_cells)
+      intermediate_expected_binary_lake_mask = &
+        transpose(intermediate_expected_binary_lake_mask)
+      intermediate_expected_lake_pixel_counts_field = &
+        transpose(intermediate_expected_lake_pixel_counts_field)
+#endif
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array, &
@@ -20462,12 +21611,17 @@ subroutine testLakeModel21
                                             init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_diagnostic_lake_volumes_field, &
                                 calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
                                 clean_lakes
+#ifdef TRANSPOSED_LAKE_MODEL
+   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                   calculate_diagnostic_lake_volumes_field
+#else
+   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+#endif
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid, &
                                           clean_lake_model
@@ -20701,6 +21855,18 @@ subroutine testLakeModel21
          (/nlon_lake,nlat_lake/)))
       allocate(binary_lake_mask(nlat_surface,nlon_surface))
       binary_lake_mask(:,:) = .False.
+#ifdef TRANSPOSED_LAKE_MODEL
+      lake_model_parameters => &
+        transposedlakemodelparameters(corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
+                                      cell_areas_on_surface_model_grid, &
+                                      12, &
+                                      is_lake, &
+                                      binary_lake_mask, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_lake,nlon_lake, &
+                                      nlat_surface,nlon_surface)
+#else
       lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
@@ -20711,6 +21877,7 @@ subroutine testLakeModel21
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+#endif
       allocate(lake_parameters_as_array(240))
       lake_parameters_as_array = &
         (/ 12.0, 26.0, 1.0, -1.0, 0.0, 8.0, 11.0, 3.0, 8.0, 11.0,  1.0, 1.0, 5.0, 8.0, 12.0, 1.0, 1.0, 5.0, 8.0, &
@@ -21366,6 +22533,69 @@ subroutine testLakeModel21
                              .false.,.false.,.false., &
                              .false.,.false.,.false. /), &
         (/nlon_surface,nlat_surface/)))
+#ifdef TRANSPOSED_LAKE_MODEL
+      expected_water_to_hd = transpose(expected_water_to_hd)
+      expected_lake_numbers = transpose(expected_lake_numbers)
+      expected_lake_types = transpose(expected_lake_types)
+      expected_lake_fractions = &
+        transpose(expected_lake_fractions)
+      expected_number_lake_cells = &
+        transpose(expected_number_lake_cells)
+      expected_number_fine_grid_cells = &
+        transpose(expected_number_fine_grid_cells)
+      expected_binary_lake_mask = &
+        transpose(expected_binary_lake_mask)
+      expected_lake_pixel_counts_field = &
+        transpose(expected_lake_pixel_counts_field)
+      first_intermediate_expected_water_to_hd = &
+        transpose(first_intermediate_expected_water_to_hd)
+      first_intermediate_expected_lake_numbers = &
+        transpose(first_intermediate_expected_lake_numbers)
+      first_intermediate_expected_lake_types = &
+        transpose(first_intermediate_expected_lake_types)
+      first_intermediate_expected_lake_fractions = &
+        transpose(first_intermediate_expected_lake_fractions)
+      first_intermediate_expected_number_lake_cells = &
+        transpose(first_intermediate_expected_number_lake_cells)
+      first_intermediate_expected_number_fine_grid_cells = &
+        transpose(first_intermediate_expected_number_fine_grid_cells)
+      first_intermediate_expected_binary_lake_mask = &
+        transpose(first_intermediate_expected_binary_lake_mask)
+      first_intermediate_expected_lake_pixel_counts_field = &
+        transpose(first_intermediate_expected_lake_pixel_counts_field)
+      second_intermediate_expected_water_to_hd = &
+        transpose(second_intermediate_expected_water_to_hd)
+      second_intermediate_expected_lake_numbers = &
+        transpose(second_intermediate_expected_lake_numbers)
+      second_intermediate_expected_lake_types = &
+        transpose(second_intermediate_expected_lake_types)
+      second_intermediate_expected_lake_fractions = &
+        transpose(second_intermediate_expected_lake_fractions)
+      second_intermediate_expected_number_lake_cells = &
+        transpose(second_intermediate_expected_number_lake_cells)
+      second_intermediate_expected_number_fine_grid_cells = &
+        transpose(second_intermediate_expected_number_fine_grid_cells)
+      second_intermediate_expected_binary_lake_mask = &
+        transpose(second_intermediate_expected_binary_lake_mask)
+      second_intermediate_expected_lake_pixel_counts_field = &
+        transpose(second_intermediate_expected_lake_pixel_counts_field)
+      third_intermediate_expected_water_to_hd = &
+        transpose(third_intermediate_expected_water_to_hd)
+      third_intermediate_expected_lake_numbers = &
+        transpose(third_intermediate_expected_lake_numbers)
+      third_intermediate_expected_lake_types = &
+        transpose(third_intermediate_expected_lake_types)
+      third_intermediate_expected_lake_fractions = &
+        transpose(third_intermediate_expected_lake_fractions)
+      third_intermediate_expected_number_lake_cells = &
+        transpose(third_intermediate_expected_number_lake_cells)
+      third_intermediate_expected_number_fine_grid_cells = &
+        transpose(third_intermediate_expected_number_fine_grid_cells)
+      third_intermediate_expected_binary_lake_mask = &
+        transpose(third_intermediate_expected_binary_lake_mask)
+      third_intermediate_expected_lake_pixel_counts_field = &
+        transpose(third_intermediate_expected_lake_pixel_counts_field)
+#endif
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array, &
@@ -21727,11 +22957,17 @@ subroutine testLakeModel22
                                             init_hd_model_for_testing => &
                                             l2_init_hd_model_for_testing
    use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_diagnostic_lake_volumes_field, &
+                                calculate_binary_lake_mask, &
                                 lakepointer, dp, filling_lake_type, &
                                 overflowing_lake_type, subsumed_lake_type, &
                                 get_lake_volume,clean_lake_model_prognostics, &
                                 clean_lakes
+#ifdef TRANSPOSED_LAKE_MODEL
+   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                   calculate_diagnostic_lake_volumes_field
+#else
+   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+#endif
    use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
                                           calculate_lake_fraction_on_surface_grid, &
                                           clean_lake_model
@@ -22010,6 +23246,18 @@ subroutine testLakeModel22
                                               .False., .False., .False., &
                                               .False., .True., .False. /), &
                                             (/nlon_surface,nlat_surface/)))
+#ifdef TRANSPOSED_LAKE_MODEL
+      lake_model_parameters => &
+        transposedlakemodelparameters(corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
+                                      cell_areas_on_surface_model_grid, &
+                                      12, &
+                                      is_lake, &
+                                      binary_lake_mask, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_lake,nlon_lake, &
+                                      nlat_surface,nlon_surface)
+#else
       lake_model_parameters => &
         lakemodelparameters(corresponding_surface_cell_lat_index, &
                             corresponding_surface_cell_lon_index, &
@@ -22020,6 +23268,7 @@ subroutine testLakeModel22
                             nlat_hd,nlon_hd, &
                             nlat_lake,nlon_lake, &
                             nlat_surface,nlon_surface)
+#endif
       allocate(lake_parameters_as_array(2275))
       lake_parameters_as_array = &
         (/ 12.0, 236.0, 1.0, 8.0, 0.0, 15.0, 2.0, 45.0, 15.0, 2.0, 1.0, 0.0, 6.0, 16.0, 3.0, 1.0, &
@@ -22236,6 +23485,28 @@ subroutine testLakeModel22
          (/nlon_hd,nlat_hd/)))
       allocate(expected_lake_numbers(nlat_lake,nlon_lake))
       expected_lake_numbers = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+         0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,0,0, &
+         0,0,0,7,7,7, 0,6,0,0,0,0, 0,0,0,0,5,5,5,0, &
+         0,4,0,7,7,7, 0,0,0,0,0,0, 0,0,0,0,5,5,5,0, &
+         0,4,0,7,7,7, 0,0,0,0,0,0, 0,0,0,0,5,5,5,0, &
+         0,4,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,5,5,5,0, &
+         0,4,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,0,0, &
+         0,4,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,0,0, &
+         0,4,0,0,0,0, 0,0,0,0,0,3, 3,3,0,0,2,0,0,0, &
+         0,4,0,0,0,0, 0,0,0,0,0,3, 3,3,0,0,0,0,0,0, &
+         0,4,0,0,0,0, 0,0,0,0,0,3, 3,3,0,0,0,0,0,0, &
+         0,4,0,0,0,0, 0,0,0,0,0,3, 3,3,0,0,0,0,0,0, &
+         0,4,0,0,0,0, 0,0,0,0,0,3, 3,3,0,0,0,0,0,0, &
+         0,4,0,0,0,0, 0,0,0,0,0,3, 3,3,0,0,0,0,0,0, &
+         0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,0,0, &
+         0,1,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,0,0, &
+         0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,0,0, &
+         0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,0,0, &
+         0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,0,0, &
+         0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,0,0, &
+         0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,0,0 /), &
+#else
           0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 7, 7, 7,  0, 6, 0, 0, 0, 0,  0, 0, 0, 0, 5, 5, 5, 0, &
          0, 4, 0, 7, 7, 7,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 5, 5, 5, 0, &
@@ -22256,9 +23527,32 @@ subroutine testLakeModel22
          0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0 /), &
+#endif
          (/nlon_lake,nlat_lake/)))
       allocate(expected_lake_types(nlat_lake,nlon_lake))
       expected_lake_types = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+         0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,0,0, &
+         0,0,0,1,1,1, 0,1,0,0,0,0, 0,0,0,0,1,1,1,0, &
+         0,1,0,1,1,1, 0,0,0,0,0,0, 0,0,0,0,1,1,1,0, &
+         0,1,0,1,1,1, 0,0,0,0,0,0, 0,0,0,0,1,1,1,0, &
+         0,1,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,1,1,1,0, &
+         0,1,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,0,0, &
+         0,1,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,0,0, &
+         0,1,0,0,0,0, 0,0,0,0,0,1, 1,1,0,0,1,0,0,0, &
+         0,1,0,0,0,0, 0,0,0,0,0,1, 1,1,0,0,0,0,0,0, &
+         0,1,0,0,0,0, 0,0,0,0,0,1, 1,1,0,0,0,0,0,0, &
+         0,1,0,0,0,0, 0,0,0,0,0,1, 1,1,0,0,0,0,0,0, &
+         0,1,0,0,0,0, 0,0,0,0,0,1, 1,1,0,0,0,0,0,0, &
+         0,1,0,0,0,0, 0,0,0,0,0,1, 1,1,0,0,0,0,0,0, &
+         0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,0,0, &
+         0,1,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,0,0, &
+         0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,0,0, &
+         0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,0,0, &
+         0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,0,0, &
+         0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,0,0, &
+         0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,0,0 /), &
+#else
           0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 1, 1, 1,  0, 1, 0, 0, 0, 0,  0, 0, 0, 0, 1, 1, 1, 0, &
          0, 1, 0, 1, 1, 1,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 1, 1, 1, 0, &
@@ -22279,9 +23573,52 @@ subroutine testLakeModel22
          0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0 /), &
+#endif
          (/nlon_lake,nlat_lake/)))
       allocate(expected_diagnostic_lake_volumes(nlat_lake,nlon_lake))
       expected_diagnostic_lake_volumes = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+    0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+        0.0,   0.0,    0.0,    0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+    0.0,   0.0,    0.0,  25.61,  25.61,   25.61,   0.0,    0.0, &
+        0.0,    0.0,    0.0,    0.0,   0.0,    0.0,   0.0,    0.0, 11.28,   11.28, 11.28,  0.0, &
+    0.0,  65.56,   0.0,  25.61,  25.61,   25.61,   0.0,    0.0, &
+        0.0,    0.0,    0.0,    0.0,   0.0,    0.0,   0.0,    0.0,  11.28,   11.28, 11.28,  0.0, &
+    0.0,  65.56,   0.0,  25.61,  25.61,   25.61,   0.0,    0.0, &
+        0.0,    0.0,    0.0,    0.0,   0.0,    0.0,   0.0,    0.0,  11.28,   11.28, 11.28,  0.0, &
+    0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+        0.0,    0.0,    0.0,    0.0,   0.0,    0.0,   0.0,    0.0, 11.28,   11.28, 11.28,   0.0, &
+    0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+        0.0,    0.0,    0.0,    0.0,   0.0,    0.0,   0.0,    0.0,    0.0,   0.0,     0.0,    0.0, &
+    0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+        0.0,    0.0,    0.0,    0.0,    0.0,   0.0,    0.0,     0.0,    0.0,    0.0,    0.0,   0.0, &
+    0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+        0.0,    0.0,    0.0,    1.74,  1.74,   1.74,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0, &
+    0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+        0.0,    0.0,    0.0,    1.74,  1.74,   1.74,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0, &
+    0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+        0.0,    0.0,    0.0,    1.74,  1.74,   1.74,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0, &
+    0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+        0.0,    0.0,    0.0,    1.74,  1.74,   1.74,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0, &
+    0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+        0.0,    0.0,    0.0,    1.74,  1.74,   1.74,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0, &
+    0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+        0.0,    0.0,    0.0,    1.74,  1.74,   1.74,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0, &
+    0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+        0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+    0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+        0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+    0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+        0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+    0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+        0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+    0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+        0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+    0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+        0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+    0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+        0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0   /), &
+#else
          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,    &
         0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,   0.0,    0.0,  25.08,  25.08,   25.08,   0.0, 0.0, 0.0, &
@@ -22322,24 +23659,43 @@ subroutine testLakeModel22
           0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
           0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0   /), &
+#endif
          (/nlon_lake,nlat_lake/)))
       allocate(expected_lake_fractions(nlat_surface,nlon_surface))
       expected_lake_fractions = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+         0.0,  41.0/48.0, 0.0, &
+         0.0,   0.0,      0.0, &
+         0.0,  12.0/48.0, 0.0 /), &
+#else
           0.0,   44.0/48.0,  0.0, &
          0.0,    0.0,       0.0, &
          0.0,   12.0/48.0,  0.0 /), &
+#endif
          (/nlon_surface,nlat_surface/)))
       allocate(expected_number_lake_cells(nlat_surface,nlon_surface))
       expected_number_lake_cells = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+         13,1,12, &
+         7,18,1, &
+         1,0,0 /), &
+#else
          13, 1, 12, &
          7, 1, 21, &
          1, 0, 0 /), &
+#endif
          (/nlon_surface,nlat_surface/)))
       allocate(expected_adjusted_number_lake_cells(nlat_surface,nlon_surface))
       expected_adjusted_number_lake_cells = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+         0,41,0, &
+         0, 0,0, &
+         0,12,0 /), &
+#else
          0, 44, 0, &
          0, 0, 0, &
          0, 12, 0/), &
+#endif
          (/nlon_surface,nlat_surface/)))
       allocate(expected_number_fine_grid_cells(nlat_surface,nlon_surface))
       expected_number_fine_grid_cells = transpose(reshape((/   &
@@ -22348,9 +23704,14 @@ subroutine testLakeModel22
          36, 48, 36  /), &
          (/nlon_surface,nlat_surface/)))
       allocate(expected_lake_volumes(12))
+#ifdef TRANSPOSED_LAKE_MODEL
+      expected_lake_volumes = (/ 0.0, 0.0, 1.743055, 65.5555556, 11.277778, &
+                                 0.0, 25.6111111, 0.0, 0.0, 0.0, 0.0, 0.0 /)
+#else
       expected_lake_volumes = (/  0.0, 19.1597237, 0.0, 65.55555555556, &
                                   47.90972222, 0.0, 25.076388889, 0.0, 0.0, &
                                   0.0, 0.0, 0.0 /)
+#endif
       !allocate(expected_true_lake_depths(nlat_lake,nlon_lake))
       !expected_true_lake_depths = transpose(reshape((/   &
          !       0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, &
@@ -22374,6 +23735,96 @@ subroutine testLakeModel22
          !               0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, &
          !               0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0 /), &
          !(/nlon_lake,nlat_lake/)))
+#ifdef TRANSPOSED_LAKE_MODEL
+      allocate(expected_lake_volumes_all_timesteps(12,85))
+      expected_lake_volumes_all_timesteps = reshape( &
+        (/ 45.0, 63.0, 18.0, 66.0, 48.0, 104.0, 27.0, 52.445, 34.0, 45.0, 55.0, 85.215, &
+           45.0, 63.0, 18.0, 66.0, 48.0, 104.0, 27.0, 48.889, 34.0, 45.0, 55.0, 79.431, &
+           45.0, 63.0, 18.0, 66.0, 48.0, 104.0, 27.0, 45.333, 34.0, 45.0, 55.0, 73.646, &
+           45.0, 63.0, 18.0, 66.0, 48.0, 104.0, 27.0, 41.778, 34.0, 45.0, 55.0, 67.861, &
+           45.0, 63.0, 18.0, 66.0, 48.0, 104.0, 27.0, 38.222, 34.0, 45.0, 55.0, 62.076, &
+           45.0, 63.0, 18.0, 66.0, 48.0, 104.0, 27.0, 34.667, 34.0, 45.0, 55.0, 56.292, &
+           45.0, 63.0, 18.0, 66.0, 48.0, 104.0, 27.0, 31.111, 34.0, 45.0, 55.0, 50.507, &
+           45.0, 63.0, 18.0, 66.0, 48.0, 104.0, 27.0, 27.555, 34.0, 45.0, 55.0, 44.722, &
+           45.0, 63.0, 18.0, 66.0, 48.0, 104.0, 27.0, 24.0, 34.0, 45.0, 55.0, 38.937, &
+           45.0, 63.0, 18.0, 66.0, 48.0, 104.0, 27.0, 20.444, 34.0, 45.0, 55.0, 33.153, &
+           45.0, 63.0, 18.0, 66.0, 48.0, 104.0, 27.0, 16.889, 34.0, 45.0, 55.0, 27.368, &
+           45.0, 63.0, 18.0, 66.0, 48.0, 104.0, 27.0, 13.333, 34.0, 45.0, 55.0, 21.583, &
+           45.0, 63.0, 18.0, 66.0, 48.0, 104.0, 27.0, 9.778, 34.0, 45.0, 55.0, 15.799, &
+           45.0, 63.0, 18.0, 66.0, 48.0, 104.0, 27.0, 6.222, 34.0, 45.0, 55.0, 10.014, &
+           45.0, 63.0, 18.0, 66.0, 48.0, 104.0, 27.0, 2.667, 34.0, 45.0, 55.0, 4.229, &
+           44.556, 63.0, 18.0, 65.556, 48.0, 104.0, 27.0, 0.0, 33.222, 45.0, 54.222, 0.0, &
+           41.0, 63.0, 18.0, 65.556, 48.0, 104.0, 27.0, 0.0, 31.139, 45.0, 50.66, 0.0, &
+           37.444, 63.0, 18.0, 65.556, 48.0, 104.0, 27.0, 0.0, 29.056, 45.0, 47.097, 0.0, &
+           33.889, 63.0, 18.0, 65.556, 48.0, 104.0, 27.0, 0.0, 26.972, 45.0, 43.535, 0.0, &
+           30.333, 63.0, 18.0, 65.556, 48.0, 104.0, 27.0, 0.0, 24.889, 45.0, 39.972, 0.0, &
+           26.778, 63.0, 18.0, 65.556, 48.0, 104.0, 27.0, 0.0, 22.806, 45.0, 36.410, 0.0, &
+           23.222, 63.0, 18.0, 65.556, 48.0, 104.0, 27.0, 0.0, 20.722, 45.0, 32.847, 0.0, &
+           19.667, 63.0, 18.0, 65.556, 48.0, 104.0, 27.0, 0.0, 18.639, 45.0, 29.285, 0.0, &
+           16.111, 63.0, 18.0, 65.556, 48.0, 104.0, 27.0, 0.0, 16.556, 45.0, 25.722, 0.0, &
+           12.556, 63.0, 18.0, 65.556, 48.0, 104.0, 27.0, 0.0, 14.472, 45.0, 22.16, 0.0, &
+           9.0, 63.0, 18.0, 65.556, 48.0, 104.0, 27.0, 0.0, 12.389, 45.0, 18.597, 0.0, &
+           5.444, 63.0, 18.0, 65.556, 48.0, 104.0, 27.0, 0.0, 10.306, 45.0, 15.035, 0.0, &
+           1.889, 63.0, 18.0, 65.556, 48.0, 104.0, 27.0, 0.0, 8.222, 45.0, 11.472, 0.0, &
+           0.284, 63.0, 18.0, 65.556, 48.0, 104.0, 27.0, 0.0, 6.138, 45.0, 7.91, 0.0, &
+           0.0, 63.0, 18.0, 65.556, 48.0, 104.0, 27.0, 0.0, 4.056, 45.0, 4.347, 0.0, &
+           0.0, 63.0, 18.0, 65.556, 48.0, 104.0, 27.0, 0.0, 1.972, 45.0, 0.785, 0.0, &
+           0.0, 62.944, 18.0, 65.556, 47.944, 104.0, 25.611, 0.0, 0.0, 43.611, 0.0, 0.0, &
+           0.0, 61.694, 18.0, 65.556, 47.181, 104.0, 25.611, 0.0, 0.0, 40.111, 0.0, 0.0, &
+           0.0, 60.444, 18.0, 65.556, 46.417, 104.0, 25.611, 0.0, 0.0, 36.611, 0.0, 0.0, &
+           0.0, 59.194, 18.0, 65.556, 45.653, 104.0, 25.611, 0.0, 0.0, 33.111, 0.0, 0.0, &
+           0.0, 57.944, 18.0, 65.556, 44.889, 104.0, 25.611, 0.0, 0.0, 29.611, 0.0, 0.0, &
+           0.0, 56.694, 18.0, 65.556, 44.125, 104.0, 25.611, 0.0, 0.0, 26.111, 0.0, 0.0, &
+           0.0, 55.444, 18.0, 65.556, 43.361, 104.0, 25.611, 0.0, 0.0, 22.611, 0.0, 0.0, &
+           0.0, 54.194, 18.0, 65.556, 42.597, 104.0, 25.611, 0.0, 0.0, 19.111, 0.0, 0.0, &
+           0.0, 52.944, 18.0, 65.556, 41.833, 104.0, 25.611, 0.0, 0.0, 15.611, 0.0, 0.0, &
+           0.0, 51.694, 18.0, 65.556, 41.069, 104.0, 25.611, 0.0, 0.0, 12.111, 0.0, 0.0, &
+           0.0, 50.444, 18.0, 65.556, 40.306, 104.0, 25.611, 0.0, 0.0, 8.611, 0.0, 0.0, &
+           0.0, 49.194, 18.0, 65.556, 39.542, 104.0, 25.611, 0.0, 0.0, 5.111, 0.0, 0.0, &
+           0.0, 47.944, 18.0, 65.556, 38.778, 104.0, 25.611, 0.0, 0.0, 1.611, 0.0, 0.0, &
+           0.0, 46.694, 17.056, 65.556, 38.014, 103.056, 25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 45.444, 16.618, 65.556, 37.250, 100.056, 25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 44.194, 16.181, 65.556, 36.486,  97.056, 25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 42.944, 15.743, 65.556, 35.722,  94.056, 25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 41.694, 15.306, 65.556, 34.958,  91.056, 25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 40.444, 14.868, 65.556, 34.194,  88.056, 25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 39.194, 14.431, 65.556, 33.431, 85.056, 25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 37.944, 13.993, 65.556, 32.667, 82.056, 25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 36.694, 13.556, 65.556, 31.903, 79.056, 25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 35.444, 13.118, 65.556, 31.139, 76.056, 25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 34.194, 12.681, 65.556, 30.375, 73.056, 25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 32.944, 12.243, 65.556, 29.611, 70.056, 25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 31.694, 11.806, 65.556, 28.847, 67.056, 25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 30.444, 11.368, 65.556, 28.083, 64.056, 25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 29.194, 10.931, 65.556, 27.319, 61.056, 25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 27.944, 10.493, 65.556, 26.556, 58.056, 25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 26.694, 10.056, 65.556, 25.792, 55.056, 25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 25.444, 9.618, 65.556, 25.028, 52.056,  25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 24.194, 9.181, 65.556, 24.264, 49.056,  25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 22.944, 8.743, 65.556, 23.500, 46.056,  25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 21.694, 8.306, 65.556, 22.736, 43.056,  25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 20.444, 7.868, 65.556, 21.972, 40.056,  25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 19.194, 7.431, 65.556, 21.208, 37.056,  25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 17.944, 6.993, 65.556, 20.444, 34.056,  25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 16.694, 6.556, 65.556, 19.681, 31.056,  25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 15.444, 6.118, 65.556, 18.917, 28.056,  25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 14.194, 5.681, 65.556, 18.153, 25.056,  25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 12.944, 5.243, 65.556, 17.389, 22.056,  25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 11.694, 4.806, 65.556, 16.625, 19.056,  25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 10.444, 4.368, 65.556, 15.861, 16.056,  25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 9.194, 3.930, 65.556, 15.097, 13.056,  25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 7.944, 3.493, 65.556, 14.333, 10.056,  25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 6.694, 3.056, 65.556, 13.569, 7.056,   25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 5.444, 2.618, 65.556, 12.806, 4.056,   25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 4.194, 2.181, 65.556, 12.042, 1.056,  25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 2.944, 1.743, 65.556, 11.278, 0.0, 25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 2.131, 1.743, 65.556, 11.278, 0.0, 25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 1.319, 1.743, 65.556, 11.278, 0.0, 25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 0.507, 1.743, 65.556, 11.278, 0.0, 25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 0.0, 1.743, 65.556, 11.278, 0.0, 25.611, 0.0, 0.0, 0.0, 0.0, 0.0, &
+           0.0, 0.0, 1.743, 65.556, 11.278, 0.0, 25.611, 0.0, 0.0, 0.0, 0.0, 0.0 /), &
+           (/12,85/))
+#else
       allocate(expected_lake_volumes_all_timesteps(12,77))
       expected_lake_volumes_all_timesteps = reshape( &
         (/   45.0, 63.0, 18.0, 66.0, 48.0, 104.0, 27.0, 52.44, 34.0, 45.0, 55.0, 85.28, &
@@ -22454,6 +23905,7 @@ subroutine testLakeModel22
               0.0, 19.16,  0.0, 65.56, 47.91,  0.0, 25.08, 0.0, 0.0, 0.0, 0.0, 0.0, &
               0.0, 19.16,  0.0, 65.56, 47.91,  0.0, 25.08, 0.0, 0.0, 0.0, 0.0, 0.0/), &
            (/12,77/))
+#endif
       allocate(first_intermediate_expected_river_inflow(nlat_hd,nlon_hd))
       first_intermediate_expected_river_inflow = transpose(reshape((/   &
           0.0, 0.0, 0.0, 0.0, &
@@ -22568,15 +24020,27 @@ subroutine testLakeModel22
          (/nlon_lake,nlat_lake/)))
       allocate(first_intermediate_expected_lake_fractions(nlat_surface,nlon_surface))
       first_intermediate_expected_lake_fractions = transpose(reshape((/   &
-          0.0, 1.0, 4.0/36.0, &
+#ifdef TRANSPOSED_LAKE_MODEL
+         0.0,1.0,14.0/36.0, &
+         0.0,9.0/64.0,20.0/48.0, &
+         8.0/36.0,1.0,0.0 /), &
+#else
+         0.0, 1.0, 4.0/36.0, &
          0.0, 19.0/64.0, 20.0/48.0, &
          8.0/36.0, 1.0, 0.0/), &
+#endif
          (/nlon_surface,nlat_surface/)))
       allocate(first_intermediate_expected_adjusted_number_lake_cells(nlat_surface,nlon_surface))
       first_intermediate_expected_adjusted_number_lake_cells = transpose(reshape((/   &
-           0,  48, 4, &
+#ifdef TRANSPOSED_LAKE_MODEL
+         0, 48, 14, &
+         0,  9, 20, &
+         8, 48,  0/), &
+#else
+         0,  48, 4, &
          0,   19, 20, &
          8,  48, 0/), &
+#endif
          (/nlon_surface,nlat_surface/)))
       allocate(first_intermediate_expected_number_lake_cells(nlat_surface,nlon_surface))
       first_intermediate_expected_number_lake_cells = transpose(reshape((/   &
@@ -22685,6 +24149,49 @@ subroutine testLakeModel22
          (/nlon_lake,nlat_lake/)))
       allocate(second_intermediate_expected_diagnostic_lake_volumes(nlat_lake,nlon_lake))
       second_intermediate_expected_diagnostic_lake_volumes = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+         0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+           0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,   0.0,   0.0, 398.23, 398.23, 398.23,   0.00, 398.23, 398.23,   0.00, &
+         398.23, 398.23, 398.23, 398.23,   0.0,   0.0,  398.23, 398.23, 398.23,   0.0, &
+         0.0, 113.67,   0.0, 398.23, 398.23, 398.23, 398.23, 398.23, 398.23, 398.23,&
+          398.23, 398.23, 398.23, 398.23, 398.23, 398.23, 398.23, 398.23, 398.23,   0.0, &
+         0.0, 113.67,   0.0, 398.23, 398.23, 398.23,   0.00, 398.23, 398.23, 398.23,&
+          398.23, 398.23, 398.23, 398.23,  0.0,   0.0,  398.23, 398.23, 398.23,   0.0, &
+         0.0, 113.67,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+           0.0, 398.23, 398.23, 398.23,   0.0,    0.0, 398.23, 398.23, 398.23,   0.0, &
+         0.0, 113.67,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+           0.0, 398.23, 398.23, 398.23,   0.0,    0.0,   0.0,  398.23,    0.0,   0.0, &
+         0.0, 113.67,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+           0.0,   0.0, 398.23,    0.0,    0.0,    0.0, 398.23, 398.23, 398.23,   0.0, &
+         0.0, 113.67,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+           0.0, 398.23, 398.23, 398.23,   0.0,    0.0, 398.23, 398.23, 398.23,   0.0, &
+         0.0, 113.67,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+           0.0, 398.23, 398.23, 398.23,   0.0,    0.0, 398.23, 398.23, 398.23,   0.0, &
+         0.0, 113.67,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+           0.0, 398.23, 398.23, 398.23,   0.0,    0.0, 398.23, 398.23, 398.23,   0.0, &
+         0.0, 113.67,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+           0.0, 398.23, 398.23, 398.23,   0.0,    0.0, 398.23, 398.23, 398.23,   0.0, &
+         0.0, 113.67,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+           0.0, 398.23, 398.23, 398.23,   0.0,    0.0, 398.23, 398.23, 398.23,   0.0, &
+         0.0, 113.67,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+           0.0, 398.23, 398.23, 398.23,   0.0,    0.0, 398.23, 398.23, 398.23,   0.0, &
+         0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  &
+          0.0,  &
+          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0, &
+         0.0, 113.67, 113.67, 113.67, 113.67, 113.67, 113.67, 113.67, 113.67, 113.67,&
+            0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0, &
+         0.0, 113.67, 113.67, 113.67, 113.67, 113.67, 113.67, 113.67, 113.67, 113.67,&
+          113.67, 113.67,  113.67,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0, &
+         0.0, 113.67, 113.67, 113.67, 113.67, 113.67, 113.67, 113.67, 113.67, 113.67,&
+          113.67, 113.67,  113.67,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0, &
+         0.0, 113.67, 113.67, 113.67, 113.67, 113.67, 113.67, 113.67, 113.67, 113.67,&
+          113.67, 113.67,  113.67,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0, &
+         0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  &
+          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0, &
+         0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  &
+          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0  /), &
+#else
           0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
             0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
          0.0,   0.0,   0.0, 399.27, 399.27, 399.27,   0.00, 399.27, 399.27,  &
@@ -22725,18 +24232,31 @@ subroutine testLakeModel22
            0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0, &
          0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  &
            0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0  /), &
+#endif
          (/nlon_lake,nlat_lake/)))
       allocate(second_intermediate_expected_lake_fractions(nlat_surface,nlon_surface))
       second_intermediate_expected_lake_fractions = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+          0.0,1.0,14.0/36.0, &
+          0.0,9.0/64.0,20.0/48.0, &
+          8.0/36.0,1.0,0.0 /), &
+#else
           0.0, 1.0, 4.0/36.0, &
          0.0, 19.0/64.0, 20.0/48.0, &
          8.0/36.0, 1.0, 0.0 /), &
+#endif
          (/nlon_surface,nlat_surface/)))
       allocate(second_intermediate_expected_adjusted_number_lake_cells(nlat_surface,nlon_surface))
       second_intermediate_expected_adjusted_number_lake_cells = transpose(reshape((/   &
-          0,  48, 4, &
+#ifdef TRANSPOSED_LAKE_MODEL
+         0, 48,14, &
+         0,  9,20, &
+         8, 48, 0 /), &
+#else
+         0,  48, 4, &
          0,   19, 20, &
          8,  48,  0 /), &
+#endif
          (/nlon_surface,nlat_surface/)))
       allocate(second_intermediate_expected_number_lake_cells(nlat_surface,nlon_surface))
       second_intermediate_expected_number_lake_cells = transpose(reshape((/   &
@@ -22751,9 +24271,15 @@ subroutine testLakeModel22
          36, 48, 36  /), &
          (/nlon_surface,nlat_surface/)))
       allocate(second_intermediate_expected_lake_volumes(12))
+#ifdef TRANSPOSED_LAKE_MODEL
+      second_intermediate_expected_lake_volumes = &
+        (/ 45.0, 63.0, 18.0, 66.0, 48.0, 104.0, 27.0, 2.666666667, &
+           34.0, 45.0, 55.0, 4.229166667 /)
+#else
       second_intermediate_expected_lake_volumes = &
         (/ 45.0, 63.0, 18.0, 66.0, 48.0, 104.0, 27.0, 2.666666667, &
            34.0, 45.0, 55.0, 5.270833333 /)
+#endif
       !allocate(second_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !second_intermediate_expected_true_lake_depths = transpose(reshape((/   &
          !        0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, &
@@ -22846,6 +24372,48 @@ subroutine testLakeModel22
          (/nlon_lake,nlat_lake/)))
       allocate(third_intermediate_expected_diagnostic_lake_volumes(nlat_lake,nlon_lake))
       third_intermediate_expected_diagnostic_lake_volumes = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+         0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+           0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0,   0.0, &
+         0.0,  0.0,   0.0, 248.22, 248.22, 248.22,   0.0, 248.22, 248.22,   &
+          0.00, 248.22, 248.22, 248.22, 248.22,   0.0,   0.0, 144.22, 144.22, 144.22,   0.0, &
+         0.0, 65.56,  0.0, 248.22, 248.22, 248.22, 248.22, 248.22, 248.22,  &
+          248.22, 248.22, 248.22, 248.22, 248.22,   0.0,   0.0, 144.22, 144.22, 144.22,   0.0, &
+         0.0, 65.56,  0.0, 248.22, 248.22, 248.22,   0.0, 248.22, 248.22,   &
+          248.22, 248.22, 248.22, 248.22, 248.22,   0.0,   0.0, 144.22, 144.22, 144.22,   0.0, &
+         0.0, 65.56,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+           0.0, 248.22, 248.22, 248.22,   0.0,   0.0, 144.22, 144.22, 144.22,   0.0, &
+         0.0, 65.56,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+           0.0, 248.22, 248.22, 248.22,   0.0,   0.0,   0.0, 144.22,   0.0,     0.0, &
+         0.0, 65.56,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+           0.0,   0.0, 248.22,   0.0,     0.0,   0.0, 144.22, 144.22, 144.22,   0.0, &
+         0.0, 65.56,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+           0.0, 248.22, 248.22, 248.22,   0.0,   0.0, 144.22, 144.22, 144.22,   0.0, &
+         0.0, 65.56,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+           0.0, 248.22, 248.22, 248.22,   0.0,   0.0, 144.22, 144.22, 144.22,   0.0, &
+         0.0, 65.56,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+           0.0, 248.22, 248.22, 248.22,   0.0,   0.0, 144.22, 144.22, 144.22,   0.0, &
+         0.0, 65.56,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+           0.0, 248.22, 248.22, 248.22,   0.0,   0.0, 144.22, 144.22, 144.22,   0.0, &
+         0.0, 65.56,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+           0.0, 248.22, 248.22, 248.22,   0.0,   0.0, 144.22, 144.22, 144.22,   0.0, &
+         0.0, 65.56,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+           0.0, 248.22, 248.22, 248.22,   0.0,   0.0, 144.22, 144.22, 144.22,   0.0, &
+         0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+           0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0, 44.56,  44.56,  44.56,  44.56,  44.56,  44.56,  44.56,  44.56,&
+           44.56,   0.0,   0.0,   0.0,      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0, 44.56,  44.56,  44.56,  44.56,  44.56,  44.56,  44.56,  44.56,&
+           44.56,  44.56,  44.56,  44.56,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0, 44.56,  44.56,  44.56,  44.56,  44.56,  44.56,  44.56,  44.56,&
+           44.56,  44.56,  44.56,  44.56,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0, 44.56,  44.56,  44.56,  44.56,  44.56,  44.56,  44.56,  44.56,&
+           44.56,  44.56,  44.56,  44.56,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+           0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+           0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0 /), &
+#else
               0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   &
                0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0,   0.0, &
          0.0,  0.0,   0.0, 248.78, 248.78, 248.78,   0.0, 248.78, 248.78,   &
@@ -22886,12 +24454,19 @@ subroutine testLakeModel22
            0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
          0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  &
            0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0 /), &
+#endif
          (/nlon_lake,nlat_lake/)))
       allocate(third_intermediate_expected_lake_fractions(nlat_surface,nlon_surface))
       third_intermediate_expected_lake_fractions = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+          0.0,1.0,12.0/36.0,  &
+          0.0,9.0/64.0,20.0/48.0, &
+          8.0/36.0,1.0,0.0 /), &
+#else
           0.0, 1.0, 2.0/36.0, &
          0.0, 19.0/64.0, 20.0/48.0, &
          8.0/36.0, 1.0, 0.0 /), &
+#endif
          (/nlon_surface,nlat_surface/)))
       allocate(third_intermediate_expected_number_lake_cells(nlat_surface,nlon_surface))
       third_intermediate_expected_number_lake_cells = transpose(reshape((/   &
@@ -22901,9 +24476,15 @@ subroutine testLakeModel22
          (/nlon_surface,nlat_surface/)))
       allocate(third_intermediate_expected_adjusted_number_lake_cells(nlat_surface,nlon_surface))
       third_intermediate_expected_adjusted_number_lake_cells = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+         0,48,12, &
+         0, 9,20, &
+         8,48, 0 /), &
+#else
           0, 48, 2, &
          0,  19, 20, &
          8, 48,  0 /), &
+#endif
          (/nlon_surface,nlat_surface/)))
       allocate(third_intermediate_expected_number_fine_grid_cells(nlat_surface,nlon_surface))
       third_intermediate_expected_number_fine_grid_cells = transpose(reshape((/   &
@@ -22912,9 +24493,15 @@ subroutine testLakeModel22
          36, 48, 36  /), &
          (/nlon_surface,nlat_surface/)))
       allocate(third_intermediate_expected_lake_volumes(12))
+#ifdef TRANSPOSED_LAKE_MODEL
+      third_intermediate_expected_lake_volumes = (/ 44.55555555556, 63.0, 18.0, 65.55555555556, &
+                                                    48.0, 104.0, 27.0, 0.0, 33.2222222222, 45.0, &
+                                                    54.22222222222, 0.0 /)
+#else
       third_intermediate_expected_lake_volumes = (/ 44.55555555556, 63.0, 18.0, 65.55555555556, &
                                                     48.0, 104.0, 27.0, 0.0, 33.7777777778, 45.0, &
                                                     54.77777777778, 0.0 /)
+#endif
       !allocate(third_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !third_intermediate_expected_true_lake_depths = transpose(reshape((/   &
          !        0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0, 0.0, 0.00, 0.00, 0.00, 0.0, &
@@ -23007,6 +24594,48 @@ subroutine testLakeModel22
          (/nlon_lake,nlat_lake/)))
       allocate(fourth_intermediate_expected_diagnostic_lake_volumes(nlat_lake,nlon_lake))
       fourth_intermediate_expected_diagnostic_lake_volumes = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+           0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,  244.66, 244.66, 244.66,   0.0,  244.66, 244.66,   0.0,  244.66, 244.66, 244.66, 244.66,&
+           0.0,    0.0,  142.14, 142.14, 142.14,   0.0, &
+         0.0,  65.56,   0.0,  244.66, 244.66, 244.66, 244.66, 244.66, 244.66, 244.66, 244.66, 244.66, 244.66, 244.66,&
+           0.0,    0.0,  142.14, 142.14, 142.14,   0.0, &
+         0.0,  65.56,   0.0,  244.66, 244.66, 244.66,   0.00, 244.66, 244.66, 244.66, 244.66, 244.66, 244.66, 244.66,&
+           0.0,    0.0,  142.14, 142.14, 142.14,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  244.66, 244.66, 244.66,&
+           0.0,    0.0,  142.14, 142.14, 142.14,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  244.66, 244.66, 244.66,&
+           0.0,    0.0,    0.0,  142.14,   0.0,    0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  244.66,   0.0, &
+           0.0,    0.0,  142.14, 142.14, 142.14,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  244.66, 244.66, 244.66,&
+           0.0,    0.0,  142.14, 142.14, 142.14,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  244.66, 244.66, 244.66,&
+           0.0,    0.0,  142.14, 142.14, 142.14,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  244.66, 244.66, 244.66,&
+           0.0,    0.0,  142.14, 142.14, 142.14,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  244.66, 244.66, 244.66,&
+           0.0,    0.0,  142.14, 142.14, 142.14,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  244.66, 244.66, 244.66,&
+           0.0,    0.0,  142.14, 142.14, 142.14,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  244.66, 244.66, 244.66,&
+           0.0,    0.0,  142.14, 142.14, 142.14,   0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+           0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,  41.0,  41.0,     41.0,  41.0,    41.0,  41.0,    41.0,  41.0,    41.0,   0.0,    0.0,    0.0,    0.0, &
+           0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,  41.0,  41.0,     41.0,  41.0,    41.0,  41.0,   41.0,   41.0,    41.0,  41.0,   41.0,   41.0,    0.0, &
+           0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,  41.0,  41.0,     41.0,  41.0,    41.0,  41.0,   41.0,   41.0,    41.0,  41.0,   41.0,   41.0,    0.0, &
+           0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,  41.0,  41.0,     41.0,  41.0,    41.0,  41.0,   41.0,   41.0,    41.0,  41.0,   41.0,   41.0,    0.0, &
+           0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+           0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+           0.0,    0.0,    0.0,    0.0,    0.0,    0.0  /), &
+#else
          0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    &
          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
          0.0,   0.0,    0.0,  244.59, 244.59, 244.59,   0.0,  244.59, 244.59,&
@@ -23047,12 +24676,19 @@ subroutine testLakeModel22
             0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
             0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0  /), &
+#endif
          (/nlon_lake,nlat_lake/)))
       allocate(fourth_intermediate_expected_lake_fractions(nlat_surface,nlon_surface))
       fourth_intermediate_expected_lake_fractions = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+         0.0, 1.0, 12.0/36.0, &
+         0.0,9.0/64.0,20.0/48.0, &
+         8.0/36.0,1.0,0.0 /), &
+#else
           0.0,  1.0,  2.0/36.0, &
          0.0, 19.0/64.0, 20.0/48.0, &
          8.0/36.0, 1.0, 0.0 /), &
+#endif
          (/nlon_surface,nlat_surface/)))
       allocate(fourth_intermediate_expected_number_lake_cells(nlat_surface,nlon_surface))
       fourth_intermediate_expected_number_lake_cells = transpose(reshape((/   &
@@ -23062,9 +24698,15 @@ subroutine testLakeModel22
          (/nlon_surface,nlat_surface/)))
       allocate(fourth_intermediate_expected_adjusted_number_lake_cells(nlat_surface,nlon_surface))
       fourth_intermediate_expected_adjusted_number_lake_cells = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+         0,48,12, &
+         0, 9,20, &
+         8,48, 0  /), &
+#else
           0, 48, 2, &
          0,  19, 20, &
          8, 48,  0 /), &
+#endif
          (/nlon_surface,nlat_surface/)))
       allocate(fourth_intermediate_expected_number_fine_grid_cells(nlat_surface,nlon_surface))
       fourth_intermediate_expected_number_fine_grid_cells = transpose(reshape((/   &
@@ -23073,9 +24715,15 @@ subroutine testLakeModel22
          36, 48, 36  /), &
          (/nlon_surface,nlat_surface/)))
       allocate(fourth_intermediate_expected_lake_volumes(12))
+#ifdef TRANSPOSED_LAKE_MODEL
+      fourth_intermediate_expected_lake_volumes = (/ 41.0, 63.0, 18.0, 65.55555555556, &
+                                                     48.0, 104.0, 27.0, 0.0, 31.1388889, &
+                                                     45.0,  50.659722222, 0.0/)
+#else
       fourth_intermediate_expected_lake_volumes = (/ 41.0, 63.0, 18.0, 65.55555555556, &
                                                      48.0, 104.0, 27.0, 0.0, 32.3888889, &
                                                      45.0,  50.59027778, 0.0 /)
+#endif
       !allocate(fourth_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !fourth_intermediate_expected_true_lake_depths = transpose(reshape((/   &
          !        0.0, 0.00, 0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0, 0.0, 0.00, 0.00, 0.00, 0.0, &
@@ -23168,6 +24816,48 @@ subroutine testLakeModel22
          (/nlon_lake,nlat_lake/)))
       allocate(fifth_intermediate_expected_diagnostic_lake_volumes(nlat_lake,nlon_lake))
       fifth_intermediate_expected_diagnostic_lake_volumes = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+        0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  &
+          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,  201.91, 201.91, 201.91,   0.0,  201.91, 201.91,   0.0,  201.91,&
+          201.91, 201.91, 201.91,   0.0,    0.0,  117.14, 117.14, 117.14,   0.0, &
+         0.0,  65.56,   0.0,  201.91, 201.91, 201.91, 201.91, 201.91, 201.91, 201.91, 201.91,&
+          201.91, 201.91, 201.91,   0.0,    0.0,  117.14, 117.14, 117.14,   0.0, &
+         0.0,  65.56,   0.0,  201.91, 201.91, 201.91,   0.00, 201.91, 201.91, 201.91, 201.91,&
+          201.91, 201.91, 201.91,   0.0,    0.0,  117.14, 117.14, 117.14,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          201.91, 201.91, 201.91,   0.0,    0.0,  117.14, 117.14, 117.14,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          201.91, 201.91, 201.91,   0.0,    0.0,    0.0,  117.14,   0.0,    0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+            0.0,  201.91,   0.0,    0.0,    0.0,  117.14, 117.14, 117.14,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          201.91, 201.91, 201.91,   0.0,    0.0,  117.14, 117.14, 117.14,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          201.91, 201.91, 201.91,   0.0,    0.0,  117.14, 117.14, 117.14,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          201.91, 201.91, 201.91,   0.0,    0.0,  117.14, 117.14, 117.14,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          201.91, 201.91, 201.91,   0.0,    0.0,  117.14, 117.14, 117.14,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          201.91, 201.91, 201.91,   0.0,    0.0,  117.14, 117.14, 117.14,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          201.91, 201.91, 201.91,   0.0,    0.0,  117.14, 117.14, 117.14,   0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,  0.28,  0.28,  0.28,  0.28,  0.28,  0.28,  0.28,  0.28,  0.28,   0.0,    0.0,  &
+           0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,  0.28,  0.28,  0.28,  0.28,  0.28,  0.28,  0.28,  0.28,  0.28,  0.28,  0.28,   &
+           0.28,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,  0.28,  0.28,  0.28,  0.28,  0.28,  0.28,  0.28,  0.28,  0.28,  0.28,  0.28,   &
+           0.28,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,  0.28,  0.28,  0.28,  0.28,  0.28,  0.28,  0.28,  0.28,  0.28,  0.28,  0.28,   &
+           0.28,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
+#else
          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,    0.0, &
             0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,   0.0,    0.0,  194.34, 194.34, 194.34,   0.0,  194.34, 194.34,&
@@ -23208,24 +24898,43 @@ subroutine testLakeModel22
             0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, 0.0, 0.0,  0.0,  0.0, &
          0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
             0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, 0.0, 0.0,  0.0, 0.0  /), &
+#endif
          (/nlon_lake,nlat_lake/)))
       allocate(fifth_intermediate_expected_lake_fractions(nlat_surface,nlon_surface))
       fifth_intermediate_expected_lake_fractions = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+         0.0, 1.0, 12.0/36.0, &
+         0.0, 9.0/64.0, 20.0/48.0, &
+         8.0/36.0, 1.0, 0.0 /), &
+#else
           0.0,   1.0,   2.0/36.0, &
          0.0,   19.0/64.0, 20.0/48.0, &
          8.0/36.0,  1.0, 0.0 /), &
+#endif
          (/nlon_surface,nlat_surface/)))
       allocate(fifth_intermediate_expected_number_lake_cells(nlat_surface,nlon_surface))
       fifth_intermediate_expected_number_lake_cells = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+        13,27,13, &
+        7,19,21, &
+        20,25,0 /), &
+#else
           13, 27, 13, &
          7, 19, 21, &
          20, 25, 0/), &
+#endif
          (/nlon_surface,nlat_surface/)))
       allocate(fifth_intermediate_expected_adjusted_number_lake_cells(nlat_surface,nlon_surface))
       fifth_intermediate_expected_adjusted_number_lake_cells = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+         0,48,12, &
+         0, 9,20, &
+         8,48, 0 /), &
+#else
           0, 48, 2, &
          0,  19, 20, &
          8, 48,  0 /), &
+#endif
          (/nlon_surface,nlat_surface/)))
       allocate(fifth_intermediate_expected_number_fine_grid_cells(nlat_surface,nlon_surface))
       fifth_intermediate_expected_number_fine_grid_cells = transpose(reshape((/   &
@@ -23234,9 +24943,15 @@ subroutine testLakeModel22
          36, 48, 36  /), &
          (/nlon_surface,nlat_surface/)))
       allocate(fifth_intermediate_expected_lake_volumes(12))
+#ifdef TRANSPOSED_LAKE_MODEL
+      fifth_intermediate_expected_lake_volumes = (/ 0.2839506, 63.0, 18.0, 65.55555555556, &
+                                                    48.0, 104.0, 27.0, 0.0, 6.13888889, &
+                                                    45.0, 7.909722222, 0.0 /)
+#else
       fifth_intermediate_expected_lake_volumes = (/ 0.2839506, 63.0, 18.0, 65.55555555556, &
                                                     48.0, 104.0, 27.0, 0.0, 15.72222222222, &
                                                     45.0, 0.34027777778, 0.0 /)
+#endif
       !allocate(fifth_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !fifth_intermediate_expected_true_lake_depths = transpose(reshape((/   &
          !        0.0, 0.00, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0, 0.0, 0.00, 0.00, 0.00, 0.0, &
@@ -23283,6 +24998,28 @@ subroutine testLakeModel22
          (/nlon_hd,nlat_hd/)))
       allocate(sixth_intermediate_expected_lake_numbers(nlat_lake,nlon_lake))
       sixth_intermediate_expected_lake_numbers = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+         0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 7, 7, 7,  0, 6, 6, 0, 6, 6,  6, 6, 0, 0, 5, 5, 5, 0, &
+         0, 4, 0, 7, 7, 7, 11, 6, 6, 6, 6, 6,  6, 6, 0, 0, 5, 5, 5, 0, &
+         0, 4, 0, 7, 7, 7,  0, 6, 6, 6, 6, 6,  6, 6, 0, 0, 5, 5, 5, 0, &
+         0, 4, 0, 0, 0, 0,  0, 0, 0, 0, 0, 6,  6, 6, 0, 0, 5, 5, 5, 0, &
+         0, 4, 0, 0, 0, 0,  0, 0, 0, 0, 0, 6,  6, 6, 0, 0, 0, 9, 0, 0, &
+         0, 4, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 2, 2, 2, 0, &
+         0, 4, 0, 0, 0, 0,  0, 0, 0, 0, 0, 3,  3, 3, 0, 0, 2, 2, 2, 0, &
+         0, 4, 0, 0, 0, 0,  0, 0, 0, 0, 0, 3,  3, 3, 0, 0, 2, 2, 2, 0, &
+         0, 4, 0, 0, 0, 0,  0, 0, 0, 0, 0, 3,  3, 3, 0, 0, 2, 2, 2, 0, &
+         0, 4, 0, 0, 0, 0,  0, 0, 0, 0, 0, 3,  3, 3, 0, 0, 2, 2, 2, 0, &
+         0, 4, 0, 0, 0, 0,  0, 0, 0, 0, 0, 3,  3, 3, 0, 0, 2, 2, 2, 0, &
+         0, 4, 0, 0, 0, 0,  0, 0, 0, 0, 0, 3,  3, 3, 0, 0, 2, 2, 2, 0, &
+         0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0 /), &
+#else
           0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 7, 7, 7,  0, 6, 6, 0, 6, 6,  6, 6, 0, 0, 5, 5, 5, 0, &
          0, 4, 0, 7, 7, 7,  0, 6, 6, 6, 6, 6,  6, 6, 0, 0, 5, 5, 5, 0, &
@@ -23303,9 +25040,32 @@ subroutine testLakeModel22
          0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0 /), &
+#endif
          (/nlon_lake,nlat_lake/)))
       allocate(sixth_intermediate_expected_lake_types(nlat_lake,nlon_lake))
       sixth_intermediate_expected_lake_types = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, &
+         0,0,0,3,3,3,0,3,3,0,3,3,3,3,0,0,3,3,3,0, &
+         0,1,0,3,3,3,1,3,3,3,3,3,3,3,0,0,3,3,3,0, &
+         0,1,0,3,3,3,0,3,3,3,3,3,3,3,0,0,3,3,3,0, &
+         0,1,0,0,0,0,0,0,0,0,0,3,3,3,0,0,3,3,3,0, &
+         0,1,0,0,0,0,0,0,0,0,0,3,3,3,0,0,0,1,0,0, &
+         0,1,0,0,0,0,0,0,0,0,0,0,3,0,0,0,3,3,3,0, &
+         0,1,0,0,0,0,0,0,0,0,0,3,3,3,0,0,3,3,3,0, &
+         0,1,0,0,0,0,0,0,0,0,0,3,3,3,0,0,3,3,3,0, &
+         0,1,0,0,0,0,0,0,0,0,0,3,3,3,0,0,3,3,3,0, &
+         0,1,0,0,0,0,0,0,0,0,0,3,3,3,0,0,3,3,3,0, &
+         0,1,0,0,0,0,0,0,0,0,0,3,3,3,0,0,3,3,3,0, &
+         0,1,0,0,0,0,0,0,0,0,0,3,3,3,0,0,3,3,3,0, &
+         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, &
+         0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, &
+         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, &
+         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, &
+         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, &
+         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, &
+         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 /), &
+#else
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 1, 1, 1, 0, 3, 3, 0, 3, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
          0, 1, 0, 1, 1, 1, 0, 3, 3, 3, 3, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
@@ -23326,9 +25086,52 @@ subroutine testLakeModel22
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
+#endif
          (/nlon_lake,nlat_lake/)))
       allocate(sixth_intermediate_expected_diagnostic_lake_volumes(nlat_lake,nlon_lake))
       sixth_intermediate_expected_diagnostic_lake_volumes = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,  198.35, 198.35, 198.35,   0.0,  198.35, 198.35,   0.0,  198.35, &
+          198.35, 198.35, 198.35,   0.0,    0.0,  115.06, 115.06, 115.06,   0.0, &
+         0.0,  65.56,   0.0,  198.35, 198.35, 198.35, 198.35, 198.35, 198.35, 198.35, 198.35, &
+          198.35, 198.35, 198.35,   0.0,    0.0,  115.06, 115.06, 115.06,   0.0, &
+         0.0,  65.56,   0.0,  198.35, 198.35, 198.35,   0.00, 198.35, 198.35, 198.35, 198.35, &
+          198.35, 198.35, 198.35,   0.0,    0.0,  115.06, 115.06, 115.06,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  &
+          198.35, 198.35, 198.35,   0.0,    0.0,  115.06, 115.06, 115.06,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  &
+          198.35, 198.35, 198.35,   0.0,    0.0,    0.0,  115.06,   0.0,    0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  &
+            0.0,  198.35,   0.0,    0.0,    0.0,  115.06, 115.06, 115.06,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  &
+          198.35, 198.35, 198.35,   0.0,    0.0,  115.06, 115.06, 115.06,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  &
+          198.35, 198.35, 198.35,   0.0,    0.0,  115.06, 115.06, 115.06,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  &
+          198.35, 198.35, 198.35,   0.0,    0.0,  115.06, 115.06, 115.06,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  &
+          198.35, 198.35, 198.35,   0.0,    0.0,  115.06, 115.06, 115.06,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  &
+          198.35, 198.35, 198.35,   0.0,    0.0,  115.06, 115.06, 115.06,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  &
+          198.35, 198.35, 198.35,   0.0,    0.0,  115.06, 115.06, 115.06,   0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
+#else
         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,   0.0,    0.0,  25.08, 25.08, 25.08,   0.0,  165.08, 165.08, &
@@ -23369,24 +25172,43 @@ subroutine testLakeModel22
            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  &
            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0  /), &
+#endif
          (/nlon_lake,nlat_lake/)))
       allocate(sixth_intermediate_expected_lake_fractions(nlat_surface,nlon_surface))
       sixth_intermediate_expected_lake_fractions = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+         0.0,1.0,12.0/36.0, &
+         0.0,9.0/64.0,20.0/48.0, &
+         0.0,12.0/48.0,0.0 /), &
+#else
           0.0, 1.0, 1.0/36.0, &
          0.0, 19.0/64.0,  20.0/48.0, &
          0.0, 12.0/48.0,    0.0 /), &
+#endif
          (/nlon_surface,nlat_surface/)))
       allocate(sixth_intermediate_expected_number_lake_cells(nlat_surface,nlon_surface))
       sixth_intermediate_expected_number_lake_cells = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+        13,27,13, &
+        7,19,21, &
+        1,0,0 /), &
+#else
          13, 26, 13, &
          7, 19, 21, &
          1, 0, 0 /), &
+#endif
          (/nlon_surface,nlat_surface/)))
       allocate(sixth_intermediate_expected_adjusted_number_lake_cells(nlat_surface,nlon_surface))
       sixth_intermediate_expected_adjusted_number_lake_cells = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+         0,48,12, &
+         0, 9,20, &
+         0,12, 0 /), &
+#else
           0, 48, 1, &
          0,  19, 20, &
          0, 12,  0/), &
+#endif
          (/nlon_surface,nlat_surface/)))
       allocate(sixth_intermediate_expected_number_fine_grid_cells(nlat_surface,nlon_surface))
       sixth_intermediate_expected_number_fine_grid_cells = transpose(reshape((/   &
@@ -23395,9 +25217,15 @@ subroutine testLakeModel22
          36, 48, 36  /), &
          (/nlon_surface,nlat_surface/)))
       allocate(sixth_intermediate_expected_lake_volumes(12))
+#ifdef TRANSPOSED_LAKE_MODEL
+      sixth_intermediate_expected_lake_volumes = (/ 0.0, 63.0, 18.0, 65.55555555556, &
+                                                   48.0, 104.0, 27.0, 0.0, 4.0555555556, &
+                                                   45.0, 4.347222222, 0.0 /)
+#else
       sixth_intermediate_expected_lake_volumes = (/ 0.0, 63.0, 18.0, 65.55555555556, &
                                                     48.0, 104.0, 25.076388889, 0.0, 14.333333, &
                                                     43.0763888889, 0.0, 0.0 /)
+#endif
       !allocate(sixth_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !sixth_intermediate_expected_true_lake_depths = transpose(reshape((/   &
          !        0.0, 0.00, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
@@ -23444,6 +25272,28 @@ subroutine testLakeModel22
          (/nlon_hd,nlat_hd/)))
       allocate(seventh_intermediate_expected_lake_numbers(nlat_lake,nlon_lake))
       seventh_intermediate_expected_lake_numbers = transpose(reshape((/   &
+#if TRANSPOSED_LAKE_MODEL
+         0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 7, 7, 7,  0, 6, 6, 0, 6, 6,  6, 6, 0, 0, 5, 5, 5, 0, &
+         0, 4, 0, 7, 7, 7,  0, 6, 6, 6, 6, 6,  6, 6, 0, 0, 5, 5, 5, 0, &
+         0, 4, 0, 7, 7, 7,  0, 6, 6, 6, 6, 6,  6, 6, 0, 0, 5, 5, 5, 0, &
+         0, 4, 0, 0, 0, 0,  0, 0, 0, 0, 0, 6,  6, 6, 0, 0, 5, 5, 5, 0, &
+         0, 4, 0, 0, 0, 0,  0, 0, 0, 0, 0, 6,  6, 6, 0, 0, 0, 0, 0, 0, &
+         0, 4, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 2, 2, 2, 0, &
+         0, 4, 0, 0, 0, 0,  0, 0, 0, 0, 0, 3,  3, 3, 0, 0, 2, 2, 2, 0, &
+         0, 4, 0, 0, 0, 0,  0, 0, 0, 0, 0, 3,  3, 3, 0, 0, 2, 2, 2, 0, &
+         0, 4, 0, 0, 0, 0,  0, 0, 0, 0, 0, 3,  3, 3, 0, 0, 2, 2, 2, 0, &
+         0, 4, 0, 0, 0, 0,  0, 0, 0, 0, 0, 3,  3, 3, 0, 0, 2, 2, 2, 0, &
+         0, 4, 0, 0, 0, 0,  0, 0, 0, 0, 0, 3,  3, 3, 0, 0, 2, 2, 2, 0, &
+         0, 4, 0, 0, 0, 0,  0, 0, 0, 0, 0, 3,  3, 3, 0, 0, 2, 2, 2, 0, &
+         0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0  /), &
+#else
           0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 7, 7, 7,  0, 6, 6, 0, 6, 6,  6, 6, 0, 0, 5, 5, 5, 0, &
          0, 4, 0, 7, 7, 7,  0, 6, 6, 6, 6, 6,  6, 6, 0, 0, 5, 5, 5, 0, &
@@ -23464,9 +25314,32 @@ subroutine testLakeModel22
          0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0  /), &
+#endif
          (/nlon_lake,nlat_lake/)))
       allocate(seventh_intermediate_expected_lake_types(nlat_lake,nlon_lake))
       seventh_intermediate_expected_lake_types = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 1, 1, 1, 0, 3, 3, 0, 3, 3, 3, 3, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 1, 1, 1, 0, 3, 3, 3, 3, 3, 3, 3, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 1, 1, 1, 0, 3, 3, 3, 3, 3, 3, 3, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 1, 1, 1, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
+#else
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
          0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
@@ -23487,9 +25360,52 @@ subroutine testLakeModel22
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
+#endif
          (/nlon_lake,nlat_lake/)))
       allocate(seventh_intermediate_expected_diagnostic_lake_volumes(nlat_lake,nlon_lake))
       seventh_intermediate_expected_diagnostic_lake_volumes = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,     0.0,    0.0,   0.0,&
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,  25.61,  25.61,   25.61,   0.0, 165.61, 165.61,&
+            0.0,  165.61, 165.61, 165.61, 165.61,   0.0,    0.0, 47.94,    47.94,  47.94,   0.0, &
+         0.0,  65.56,   0.0,  25.61,  25.61,   25.61,   0.0, 165.61, 165.61,&
+          165.61, 165.61, 165.61, 165.61, 165.61,   0.0,    0.0,  47.94,    47.94,  47.94,   0.0, &
+         0.0,  65.56,   0.0,  25.61,  25.61,   25.61,   0.0, 165.61, 165.61,&
+          165.61, 165.61, 165.61, 165.61, 165.61,   0.0,    0.0,  47.94,    47.94,  47.94,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,&
+             0.0,    0.0,  165.61, 165.61, 165.61,   0.0,    0.0, 47.94,    47.94,  47.94,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,&
+             0.0,    0.0,  165.61, 165.61, 165.61,   0.0,    0.0,    0.0,   0.0,     0.0,    0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,&
+             0.0,    0.0,    0.0,  165.61,   0.0,    0.0,    0.0,  62.94,   62.94,  62.94,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,&
+             0.0,    0.0,  165.61, 165.61, 165.61,   0.0,    0.0,  62.94,   62.94,  62.94,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,&
+             0.0,    0.0,  165.61, 165.61, 165.61,   0.0,    0.0,  62.94,   62.94,  62.94,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,&
+             0.0,    0.0,  165.61, 165.61, 165.61,   0.0,    0.0,  62.94,   62.94,  62.94,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,&
+             0.0,    0.0,  165.61, 165.61, 165.61,   0.0,    0.0,  62.94,   62.94,  62.94,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,&
+             0.0,    0.0,  165.61, 165.61, 165.61,   0.0,    0.0,  62.94,   62.94,  62.94,   0.0, &
+         0.0,  65.56,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,&
+             0.0,    0.0,  165.61, 165.61, 165.61,   0.0,    0.0,  62.94,   62.94,  62.94,   0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,&
+             0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,&
+             0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,&
+             0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,&
+             0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,&
+             0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,&
+             0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,&
+             0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
+#else
          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,    &
         0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,   0.0,    0.0,  25.08,  25.08,   25.08,   0.0, 102.51, 102.51, &
@@ -23530,24 +25446,43 @@ subroutine testLakeModel22
           0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
           0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0  /), &
+#endif
          (/nlon_lake,nlat_lake/)))
       allocate(seventh_intermediate_expected_lake_fractions(nlat_surface,nlon_surface))
       seventh_intermediate_expected_lake_fractions = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+         0.0,1.0,11.0/36.0, &
+         0.0,8.0/64.0,20.0/48.0, &
+         0.0,12.0/48.0,0.0 /), &
+#else
           0.0, 1.0, 0.0, &
          0.0, 18.0/64.0, 20.0/48.0, &
          0.0, 12.0/48.0, 0.0 /), &
+#endif
          (/nlon_surface,nlat_surface/)))
       allocate(seventh_intermediate_expected_number_lake_cells(nlat_surface,nlon_surface))
       seventh_intermediate_expected_number_lake_cells = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+        13,26,12, &
+         7,19,21, &
+         1,0,0 /), &
+#else
          13, 26, 12, &
          7, 18, 21, &
          1, 0, 0 /), &
+#endif
          (/nlon_surface,nlat_surface/)))
       allocate(seventh_intermediate_expected_adjusted_number_lake_cells(nlat_surface,nlon_surface))
       seventh_intermediate_expected_adjusted_number_lake_cells = transpose(reshape((/   &
+#ifdef TRANSPOSED_LAKE_MODEL
+          0,48,11, &
+          0, 8,20, &
+          0,12, 0 /), &
+#else
           0, 48, 0, &
          0,  18, 20, &
          0, 12,  0 /), &
+#endif
          (/nlon_surface,nlat_surface/)))
       allocate(seventh_intermediate_expected_number_fine_grid_cells(nlat_surface,nlon_surface))
       seventh_intermediate_expected_number_fine_grid_cells = transpose(reshape((/   &
@@ -23556,9 +25491,15 @@ subroutine testLakeModel22
          36, 48, 36  /), &
          (/nlon_surface,nlat_surface/)))
       allocate(seventh_intermediate_expected_lake_volumes(12))
+#ifdef TRANSPOSED_LAKE_MODEL
+      seventh_intermediate_expected_lake_volumes= (/ 0.0, 62.9444444444, 18.0, 65.55555555556, &
+                                                     47.94444444, 104.0, 25.61111111, 0.0, 0.0, &
+                                                     43.61111111, 0.0, 0.0/)
+#else
       seventh_intermediate_expected_lake_volumes= (/ 0.0, 62.90972222, 16.5069445, 65.55555555556, &
                                                      47.90972222, 102.5069445, 25.076388889, 0.0, 0.0, &
                                                      0.0, 0.0, 0.0 /)
+#endif
       !allocate(seventh_intermediate_expected_true_lake_depths(nlat_lake,nlon_lake))
       !seventh_intermediate_expected_true_lake_depths = transpose(reshape((/   &
          !        0.0, 0.00, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0, 0.0, 0.00, 0.00, 0.00, 0.0, &
@@ -23582,12 +25523,123 @@ subroutine testLakeModel22
          !                0.0, 0.00, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0, 0.0, 0.00, 0.00, 0.00, 0.0, &
          !                0.0, 0.00, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0, 0.0, 0.00, 0.00, 0.00, 0.0 /), &
          !(/nlon_lake,nlat_lake/)))
+#ifdef TRANSPOSED_LAKE_MODEL
+      expected_water_to_hd = transpose(expected_water_to_hd)
+      expected_lake_numbers = transpose(expected_lake_numbers)
+      expected_lake_types = transpose(expected_lake_types)
+      expected_lake_fractions = &
+        transpose(expected_lake_fractions)
+      expected_number_lake_cells = &
+        transpose(expected_number_lake_cells)
+      expected_adjusted_number_lake_cells = &
+        transpose(expected_adjusted_number_lake_cells)
+      expected_number_fine_grid_cells = &
+        transpose(expected_number_fine_grid_cells)
+      first_intermediate_expected_water_to_hd = &
+        transpose(first_intermediate_expected_water_to_hd)
+      first_intermediate_expected_lake_numbers = &
+        transpose(first_intermediate_expected_lake_numbers)
+      first_intermediate_expected_lake_types = &
+        transpose(first_intermediate_expected_lake_types)
+      first_intermediate_expected_lake_fractions = &
+        transpose(first_intermediate_expected_lake_fractions)
+      first_intermediate_expected_number_lake_cells = &
+        transpose(first_intermediate_expected_number_lake_cells)
+      first_intermediate_expected_adjusted_number_lake_cells = &
+        transpose(first_intermediate_expected_adjusted_number_lake_cells)
+      first_intermediate_expected_number_fine_grid_cells = &
+        transpose(first_intermediate_expected_number_fine_grid_cells)
+      second_intermediate_expected_water_to_hd = &
+        transpose(second_intermediate_expected_water_to_hd)
+      second_intermediate_expected_lake_numbers = &
+        transpose(second_intermediate_expected_lake_numbers)
+      second_intermediate_expected_lake_types = &
+        transpose(second_intermediate_expected_lake_types)
+      second_intermediate_expected_lake_fractions = &
+        transpose(second_intermediate_expected_lake_fractions)
+      second_intermediate_expected_number_lake_cells = &
+        transpose(second_intermediate_expected_number_lake_cells)
+      second_intermediate_expected_adjusted_number_lake_cells = &
+        transpose(second_intermediate_expected_adjusted_number_lake_cells)
+      second_intermediate_expected_number_fine_grid_cells = &
+        transpose(second_intermediate_expected_number_fine_grid_cells)
+      third_intermediate_expected_water_to_hd = &
+        transpose(third_intermediate_expected_water_to_hd)
+      third_intermediate_expected_lake_numbers = &
+        transpose(third_intermediate_expected_lake_numbers)
+      third_intermediate_expected_lake_types = &
+        transpose(third_intermediate_expected_lake_types)
+      third_intermediate_expected_lake_fractions = &
+        transpose(third_intermediate_expected_lake_fractions)
+      third_intermediate_expected_adjusted_number_lake_cells = &
+        transpose(third_intermediate_expected_adjusted_number_lake_cells)
+      third_intermediate_expected_number_lake_cells = &
+        transpose(third_intermediate_expected_number_lake_cells)
+      third_intermediate_expected_number_fine_grid_cells = &
+        transpose(third_intermediate_expected_number_fine_grid_cells)
+      fourth_intermediate_expected_water_to_hd = &
+        transpose(fourth_intermediate_expected_water_to_hd)
+      fourth_intermediate_expected_lake_numbers = &
+        transpose(fourth_intermediate_expected_lake_numbers)
+      fourth_intermediate_expected_lake_types = &
+        transpose(fourth_intermediate_expected_lake_types)
+      fourth_intermediate_expected_lake_fractions = &
+        transpose(fourth_intermediate_expected_lake_fractions)
+      fourth_intermediate_expected_number_lake_cells = &
+        transpose(fourth_intermediate_expected_number_lake_cells)
+      fourth_intermediate_expected_number_fine_grid_cells = &
+        transpose(fourth_intermediate_expected_number_fine_grid_cells)
+      fourth_intermediate_expected_adjusted_number_lake_cells = &
+        transpose(fourth_intermediate_expected_adjusted_number_lake_cells)
+      fifth_intermediate_expected_water_to_hd = &
+        transpose(fifth_intermediate_expected_water_to_hd)
+      fifth_intermediate_expected_lake_numbers = &
+        transpose(fifth_intermediate_expected_lake_numbers)
+      fifth_intermediate_expected_lake_types = &
+        transpose(fifth_intermediate_expected_lake_types)
+      fifth_intermediate_expected_lake_fractions = &
+        transpose(fifth_intermediate_expected_lake_fractions)
+      fifth_intermediate_expected_number_lake_cells = &
+        transpose(fifth_intermediate_expected_number_lake_cells)
+      fifth_intermediate_expected_adjusted_number_lake_cells = &
+        transpose(fifth_intermediate_expected_adjusted_number_lake_cells)
+      fifth_intermediate_expected_number_fine_grid_cells = &
+        transpose(fifth_intermediate_expected_number_fine_grid_cells)
+      sixth_intermediate_expected_water_to_hd = &
+        transpose(sixth_intermediate_expected_water_to_hd)
+      sixth_intermediate_expected_lake_numbers = &
+        transpose(sixth_intermediate_expected_lake_numbers)
+      sixth_intermediate_expected_lake_types = &
+        transpose(sixth_intermediate_expected_lake_types)
+      sixth_intermediate_expected_lake_fractions = &
+        transpose(sixth_intermediate_expected_lake_fractions)
+      sixth_intermediate_expected_number_lake_cells = &
+        transpose(sixth_intermediate_expected_number_lake_cells)
+      sixth_intermediate_expected_adjusted_number_lake_cells = &
+        transpose(sixth_intermediate_expected_adjusted_number_lake_cells)
+      sixth_intermediate_expected_number_fine_grid_cells = &
+        transpose(sixth_intermediate_expected_number_fine_grid_cells)
+      seventh_intermediate_expected_water_to_hd = &
+        transpose(seventh_intermediate_expected_water_to_hd)
+      seventh_intermediate_expected_lake_numbers = &
+        transpose(seventh_intermediate_expected_lake_numbers)
+      seventh_intermediate_expected_lake_types = &
+        transpose(seventh_intermediate_expected_lake_types)
+      seventh_intermediate_expected_lake_fractions = &
+        transpose(seventh_intermediate_expected_lake_fractions)
+      seventh_intermediate_expected_number_lake_cells = &
+        transpose(seventh_intermediate_expected_number_lake_cells)
+      seventh_intermediate_expected_adjusted_number_lake_cells = &
+        transpose(seventh_intermediate_expected_adjusted_number_lake_cells)
+      seventh_intermediate_expected_number_fine_grid_cells = &
+        transpose(seventh_intermediate_expected_number_fine_grid_cells)
+#endif
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_model_parameters, &
                                      lake_parameters_as_array, &
                                      initial_water_to_lake_centers, &
                                      initial_spillover_to_rivers)
-      allocate(lake_volumes_all_timesteps(12,112))
+      allocate(lake_volumes_all_timesteps(12,85))
       call run_hd_model(0,runoffs,drainages,evaporations, &
                         use_realistic_surface_coupling_in=.true.)
       lake_model_prognostics => get_lake_model_prognostics()
@@ -23983,7 +26035,11 @@ subroutine testLakeModel22
                                      lake_parameters_as_array, &
                                      initial_water_to_lake_centers, &
                                      initial_spillover_to_rivers)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call run_hd_model(32,runoffs,drainages,evaporations, &
+#else
       call run_hd_model(41,runoffs,drainages,evaporations, &
+#endif
                         use_realistic_surface_coupling_in=.true.)
       lake_model_prognostics => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
@@ -24050,11 +26106,19 @@ subroutine testLakeModel22
                                      initial_water_to_lake_centers, &
                                      initial_spillover_to_rivers)
       use_realistic_surface_coupling=.true.
+#ifdef TRANSPOSED_LAKE_MODEL
+      call run_hd_model(85,runoffs,drainages,evaporations, &
+#else
       call run_hd_model(77,runoffs,drainages,evaporations, &
+#endif
                         use_realistic_surface_coupling,"", &
                         lake_volumes_all_timesteps)
       call assert_equals(lake_volumes_all_timesteps,expected_lake_volumes_all_timesteps, &
+#ifdef TRANSPOSED_LAKE_MODEL
+                         12,85,0.01_dp)
+#else
                          12,77,0.01_dp)
+#endif
       lake_model_prognostics => get_lake_model_prognostics()
       call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
