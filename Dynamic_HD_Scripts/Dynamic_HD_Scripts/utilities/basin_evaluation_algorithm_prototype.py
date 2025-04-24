@@ -170,6 +170,19 @@ class Lake:
     def set_potential_exit_points(self,potential_exit_points):
         self.potential_exit_points = potential_exit_points
 
+    def __repr__(self):
+        return (f"center_coords={self.center_coords}\n"
+                f"lake_number={self.lake_number}\n"
+                f"primary_lake={self.primary_lake}\n"
+                f"secondary_lakes={self.secondary_lakes}\n"
+                f"outflow_points={self.outflow_points}\n"
+                f"filling_order={self.filling_order}\n"
+                f"center_cell_volume_threshold={self.center_cell_volume_threshold}\n"
+                f"lake_area={self.lake_area}\n"
+                f"spill_points={self.spill_points}\n"
+                f"potential_exit_points{self.potential_exit_points}\n")
+
+
 class Cell:
 
     def get_cell_coords(self):
@@ -800,7 +813,7 @@ class LatLonEvaluateBasin:
                         coarse_catchment_nums_in,
                         return_algorithm_object=False):
         catchments_from_sink_filling_in = \
-            np.full(minima_in.shape,False,dtype=np.int32)
+            np.full(minima_in.shape,-1,dtype=np.int32)
         fill_sinks_cpp_func(orography_array=
                             corrected_orography_in,
                             method = 4,

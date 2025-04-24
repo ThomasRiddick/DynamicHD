@@ -141,7 +141,7 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
       if i%output_timestep == 0 || i == 1
         print_global_values::PrintGlobalValues = PrintGlobalValues()
         handle_event(hsm,print_global_values::PrintGlobalValues)
-        #write_river_flow::WriteRiverFlow = WriteRiverFlow(river_flow_$(i).nc")
+        #write_river_flow::WriteRiverFlow = WriteRiverFlow("river_flow_$(i).nc")
         #handle_event(hsm,write_river_flow)
         if i%output_timestep == 0
           write_mean_river_flow::WriteMeanRiverFlow =

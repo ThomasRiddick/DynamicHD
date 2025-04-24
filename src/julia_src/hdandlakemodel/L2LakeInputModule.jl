@@ -39,7 +39,7 @@ function load_lake_parameters(lake_para_filepath::AbstractString,
                           is_lake,
                           binary_lake_mask)
     variable = file_handle["lakes_as_array"]
-    lake_parameters_as_array::Array{Int64} = NetCDF.readvar(variable)
+    lake_parameters_as_array::Array{Float64} = NetCDF.readvar(variable)
     return lake_model_parameters,lake_parameters_as_array
   finally
     NetCDF.close(file_handle)
@@ -53,6 +53,18 @@ function load_grid_specific_lake_parameters(file_handle::NcFile,lake_grid::LatLo
       load_field(file_handle,lake_grid,"corresponding_surface_cell_lon_index",Int64)
   return LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
                                    corresponding_surface_cell_lon_index)
+end
+
+function load_cell_areas_on_surface_model_grid(cell_areas_filepath::AbstractString,
+                                               surface_model_grid::Grid)
+  file_handle::NcFile = NetCDF.open(cell_areas_filepath)
+  try
+    cell_areas_on_surface_model_grid::Field{Float64} =
+        load_field(file_handle,surface_model_grid,"cell_areas_on_surface_model_grid",Float64)
+    return cell_areas_on_surface_model_grid
+  finally
+    NetCDF.close(file_handle)
+  end
 end
 
 end

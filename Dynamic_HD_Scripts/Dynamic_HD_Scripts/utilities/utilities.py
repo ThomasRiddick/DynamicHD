@@ -1853,3 +1853,10 @@ def expand_catchment_to_include_rivermouths(rdirs,catchments,mouth_coords):
         else:
             assigned_catchment_number = catchments_slice[tuple(nbr_coords)]
             catchments[tuple(mouth_coords)] = assigned_catchment_number
+
+def write_fields_for_debug(fields,workdir):
+    for fieldname,field in fields.items():
+        iodriver.advanced_field_writer(path.join(workdir,f"{fieldname}_temp.nc"),
+                                       field,
+                                       fieldname=fieldname)
+
