@@ -2,6 +2,8 @@ module l2_lake_model_interface_mod
 
 use l2_lake_model_mod
 use l2_lake_model_array_decoder_mod
+use l2_lake_model_input, only: config_lakes, load_lake_model_parameters, &
+                               load_lake_initial_values
 ! use l2_lake_model_io_mod
 ! #ifdef USE_LOGGING
 !   use latlon_lake_logger_mod
@@ -56,22 +58,35 @@ subroutine initialiselakeinterfaceprognosticfields(this, &
     this%lake_water_from_ocean = 0.0_dp
 end subroutine initialiselakeinterfaceprognosticfields
 
-subroutine init_lake_model(lake_model_ctl_filename,initial_spillover_to_rivers, &
-                           lake_interface_fields,step_length)
+subroutine init_lake_model(lake_model_ctl_filename, &
+                           cell_areas_on_surface_model_grid, &
+                           initial_spillover_to_rivers, &
+                           lake_interface_fields,step_length, &
+                           _NPOINTS_HD_, &
+                           _NPOINTS_SURFACE_)
   character(len = *), intent(in) :: lake_model_ctl_filename
+  real(dp), pointer, dimension(_DIMS_), intent(in) :: cell_areas_on_surface_model_grid
   real(dp), pointer, dimension(_DIMS_),intent(out) :: initial_spillover_to_rivers
   type(lakeinterfaceprognosticfields), intent(inout) :: lake_interface_fields
   real(dp), intent(in) :: step_length
   real(dp), pointer, dimension(:) :: lake_parameters_as_array
   type(lakeparameterspointer), dimension(:), pointer :: lake_parameters_array
   real(dp), pointer, dimension(_DIMS_) :: initial_water_to_lake_centers
-    ! call config_lakes(lake_model_ctl_filename,global_run_water_budget_check)
-    ! global_lake_model_parameters => read_lake_parameters(.true.)
+  _DEF_NPOINTS_HD_ _INTENT_in_
+  _DEF_NPOINTS_SURFACE_ _INTENT_in_
+    call config_lakes(lake_model_ctl_filename,global_run_water_budget_check)
+    call load_lake_model_parameters(cell_areas_on_surface_model_grid, &
+                                    .false., &
+                                    global_lake_model_parameters, &
+                                    lake_parameters_as_array, &
+                                    _NPOINTS_HD_, &
+                                    _NPOINTS_SURFACE_)
     global_lake_model_prognostics => lakemodelprognostics(global_lake_model_parameters)
     global_step_length = step_length
-    ! call load_lake_initial_values(initial_water_to_lake_centers,&
-    !                               initial_spillover_to_rivers, &
-    !                               global_step_length)
+    call load_lake_initial_values(initial_water_to_lake_centers,&
+                                  initial_spillover_to_rivers, &
+                                  global_step_length, &
+                                  global_lake_model_parameters%_NPOINTS_HD_)
     lake_parameters_array => &
       get_lake_parameters_from_array(lake_parameters_as_array, &
                                      global_lake_model_parameters%_NPOINTS_LAKE_, &
