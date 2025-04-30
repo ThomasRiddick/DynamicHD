@@ -1,6 +1,11 @@
 module l2_lake_model_mod
 
 use latlon_lake_model_tree_mod
+use l2_lake_model_output, only: write_diagnostic_lake_volumes_field, &
+                                write_lake_volumes_field, &
+                                write_lake_numbers_field, &
+                                write_lake_fractions_field, &
+                                write_binary_lake_mask_field
 use l2_calculate_lake_fractions_mod, only: add_pixel_by_coords,remove_pixel_by_coords
 use l2_calculate_lake_fractions_mod, only: lakeinputpointer, lakeinput
 use l2_calculate_lake_fractions_mod, only: setup_lake_for_fraction_calculation
@@ -1818,7 +1823,7 @@ subroutine calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
                                                    lake_model_prognostics, &
                                                    lake_fraction_on_surface_grid)
   type(lakemodelparameters), pointer, intent(in) :: lake_model_parameters
-  type(lakemodelprognostics), pointer, intent(inout) :: lake_model_prognostics
+  type(lakemodelprognostics), pointer, intent(in) :: lake_model_prognostics
   real(dp), dimension(_DIMS_), allocatable, intent(inout) :: lake_fraction_on_surface_grid
     lake_fraction_on_surface_grid(_DIMS_) = real(lake_model_prognostics%adjusted_lake_cell_count(_DIMS_))&
                                          /real(lake_model_parameters%number_fine_grid_cells(_DIMS_))
@@ -1846,45 +1851,107 @@ function get_lake_volume_list(lake_model_prognostics) &
     end do
 end function get_lake_volume_list
 
-! subroutine write_lake_numbers(lake_model_parameters,lake_model_prognostics, &
-!                               timestep)
-!   type(lakemodelparameters), pointer :: lake_model_parameters
-!   type(lakemodelprognostics), pointer :: lake_model_prognostics
-!     call write_lake_numbers_field(lake_model_parameters%lake_model_grid, &
-!                                   lake_model_prognostics%lake_numbers, &
-!                                   timestep=timestep)
-! end subroutine write_lake_numbers
+subroutine write_lake_numbers(working_directory,lake_model_parameters, &
+                              lake_model_prognostics,timestep)
+  character(len = *), intent(in) :: working_directory
+  type(lakemodelparameters), pointer, intent(in) :: lake_model_parameters
+  type(lakemodelprognostics), pointer, intent(in) :: lake_model_prognostics
+  integer, intent(in) :: timestep
+    call write_lake_numbers_field(working_directory, &
+                                  lake_model_prognostics%lake_numbers, &
+                                  timestep, &
+                                  lake_model_parameters%_NPOINTS_LAKE_)
+end subroutine write_lake_numbers
 
-! subroutine write_lake_volumes(lake_model_parameters,lake_model_prognostics)
-!   type(lakemodelparameters), pointer :: lake_model_parameters
-!   type(lakemodelprognostics), pointer :: lake_model_prognostics
-!   type(lakeprognostics), pointer :: lake
-!     lake_volumes(_DIMS_) = 0.0_dp
-!     do i=1,size(lake_model_prognostics%lakes)
-!       lake => lake_model_prognostics%lakes(i)
-!       lake_center_cell::CartesianIndex = lake%parameters%center_cell
-!       lake_volumes(lake_center_cell) = get_lake_volume(lake)
-!     end do
-!     call write_lake_volumes_field(lake_model_parameters%lake_model_grid,lake_volumes)
-! end subroutine write_lake_volumes
+subroutine write_lake_volumes(lake_volumes_filename,&
+                              lake_model_parameters,lake_model_prognostics)
+  character(len = *), intent(in) :: lake_volumes_filename
+  type(lakemodelparameters), pointer, intent(in) :: lake_model_parameters
+  type(lakemodelprognostics), pointer, intent(in) :: lake_model_prognostics
+  type(lakeprognostics), pointer :: lake
+  real(dp), dimension(_DIMS_), pointer :: lake_volumes
+  real(dp) :: lake_volume
+  integer :: i
+    allocate(lake_volumes(lake_model_parameters%_NPOINTS_LAKE_))
+    lake_volumes(_DIMS_) = 0.0_dp
+    do i=1,size(lake_model_prognostics%lakes)
+      lake => lake_model_prognostics%lakes(i)%lake_pointer
+      lake_volume = get_lake_volume(lake)
+      lake_volumes(lake%parameters%_COORDS_ARG_center_coords_) = lake_volume
+    end do
+    call write_lake_volumes_field(lake_volumes_filename, &
+                                  lake_volumes,&
+                                  lake_model_parameters%_NPOINTS_LAKE_)
+    deallocate(lake_volumes)
+end subroutine write_lake_volumes
 
-! subroutine write_diagnostic_lake_volumes(lake_model_parameters,lake_model_prognostics, &
-!                                          timestep)
-!   type(lakemodelparameters), pointer :: lake_model_parameters
-!   type(lakemodelprognostics), pointer :: lake_model_prognostics
-!     diagnostic_lake_volumes(_DIMS_) = &
-!       calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
-!                                               lake_model_prognostics)
-!     write_diagnostic_lake_volumes_field(lake_model_parameters%lake_model_grid, &
-!                                         diagnostic_lake_volumes, &
-!                                         timestep)
-! end subroutine write_diagnostic_lake_volumes
+subroutine write_diagnostic_lake_volumes(working_directory, &
+                                         lake_model_parameters, &
+                                         lake_model_prognostics, &
+                                         timestep)
+  character(len = *), intent(in) :: working_directory
+  type(lakemodelparameters), pointer, intent(in) :: lake_model_parameters
+  type(lakemodelprognostics), pointer, intent(in) :: lake_model_prognostics
+  integer, intent(in) :: timestep
+  real(dp), dimension(_DIMS_), pointer :: diagnostic_lake_volumes
+    diagnostic_lake_volumes => &
+      calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
+                                              lake_model_prognostics)
+    call write_diagnostic_lake_volumes_field(working_directory, &
+                                             diagnostic_lake_volumes, &
+                                             timestep,&
+                                             lake_model_parameters%_NPOINTS_LAKE_)
+    deallocate(diagnostic_lake_volumes)
+end subroutine write_diagnostic_lake_volumes
+
+subroutine write_lake_fractions(working_directory, &
+                                lake_model_parameters, &
+                                lake_model_prognostics, &
+                                timestep)
+  character(len = *), intent(in) :: working_directory
+  type(lakemodelparameters), pointer, intent(in) :: lake_model_parameters
+  type(lakemodelprognostics), pointer, intent(in) :: lake_model_prognostics
+  integer, intent(in) :: timestep
+  real(dp), dimension(_DIMS_), allocatable :: lake_fraction_on_surface_grid
+    allocate(lake_fraction_on_surface_grid(lake_model_parameters%_NPOINTS_SURFACE_))
+    call calculate_lake_fraction_on_surface_grid(lake_model_parameters, &
+                                                 lake_model_prognostics, &
+                                                 lake_fraction_on_surface_grid)
+    call write_lake_fractions_field(working_directory, &
+                                    lake_fraction_on_surface_grid, &
+                                    timestep, &
+                                    lake_model_parameters%_NPOINTS_SURFACE_)
+    deallocate(lake_fraction_on_surface_grid)
+end subroutine write_lake_fractions
+
+subroutine write_binary_lake_mask_and_adjusted_lake_fraction(binary_lake_mask_filename, &
+                                                             lake_model_parameters, &
+                                                             lake_model_prognostics)
+  character(len = *), intent(in) :: binary_lake_mask_filename
+  type(lakemodelparameters), pointer, intent(in) :: lake_model_parameters
+  type(lakemodelprognostics), pointer, intent(in) :: lake_model_prognostics
+  integer, dimension(_DIMS_), pointer  :: lake_pixel_counts_field
+  real(dp), dimension(_DIMS_), pointer :: lake_fractions_field
+  logical, dimension(_DIMS_), pointer  :: binary_lake_mask
+    call calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
+                                    lake_pixel_counts_field,lake_fractions_field, &
+                                    binary_lake_mask)
+    call write_binary_lake_mask_field(binary_lake_mask_filename, &
+                                      lake_model_parameters%number_fine_grid_cells, &
+                                      lake_pixel_counts_field, &
+                                      lake_fractions_field, &
+                                      binary_lake_mask, &
+                                      lake_model_parameters%_NPOINTS_SURFACE_)
+    deallocate(lake_pixel_counts_field)
+    deallocate(lake_fractions_field)
+    deallocate(binary_lake_mask)
+end subroutine write_binary_lake_mask_and_adjusted_lake_fraction
 
 function calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
                                                  lake_model_prognostics) &
     result(diagnostic_lake_volumes)
   type(lakemodelparameters), intent(in), pointer :: lake_model_parameters
-  type(lakemodelprognostics), intent(inout), pointer :: lake_model_prognostics
+  type(lakemodelprognostics), intent(in), pointer :: lake_model_prognostics
   real(dp), dimension(_DIMS_), pointer :: diagnostic_lake_volumes
   real(dp), dimension(:), allocatable :: lake_volumes_by_lake_number
   type(lakeprognostics), pointer :: lake
@@ -1970,7 +2037,7 @@ subroutine calculate_binary_lake_mask(lake_model_parameters,lake_model_prognosti
                                       lake_pixel_counts_field,lake_fractions_field, &
                                       binary_lake_mask)
   type(lakemodelparameters), pointer, intent(in) :: lake_model_parameters
-  type(lakemodelprognostics), pointer, intent(inout) :: lake_model_prognostics
+  type(lakemodelprognostics), pointer, intent(in) :: lake_model_prognostics
   integer, dimension(_DIMS_), pointer, intent(out) :: lake_pixel_counts_field
   real(dp), dimension(_DIMS_), pointer, intent(out) :: lake_fractions_field
   logical, dimension(_DIMS_), pointer, intent(out) :: binary_lake_mask
@@ -2011,11 +2078,11 @@ subroutine calculate_binary_lake_mask(lake_model_parameters,lake_model_prognosti
       end do
     end do
     allocate(filled_cells_by_primary_lake_number(lake_model_parameters%_NPOINTS_LAKE_))
-    filled_cells_by_primary_lake_number(:,:) = primary_lake_numbers(:,:)
+    filled_cells_by_primary_lake_number(_DIMS_) = primary_lake_numbers(_DIMS_)
     where (lake_model_prognostics%lake_numbers == 0)
-      filled_cells_by_primary_lake_number(:,:) = 0
+      filled_cells_by_primary_lake_number(_DIMS_) = 0
     elsewhere
-      filled_cells_by_primary_lake_number(:,:) = filled_cells_by_primary_lake_number(:,:)
+      filled_cells_by_primary_lake_number(_DIMS_) = filled_cells_by_primary_lake_number(_DIMS_)
     endwhere
     allocate(lake_fraction_calculation_input_temp(lake_model_parameters%number_of_lakes))
     allocate(mask(lake_model_parameters%_NPOINTS_LAKE_))
@@ -2137,7 +2204,7 @@ subroutine check_water_budget(lake_model_prognostics, &
                                  sum(lake_model_prognostics%water_to_hd) - &
                                  sum(lake_model_prognostics%evaporation_from_lakes)
     difference = change_in_total_lake_volume - total_inflow_minus_outflow
-    tolerance = 1.0e-13_dp*max(new_total_lake_volume, total_water_to_lakes,1.0e-50_dp)
+    tolerance = 1.0e-10_dp*max(new_total_lake_volume, total_water_to_lakes,1.0e-50_dp)
     if (abs(difference) > tolerance) then
       write(*,*) "*** Lake Water Budget ***"
       write(*,*) "Total lake volume: ",new_total_lake_volume

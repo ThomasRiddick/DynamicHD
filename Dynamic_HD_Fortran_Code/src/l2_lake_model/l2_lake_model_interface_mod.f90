@@ -183,14 +183,38 @@ end subroutine run_lake_model_jsbach
 !                                   timestep)
 ! end subroutine write_lake_numbers_field_interface
 
-! subroutine write_diagnostic_lake_volumes_interface(working_directory,timestep)
-!   integer :: timestep
-!   character(len = *), intent(in) :: working_directory
-!     call write_diagnostic_lake_volumes(working_directory, &
-!                                        global_lake_model_parameters, &
-!                                        global_lake_model_prognostics, &
-!                                        timestep)
-! end subroutine write_diagnostic_lake_volumes_interface
+subroutine write_diagnostic_lake_volumes_interface(working_directory,timestep)
+  integer :: timestep
+  character(len = *), intent(in) :: working_directory
+    call write_diagnostic_lake_volumes(working_directory, &
+                                       global_lake_model_parameters, &
+                                       global_lake_model_prognostics, &
+                                       timestep)
+end subroutine write_diagnostic_lake_volumes_interface
+
+subroutine write_lake_fractions_interface(working_directory,timestep)
+  integer :: timestep
+  character(len = *), intent(in) :: working_directory
+    call write_lake_fractions(working_directory, &
+                              global_lake_model_parameters, &
+                              global_lake_model_prognostics, &
+                              timestep)
+end subroutine write_lake_fractions_interface
+
+subroutine write_lake_volumes_interface(lake_volumes_filename)
+  character(len = *), intent(in) :: lake_volumes_filename
+  call write_lake_volumes(lake_volumes_filename, &
+                          global_lake_model_parameters, &
+                          global_lake_model_prognostics)
+end subroutine write_lake_volumes_interface
+
+subroutine write_binary_lake_mask_and_adjusted_lake_fraction_interface(binary_lake_mask_filename)
+  character(len = *), intent(in) :: binary_lake_mask_filename
+  call write_binary_lake_mask_and_adjusted_lake_fraction(binary_lake_mask_filename, &
+                                                         global_lake_model_parameters, &
+                                                         global_lake_model_prognostics)
+end subroutine write_binary_lake_mask_and_adjusted_lake_fraction_interface
+
 
 function get_lake_model_prognostics() result(value)
   type(lakemodelprognostics), pointer :: value

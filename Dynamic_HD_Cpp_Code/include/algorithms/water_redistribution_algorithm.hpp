@@ -38,6 +38,7 @@ protected:
   field<double>* water_redistributed_to_lakes = nullptr;
   field<double>* water_redistributed_to_rivers = nullptr;
   vector<coords*> lake_center_list;
+  int null_lake_number = -1;
 };
 
 #endif /* INCLUDE_WATER_REDISTRIBUTION_ALGORITHM_HPP_ */

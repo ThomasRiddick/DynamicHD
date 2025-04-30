@@ -737,6 +737,9 @@ class BasinEvaluationAlgorithm:
     def get_number_of_lakes(self):
         return len(self.lakes)
 
+    def get_lake_numbers(self):
+        return self.lake_numbers
+
 class LatLonBasinEvaluationAlgorithm(BasinEvaluationAlgorithm):
 
     def __init__(self,
@@ -843,7 +846,8 @@ class LatLonEvaluateBasin:
         alg.evaluate_basins()
         output = {"lakes_as_array":alg.get_lakes_as_array(),
                   "number_of_lakes":alg.get_number_of_lakes(),
-                  "lake_mask":alg.get_lake_mask()}
+                  "lake_mask":alg.get_lake_mask(),
+                  "lake_numbers":alg.get_lake_numbers()}
         if return_algorithm_object:
             return output,alg
         else:

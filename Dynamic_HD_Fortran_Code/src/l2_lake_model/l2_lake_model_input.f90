@@ -64,10 +64,10 @@ subroutine load_lake_model_parameters(cell_areas_on_surface_model_grid, &
     _IF_USE_SINGLE_INDEX_
      ! Not implemented
     _ELSE_
-    call check_return_code(nf90_inq_dimid(ncid,'latitude',dimid))
+    call check_return_code(nf90_inq_dimid(ncid,'lat',dimid))
     call check_return_code(nf90_inquire_dimension(ncid,dimid,len=nlat_lake))
 
-    call check_return_code(nf90_inq_dimid(ncid,'longitude',dimid))
+    call check_return_code(nf90_inq_dimid(ncid,'lon',dimid))
     call check_return_code(nf90_inquire_dimension(ncid,dimid,len=nlon_lake))
 
     _END_IF_USE_SINGLE_INDEX_
@@ -75,8 +75,8 @@ subroutine load_lake_model_parameters(cell_areas_on_surface_model_grid, &
     call check_return_code(nf90_inq_dimid(ncid,'npoints',dimid))
     call check_return_code(nf90_inquire_dimension(ncid,dimid,len=npoints))
 
-    allocate(temp_integer_array(_NPOINTS_LAKE_))
-    allocate(binary_lake_mask_int_temp_array(_NPOINTS_SURFACE_))
+    allocate(temp_integer_array(nlon_lake,nlat_lake))
+    allocate(binary_lake_mask_int_temp_array(nlon_surface,nlat_surface))
     allocate(number_of_lakes_temp_array(1))
     allocate(lake_parameters_as_array(npoints))
 
@@ -155,10 +155,10 @@ subroutine load_lake_initial_values(initial_water_to_lake_centers,&
                                     initial_spillover_to_rivers, &
                                     step_length, &
                                     _NPOINTS_HD_)
-  real(dp), pointer, dimension(:,:), intent(inout) :: initial_water_to_lake_centers
-  real(dp), pointer, dimension(:,:), intent(inout) :: initial_spillover_to_rivers
-  real(dp), pointer, dimension(:,:) :: initial_water_to_lake_centers_temp
-  real(dp), pointer, dimension(:,:) :: initial_spillover_to_rivers_temp
+  real(dp), pointer, dimension(_DIMS_), intent(inout) :: initial_water_to_lake_centers
+  real(dp), pointer, dimension(_DIMS_), intent(inout) :: initial_spillover_to_rivers
+  real(dp), pointer, dimension(_DIMS_) :: initial_water_to_lake_centers_temp
+  real(dp), pointer, dimension(_DIMS_) :: initial_spillover_to_rivers_temp
   real(dp) :: step_length
   integer :: ncid,varid,dimid
   _DEF_NPOINTS_HD_ _INTENT_in_
@@ -170,10 +170,10 @@ subroutine load_lake_initial_values(initial_water_to_lake_centers,&
     _IF_USE_SINGLE_INDEX_
     ! Not implemented
     _ELSE_
-    call check_return_code(nf90_inq_dimid(ncid,'latitude',dimid))
+    call check_return_code(nf90_inq_dimid(ncid,'lat',dimid))
     call check_return_code(nf90_inquire_dimension(ncid,dimid,len=nlat_lake))
 
-    call check_return_code(nf90_inq_dimid(ncid,'longitude',dimid))
+    call check_return_code(nf90_inq_dimid(ncid,'lon',dimid))
     call check_return_code(nf90_inquire_dimension(ncid,dimid,len=nlon_lake))
     _END_IF_USE_SINGLE_INDEX_
 
@@ -181,46 +181,37 @@ subroutine load_lake_initial_values(initial_water_to_lake_centers,&
     call check_return_code(nf90_inq_varid(ncid,'water_redistributed_to_lakes',varid))
     call check_return_code(nf90_get_var(ncid, varid, &
                                         initial_water_to_lake_centers_temp))
-    allocate(initial_water_to_lake_centers(nlat_lake,nlon_lake))
+    allocate(initial_water_to_lake_centers(_NPOINTS_LAKE_))
     initial_water_to_lake_centers = transpose(initial_water_to_lake_centers_temp)
 
     allocate(initial_spillover_to_rivers_temp(nlon_hd,nlat_hd))
     call check_return_code(nf90_inq_varid(ncid,'water_redistributed_to_rivers',varid))
     call check_return_code(nf90_get_var(ncid, varid,initial_spillover_to_rivers_temp))
-    allocate(initial_spillover_to_rivers(nlat_hd,nlon_hd))
+    allocate(initial_spillover_to_rivers(_NPOINTS_HD_))
     initial_spillover_to_rivers = transpose(initial_spillover_to_rivers_temp)
-    initial_spillover_to_rivers(:,:) = initial_spillover_to_rivers(:,:)/step_length
+    initial_spillover_to_rivers(_DIMS_) = initial_spillover_to_rivers(_DIMS_)/step_length
     call check_return_code(nf90_close(ncid))
     deallocate(initial_water_to_lake_centers_temp)
     deallocate(initial_spillover_to_rivers_temp)
 end subroutine load_lake_initial_values
 
-function load_cell_areas_on_surface_model_grid(surface_cell_areas_filename) &
+function load_cell_areas_on_surface_model_grid(surface_cell_areas_filename, &
+                                               _NPOINTS_SURFACE_) &
     result(cell_areas_on_surface_model_grid)
   character(len = max_name_length) :: surface_cell_areas_filename
   real(dp), dimension(_DIMS_), pointer :: cell_areas_on_surface_model_grid
   real(dp), dimension(_DIMS_), pointer :: cell_areas_on_surface_model_grid_temp
-  integer :: ncid,varid,dimid
-  _DEF_NPOINTS_SURFACE_
+  integer :: ncid,varid
+  _DEF_NPOINTS_SURFACE_ _INTENT_in_
 
     write(*,*) "Loading surface grid cell areas from file: " // trim(surface_cell_areas_filename)
     call check_return_code(nf90_open(surface_cell_areas_filename,nf90_nowrite,ncid))
-
-    _IF_USE_SINGLE_INDEX_
-    ! Not implemented
-    _ELSE_
-    call check_return_code(nf90_inq_dimid(ncid,'latitude',dimid))
-    call check_return_code(nf90_inquire_dimension(ncid,dimid,len=nlat_surface))
-
-    call check_return_code(nf90_inq_dimid(ncid,'longitude',dimid))
-    call check_return_code(nf90_inquire_dimension(ncid,dimid,len=nlon_surface))
-    _END_IF_USE_SINGLE_INDEX_
 
     allocate(cell_areas_on_surface_model_grid_temp(nlon_surface,nlat_surface))
     call check_return_code(nf90_inq_varid(ncid,'cell_areas_on_surface_model_grid',varid))
     call check_return_code(nf90_get_var(ncid, varid, &
                                         cell_areas_on_surface_model_grid_temp))
-    allocate(cell_areas_on_surface_model_grid(nlat_surface,nlon_surface))
+    allocate(cell_areas_on_surface_model_grid(_NPOINTS_SURFACE_))
     cell_areas_on_surface_model_grid = transpose(cell_areas_on_surface_model_grid_temp)
 
     call check_return_code(nf90_close(ncid))
