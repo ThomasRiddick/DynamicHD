@@ -74,6 +74,7 @@ struct LakeFractionCalculationPrognostics
   pixels::Vector{Pixel}
   primary_lake_numbers::Field{Int64}
   lake_index::Field{Int64}
+  non_lake_filled_pixel_count_field::Field{Int64}
   grid_specific_lake_model_parameters::GridSpecificLakeModelParameters
   function LakeFractionCalculationPrognostics(
       lakes::Vector{LakeProperties},
@@ -85,6 +86,7 @@ struct LakeFractionCalculationPrognostics
     return new(lakes,pixel_numbers,pixels,
                primary_lake_numbers,
                Field{Int64}(lake_grid,0),
+               Field{Int64}(lake_grid,0),
                grid_specific_lake_model_parameters)
   end
   function LakeFractionCalculationPrognostics(
@@ -93,6 +95,7 @@ struct LakeFractionCalculationPrognostics
     return new(LakeProperties[],
                Field{Int64}(lake_grid,0),
                Pixel[],
+               Field{Int64}(lake_grid,0),
                Field{Int64}(lake_grid,0),
                Field{Int64}(lake_grid,0),
                grid_specific_lake_model_parameters)
@@ -224,13 +227,20 @@ function setup_cells_lakes_and_pixels(lakes::Vector{LakeInput},
   return all_lake_total_pixels
 end
 
-function set_max_pixels_from_lake_for_cell(cell::LakeCell,lake_pixel_counts_field::Field{Int64})
-  other_lake_potential_pixels::Int64 = cell.all_lake_potential_pixel_count - cell.lake_potential_pixel_count
-  all_lake_pixel_count::Int64 = lake_pixel_counts_field(cell.coarse_grid_coords)
-  other_lake_filled_non_lake_pixels::Int64 = all_lake_pixel_count + cell.lake_potential_pixel_count -
-                                             cell.lake_pixel_count - cell.all_lake_potential_pixel_count
+function set_max_pixels_from_lake_for_cell(cell::LakeCell,
+                                           non_lake_filled_pixel_count_field::Field{Int64})
+  other_lake_potential_pixels::Int64 = cell.all_lake_potential_pixel_count -
+                                       cell.lake_potential_pixel_count
+   non_lake_filled_pixel_count::Int64 = cell.lake_pixel_count -
+                                       cell.lake_potential_pixel_count
+  if  non_lake_filled_pixel_count < 0
+     non_lake_filled_pixel_count = 0
+  end
+  other_lake_filled_non_lake_pixels::Int64 =
+    non_lake_filled_pixel_count_field(cell.coarse_grid_coords) -
+    non_lake_filled_pixel_count
   if other_lake_filled_non_lake_pixels < 0
-    other_lake_filled_non_lake_pixels = 0
+    error("Non lake filled pixel count logic error")
   end
   cell.max_pixels_from_lake =  cell.pixel_count - other_lake_potential_pixels - other_lake_filled_non_lake_pixels
 end
@@ -246,6 +256,7 @@ function calculate_lake_fractions(lakes::Vector{LakeInput},
   pixels::Vector{Pixel} = Pixel[]
   all_lake_potential_pixel_counts::Field{Int64} = Field{Int64}(surface_grid,0)
   lake_pixel_counts_field::Field{Int64} =  Field{Int64}(surface_grid,0)
+  non_lake_filled_pixel_count_field::Field{Int64} =  Field{Int64}(surface_grid,0)
   all_lake_total_pixels::Int64 =
     setup_cells_lakes_and_pixels(lakes,cell_pixel_counts,
                                  all_lake_potential_pixel_mask,
@@ -257,7 +268,7 @@ function calculate_lake_fractions(lakes::Vector{LakeInput},
   sort!(lake_properties,by=x->x.lake_pixel_count,rev=true)
   for lake::LakeProperties in lake_properties::Vector{LakeProperties}
     for cell in lake.cell_list
-      set_max_pixels_from_lake_for_cell(cell,lake_pixel_counts_field)
+      set_max_pixels_from_lake_for_cell(cell,non_lake_filled_pixel_count_field)
     end
     sort!(lake.cell_list,by=x->x.lake_pixel_count/x.pixel_count,rev=true)
     j = length(lake.cell_list)
@@ -318,7 +329,12 @@ function calculate_lake_fractions(lakes::Vector{LakeInput},
     end
     for cell in lake.cell_list
       set!(lake_pixel_counts_field,cell.coarse_grid_coords,
-      lake_pixel_counts_field(cell.coarse_grid_coords)+cell.lake_pixel_count)
+           lake_pixel_counts_field(cell.coarse_grid_coords)+cell.lake_pixel_count)
+      overflow_count::Int64 = cell.lake_pixel_count - cell.lake_potential_pixel_count
+      if overflow_count > 0
+        set!(non_lake_filled_pixel_count_field,cell.coarse_grid_coords,
+             non_lake_filled_pixel_count_field(cell.coarse_grid_coords)+overflow_count)
+      end
     end
   end
   lake_fractions_field::Field{Float64} =
@@ -343,6 +359,7 @@ function setup_lake_for_fraction_calculation(lakes::Vector{LakeInput},
   pixels::Vector{Pixel} = Pixel[]
   all_lake_total_pixels::Int64 = 0
   all_lake_potential_pixel_counts::Field{Int64} = Field{Int64}(surface_grid,0)
+  non_lake_filled_pixel_count_field::Field{Int64} =  Field{Int64}(surface_grid,0)
   lake_pixel_counts_field::Field{Int64} =  Field{Int64}(surface_grid,0)
   setup_cells_lakes_and_pixels(lakes,cell_pixel_counts,
                                all_lake_potential_pixel_mask,
@@ -368,14 +385,16 @@ function setup_lake_for_fraction_calculation(lakes::Vector{LakeInput},
 end
 
 function add_pixel(lake::LakeProperties,pixel::Pixel,
-                   lake_pixel_counts_field::Field{Int64})
+                   lake_pixel_counts_field::Field{Int64},
+                   non_lake_filled_pixel_count_field::Field{Int64})
   local cell::LakeCell
+  local overflow_count::Int64
   for entry in lake.cell_list
     if entry.coarse_grid_coords == pixel.original_coarse_grid_coords
       cell = entry
     end
   end
-  set_max_pixels_from_lake_for_cell(cell,lake_pixel_counts_field)
+  set_max_pixels_from_lake_for_cell(cell,non_lake_filled_pixel_count_field)
   if cell.max_pixels_from_lake == cell.lake_pixel_count
     local other_pixel::Pixel
     local other_pixel_origin_cell::LakeCell
@@ -397,18 +416,24 @@ function add_pixel(lake::LakeProperties,pixel::Pixel,
     extract_pixel(cell,other_pixel)
     #Order of next two statements is critical to prevent loops
     insert_pixel(cell,pixel)
-    add_pixel(lake,other_pixel,lake_pixel_counts_field)
+    add_pixel(lake,other_pixel,lake_pixel_counts_field,
+              non_lake_filled_pixel_count_field)
   elseif cell.max_pixels_from_lake < cell.lake_pixel_count
     error("Cell has more pixel than possible - logic error")
   elseif cell.in_binary_mask
     insert_pixel(cell,pixel)
     set!(lake_pixel_counts_field,cell.coarse_grid_coords,
          lake_pixel_counts_field(cell.coarse_grid_coords)+1)
+    overflow_count = cell.lake_pixel_count - cell.lake_potential_pixel_count
+    if overflow_count > 0
+      set!(non_lake_filled_pixel_count_field,cell.coarse_grid_coords,
+           non_lake_filled_pixel_count_field(cell.coarse_grid_coords)+1)
+    end
   else
     most_filled_cell = cell
     most_filled_cell_lake_fraction = -1.0
     for other_cell in lake.cell_list
-      set_max_pixels_from_lake_for_cell(other_cell,lake_pixel_counts_field)
+      set_max_pixels_from_lake_for_cell(other_cell,non_lake_filled_pixel_count_field)
       other_cell_lake_fraction = other_cell.lake_pixel_count/
                                  other_cell.pixel_count
       if other_cell_lake_fraction > most_filled_cell_lake_fraction &&
@@ -422,21 +447,38 @@ function add_pixel(lake::LakeProperties,pixel::Pixel,
       insert_pixel(most_filled_cell,pixel)
       set!(lake_pixel_counts_field,most_filled_cell.coarse_grid_coords,
            lake_pixel_counts_field(most_filled_cell.coarse_grid_coords)+1)
+      overflow_count = most_filled_cell.lake_pixel_count -
+                       most_filled_cell.lake_potential_pixel_count
+      if overflow_count > 0
+        set!(non_lake_filled_pixel_count_field,most_filled_cell.coarse_grid_coords,
+             non_lake_filled_pixel_count_field(most_filled_cell.coarse_grid_coords)+1)
+      end
     else
       insert_pixel(cell,pixel)
       set!(lake_pixel_counts_field,cell.coarse_grid_coords,
            lake_pixel_counts_field(cell.coarse_grid_coords)+1)
+      overflow_count = cell.lake_pixel_count - cell.lake_potential_pixel_count
+      if overflow_count > 0
+        set!(non_lake_filled_pixel_count_field,cell.coarse_grid_coords,
+             non_lake_filled_pixel_count_field(cell.coarse_grid_coords)+1)
+      end
     end
   end
 end
 
 function remove_pixel(lake::LakeProperties,pixel::Pixel,
-                      lake_pixel_counts_field::Field{Int64})
+                      lake_pixel_counts_field::Field{Int64},
+                      non_lake_filled_pixel_count_field::Field{Int64})
   local cell::LakeCell
   for entry in lake.cell_list
     if entry.coarse_grid_coords == pixel.assigned_coarse_grid_coords
       cell = entry
     end
+  end
+  overflow_count::Int64 = cell.lake_pixel_count - cell.lake_potential_pixel_count
+  if overflow_count > 0
+    set!(non_lake_filled_pixel_count_field,cell.coarse_grid_coords,
+         non_lake_filled_pixel_count_field(cell.coarse_grid_coords)-1)
   end
   extract_pixel(cell,pixel)
   set!(lake_pixel_counts_field,cell.coarse_grid_coords,
@@ -454,12 +496,24 @@ function remove_pixel(lake::LakeProperties,pixel::Pixel,
       end
     end
     if least_filled_cell_lake_fraction < 999.0
+      overflow_count = least_filled_cell.lake_pixel_count -
+                       least_filled_cell.lake_potential_pixel_count
+      if overflow_count > 0
+        set!(non_lake_filled_pixel_count_field,least_filled_cell.coarse_grid_coords,
+             non_lake_filled_pixel_count_field(
+                least_filled_cell.coarse_grid_coords)-1)
+      end
       other_pixel = extract_any_pixel(least_filled_cell)
       set!(lake_pixel_counts_field,least_filled_cell.coarse_grid_coords,
        lake_pixel_counts_field(least_filled_cell.coarse_grid_coords)-1)
       insert_pixel(cell,other_pixel)
       set!(lake_pixel_counts_field,cell.coarse_grid_coords,
        lake_pixel_counts_field(cell.coarse_grid_coords)+1)
+      overflow_count = cell.lake_pixel_count - cell.lake_potential_pixel_count
+      if overflow_count > 0
+        set!(non_lake_filled_pixel_count_field,cell.coarse_grid_coords,
+             non_lake_filled_pixel_count_field(cell.coarse_grid_coords)+1)
+      end
     end
   end
 end
@@ -484,7 +538,8 @@ function add_pixel_by_coords(pixel_coords::CartesianIndex,
   if lake_in.has_cells_in_binary_mask
     pixel_in::Pixel = prognostics.pixels[prognostics.pixel_numbers(pixel_coords)]
     add_pixel(lake_in,pixel_in,
-              lake_pixel_counts_field)
+              lake_pixel_counts_field,
+              prognostics.non_lake_filled_pixel_count_field)
   else
     surface_model_coords::CartesianIndex =
       get_corresponding_surface_model_grid_cell(pixel_coords,
@@ -515,7 +570,8 @@ function remove_pixel_by_coords(pixel_coords::CartesianIndex,
   if lake_in.has_cells_in_binary_mask
     pixel_in::Pixel = prognostics.pixels[prognostics.pixel_numbers(pixel_coords)]
     remove_pixel(lake_in,pixel_in,
-                 lake_pixel_counts_field)
+                 lake_pixel_counts_field,
+                 prognostics.non_lake_filled_pixel_count_field)
   else
     surface_model_coords::CartesianIndex =
       get_corresponding_surface_model_grid_cell(pixel_coords,
