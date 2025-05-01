@@ -54,6 +54,34 @@ subroutine init_lake_model_test(lake_model_parameters,lake_parameters_as_array, 
         lake_interface_fields => transpose_lake_interface_fields(transposed_lake_interface_fields)
 end subroutine init_lake_model_test
 
+subroutine init_lake_model(lake_model_ctl_filename, &
+                           cell_areas_on_surface_model_grid, &
+                           initial_spillover_to_rivers, &
+                           lake_interface_fields,step_length, &
+                           _NPOINTS_HD_, &
+                           _NPOINTS_SURFACE_)
+  character(len = *), intent(in) :: lake_model_ctl_filename
+  real(dp), pointer, dimension(_DIMS_), intent(in) :: cell_areas_on_surface_model_grid
+  real(dp), pointer, dimension(_DIMS_),intent(out) :: initial_spillover_to_rivers
+  type(lakeinterfaceprognosticfields), intent(inout) :: lake_interface_fields
+  real(dp), intent(in) :: step_length
+  real(dp), pointer, dimension(:,:)  :: transposed_initial_spillover_to_rivers
+  type(lakeinterfaceprognosticfields), pointer :: transposed_lake_interface_fields
+  transposed_lake_interface_fields => transpose_lake_interface_fields(lake_interface_fields)
+  call init_lake_model_orig(lake_model_ctl_filename, &
+                            cell_areas_on_surface_model_grid, &
+                            transposed_initial_spillover_to_rivers, &
+                            transposed_lake_interface_fields,step_length, &
+                            _NPOINTS_HD_, &
+                            _NPOINTS_SURFACE_)
+  lake_interface_fields => transpose_lake_interface_fields(transposed_lake_interface_fields)
+  array_shape = shape(transposed_initial_spillover_to_rivers)
+  allocate(initial_spillover_to_rivers(array_shape(2),&
+                                       array_shape(1)))
+  initial_spillover_to_rivers = transpose(transposed_initial_spillover_to_rivers)
+  deallocate(transposed_initial_spillover_to_rivers)
+end
+
 subroutine clean_lake_model()
         call clean_lake_model_orig()
 end subroutine clean_lake_model

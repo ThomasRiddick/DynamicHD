@@ -26,7 +26,11 @@ subroutine write_lake_volumes_field(lake_volumes_filename,&
     _END_IF_USE_SINGLE_INDEX_
     call check_return_code(nf90_def_var(ncid, "lake_volumes_field", nf90_real, dimids,varid))
     call check_return_code(nf90_enddef(ncid))
+    _IF_USE_LONLAT_
+    call check_return_code(nf90_put_var(ncid,varid,lake_volumes))
+    _ELSE_IF_NOT_USE_LONLAT_
     call check_return_code(nf90_put_var(ncid,varid,transpose(lake_volumes)))
+    _END_IF_USE_LONLAT_
     call check_return_code(nf90_close(ncid))
 end subroutine write_lake_volumes_field
 
@@ -60,8 +64,13 @@ subroutine write_lake_numbers_field(working_directory,&
     _END_IF_USE_SINGLE_INDEX_
     call check_return_code(nf90_def_var(ncid,"lake_number",nf90_real,dimids,varid))
     call check_return_code(nf90_enddef(ncid))
+    _IF_USE_LONLAT_
+    call check_return_code(nf90_put_var(ncid,varid,&
+                                        lake_numbers))
+    _ELSE_IF_NOT_USE_LONLAT_
     call check_return_code(nf90_put_var(ncid,varid,&
                                         transpose(lake_numbers)))
+    _END_IF_USE_LONLAT_
     call check_return_code(nf90_close(ncid))
 end subroutine write_lake_numbers_field
 
@@ -69,7 +78,7 @@ subroutine write_diagnostic_lake_volumes_field(working_directory, &
                                                diagnostic_lake_volumes, &
                                                timestep,_NPOINTS_LAKE_)
   character(len = *), intent(in) :: working_directory
-  real(dp), dimension(:,:), pointer, intent(in) :: diagnostic_lake_volumes
+  real(dp), dimension(_DIMS_), pointer, intent(in) :: diagnostic_lake_volumes
   integer, intent(in) :: timestep
   character(len = 50) :: timestep_str
   character(len = max_name_length) :: filename
@@ -93,7 +102,11 @@ subroutine write_diagnostic_lake_volumes_field(working_directory, &
     _END_IF_USE_SINGLE_INDEX_
     call check_return_code(nf90_def_var(ncid,"diagnostic_lake_volumes",nf90_real,dimids,varid))
     call check_return_code(nf90_enddef(ncid))
+    _IF_USE_LONLAT_
+    call check_return_code(nf90_put_var(ncid,varid,diagnostic_lake_volumes))
+    _ELSE_IF_NOT_USE_LONLAT_
     call check_return_code(nf90_put_var(ncid,varid,transpose(diagnostic_lake_volumes)))
+    _END_IF_USE_LONLAT_
     call check_return_code(nf90_close(ncid))
 end subroutine write_diagnostic_lake_volumes_field
 
@@ -128,8 +141,13 @@ subroutine write_lake_fractions_field(working_directory, &
     _END_IF_USE_SINGLE_INDEX_
     call check_return_code(nf90_def_var(ncid,"lake_fraction",nf90_real,dimids,varid))
     call check_return_code(nf90_enddef(ncid))
+    _IF_USE_LONLAT_
+    call check_return_code(nf90_put_var(ncid,varid,&
+                                        lake_fraction_on_surface_grid))
+    _ELSE_IF_NOT_USE_LONLAT_
     call check_return_code(nf90_put_var(ncid,varid,&
                                         transpose(lake_fraction_on_surface_grid)))
+    _END_IF_USE_LONLAT_
     call check_return_code(nf90_close(ncid))
 end subroutine write_lake_fractions_field
 
@@ -174,10 +192,17 @@ subroutine write_binary_lake_mask_field(binary_lake_mask_filename, &
     elsewhere
       binary_lake_mask_int(_DIMS_) = 0
     end where
+    _IF_USE_LONLAT_
+    call check_return_code(nf90_put_var(ncid,number_fine_grid_cells_varid,number_fine_grid_cells))
+    call check_return_code(nf90_put_var(ncid,lake_pixel_counts_varid,lake_pixel_counts_field))
+    call check_return_code(nf90_put_var(ncid,lake_fractions_varid,lake_fractions_field))
+    call check_return_code(nf90_put_var(ncid,binary_lake_mask_varid,binary_lake_mask_int))
+    _ELSE_IF_NOT_USE_LONLAT_
     call check_return_code(nf90_put_var(ncid,number_fine_grid_cells_varid,transpose(number_fine_grid_cells)))
     call check_return_code(nf90_put_var(ncid,lake_pixel_counts_varid,transpose(lake_pixel_counts_field)))
     call check_return_code(nf90_put_var(ncid,lake_fractions_varid,transpose(lake_fractions_field)))
     call check_return_code(nf90_put_var(ncid,binary_lake_mask_varid,transpose(binary_lake_mask_int)))
+    _END_IF_USE_LONLAT_
     call check_return_code(nf90_close(ncid))
     deallocate(binary_lake_mask_int)
 end subroutine write_binary_lake_mask_field

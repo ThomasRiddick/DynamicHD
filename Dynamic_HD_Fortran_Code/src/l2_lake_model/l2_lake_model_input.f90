@@ -12,20 +12,24 @@ character(len = max_name_length) :: lake_start_filename
 real(dp) :: lake_retention_coefficient
 real(dp) :: minimum_lake_volume_threshold
 logical :: run_water_budget_check
+logical :: use_binary_lake_mask
 
 contains
 
 subroutine config_lakes(lake_model_ctl_filename,&
-                        run_water_budget_check_out)
+                        run_water_budget_check_out, &
+                        use_binary_lake_mask_out)
   include 'lake_model_ctl.inc'
   character(len = max_name_length) :: lake_model_ctl_filename
   logical, intent(out) :: run_water_budget_check_out
+  logical, intent(out) :: use_binary_lake_mask_out
   integer :: unit_number
     write(*,*) "Reading namelist: " // trim(lake_model_ctl_filename)
     open(newunit=unit_number,file=lake_model_ctl_filename,status='old')
     read(unit=unit_number,nml=lake_model_ctl)
     close(unit_number)
     run_water_budget_check_out = run_water_budget_check
+    use_binary_lake_mask_out = use_binary_lake_mask
 end subroutine config_lakes
 
 subroutine set_lake_parameters_filename(lake_params_filename_in)
@@ -86,12 +90,20 @@ subroutine load_lake_model_parameters(cell_areas_on_surface_model_grid, &
     call check_return_code(nf90_inq_varid(ncid,'corresponding_surface_cell_lat_index',varid))
     call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
     allocate(corresponding_surface_cell_lat_index(_NPOINTS_LAKE_))
+    _IF_USE_LONLAT_
+    corresponding_surface_cell_lat_index  = temp_integer_array
+    _ELSE_IF_NOT_USE_LONLAT_
     corresponding_surface_cell_lat_index  = transpose(temp_integer_array)
+    _END_IF_USE_LONLAT_
 
     call check_return_code(nf90_inq_varid(ncid,'corresponding_surface_cell_lon_index',varid))
     call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
     allocate(corresponding_surface_cell_lon_index(_NPOINTS_LAKE_))
+    _IF_USE_LONLAT_
+    corresponding_surface_cell_lon_index  = temp_integer_array
+    _ELSE_IF_NOT_USE_LONLAT
     corresponding_surface_cell_lon_index  = transpose(temp_integer_array)
+    _END_IF_USE_LONLAT_
     _END_IF_USE_SINGLE_INDEX_
 
     call check_return_code(nf90_inq_varid(ncid,'number_of_lakes',varid))
@@ -101,13 +113,21 @@ subroutine load_lake_model_parameters(cell_areas_on_surface_model_grid, &
     call check_return_code(nf90_inq_varid(ncid,'lake_mask',varid))
     call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
     allocate(is_lake_int(_NPOINTS_LAKE_))
+    _IF_USE_LONLAT_
+    is_lake_int = temp_integer_array
+    _ELSE_IF_NOT_USE_LONLAT_
     is_lake_int = transpose(temp_integer_array)
+    _END_IF_USE_LONLAT_
 
     allocate(binary_lake_mask_int(_NPOINTS_SURFACE_))
     if (load_binary_mask) then
       call check_return_code(nf90_inq_varid(ncid,'binary_lake_mask',varid))
       call check_return_code(nf90_get_var(ncid, varid,binary_lake_mask_int_temp_array))
+      _IF_USE_LONLAT_
+      binary_lake_mask_int  = binary_lake_mask_int_temp_array
+      _ELSE_IF_NOT_USE_LONLAT_
       binary_lake_mask_int  = transpose(binary_lake_mask_int_temp_array)
+      _END_IF_USE_LONLAT_
     else
       binary_lake_mask_int(_DIMS_) = 0
     end if
@@ -182,13 +202,21 @@ subroutine load_lake_initial_values(initial_water_to_lake_centers,&
     call check_return_code(nf90_get_var(ncid, varid, &
                                         initial_water_to_lake_centers_temp))
     allocate(initial_water_to_lake_centers(_NPOINTS_LAKE_))
+    _IF_USE_LONLAT_
+    initial_water_to_lake_centers = initial_water_to_lake_centers_temp
+    _ELSE_IF_NOT_USE_LONLAT_
     initial_water_to_lake_centers = transpose(initial_water_to_lake_centers_temp)
+    _END_IF_USE_LONLAT_
 
     allocate(initial_spillover_to_rivers_temp(nlon_hd,nlat_hd))
     call check_return_code(nf90_inq_varid(ncid,'water_redistributed_to_rivers',varid))
     call check_return_code(nf90_get_var(ncid, varid,initial_spillover_to_rivers_temp))
     allocate(initial_spillover_to_rivers(_NPOINTS_HD_))
+    _IF_USE_LONLAT_
+    initial_spillover_to_rivers = initial_spillover_to_rivers_temp
+    _ELSE_IF_NOT_USE_LONLAT_
     initial_spillover_to_rivers = transpose(initial_spillover_to_rivers_temp)
+    _END_IF_USE_LONLAT_
     initial_spillover_to_rivers(_DIMS_) = initial_spillover_to_rivers(_DIMS_)/step_length
     call check_return_code(nf90_close(ncid))
     deallocate(initial_water_to_lake_centers_temp)
@@ -212,7 +240,11 @@ function load_cell_areas_on_surface_model_grid(surface_cell_areas_filename, &
     call check_return_code(nf90_get_var(ncid, varid, &
                                         cell_areas_on_surface_model_grid_temp))
     allocate(cell_areas_on_surface_model_grid(_NPOINTS_SURFACE_))
+    _IF_USE_LONLAT_
+    cell_areas_on_surface_model_grid = cell_areas_on_surface_model_grid_temp
+    _ELSE_IF_NOT_USE_LONLAT_
     cell_areas_on_surface_model_grid = transpose(cell_areas_on_surface_model_grid_temp)
+    _END_IF_USE_LONLAT_
 
     call check_return_code(nf90_close(ncid))
     deallocate(cell_areas_on_surface_model_grid_temp)

@@ -72,11 +72,13 @@ subroutine init_lake_model(lake_model_ctl_filename, &
   real(dp), pointer, dimension(:) :: lake_parameters_as_array
   type(lakeparameterspointer), dimension(:), pointer :: lake_parameters_array
   real(dp), pointer, dimension(_DIMS_) :: initial_water_to_lake_centers
+  logical :: use_binary_lake_mask
   _DEF_NPOINTS_HD_ _INTENT_in_
   _DEF_NPOINTS_SURFACE_ _INTENT_in_
-    call config_lakes(lake_model_ctl_filename,global_run_water_budget_check)
+    call config_lakes(lake_model_ctl_filename,global_run_water_budget_check, &
+                      use_binary_lake_mask)
     call load_lake_model_parameters(cell_areas_on_surface_model_grid, &
-                                    .false., &
+                                    use_binary_lake_mask, &
                                     global_lake_model_parameters, &
                                     lake_parameters_as_array, &
                                     _NPOINTS_HD_, &
