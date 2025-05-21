@@ -101,7 +101,7 @@ subroutine load_lake_model_parameters(cell_areas_on_surface_model_grid, &
     allocate(corresponding_surface_cell_lon_index(_NPOINTS_LAKE_))
     _IF_USE_LONLAT_
     corresponding_surface_cell_lon_index  = temp_integer_array
-    _ELSE_IF_NOT_USE_LONLAT
+    _ELSE_IF_NOT_USE_LONLAT_
     corresponding_surface_cell_lon_index  = transpose(temp_integer_array)
     _END_IF_USE_LONLAT_
     _END_IF_USE_SINGLE_INDEX_

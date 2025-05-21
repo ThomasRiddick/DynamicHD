@@ -50,8 +50,9 @@ input_lake_volumes_filepath=${13}
 output_lakepara_filepath=${14}
 output_hdstart_filepath=${15}
 output_lakestart_filepath=${16}
-date=${17}
-additional_corrections_list_filepath=${18}
+output_binary_lake_mask_filepath=${17}
+date=${18}
+additional_corrections_list_filepath=${19}
 
 #Change first_timestep into a bash command for true or false
 shopt -s nocasematch
@@ -66,8 +67,8 @@ fi
 shopt -u nocasematch
 
 #Check number of arguments makes sense
-if [[ $# -ne 17 ]] && [[ $# -ne 18 ]]; then
-  echo "Wrong number of positional arguments ($# supplied), script only takes 17 or 18" 1>&2
+if [[ $# -ne 18 ]] && [[ $# -ne 19 ]]; then
+  echo "Wrong number of positional arguments ($# supplied), script only takes 18 or 19" 1>&2
   exit 1
 fi
 
@@ -87,6 +88,11 @@ if  $first_timestep && ! [[ ${output_hdstart_filepath##*.} == "nc" ]] ; then
   exit 1
 fi
 
+if ! [[ ${output_binary_lake_mask_filepath##*.} == "nc" ]] ; then
+  echo "Output binary lake mask file has the wrong file extension" 1>&2
+  exit 1
+fi
+
 #Convert input filepaths from relative filepaths to absolute filepaths
 input_ls_mask_filepath=$(find_abs_path $input_ls_mask_filepath)
 input_orography_filepath=$(find_abs_path $input_orography_filepath)
@@ -101,6 +107,7 @@ input_lake_volumes_filepath=$(find_abs_path $input_lake_volumes_filepath)
 output_lakepara_filepath=$(find_abs_path $output_lakepara_filepath)
 output_hdstart_filepath=$(find_abs_path $output_hdstart_filepath)
 output_lakestart_filepath=$(find_abs_path $output_lakestart_filepath)
+output_binary_lake_mask_filepath=$(find_abs_path $output_binary_lake_mask_filepath)
 if [[ -z ${additional_corrections_list_filepath} ]]; then
   additional_corrections_list_filepath=$(find_abs_path $additional_corrections_list_filepath)
 fi
@@ -161,7 +168,10 @@ if ! [[ -d ${output_lakestart_filepath%/*} ]]; then
   echo "Filepath of output lakestart.nc does not exist" 1>&2
   exit 1
 fi
-
+if ! [[ -d ${output_binary_lake_mask_filepath%/*} ]]; then
+  echo "Filepath of output binary lake mask file does not exist" 1>&2
+  exit 1
+fi
 
 if [[ -z ${additional_corrections_list_filepath} ]] &&
    ! [[ -e ${additional_corrections_list_filepath} ]]; then
@@ -356,10 +366,22 @@ fi
 
 #Run
 echo "Running Dynamic HD Code" 1>&2
-python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_hd_and_dynamic_lake_drivers/dynamic_lake_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${input_lake_volumes_filepath} ${present_day_base_orography_filepath} ${glacier_mask_filepath} ${working_directory}/hdpara_out_temp.nc ${output_lakepara_filepath} ${ancillary_data_directory} ${working_directory} ${output_lakestart_filepath} ${output_hdstart_argument} -d ${date} ${additional_corrections_list_argument}
+python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_hd_and_dynamic_lake_drivers/dynamic_lake_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${input_lake_volumes_filepath} ${present_day_base_orography_filepath} ${glacier_mask_filepath} ${working_directory}/hdpara_out_temp.nc ${working_directory}/lakepara_out_temp.nc ${ancillary_data_directory} ${working_directory} ${output_lakestart_filepath} ${output_hdstart_argument} -d ${date} ${additional_corrections_list_argument}
 
 #Change lake centers FDIR from 5 to -2
 ncap2 -s 'where(FDIR == 5.0) FDIR=-2.0' hdpara_out_temp.nc ${output_hdpara_filepath}
+
+#Make preliminary hd and lake model run to calculate binary lake mask
+cdo expr,'ARF_K=0.0' ${output_hdpara_filepath} hdpara_zero_arf_k.nc
+cdo expr,'ALF_K=0.0' ${output_hdpara_filepath} hdpara_zero_alf_k.nc
+cdo expr,'AGF_K=0.0' ${output_hdpara_filepath} hdpara_zero_agf_k.nc
+cdo merge hdpara_zero_arf_k.nc hdpara_zero_alf_k.nc hdpara_zero_agf_k.nc hdpara_zero_k_params.nc
+cdo replace ${output_hdpara_filepath} hdpara_zero_k_params.nc hdpara_instant_throughflow.nc
+${source_directory}/bin/hd_and_lake_model hdpara_instant_throughflow.nc ${ancillary_data_directory}/hdstart_zeros.nc 365 ${working_directory} ${ancillary_data_directory}/preliminary_run_lake.ctl ${ancillary_data_directory}/cell_areas_on_surface_grid.nc
+mv binary_lake_mask.nc ${output_binary_lake_mask_filepath}
+cdo selname,binary_lake_mask ${output_binary_lake_mask_filepath} binary_lake_mask_field_only.nc
+cdo merge ${working_directory}/lakepara_out_temp.nc binary_lake_mask_field_only.nc ${output_lakepara_filepath}
+rm -f binary_lake_mask_field_only.nc hdpara_instant_throughflow.nc
 
 #Release trapped water from hdstart file
 if ! ${first_timestep}; then

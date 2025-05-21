@@ -82,22 +82,24 @@ struct LakeFractionCalculationPrognostics
       pixels::Vector{Pixel},
       primary_lake_numbers::Field{Int64},
       grid_specific_lake_model_parameters::GridSpecificLakeModelParameters,
-      lake_grid::Grid)
+      lake_grid::Grid,
+      surface_grid::Grid)
     return new(lakes,pixel_numbers,pixels,
                primary_lake_numbers,
                Field{Int64}(lake_grid,0),
-               Field{Int64}(lake_grid,0),
+               Field{Int64}(surface_grid,0),
                grid_specific_lake_model_parameters)
   end
   function LakeFractionCalculationPrognostics(
       grid_specific_lake_model_parameters::GridSpecificLakeModelParameters,
-      lake_grid::Grid)
+      lake_grid::Grid,
+      surface_grid::Grid)
     return new(LakeProperties[],
                Field{Int64}(lake_grid,0),
                Pixel[],
                Field{Int64}(lake_grid,0),
                Field{Int64}(lake_grid,0),
-               Field{Int64}(lake_grid,0),
+               Field{Int64}(surface_grid,0),
                grid_specific_lake_model_parameters)
   end
 end
@@ -359,7 +361,6 @@ function setup_lake_for_fraction_calculation(lakes::Vector{LakeInput},
   pixels::Vector{Pixel} = Pixel[]
   all_lake_total_pixels::Int64 = 0
   all_lake_potential_pixel_counts::Field{Int64} = Field{Int64}(surface_grid,0)
-  non_lake_filled_pixel_count_field::Field{Int64} =  Field{Int64}(surface_grid,0)
   lake_pixel_counts_field::Field{Int64} =  Field{Int64}(surface_grid,0)
   setup_cells_lakes_and_pixels(lakes,cell_pixel_counts,
                                all_lake_potential_pixel_mask,
@@ -381,7 +382,8 @@ function setup_lake_for_fraction_calculation(lakes::Vector{LakeInput},
                                             pixels,
                                             primary_lake_numbers,
                                             grid_specific_lake_model_parameters,
-                                            lake_grid)
+                                            lake_grid,
+                                            surface_grid)
 end
 
 function add_pixel(lake::LakeProperties,pixel::Pixel,

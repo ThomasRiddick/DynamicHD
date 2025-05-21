@@ -2,8 +2,10 @@ module l2_lake_model_interface_switcher_mod
 
 use l2_lake_model_interface_mod, only: init_lake_model_test_orig => init_lake_model_test, &
                                        init_lake_model_orig => init_lake_model, &
+                                       init_lake_model_jsb_orig => init_lake_model_jsb, &
                                        clean_lake_model_orig => clean_lake_model, &
                                        run_lake_model_orig => run_lake_model, &
+                                       run_lake_model_jsb_orig => run_lake_model_jsb, &
                                        get_lake_model_prognostics_orig => &
                                        get_lake_model_prognostics, &
                                        get_surface_model_nlat_orig => get_surface_model_nlat, &
@@ -14,7 +16,11 @@ use l2_lake_model_interface_mod, only: init_lake_model_test_orig => init_lake_mo
                                        set_lake_evaporation_for_testing_interface, &
                                        set_lake_evaporation_interface_orig => &
                                        set_lake_evaporation_interface, &
-                                       lakeinterfaceprognosticfields
+                                       lakeinterfaceprognosticfields, &
+                                       write_lake_fractions_interface, &
+                                       write_lake_volumes_interface, &
+                                       write_binary_lake_mask_and_adjusted_lake_fraction_interface, &
+                                       write_diagnostic_lake_volumes_interface
 use l2_lake_model_mod,          only:  lakemodelparameters,lakemodelprognostics, &
                                        lakemodelparametersconstructor_orig => &
                                        lakemodelparametersconstructor, &
@@ -61,26 +67,46 @@ subroutine init_lake_model(lake_model_ctl_filename, &
                            _NPOINTS_HD_, &
                            _NPOINTS_SURFACE_)
   character(len = *), intent(in) :: lake_model_ctl_filename
-  real(dp), pointer, dimension(_DIMS_), intent(in) :: cell_areas_on_surface_model_grid
-  real(dp), pointer, dimension(_DIMS_),intent(out) :: initial_spillover_to_rivers
-  type(lakeinterfaceprognosticfields), intent(inout) :: lake_interface_fields
+  real(dp), pointer, dimension(:,:), intent(in) :: cell_areas_on_surface_model_grid
+  real(dp), pointer, dimension(:,:),intent(out) :: initial_spillover_to_rivers
+  type(lakeinterfaceprognosticfields), pointer, intent(inout) :: lake_interface_fields
   real(dp), intent(in) :: step_length
   real(dp), pointer, dimension(:,:)  :: transposed_initial_spillover_to_rivers
   type(lakeinterfaceprognosticfields), pointer :: transposed_lake_interface_fields
-  transposed_lake_interface_fields => transpose_lake_interface_fields(lake_interface_fields)
-  call init_lake_model_orig(lake_model_ctl_filename, &
-                            cell_areas_on_surface_model_grid, &
-                            transposed_initial_spillover_to_rivers, &
-                            transposed_lake_interface_fields,step_length, &
-                            _NPOINTS_HD_, &
-                            _NPOINTS_SURFACE_)
-  lake_interface_fields => transpose_lake_interface_fields(transposed_lake_interface_fields)
-  array_shape = shape(transposed_initial_spillover_to_rivers)
-  allocate(initial_spillover_to_rivers(array_shape(2),&
-                                       array_shape(1)))
-  initial_spillover_to_rivers = transpose(transposed_initial_spillover_to_rivers)
-  deallocate(transposed_initial_spillover_to_rivers)
-end
+  integer, dimension(2) :: array_shape
+  _DEF_NPOINTS_HD_
+  _DEF_NPOINTS_SURFACE_
+    transposed_lake_interface_fields => transpose_lake_interface_fields(lake_interface_fields)
+    call init_lake_model_orig(lake_model_ctl_filename, &
+                              cell_areas_on_surface_model_grid, &
+                              transposed_initial_spillover_to_rivers, &
+                              transposed_lake_interface_fields,step_length, &
+                              _NPOINTS_HD_, &
+                              _NPOINTS_SURFACE_)
+    lake_interface_fields => transpose_lake_interface_fields(transposed_lake_interface_fields)
+    array_shape = shape(transposed_initial_spillover_to_rivers)
+    allocate(initial_spillover_to_rivers(array_shape(2),&
+                                         array_shape(1)))
+    initial_spillover_to_rivers = transpose(transposed_initial_spillover_to_rivers)
+    deallocate(transposed_initial_spillover_to_rivers)
+end subroutine init_lake_model
+
+subroutine init_lake_model_jsb(initial_spillover_to_rivers,cell_areas_from_jsbach, &
+                               total_lake_restart_file_water_content,step_length))
+ real(dp), dimension(:,:), pointer, intent(out) :: initial_spillover_to_rivers
+ real(dp), intent(out) :: total_lake_restart_file_water_content
+ real(dp), dimension(:,:), pointer, intent(in) :: cell_areas_from_jsbach
+ real(dp), intent(in) :: step_length
+ real(dp), pointer, dimension(:,:)  :: transposed_initial_spillover_to_rivers
+ integer, dimension(2) :: array_shape
+   call init_lake_model_jsb_orig(transposed_initial_spillover_to_rivers,cell_areas_from_jsbach, &
+                                 total_lake_restart_file_water_content,step_length)
+   array_shape = shape(transposed_initial_spillover_to_rivers)
+   allocate(initial_spillover_to_rivers(array_shape(2),&
+                                         array_shape(1)))
+   initial_spillover_to_rivers = transpose(transposed_initial_spillover_to_rivers)
+   deallocate(transposed_initial_spillover_to_rivers)
+end subroutine init_lake_model_jsb
 
 subroutine clean_lake_model()
         call clean_lake_model_orig()
@@ -94,23 +120,31 @@ subroutine run_lake_model(lake_interface_fields)
         lake_interface_fields => transpose_lake_interface_fields(transposed_lake_interface_fields)
 end subroutine run_lake_model
 
-subroutine write_lake_numbers_field_interface(working_directory,timestep)
-  integer :: timestep
-  character(len = *), intent(in) :: working_directory
-  integer :: i
-    if (timestep == 0) i = 0
-    if (working_directory == "") i = 0
-    write(*,*) "write_lake_numbers_field_interface has been disabled"
-end subroutine write_lake_numbers_field_interface
-
-subroutine write_diagnostic_lake_volumes_interface(working_directory,timestep)
-  integer :: timestep
-  character(len = *), intent(in) :: working_directory
-  integer :: i
-    if (timestep == 0) i = 0
-    if (working_directory == "") i = 0
-    write(*,*) "write_diagnostic_lake_volumes_interface has been disabled"
-end subroutine write_diagnostic_lake_volumes_interface
+subroutine run_lake_model_jsb(water_to_lakes_in,water_to_hd_out,lake_water_from_ocean)
+  real(dp), allocatable, dimension(:,:), intent(in)   :: water_to_lakes_in
+  real(dp), allocatable, dimension(:,:), intent(inout)  :: water_to_hd_out
+  real(dp), allocatable, dimension(:,:), intent(inout)  :: lake_water_from_ocean
+  real(dp), allocatable, dimension(:,:) :: transposed_water_to_lakes_in
+  real(dp), allocatable, dimension(:,:) :: transposed_water_to_hd_out
+  real(dp), allocatable, dimension(:,:) :: transposed_lake_water_from_ocean
+  integer, dimension(2) :: array_shape
+    array_shape = shape(water_to_lakes_in)
+    allocate(transposed_water_to_lakes_in(array_shape(2),&
+                                          array_shape(1)))
+    allocate(transposed_water_to_hd_out(array_shape(2),&
+                                        array_shape(1)))
+    allocate(transposed_lake_water_from_ocean(array_shape(2),&
+                                              array_shape(1)))
+    transposed_water_to_lakes_in = transpose(water_to_lakes_in)
+    call run_lake_model_jsb_orig(transposed_water_to_lakes_in, &
+                                 transposed_water_to_hd_out, &
+                                 transposed_lake_water_from_ocean)
+    deallocate(transposed_water_to_lakes_in)
+    water_to_hd_out = transpose(transposed_water_to_hd_out)
+    lake_water_from_ocean = transpose(transposed_lake_water_from_ocean)
+    deallocate(transposed_water_to_hd_out)
+    deallocate(transposed_lake_water_from_ocean)
+end subroutine run_lake_model_jsb
 
 function get_lake_model_prognostics() result(value)
   type(lakemodelprognostics), pointer :: value
@@ -120,12 +154,12 @@ end function get_lake_model_prognostics
 
 function get_surface_model_nlat() result(nlat)
   integer :: nlat
-    nlat = get_surface_model_nlon_orig()
+    nlat = get_surface_model_nlat_orig()
 end function get_surface_model_nlat
 
 function get_surface_model_nlon() result(nlon)
   integer :: nlon
-    nlon = get_surface_model_nlat_orig()
+    nlon = get_surface_model_nlon_orig()
 end function get_surface_model_nlon
 
 function get_lake_volumes() result(lake_volumes)

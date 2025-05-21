@@ -80,6 +80,7 @@ type lakefractioncalculationprognostics
   type(pixelpointer), dimension(:), pointer :: pixels
   integer, dimension(_DIMS_), pointer :: primary_lake_numbers
   integer, dimension(_DIMS_), pointer ::lake_index
+  integer, dimension(_DIMS_), pointer :: non_lake_filled_pixel_count_field
   _DEF_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_
 end type lakefractioncalculationprognostics
 
@@ -194,13 +195,14 @@ end function pixelconstructor
 function lakefractioncalculationprognosticsconstructor( &
     lakes,pixel_numbers,pixels,primary_lake_numbers, &
     _INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_, &
-    _NPOINTS_LAKE_) result(constructor)
+    _NPOINTS_LAKE_,_NPOINTS_SURFACE_) result(constructor)
   type(lakepropertiespointer), dimension(:), pointer :: lakes
   integer, dimension(_DIMS_), pointer :: pixel_numbers
   type(pixelpointer), dimension(:), pointer :: pixels
   integer, dimension(_DIMS_), pointer :: primary_lake_numbers
   _DEF_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ _INTENT_in_
   _DEF_NPOINTS_LAKE_ _INTENT_in_
+  _DEF_NPOINTS_SURFACE_ _INTENT_in_
   type(lakefractioncalculationprognostics), pointer :: constructor
     allocate(constructor)
     constructor%lakes => lakes
@@ -209,6 +211,8 @@ function lakefractioncalculationprognosticsconstructor( &
     constructor%primary_lake_numbers => primary_lake_numbers
     allocate(constructor%lake_index(_NPOINTS_LAKE_))
     constructor%lake_index(_DIMS_) = 0
+    allocate(constructor%non_lake_filled_pixel_count_field(_NPOINTS_SURFACE_))
+    constructor%non_lake_filled_pixel_count_field(_DIMS_) = 0
     _ASSIGN_constructor%_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ => &
       _INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_
 end function lakefractioncalculationprognosticsconstructor
@@ -446,21 +450,26 @@ subroutine setup_cells_lakes_and_pixels(lakes, &
     end do
 end subroutine setup_cells_lakes_and_pixels
 
-subroutine set_max_pixels_from_lake_for_cell(cell_in,lake_pixel_counts_field)
+subroutine set_max_pixels_from_lake_for_cell(cell_in, &
+                                             non_lake_filled_pixel_count_field)
   type(lakecell), pointer :: cell_in
-  integer, dimension(_DIMS_), pointer :: lake_pixel_counts_field
+  integer, dimension(_DIMS_), pointer :: non_lake_filled_pixel_count_field
   integer :: other_lake_potential_pixels
-  integer :: all_lake_pixel_count
+  integer :: non_lake_filled_pixel_count
   integer :: other_lake_filled_non_lake_pixels
     other_lake_potential_pixels = cell_in%all_lake_potential_pixel_count - &
                                   cell_in%lake_potential_pixel_count
-    all_lake_pixel_count = lake_pixel_counts_field(cell_in%_COORDS_ARG_coarse_grid_coords_)
-    other_lake_filled_non_lake_pixels = all_lake_pixel_count + &
-                                        cell_in%lake_potential_pixel_count - &
-                                        cell_in%lake_pixel_count - &
-                                        cell_in%all_lake_potential_pixel_count
+    non_lake_filled_pixel_count = cell_in%lake_pixel_count - &
+                                  cell_in%lake_potential_pixel_count
+    if (non_lake_filled_pixel_count < 0) then
+      non_lake_filled_pixel_count = 0
+    end if
+    other_lake_filled_non_lake_pixels = &
+      non_lake_filled_pixel_count_field(cell_in%_COORDS_ARG_coarse_grid_coords_) - &
+      non_lake_filled_pixel_count
     if (other_lake_filled_non_lake_pixels < 0) then
-      other_lake_filled_non_lake_pixels = 0
+      write(*,*) "Non lake filled pixel count logic error"
+      stop
     end if
     cell_in%max_pixels_from_lake =  cell_in%pixel_count - other_lake_potential_pixels -  &
                                  other_lake_filled_non_lake_pixels
@@ -485,6 +494,7 @@ subroutine calculate_lake_fractions(lakes, &
   _DEF_NPOINTS_LAKE_ _INTENT_in_
   _DEF_NPOINTS_SURFACE_ _INTENT_in_
   integer, dimension(_DIMS_), pointer :: pixel_numbers
+  integer, dimension(_DIMS_), pointer :: non_lake_filled_pixel_count_field
   integer, dimension(_DIMS_), pointer :: all_lake_potential_pixel_counts
   logical, dimension(_DIMS_), pointer :: all_lake_potential_pixel_mask
   type(lakepropertiespointer), dimension(:), pointer :: lake_properties
@@ -506,6 +516,7 @@ subroutine calculate_lake_fractions(lakes, &
   integer :: pixels_to_transfer
   integer :: i,j,k,l,m
   integer :: lake_number
+  integer :: overflow_count
     allocate(all_lake_potential_pixel_mask(_NPOINTS_LAKE_))
     all_lake_potential_pixel_mask(_DIMS_) =  .false.
     allocate(lake_properties(size(lakes)))
@@ -515,6 +526,8 @@ subroutine calculate_lake_fractions(lakes, &
     all_lake_potential_pixel_counts(_DIMS_) = 0
     allocate(lake_pixel_counts_field(_NPOINTS_SURFACE_))
     lake_pixel_counts_field(_DIMS_) = 0
+    allocate(non_lake_filled_pixel_count_field(_NPOINTS_SURFACE_))
+    non_lake_filled_pixel_count_field(_DIMS_) = 0
     call setup_cells_lakes_and_pixels(lakes,cell_pixel_counts, &
                                       all_lake_potential_pixel_mask, &
                                       lake_properties, &
@@ -545,7 +558,7 @@ subroutine calculate_lake_fractions(lakes, &
       lake => lake_properties(lake_number)%lake_properties_pointer
       do k = 1,size(lake%cell_list)
         working_cell => lake%cell_list(k)%lake_cell_pointer
-        call set_max_pixels_from_lake_for_cell(working_cell,lake_pixel_counts_field)
+        call set_max_pixels_from_lake_for_cell(working_cell,non_lake_filled_pixel_count_field)
       end do
       allocate(cell_list_temp(size(lake%cell_list)))
       do l = 1,size(lake%cell_list)
@@ -633,6 +646,12 @@ subroutine calculate_lake_fractions(lakes, &
         working_cell => lake%cell_list(k)%lake_cell_pointer
         lake_pixel_counts_field(working_cell%_COORDS_ARG_coarse_grid_coords_) = &
           lake_pixel_counts_field(working_cell%_COORDS_ARG_coarse_grid_coords_)+working_cell%lake_pixel_count
+        overflow_count = working_cell%lake_pixel_count - working_cell%lake_potential_pixel_count
+        if (overflow_count > 0) then
+          non_lake_filled_pixel_count_field(working_cell%_COORDS_ARG_coarse_grid_coords_) = &
+            non_lake_filled_pixel_count_field(working_cell%_COORDS_ARG_coarse_grid_coords_) + &
+            overflow_count
+        end if
       end do
     end do
     allocate(lake_fractions_field(_NPOINTS_SURFACE_))
@@ -722,14 +741,16 @@ function setup_lake_for_fraction_calculation(lakes, &
                                           pixels, &
                                           primary_lake_numbers, &
                                           _INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_, &
-                                          _NPOINTS_LAKE_)
+                                          _NPOINTS_LAKE_,_NPOINTS_SURFACE_)
 end function setup_lake_for_fraction_calculation
 
-recursive subroutine add_pixel(lake,pixel_in,pixels,lake_pixel_counts_field)
+recursive subroutine add_pixel(lake,pixel_in,pixels,lake_pixel_counts_field, &
+                               non_lake_filled_pixel_count_field)
   type(lakeproperties), pointer :: lake
   type(pixel), pointer :: pixel_in
   type(pixelpointer), dimension(:), pointer :: pixels
   integer, dimension(_DIMS_), pointer :: lake_pixel_counts_field
+  integer, dimension(_DIMS_), pointer :: non_lake_filled_pixel_count_field
   type(lakecell), pointer :: working_cell
   type(lakecell), pointer :: other_cell
   type(lakecell), pointer :: most_filled_cell
@@ -743,13 +764,14 @@ recursive subroutine add_pixel(lake,pixel_in,pixels,lake_pixel_counts_field)
   real(dp) :: max_other_pixel_origin_cell_lake_fraction
   real(dp) :: most_filled_cell_lake_fraction
   integer :: i
+  integer :: overflow_count
     do i = 1,size(lake%cell_list)
       entry => lake%cell_list(i)%lake_cell_pointer
       if (_EQUALS_entry%_COORDS_coarse_grid_coords_ == pixel_in%_COORDS_original_coarse_grid_coords_) then
         working_cell => entry
       end if
     end do
-    call set_max_pixels_from_lake_for_cell(working_cell,lake_pixel_counts_field)
+    call set_max_pixels_from_lake_for_cell(working_cell,non_lake_filled_pixel_count_field)
     if (working_cell%max_pixels_from_lake == working_cell%lake_pixel_count) then
       max_other_pixel_origin_cell_lake_fraction = -1.0_dp
       do i = 1,working_cell%lake_pixels_added_count
@@ -772,7 +794,8 @@ recursive subroutine add_pixel(lake,pixel_in,pixels,lake_pixel_counts_field)
       call extract_pixel(working_cell,other_pixel)
       !Order of next two statements is critical to prevent loops
       call insert_pixel(working_cell,pixel_in)
-      call add_pixel(lake,other_pixel,pixels,lake_pixel_counts_field)
+      call add_pixel(lake,other_pixel,pixels,lake_pixel_counts_field, &
+                     non_lake_filled_pixel_count_field)
     elseif (working_cell%max_pixels_from_lake < working_cell%lake_pixel_count) then
       write(*,*) "Cell has more pixel than possible - logic error"
       stop
@@ -780,11 +803,16 @@ recursive subroutine add_pixel(lake,pixel_in,pixels,lake_pixel_counts_field)
       call insert_pixel(working_cell,pixel_in)
       lake_pixel_counts_field(working_cell%_COORDS_ARG_coarse_grid_coords_) = &
         lake_pixel_counts_field(working_cell%_COORDS_ARG_coarse_grid_coords_) + 1
+      overflow_count = working_cell%lake_pixel_count - working_cell%lake_potential_pixel_count
+      if (overflow_count > 0) then
+        non_lake_filled_pixel_count_field(working_cell%_COORDS_ARG_coarse_grid_coords_) = &
+          non_lake_filled_pixel_count_field(working_cell%_COORDS_ARG_coarse_grid_coords_) + 1
+      end if
     else
       most_filled_cell_lake_fraction = -1.0_dp
       do i = 1,size(lake%cell_list)
         other_cell => lake%cell_list(i)%lake_cell_pointer
-        call set_max_pixels_from_lake_for_cell(other_cell,lake_pixel_counts_field)
+        call set_max_pixels_from_lake_for_cell(other_cell,non_lake_filled_pixel_count_field)
         other_cell_lake_fraction = real(other_cell%lake_pixel_count,dp)/ &
                                    real(other_cell%pixel_count,dp)
         if (other_cell_lake_fraction > most_filled_cell_lake_fraction .and. &
@@ -798,19 +826,32 @@ recursive subroutine add_pixel(lake,pixel_in,pixels,lake_pixel_counts_field)
         call insert_pixel(most_filled_cell,pixel_in)
         lake_pixel_counts_field(most_filled_cell%_COORDS_ARG_coarse_grid_coords_) = &
           lake_pixel_counts_field(most_filled_cell%_COORDS_ARG_coarse_grid_coords_) + 1
+        overflow_count = most_filled_cell%lake_pixel_count - &
+                         most_filled_cell%lake_potential_pixel_count
+        if (overflow_count > 0) then
+          non_lake_filled_pixel_count_field(most_filled_cell%_COORDS_ARG_coarse_grid_coords_) = &
+            non_lake_filled_pixel_count_field(most_filled_cell%_COORDS_ARG_coarse_grid_coords_) + 1
+        end if
       else
         call insert_pixel(working_cell,pixel_in)
         lake_pixel_counts_field(working_cell%_COORDS_ARG_coarse_grid_coords_) = &
           lake_pixel_counts_field(working_cell%_COORDS_ARG_coarse_grid_coords_) + 1
+        overflow_count = working_cell%lake_pixel_count - working_cell%lake_potential_pixel_count
+        if (overflow_count > 0) then
+          non_lake_filled_pixel_count_field(working_cell%_COORDS_ARG_coarse_grid_coords_) = &
+            non_lake_filled_pixel_count_field(working_cell%_COORDS_ARG_coarse_grid_coords_) + 1
+        end if
       end if
     end if
 end subroutine add_pixel
 
-subroutine remove_pixel(lake,pixel_in,pixels,lake_pixel_counts_field)
+subroutine remove_pixel(lake,pixel_in,pixels,lake_pixel_counts_field, &
+                        non_lake_filled_pixel_count_field)
   type(lakeproperties), pointer :: lake
   type(pixel), pointer :: pixel_in
   type(pixelpointer), dimension(:), pointer :: pixels
   integer, dimension(_DIMS_), pointer :: lake_pixel_counts_field
+  integer, dimension(_DIMS_), pointer :: non_lake_filled_pixel_count_field
   type(lakecell), pointer :: working_cell
   type(lakecell), pointer :: other_cell
   type(lakecell), pointer :: least_filled_cell
@@ -819,12 +860,18 @@ subroutine remove_pixel(lake,pixel_in,pixels,lake_pixel_counts_field)
   real(dp) :: least_filled_cell_lake_fraction
   real(dp) :: other_cell_lake_fraction
   integer :: i
+  integer :: overflow_count
     do i = 1,size(lake%cell_list)
       entry => lake%cell_list(i)%lake_cell_pointer
       if (_EQUALS_entry%_COORDS_coarse_grid_coords_ == pixel_in%_COORDS_assigned_coarse_grid_coords_) then
         working_cell => entry
       end if
     end do
+    overflow_count = working_cell%lake_pixel_count - working_cell%lake_potential_pixel_count
+    if (overflow_count > 0) then
+      non_lake_filled_pixel_count_field(working_cell%_COORDS_ARG_coarse_grid_coords_) = &
+        non_lake_filled_pixel_count_field(working_cell%_COORDS_ARG_coarse_grid_coords_) - 1
+    end if
     call extract_pixel(working_cell,pixel_in)
     lake_pixel_counts_field(working_cell%_COORDS_ARG_coarse_grid_coords_) = &
       lake_pixel_counts_field(working_cell%_COORDS_ARG_coarse_grid_coords_) - 1
@@ -841,12 +888,24 @@ subroutine remove_pixel(lake,pixel_in,pixels,lake_pixel_counts_field)
         end if
       end do
       if (least_filled_cell_lake_fraction < 999.0_dp) then
+        overflow_count = least_filled_cell%lake_pixel_count - &
+                         least_filled_cell%lake_potential_pixel_count
+        if (overflow_count > 0) then
+          non_lake_filled_pixel_count_field(least_filled_cell%_COORDS_ARG_coarse_grid_coords_) = &
+            non_lake_filled_pixel_count_field(&
+              least_filled_cell%_COORDS_ARG_coarse_grid_coords_) - 1
+        end if
         other_pixel => extract_any_pixel(least_filled_cell,pixels)
         lake_pixel_counts_field(least_filled_cell%_COORDS_ARG_coarse_grid_coords_) = &
           lake_pixel_counts_field(least_filled_cell%_COORDS_ARG_coarse_grid_coords_) - 1
         call insert_pixel(working_cell,other_pixel)
         lake_pixel_counts_field(working_cell%_COORDS_ARG_coarse_grid_coords_) = &
           lake_pixel_counts_field(working_cell%_COORDS_ARG_coarse_grid_coords_) + 1
+        overflow_count = working_cell%lake_pixel_count - working_cell%lake_potential_pixel_count
+        if (overflow_count > 0) then
+          non_lake_filled_pixel_count_field(working_cell%_COORDS_ARG_coarse_grid_coords_) = &
+            non_lake_filled_pixel_count_field(working_cell%_COORDS_ARG_coarse_grid_coords_) + 1
+        end if
       end if
     end if
 end subroutine remove_pixel
@@ -881,7 +940,8 @@ subroutine add_pixel_by_coords(_COORDS_ARG_pixel_coords_, &
       pixel_in => prognostics%&
         &pixels(prognostics%pixel_numbers(_COORDS_ARG_pixel_coords_))%pixel_pointer
       call add_pixel(lake_in,pixel_in,prognostics%pixels, &
-                     lake_pixel_counts_field)
+                     lake_pixel_counts_field, &
+                     prognostics%non_lake_filled_pixel_count_field)
     else
       _GET_COORDS_ _COORDS_surface_model_coords_ _FROM_ prognostics%_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ _COORDS_pixel_coords_
       lake_pixel_counts_field(_COORDS_ARG_surface_model_coords_) = &
@@ -919,7 +979,8 @@ subroutine remove_pixel_by_coords(_COORDS_ARG_pixel_coords_, &
       pixel_in => prognostics%&
         &pixels(prognostics%pixel_numbers(_COORDS_ARG_pixel_coords_))%pixel_pointer
       call remove_pixel(lake_in,pixel_in,prognostics%pixels,&
-                        lake_pixel_counts_field)
+                        lake_pixel_counts_field, &
+                        prognostics%non_lake_filled_pixel_count_field)
     else
       _GET_COORDS_ _COORDS_surface_model_coords_ _FROM_ prognostics%_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ _COORDS_pixel_coords_
       lake_pixel_counts_field(_COORDS_ARG_surface_model_coords_) = &

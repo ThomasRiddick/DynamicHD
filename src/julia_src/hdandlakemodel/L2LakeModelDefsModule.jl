@@ -131,7 +131,8 @@ mutable struct LakeModelPrognostics
     lake_fraction_prognostics::LakeFractionCalculationPrognostics =
       LakeFractionCalculationPrognostics(lake_model_parameters.
                                          grid_specific_lake_model_parameters,
-                                         lake_model_parameters.lake_model_grid)
+                                         lake_model_parameters.lake_model_grid,
+                                         lake_model_parameters.surface_model_grid)
     new(lakes,lake_numbers,lake_cell_count,
         adjusted_lake_cell_count,
         effective_volume_per_cell_on_surface_grid,
