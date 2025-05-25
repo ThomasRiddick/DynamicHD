@@ -1,12 +1,19 @@
 module latlon_hd_model_mod
 
+! #ifdef TRANSPOSED_LAKE_MODEL
+! use latlon_lake_model_interface_switcher_mod
+! #else
+! use latlon_lake_model_interface_mod
+! #endif
 #ifdef TRANSPOSED_LAKE_MODEL
-use latlon_lake_model_interface_switcher_mod
+use lake_model_interface_switcher_mod
 #else
-use latlon_lake_model_interface_mod
+use lake_model_interface_mod
 #endif
 
 implicit none
+
+real(dp), private :: global_step_length = 86400.0_dp
 
 type, public :: riverparameters
   real(dp), pointer, dimension(:,:) :: rdirs
@@ -78,6 +85,7 @@ type prognostics
   type(riverdiagnosticfields), pointer :: river_diagnostic_fields
   type(riverdiagnosticoutputfields), pointer :: river_diagnostic_output_fields
   logical :: using_lakes
+  logical :: using_jsb_lake_interface
   contains
     procedure :: initialiseprognostics
     procedure :: prognosticsdestructor
@@ -279,11 +287,13 @@ subroutine riverdiagnosticoutputfieldsdestructor(this)
     deallocate(this%cumulative_river_flow)
 end subroutine riverdiagnosticoutputfieldsdestructor
 
-subroutine initialiseprognostics(this,using_lakes,river_parameters,river_fields)
+subroutine initialiseprognostics(this,using_lakes,using_jsb_lake_interface, &
+                                 river_parameters,river_fields)
   class(prognostics) :: this
   type(riverparameters),target :: river_parameters
   type(riverprognosticfields),target,intent(inout) :: river_fields
   logical :: using_lakes
+  logical :: using_jsb_lake_interface
     this%river_parameters => river_parameters
     this%river_fields => river_fields
     if(using_lakes) then
@@ -293,15 +303,19 @@ subroutine initialiseprognostics(this,using_lakes,river_parameters,river_fields)
     this%river_diagnostic_fields => riverdiagnosticfields(river_parameters)
     this%river_diagnostic_output_fields => riverdiagnosticoutputfields(river_parameters)
     this%using_lakes = using_lakes
+    this%using_jsb_lake_interface = using_jsb_lake_interface
 end subroutine initialiseprognostics
 
-function prognosticsconstructor(using_lakes,river_parameters,river_fields) result(constructor)
+function prognosticsconstructor(using_lakes,using_jsb_lake_interface, &
+                                river_parameters,river_fields) result(constructor)
   type(prognostics), pointer :: constructor
   type(riverparameters) :: river_parameters
   type(riverprognosticfields) :: river_fields
   logical :: using_lakes
+  logical :: using_jsb_lake_interface
     allocate(constructor)
-    call constructor%initialiseprognostics(using_lakes,river_parameters,river_fields)
+    call constructor%initialiseprognostics(using_lakes,using_jsb_lake_interface, &
+                                           river_parameters,river_fields)
 end function prognosticsconstructor
 
 subroutine prognosticsdestructor(this)
@@ -405,7 +419,19 @@ subroutine run_hd(prognostic_fields)
     prognostic_fields%river_fields%runoff(:,:) = 0.0_dp
     prognostic_fields%river_fields%drainage(:,:) = 0.0_dp
     if (prognostic_fields%using_lakes) then
-      call run_lake_model(prognostic_fields%lake_interface_fields)
+      if (prognostic_fields%using_jsb_lake_interface) then
+        prognostic_fields%lake_interface_fields%water_to_lakes(:,:) =  &
+          prognostic_fields%lake_interface_fields%water_to_lakes(:,:)*global_step_length
+        call run_lake_model_jsb(prognostic_fields%lake_interface_fields%water_to_lakes, &
+                                prognostic_fields%lake_interface_fields%water_from_lakes, &
+                                prognostic_fields%lake_interface_fields%lake_water_from_ocean)
+        prognostic_fields%lake_interface_fields%water_from_lakes(:,:) = &
+          prognostic_fields%lake_interface_fields%water_from_lakes/global_step_length
+        prognostic_fields%lake_interface_fields%lake_water_from_ocean(:,:) = &
+          prognostic_fields%lake_interface_fields%lake_water_from_ocean(:,:)/global_step_length
+      else
+        call run_lake_model(prognostic_fields%lake_interface_fields)
+      end if
     end if
 end subroutine run_hd
 
@@ -533,7 +559,7 @@ function  get_lake_volumes_interface() result(lake_volumes)
 end function get_lake_volumes_interface
 
 subroutine  get_lake_fraction_interface(lake_fraction)
-  real(dp), dimension(:,:), intent(inout) :: lake_fraction
+  real(dp), dimension(:,:), allocatable, intent(inout) :: lake_fraction
     call get_lake_fraction(lake_fraction)
 end subroutine get_lake_fraction_interface
 
