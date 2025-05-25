@@ -92,7 +92,7 @@ subroutine init_lake_model(lake_model_ctl_filename, &
 end subroutine init_lake_model
 
 subroutine init_lake_model_jsb(initial_spillover_to_rivers,cell_areas_from_jsbach, &
-                               total_lake_restart_file_water_content,step_length))
+                               total_lake_restart_file_water_content,step_length)
  real(dp), dimension(:,:), pointer, intent(out) :: initial_spillover_to_rivers
  real(dp), intent(out) :: total_lake_restart_file_water_content
  real(dp), dimension(:,:), pointer, intent(in) :: cell_areas_from_jsbach
