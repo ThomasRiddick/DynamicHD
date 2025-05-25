@@ -377,6 +377,8 @@ cdo expr,'ALF_K=0.0' ${output_hdpara_filepath} hdpara_zero_alf_k.nc
 cdo expr,'AGF_K=0.0' ${output_hdpara_filepath} hdpara_zero_agf_k.nc
 cdo merge hdpara_zero_arf_k.nc hdpara_zero_alf_k.nc hdpara_zero_agf_k.nc hdpara_zero_k_params.nc
 cdo replace ${output_hdpara_filepath} hdpara_zero_k_params.nc hdpara_instant_throughflow.nc
+ln -s ${working_directory}/lakepara_out_temp.nc lakepara_spinup.nc
+ln -s ${output_lakestart_filepath} lakestart_spinup.nc
 ${source_directory}/bin/hd_and_lake_model hdpara_instant_throughflow.nc ${ancillary_data_directory}/hdstart_zeros.nc 365 ${working_directory} ${ancillary_data_directory}/preliminary_run_lake.ctl ${ancillary_data_directory}/cell_areas_on_surface_grid.nc
 mv binary_lake_mask.nc ${output_binary_lake_mask_filepath}
 cdo selname,binary_lake_mask ${output_binary_lake_mask_filepath} binary_lake_mask_field_only.nc

@@ -10,7 +10,7 @@ lib_dir = meson.project_source_root() / 'lib'
 cpp_src = []
 cpp_test_src = []
 fortran_src = []
-fortran_l2_lake_model_src = []
+fortran_lake_model_src = []
 fortran_test_src = ['/Users/thomasriddick/Documents/code/fruit_3.4.1/src_copy/fruit.f90']
 cpp_src_path = 'Dynamic_HD_Cpp_Code/src'
 fortran_src_path = 'Dynamic_HD_Fortran_Code/src'
@@ -23,8 +23,8 @@ foreach cpp_subdir : cpp_subdirs
   subdir(cpp_src_path / cpp_subdir)
 endforeach
 fortran_subdirs = ['algorithms','base','drivers',
-                   'testing','icosohedral_hd_and_lake_model',
-                   'latlon_hd_and_lake_model','l2_lake_model']
+                   'testing','icosohedral_hd_model',
+                   'latlon_hd_model','lake_model']
 foreach fortran_subdir : fortran_subdirs
   subdir(fortran_src_path / fortran_subdir)
 endforeach
@@ -64,12 +64,12 @@ if get_option('build_cython')
                         install_dir: lib_dir)
   endforeach
 endif
-l2_lake_gen = generator(py,
-                        output: '@BASENAME@.f90',
-                        arguments: ['@SOURCE_DIR@/utils/preprocessor_' +
-                                    'utilities/l2_lake_model_preprocessor.py',
-                                    '@INPUT@','@OUTPUT@'])
-fortran_src += l2_lake_gen.process(fortran_l2_lake_model_src)
+lake_gen = generator(py,
+                     output: '@BASENAME@.f90',
+                     arguments: ['@SOURCE_DIR@/utils/preprocessor_' +
+                                 'utilities/lake_model_preprocessor.py',
+                                 '@INPUT@','@OUTPUT@'])
+fortran_src += lake_gen.process(fortran_lake_model_src)
 lib_fortran = library('dyhd_fortran',fortran_src,
                       include_directories: fortran_inc,
                       dependencies: netcdf_fortran_lib)
