@@ -1,6 +1,6 @@
-module l2_lake_model_interface_switcher_mod
+module lake_model_interface_switcher_mod
 
-use l2_lake_model_interface_mod, only: init_lake_model_test_orig => init_lake_model_test, &
+use lake_model_interface_mod, only: init_lake_model_test_orig => init_lake_model_test, &
                                        init_lake_model_orig => init_lake_model, &
                                        init_lake_model_jsb_orig => init_lake_model_jsb, &
                                        clean_lake_model_orig => clean_lake_model, &
@@ -21,7 +21,7 @@ use l2_lake_model_interface_mod, only: init_lake_model_test_orig => init_lake_mo
                                        write_lake_volumes_interface, &
                                        write_binary_lake_mask_and_adjusted_lake_fraction_interface, &
                                        write_diagnostic_lake_volumes_interface
-use l2_lake_model_mod,          only:  lakemodelparameters,lakemodelprognostics, &
+use lake_model_mod,          only:  lakemodelparameters,lakemodelprognostics, &
                                        lakemodelparametersconstructor_orig => &
                                        lakemodelparametersconstructor, &
                                        dp, filling_lake_type, overflowing_lake_type, &
@@ -281,4 +281,4 @@ function calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
     diagnostic_lake_volumes_transposed = transpose(diagnostic_lake_volumes)
 end function  calculate_diagnostic_lake_volumes_field
 
-end module l2_lake_model_interface_switcher_mod
+end module lake_model_interface_switcher_mod

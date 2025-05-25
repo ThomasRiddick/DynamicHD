@@ -1,18 +1,18 @@
-module l2_lake_model_mod
+module lake_model_mod
 
-use latlon_lake_model_tree_mod
-use l2_lake_model_output, only: write_diagnostic_lake_volumes_field, &
+use lake_model_tree_mod
+use lake_model_output, only: write_diagnostic_lake_volumes_field, &
                                 write_lake_volumes_field, &
                                 write_lake_numbers_field, &
                                 write_lake_fractions_field, &
                                 write_binary_lake_mask_field
-use l2_calculate_lake_fractions_mod, only: add_pixel_by_coords,remove_pixel_by_coords
-use l2_calculate_lake_fractions_mod, only: lakeinputpointer, lakeinput
-use l2_calculate_lake_fractions_mod, only: setup_lake_for_fraction_calculation
-use l2_calculate_lake_fractions_mod, only: calculate_lake_fractions
-use l2_calculate_lake_fractions_mod, only: lakefractioncalculationprognostics
-use l2_calculate_lake_fractions_mod, only: clean_lake_fraction_calculation_prognostics
-use l2_calculate_lake_fractions_mod, only: clean_lake_input
+use calculate_lake_fractions_mod, only: add_pixel_by_coords,remove_pixel_by_coords
+use calculate_lake_fractions_mod, only: lakeinputpointer, lakeinput
+use calculate_lake_fractions_mod, only: setup_lake_for_fraction_calculation
+use calculate_lake_fractions_mod, only: calculate_lake_fractions
+use calculate_lake_fractions_mod, only: lakefractioncalculationprognostics
+use calculate_lake_fractions_mod, only: clean_lake_fraction_calculation_prognostics
+use calculate_lake_fractions_mod, only: clean_lake_input
 
 implicit none
 
@@ -29,9 +29,9 @@ implicit none
 ! check loop ordering is optimal
 ! pre allocate old_effective_lake_height_on_surface_grid
 
-! use latlon_lake_model_tree_mod
+! use lake_model_tree_mod
 ! #ifdef USE_LOGGING
-!   use latlon_lake_logger_mod
+!   use lake_logger_mod
 ! #endif
 
 ! Distribute spillover
@@ -2219,4 +2219,4 @@ subroutine check_water_budget(lake_model_prognostics, &
     lake_model_prognostics%total_lake_volume = new_total_lake_volume
 end subroutine check_water_budget
 
-end module l2_lake_model_mod
+end module lake_model_mod

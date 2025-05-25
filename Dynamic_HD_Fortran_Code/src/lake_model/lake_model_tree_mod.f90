@@ -1,4 +1,4 @@
-module latlon_lake_model_tree_mod
+module lake_model_tree_mod
 
 implicit none
 private
@@ -612,4 +612,4 @@ contains
       constructor%sets => doubly_linked_list()
   end function rooted_tree_forest_constructor
 
-end module latlon_lake_model_tree_mod
+end module lake_model_tree_mod

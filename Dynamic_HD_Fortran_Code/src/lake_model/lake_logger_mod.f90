@@ -1,4 +1,4 @@
-module latlon_lake_logger_mod
+module lake_logger_mod
 
 use netcdf
 use check_return_code_netcdf_mod
@@ -12,7 +12,7 @@ integer, parameter :: first_logging_timestep = 99999
 integer, parameter :: maximum_output_per_timestep = 10000
 integer, parameter :: info_dump_timestep = 99999
 
-type latlon_lake_logger
+type lake_logger
   integer :: timestep
   integer, dimension(print_interval,4) :: lake_process_log
   real(dp) :: lake_volumes(print_interval)
@@ -21,24 +21,24 @@ type latlon_lake_logger
   integer :: timestep_total_output
   logical :: logging_status
   contains
-    procedure :: initialise_latlon_lake_logger
+    procedure :: initialise_lake_logger
     procedure :: increment_timestep
     procedure :: log_process
     procedure :: print_log
     procedure :: create_info_dump
-end type latlon_lake_logger
+end type lake_logger
 
-interface latlon_lake_logger
-  procedure :: latlon_lake_logger_constructor
-end interface latlon_lake_logger
+interface lake_logger
+  procedure :: lake_logger_constructor
+end interface lake_logger
 
-type(latlon_lake_logger),pointer :: global_lake_logger
+type(lake_logger),pointer :: global_lake_logger
 
 
 contains
 
-subroutine initialise_latlon_lake_logger(this)
-  class(latlon_lake_logger) :: this
+subroutine initialise_lake_logger(this)
+  class(lake_logger) :: this
     this%timestep = 0
     this%lake_process_log(:,:) = 0
     this%lake_volumes(:) = 0
@@ -46,14 +46,14 @@ subroutine initialise_latlon_lake_logger(this)
     this%logging_status = .false.
     this%log_position = 0
     this%timestep_total_output = 0
-end subroutine initialise_latlon_lake_logger
+end subroutine initialise_lake_logger
 
 subroutine delete_logger
     deallocate(global_lake_logger)
 end subroutine delete_logger
 
 subroutine increment_timestep(this)
-  class(latlon_lake_logger) :: this
+  class(lake_logger) :: this
     this%timestep = this%timestep+1
     if (this%logging_status) then
         call this%print_log()
@@ -72,7 +72,7 @@ end subroutine increment_timestep
 
 subroutine create_info_dump(this,water_to_lakes,lake_volumes, &
                             nlat,nlon,nlat_coarse,nlon_coarse)
-  class(latlon_lake_logger) :: this
+  class(lake_logger) :: this
   real(dp), dimension(:,:),pointer :: water_to_lakes
   real(dp), dimension(:,:),pointer :: lake_volumes
   integer ::  nlat,nlon,nlat_coarse,nlon_coarse
@@ -107,7 +107,7 @@ end subroutine create_info_dump
 
 subroutine log_process(this,lake_number,lake_center_lat,lake_center_lon, &
                        lake_type,lake_volume,process_name)
-  class(latlon_lake_logger) :: this
+  class(lake_logger) :: this
   integer :: lake_number
   integer :: lake_center_lat
   integer :: lake_center_lon
@@ -144,7 +144,7 @@ subroutine log_process(this,lake_number,lake_center_lat,lake_center_lon, &
 end subroutine
 
 subroutine print_log(this)
-  class(latlon_lake_logger) :: this
+  class(lake_logger) :: this
   integer :: i
     if (this%log_position > 0) then
       do i = 1,this%log_position
@@ -155,14 +155,14 @@ subroutine print_log(this)
     end if
 end subroutine print_log
 
-function latlon_lake_logger_constructor() result(constructor)
-  type(latlon_lake_logger),pointer :: constructor
+function lake_logger_constructor() result(constructor)
+  type(lake_logger),pointer :: constructor
     allocate(constructor)
-    call constructor%initialise_latlon_lake_logger()
-end function latlon_lake_logger_constructor
+    call constructor%initialise_lake_logger()
+end function lake_logger_constructor
 
 subroutine setup_logger()
-    global_lake_logger => latlon_lake_logger()
+    global_lake_logger => lake_logger()
 end subroutine setup_logger
 
 subroutine increment_timestep_wrapper()
@@ -196,4 +196,4 @@ function is_logging()
     is_logging = global_lake_logger%logging_status
 end function
 
-end module latlon_lake_logger_mod
+end module lake_logger_mod

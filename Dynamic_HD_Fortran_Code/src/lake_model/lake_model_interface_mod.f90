@@ -1,12 +1,12 @@
-module l2_lake_model_interface_mod
+module lake_model_interface_mod
 
-use l2_lake_model_mod
-use l2_lake_model_array_decoder_mod
-use l2_lake_model_input, only: config_lakes, load_lake_model_parameters, &
+use lake_model_mod
+use lake_model_array_decoder_mod
+use lake_model_input, only: config_lakes, load_lake_model_parameters, &
                                load_lake_initial_values
-! use l2_lake_model_io_mod
+! use lake_model_io_mod
 ! #ifdef USE_LOGGING
-!   use latlon_lake_logger_mod
+!   use lake_logger_mod
 ! #endif
 
 implicit none
@@ -352,4 +352,4 @@ function get_lake_volumes() result(lake_volumes)
     lake_volumes => get_lake_volume_list(global_lake_model_prognostics)
 end function get_lake_volumes
 
-end module l2_lake_model_interface_mod
+end module lake_model_interface_mod

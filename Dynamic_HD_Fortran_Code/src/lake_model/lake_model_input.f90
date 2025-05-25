@@ -1,7 +1,7 @@
-module l2_lake_model_input
+module lake_model_input
 
 use netcdf
-use l2_lake_model_mod
+use lake_model_mod
 use check_return_code_netcdf_mod
 use parameters_mod
 
@@ -251,4 +251,4 @@ function load_cell_areas_on_surface_model_grid(surface_cell_areas_filename, &
 
 end function load_cell_areas_on_surface_model_grid
 
-end module l2_lake_model_input
+end module lake_model_input

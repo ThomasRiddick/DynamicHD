@@ -1,4 +1,4 @@
-module  l2_calculate_lake_fractions_mod
+module  calculate_lake_fractions_mod
 
 implicit none
 
@@ -989,4 +989,4 @@ subroutine remove_pixel_by_coords(_COORDS_ARG_pixel_coords_, &
 end subroutine remove_pixel_by_coords
 
 
-end module  l2_calculate_lake_fractions_mod
+end module  calculate_lake_fractions_mod

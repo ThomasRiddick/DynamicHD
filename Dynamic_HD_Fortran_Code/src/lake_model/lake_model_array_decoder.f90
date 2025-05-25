@@ -1,6 +1,6 @@
-module l2_lake_model_array_decoder_mod
+module lake_model_array_decoder_mod
 
-use l2_lake_model_mod
+use lake_model_mod
 
 implicit none
 
@@ -253,5 +253,5 @@ function get_lake_parameters_from_array(array, &
     call finish_array(decoder)
 end
 
-end module l2_lake_model_array_decoder_mod
+end module lake_model_array_decoder_mod
 

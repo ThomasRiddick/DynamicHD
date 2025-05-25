@@ -1,9 +1,9 @@
-module l2_lake_model_output
+module lake_model_output
 
 use netcdf
 use check_return_code_netcdf_mod
 use parameters_mod
-use l2_calculate_lake_fractions_mod, only: dp
+use calculate_lake_fractions_mod, only: dp
 
 implicit none
 
@@ -207,4 +207,4 @@ subroutine write_binary_lake_mask_field(binary_lake_mask_filename, &
     deallocate(binary_lake_mask_int)
 end subroutine write_binary_lake_mask_field
 
-end module l2_lake_model_output
+end module lake_model_output

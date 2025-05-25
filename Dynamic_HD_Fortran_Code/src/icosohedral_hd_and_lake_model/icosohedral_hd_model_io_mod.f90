@@ -174,7 +174,7 @@ end function load_river_initial_values
 subroutine write_river_initial_values(hd_start_filename,river_parameters, &
                                       river_prognostic_fields)
   character(len = max_name_length) :: hd_start_filename
-  type(lakeparameters), pointer :: river_parameters
+  type(riverparameters), pointer :: river_parameters
   type(riverprognosticfields), pointer :: river_prognostic_fields
   integer :: ncid,varid_fgmem
   integer :: varid_flfmem,varid_frfmem,dimid
