@@ -1,4 +1,4 @@
-module latlon_lake_model_tree_test_mod
+module lake_model_tree_test_mod
 use fruit
 implicit none
 
@@ -11,7 +11,7 @@ contains
     end subroutine teardown
 
 subroutine testRootedTrees
-   use latlon_lake_model_tree_mod
+   use lake_model_tree_mod
    type(rooted_tree_forest), pointer :: dsets
    integer, dimension(:), pointer :: elements
    logical :: dummy
@@ -105,4 +105,4 @@ subroutine testRootedTrees
     deallocate(dsets)
 end subroutine testRootedTrees
 
-end module latlon_lake_model_tree_test_mod
+end module lake_model_tree_test_mod

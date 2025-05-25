@@ -1,4 +1,4 @@
-module l2_lake_model_array_decoder_test_mod
+module lake_model_array_decoder_test_mod
 
 use fruit
 implicit none
@@ -6,8 +6,8 @@ implicit none
 contains
 
 subroutine testArrayDecoderOneLake
-  use l2_lake_model_mod
-  use l2_lake_model_array_decoder_mod
+  use lake_model_mod
+  use lake_model_array_decoder_mod
   type(lakeparameterspointer), dimension(:), pointer :: lake_parameters
   real(dp), dimension(:), pointer :: lake_parameters_as_array
   integer, pointer, dimension(:) :: expected_outflow_keys
@@ -178,8 +178,8 @@ subroutine testArrayDecoderOneLake
 end subroutine testArrayDecoderOneLake
 
 subroutine testArrayDecoderTwoLakes
-  use l2_lake_model_mod
-  use l2_lake_model_array_decoder_mod
+  use lake_model_mod
+  use lake_model_array_decoder_mod
   type(lakeparameterspointer), dimension(:), pointer :: lake_parameters
   real(dp), dimension(:), pointer :: lake_parameters_as_array
   integer, pointer, dimension(:) :: expected_outflow_keys_lake_one
@@ -419,4 +419,4 @@ subroutine testArrayDecoderTwoLakes
     deallocate(lake_parameters)
 end subroutine testArrayDecoderTwoLakes
 
-end module l2_lake_model_array_decoder_test_mod
+end module lake_model_array_decoder_test_mod

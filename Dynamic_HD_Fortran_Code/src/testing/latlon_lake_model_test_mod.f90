@@ -1,4 +1,4 @@
-module l2_latlon_lake_model_test_mod
+module latlon_lake_model_test_mod
 
 use fruit
 implicit none
@@ -6,7 +6,7 @@ implicit none
 contains
 
 subroutine testRedirectDictionary1
-  use l2_lake_model_mod
+  use lake_model_mod
   type(redirectdictionary), pointer :: dict
   type(redirect), pointer :: redirect_in
   type(redirect), pointer :: redirect_out
@@ -21,7 +21,7 @@ subroutine testRedirectDictionary1
 end subroutine testRedirectDictionary1
 
 subroutine testRedirectDictionary2
-  use l2_lake_model_mod
+  use lake_model_mod
   type(redirectdictionary), pointer :: dict
   type(redirect), pointer :: redirect_in
   type(redirect), pointer :: redirect_out
@@ -44,7 +44,7 @@ subroutine testRedirectDictionary2
 end subroutine testRedirectDictionary2
 
 subroutine testRedirectDictionary3
-  use l2_lake_model_mod
+  use lake_model_mod
   type(redirectdictionary), pointer :: dict
   type(redirect), pointer :: redirect_in
   type(redirect), pointer :: redirect_out
@@ -87,7 +87,7 @@ subroutine testRedirectDictionary3
 end subroutine testRedirectDictionary3
 
 subroutine testRedirectDictionary4
-  use l2_lake_model_mod
+  use lake_model_mod
   type(redirectdictionary), pointer :: dict
   type(redirect), pointer :: redirect_in
   type(redirect), pointer :: redirect_out
@@ -107,7 +107,7 @@ subroutine testRedirectDictionary4
 end subroutine testRedirectDictionary4
 
 subroutine testRedirectDictionary5
-  use l2_lake_model_mod
+  use lake_model_mod
   type(redirectdictionary), pointer :: dict
   type(redirect), pointer :: redirect_in
   type(redirect), pointer :: redirect_out
@@ -127,7 +127,7 @@ subroutine testRedirectDictionary5
 end subroutine testRedirectDictionary5
 
 subroutine testRedirectDictionary6
-  use l2_lake_model_mod
+  use lake_model_mod
   type(redirectdictionary), pointer :: dict
   type(redirect), pointer :: redirect_in
   type(redirect), pointer :: redirect_out
@@ -325,23 +325,22 @@ end subroutine testRedirectDictionary6
 
 subroutine testLakeModel1
    use latlon_hd_model_interface_mod, only: run_hd_model, clean_hd_model, &
-                                            init_hd_model_for_testing => &
-                                            l2_init_hd_model_for_testing
-   use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_binary_lake_mask, &
-                                lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type, &
-                                get_lake_volume,clean_lake_model_prognostics, &
-                                clean_lakes
+                                            init_hd_model_for_testing
+   use lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
+                             calculate_binary_lake_mask, &
+                             lakepointer, dp, filling_lake_type, &
+                             overflowing_lake_type, subsumed_lake_type, &
+                             get_lake_volume,clean_lake_model_prognostics, &
+                             clean_lakes
 #ifdef TRANSPOSED_LAKE_MODEL
-   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
-                                                   calculate_diagnostic_lake_volumes_field
+   use lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                calculate_diagnostic_lake_volumes_field
 #else
-   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+   use lake_model_mod, only: calculate_diagnostic_lake_volumes_field
 #endif
-   use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
-                                          calculate_lake_fraction_on_surface_grid, &
-                                          clean_lake_model
+   use lake_model_interface_mod, only: get_lake_model_prognostics, &
+                                       calculate_lake_fraction_on_surface_grid, &
+                                       clean_lake_model
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
    implicit none
    integer :: nlat_hd, nlon_hd
@@ -919,23 +918,22 @@ end subroutine testLakeModel1
 
 subroutine testLakeModel2
    use latlon_hd_model_interface_mod, only: run_hd_model, clean_hd_model, &
-                                            init_hd_model_for_testing => &
-                                            l2_init_hd_model_for_testing
-   use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_binary_lake_mask, &
-                                lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type, &
-                                get_lake_volume,clean_lake_model_prognostics, &
-                                clean_lakes
+                                            init_hd_model_for_testing
+   use lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
+                             calculate_binary_lake_mask, &
+                             lakepointer, dp, filling_lake_type, &
+                             overflowing_lake_type, subsumed_lake_type, &
+                             get_lake_volume,clean_lake_model_prognostics, &
+                             clean_lakes
 #ifdef TRANSPOSED_LAKE_MODEL
-   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
-                                                   calculate_diagnostic_lake_volumes_field
+   use lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                calculate_diagnostic_lake_volumes_field
 #else
-   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+   use lake_model_mod, only: calculate_diagnostic_lake_volumes_field
 #endif
-   use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
-                                          calculate_lake_fraction_on_surface_grid, &
-                                          clean_lake_model
+   use lake_model_interface_mod, only: get_lake_model_prognostics, &
+                                       calculate_lake_fraction_on_surface_grid, &
+                                       clean_lake_model
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
    integer :: nlat_hd, nlon_hd
    integer :: nlat_surface, nlon_surface
@@ -2148,23 +2146,22 @@ end subroutine testLakeModel2
 
 subroutine testLakeModel3
    use latlon_hd_model_interface_mod, only: run_hd_model, clean_hd_model, &
-                                            init_hd_model_for_testing => &
-                                            l2_init_hd_model_for_testing
-   use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_binary_lake_mask, &
-                                lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type, &
-                                get_lake_volume,clean_lake_model_prognostics, &
-                                clean_lakes
+                                            init_hd_model_for_testing
+   use lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
+                             calculate_binary_lake_mask, &
+                             lakepointer, dp, filling_lake_type, &
+                             overflowing_lake_type, subsumed_lake_type, &
+                             get_lake_volume,clean_lake_model_prognostics, &
+                             clean_lakes
 #ifdef TRANSPOSED_LAKE_MODEL
-   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
-                                                   calculate_diagnostic_lake_volumes_field
+   use lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                calculate_diagnostic_lake_volumes_field
 #else
-   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+   use lake_model_mod, only: calculate_diagnostic_lake_volumes_field
 #endif
-   use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
-                                          calculate_lake_fraction_on_surface_grid, &
-                                          clean_lake_model
+   use lake_model_interface_mod, only: get_lake_model_prognostics, &
+                                       calculate_lake_fraction_on_surface_grid, &
+                                       clean_lake_model
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
    integer :: nlat_hd, nlon_hd
    integer :: nlat_surface, nlon_surface
@@ -2532,23 +2529,22 @@ end subroutine testLakeModel3
 
 subroutine testLakeModel4
    use latlon_hd_model_interface_mod, only: run_hd_model, clean_hd_model, &
-                                            init_hd_model_for_testing => &
-                                            l2_init_hd_model_for_testing
-   use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_binary_lake_mask, &
-                                lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type, &
-                                get_lake_volume,clean_lake_model_prognostics, &
-                                clean_lakes
+                                            init_hd_model_for_testing
+   use lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
+                             calculate_binary_lake_mask, &
+                             lakepointer, dp, filling_lake_type, &
+                             overflowing_lake_type, subsumed_lake_type, &
+                             get_lake_volume,clean_lake_model_prognostics, &
+                             clean_lakes
 #ifdef TRANSPOSED_LAKE_MODEL
-   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
-                                                   calculate_diagnostic_lake_volumes_field
+   use lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                calculate_diagnostic_lake_volumes_field
 #else
-   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+   use lake_model_mod, only: calculate_diagnostic_lake_volumes_field
 #endif
-   use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
-                                          calculate_lake_fraction_on_surface_grid, &
-                                          clean_lake_model
+   use lake_model_interface_mod, only: get_lake_model_prognostics, &
+                                       calculate_lake_fraction_on_surface_grid, &
+                                       clean_lake_model
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
    integer :: nlat_hd, nlon_hd
    integer :: nlat_surface, nlon_surface
@@ -3074,23 +3070,22 @@ end subroutine testLakeModel4
 
 subroutine testLakeModel5
    use latlon_hd_model_interface_mod, only: run_hd_model, clean_hd_model, &
-                                            init_hd_model_for_testing => &
-                                            l2_init_hd_model_for_testing
-   use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_binary_lake_mask, &
-                                lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type, &
-                                get_lake_volume,clean_lake_model_prognostics, &
-                                clean_lakes
+                                            init_hd_model_for_testing
+   use lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
+                             calculate_binary_lake_mask, &
+                             lakepointer, dp, filling_lake_type, &
+                             overflowing_lake_type, subsumed_lake_type, &
+                             get_lake_volume,clean_lake_model_prognostics, &
+                             clean_lakes
 #ifdef TRANSPOSED_LAKE_MODEL
-   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
-                                                   calculate_diagnostic_lake_volumes_field
+   use lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                calculate_diagnostic_lake_volumes_field
 #else
-   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+   use lake_model_mod, only: calculate_diagnostic_lake_volumes_field
 #endif
-   use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
-                                          calculate_lake_fraction_on_surface_grid, &
-                                          clean_lake_model
+   use lake_model_interface_mod, only: get_lake_model_prognostics, &
+                                       calculate_lake_fraction_on_surface_grid, &
+                                       clean_lake_model
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
    integer :: nlat_hd, nlon_hd
    integer :: nlat_surface, nlon_surface
@@ -3855,23 +3850,22 @@ end subroutine testLakeModel5
 
 subroutine testLakeModel6
    use latlon_hd_model_interface_mod, only: run_hd_model, clean_hd_model, &
-                                            init_hd_model_for_testing => &
-                                            l2_init_hd_model_for_testing
-   use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_binary_lake_mask, &
-                                lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type, &
-                                get_lake_volume,clean_lake_model_prognostics, &
-                                clean_lakes
+                                            init_hd_model_for_testing
+   use lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
+                             calculate_binary_lake_mask, &
+                             lakepointer, dp, filling_lake_type, &
+                             overflowing_lake_type, subsumed_lake_type, &
+                             get_lake_volume,clean_lake_model_prognostics, &
+                             clean_lakes
 #ifdef TRANSPOSED_LAKE_MODEL
-   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
-                                                   calculate_diagnostic_lake_volumes_field
+   use lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                calculate_diagnostic_lake_volumes_field
 #else
-   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+   use lake_model_mod, only: calculate_diagnostic_lake_volumes_field
 #endif
-   use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
-                                          calculate_lake_fraction_on_surface_grid, &
-                                          clean_lake_model
+   use lake_model_interface_mod, only: get_lake_model_prognostics, &
+                                       calculate_lake_fraction_on_surface_grid, &
+                                       clean_lake_model
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
    integer :: nlat_hd, nlon_hd
    integer :: nlat_surface, nlon_surface
@@ -4997,23 +4991,22 @@ end subroutine testLakeModel6
 
 subroutine testLakeModel7
    use latlon_hd_model_interface_mod, only: run_hd_model, clean_hd_model, &
-                                            init_hd_model_for_testing => &
-                                            l2_init_hd_model_for_testing
-   use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_binary_lake_mask, &
-                                lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type, &
-                                get_lake_volume,clean_lake_model_prognostics, &
-                                clean_lakes
+                                            init_hd_model_for_testing
+   use lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
+                             calculate_binary_lake_mask, &
+                             lakepointer, dp, filling_lake_type, &
+                             overflowing_lake_type, subsumed_lake_type, &
+                             get_lake_volume,clean_lake_model_prognostics, &
+                             clean_lakes
 #ifdef TRANSPOSED_LAKE_MODEL
-   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
-                                                   calculate_diagnostic_lake_volumes_field
+   use lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                calculate_diagnostic_lake_volumes_field
 #else
-   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+   use lake_model_mod, only: calculate_diagnostic_lake_volumes_field
 #endif
-   use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
-                                          calculate_lake_fraction_on_surface_grid, &
-                                          clean_lake_model
+   use lake_model_interface_mod, only: get_lake_model_prognostics, &
+                                       calculate_lake_fraction_on_surface_grid, &
+                                       clean_lake_model
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
    real(dp) :: seconds_per_day
    integer :: nlat_hd, nlon_hd
@@ -6138,23 +6131,22 @@ end subroutine testLakeModel7
 
 subroutine testLakeModel8
    use latlon_hd_model_interface_mod, only: run_hd_model, clean_hd_model, &
-                                            init_hd_model_for_testing => &
-                                            l2_init_hd_model_for_testing
-   use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_binary_lake_mask, &
-                                lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type, &
-                                get_lake_volume,clean_lake_model_prognostics, &
-                                clean_lakes
+                                            init_hd_model_for_testing
+   use lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
+                             calculate_binary_lake_mask, &
+                             lakepointer, dp, filling_lake_type, &
+                             overflowing_lake_type, subsumed_lake_type, &
+                             get_lake_volume,clean_lake_model_prognostics, &
+                             clean_lakes
 #ifdef TRANSPOSED_LAKE_MODEL
-   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
-                                                   calculate_diagnostic_lake_volumes_field
+   use lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                calculate_diagnostic_lake_volumes_field
 #else
-   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+   use lake_model_mod, only: calculate_diagnostic_lake_volumes_field
 #endif
-   use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
-                                          calculate_lake_fraction_on_surface_grid, &
-                                          clean_lake_model
+   use lake_model_interface_mod, only: get_lake_model_prognostics, &
+                                       calculate_lake_fraction_on_surface_grid, &
+                                       clean_lake_model
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
    real(dp) :: seconds_per_day
    integer :: nlat_hd, nlon_hd
@@ -8567,23 +8559,22 @@ end subroutine testLakeModel8
 
 subroutine testLakeModel9
    use latlon_hd_model_interface_mod, only: run_hd_model, clean_hd_model, &
-                                            init_hd_model_for_testing => &
-                                            l2_init_hd_model_for_testing
-   use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_binary_lake_mask, &
-                                lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type, &
-                                get_lake_volume,clean_lake_model_prognostics, &
-                                clean_lakes
+                                            init_hd_model_for_testing
+   use lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
+                             calculate_binary_lake_mask, &
+                             lakepointer, dp, filling_lake_type, &
+                             overflowing_lake_type, subsumed_lake_type, &
+                             get_lake_volume,clean_lake_model_prognostics, &
+                             clean_lakes
 #ifdef TRANSPOSED_LAKE_MODEL
-   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
-                                                   calculate_diagnostic_lake_volumes_field
+   use lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                calculate_diagnostic_lake_volumes_field
 #else
-   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+   use lake_model_mod, only: calculate_diagnostic_lake_volumes_field
 #endif
-   use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
-                                          calculate_lake_fraction_on_surface_grid, &
-                                          clean_lake_model
+   use lake_model_interface_mod, only: get_lake_model_prognostics, &
+                                       calculate_lake_fraction_on_surface_grid, &
+                                       clean_lake_model
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
    integer :: nlat_hd, nlon_hd
    integer :: nlat_surface, nlon_surface
@@ -9329,23 +9320,22 @@ end subroutine testLakeModel9
 
 subroutine testLakeModel10
    use latlon_hd_model_interface_mod, only: run_hd_model, clean_hd_model, &
-                                            init_hd_model_for_testing => &
-                                            l2_init_hd_model_for_testing
-   use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_binary_lake_mask, &
-                                lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type, &
-                                get_lake_volume,clean_lake_model_prognostics, &
-                                clean_lakes
+                                            init_hd_model_for_testing
+   use lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
+                             calculate_binary_lake_mask, &
+                             lakepointer, dp, filling_lake_type, &
+                             overflowing_lake_type, subsumed_lake_type, &
+                             get_lake_volume,clean_lake_model_prognostics, &
+                             clean_lakes
 #ifdef TRANSPOSED_LAKE_MODEL
-   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
-                                                   calculate_diagnostic_lake_volumes_field
+   use lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                calculate_diagnostic_lake_volumes_field
 #else
-   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+   use lake_model_mod, only: calculate_diagnostic_lake_volumes_field
 #endif
-   use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
-                                          calculate_lake_fraction_on_surface_grid, &
-                                          clean_lake_model
+   use lake_model_interface_mod, only: get_lake_model_prognostics, &
+                                       calculate_lake_fraction_on_surface_grid, &
+                                       clean_lake_model
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
    real(dp) :: seconds_per_day
    integer :: nlat_hd, nlon_hd
@@ -10586,23 +10576,22 @@ end subroutine testLakeModel10
 
 subroutine testLakeModel11
    use latlon_hd_model_interface_mod, only: run_hd_model, clean_hd_model, &
-                                            init_hd_model_for_testing => &
-                                            l2_init_hd_model_for_testing
-   use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_binary_lake_mask, &
-                                lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type, &
-                                get_lake_volume,clean_lake_model_prognostics, &
-                                clean_lakes
+                                            init_hd_model_for_testing
+   use lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
+                             calculate_binary_lake_mask, &
+                             lakepointer, dp, filling_lake_type, &
+                             overflowing_lake_type, subsumed_lake_type, &
+                             get_lake_volume,clean_lake_model_prognostics, &
+                             clean_lakes
 #ifdef TRANSPOSED_LAKE_MODEL
-   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
-                                                   calculate_diagnostic_lake_volumes_field
+   use lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                calculate_diagnostic_lake_volumes_field
 #else
-   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+   use lake_model_mod, only: calculate_diagnostic_lake_volumes_field
 #endif
-   use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
-                                          calculate_lake_fraction_on_surface_grid, &
-                                          clean_lake_model
+   use lake_model_interface_mod, only: get_lake_model_prognostics, &
+                                       calculate_lake_fraction_on_surface_grid, &
+                                       clean_lake_model
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
    real(dp) :: seconds_per_day
    integer :: nlat_hd, nlon_hd
@@ -11172,23 +11161,22 @@ end subroutine testLakeModel11
 
 subroutine testLakeModel12
    use latlon_hd_model_interface_mod, only: run_hd_model, clean_hd_model, &
-                                            init_hd_model_for_testing => &
-                                            l2_init_hd_model_for_testing
-   use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_binary_lake_mask, &
-                                lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type, &
-                                get_lake_volume,clean_lake_model_prognostics, &
-                                clean_lakes
+                                            init_hd_model_for_testing
+   use lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
+                             calculate_binary_lake_mask, &
+                             lakepointer, dp, filling_lake_type, &
+                             overflowing_lake_type, subsumed_lake_type, &
+                             get_lake_volume,clean_lake_model_prognostics, &
+                             clean_lakes
 #ifdef TRANSPOSED_LAKE_MODEL
-   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
-                                                   calculate_diagnostic_lake_volumes_field
+   use lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                calculate_diagnostic_lake_volumes_field
 #else
-   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+   use lake_model_mod, only: calculate_diagnostic_lake_volumes_field
 #endif
-   use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
-                                          calculate_lake_fraction_on_surface_grid, &
-                                          clean_lake_model
+   use lake_model_interface_mod, only: get_lake_model_prognostics, &
+                                       calculate_lake_fraction_on_surface_grid, &
+                                       clean_lake_model
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
    real(dp) :: seconds_per_day
    integer :: nlat_hd, nlon_hd
@@ -11735,23 +11723,22 @@ end subroutine testLakeModel12
 
 subroutine testLakeModel13
    use latlon_hd_model_interface_mod, only: run_hd_model, clean_hd_model, &
-                                            init_hd_model_for_testing => &
-                                            l2_init_hd_model_for_testing
-   use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_binary_lake_mask, &
-                                lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type, &
-                                get_lake_volume,clean_lake_model_prognostics, &
-                                clean_lakes
+                                            init_hd_model_for_testing
+   use lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
+                             calculate_binary_lake_mask, &
+                             lakepointer, dp, filling_lake_type, &
+                             overflowing_lake_type, subsumed_lake_type, &
+                             get_lake_volume,clean_lake_model_prognostics, &
+                             clean_lakes
 #ifdef TRANSPOSED_LAKE_MODEL
-   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
-                                                   calculate_diagnostic_lake_volumes_field
+   use lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                calculate_diagnostic_lake_volumes_field
 #else
-   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+   use lake_model_mod, only: calculate_diagnostic_lake_volumes_field
 #endif
-   use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
-                                          calculate_lake_fraction_on_surface_grid, &
-                                          clean_lake_model
+   use lake_model_interface_mod, only: get_lake_model_prognostics, &
+                                       calculate_lake_fraction_on_surface_grid, &
+                                       clean_lake_model
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
    real(dp) :: seconds_per_day
    integer :: nlat_hd, nlon_hd
@@ -12783,23 +12770,22 @@ end subroutine testLakeModel13
 
 subroutine testLakeModel14
    use latlon_hd_model_interface_mod, only: run_hd_model, clean_hd_model, &
-                                            init_hd_model_for_testing => &
-                                            l2_init_hd_model_for_testing
-   use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_binary_lake_mask, &
-                                lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type, &
-                                get_lake_volume,clean_lake_model_prognostics, &
-                                clean_lakes
+                                            init_hd_model_for_testing
+   use lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
+                             calculate_binary_lake_mask, &
+                             lakepointer, dp, filling_lake_type, &
+                             overflowing_lake_type, subsumed_lake_type, &
+                             get_lake_volume,clean_lake_model_prognostics, &
+                             clean_lakes
 #ifdef TRANSPOSED_LAKE_MODEL
-   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
-                                                   calculate_diagnostic_lake_volumes_field
+   use lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                calculate_diagnostic_lake_volumes_field
 #else
-   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+   use lake_model_mod, only: calculate_diagnostic_lake_volumes_field
 #endif
-   use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
-                                          calculate_lake_fraction_on_surface_grid, &
-                                          clean_lake_model
+   use lake_model_interface_mod, only: get_lake_model_prognostics, &
+                                       calculate_lake_fraction_on_surface_grid, &
+                                       clean_lake_model
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
    real(dp) :: seconds_per_day
    integer :: nlat_hd, nlon_hd
@@ -13361,23 +13347,22 @@ end subroutine testLakeModel14
 
 subroutine testLakeModel15
    use latlon_hd_model_interface_mod, only: run_hd_model, clean_hd_model, &
-                                            init_hd_model_for_testing => &
-                                            l2_init_hd_model_for_testing
-   use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_binary_lake_mask, &
-                                lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type, &
-                                get_lake_volume,clean_lake_model_prognostics, &
-                                clean_lakes
+                                            init_hd_model_for_testing
+   use lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
+                             calculate_binary_lake_mask, &
+                             lakepointer, dp, filling_lake_type, &
+                             overflowing_lake_type, subsumed_lake_type, &
+                             get_lake_volume,clean_lake_model_prognostics, &
+                             clean_lakes
 #ifdef TRANSPOSED_LAKE_MODEL
-   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
-                                                   calculate_diagnostic_lake_volumes_field
+   use lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                calculate_diagnostic_lake_volumes_field
 #else
-   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+   use lake_model_mod, only: calculate_diagnostic_lake_volumes_field
 #endif
-   use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
-                                          calculate_lake_fraction_on_surface_grid, &
-                                          clean_lake_model
+   use lake_model_interface_mod, only: get_lake_model_prognostics, &
+                                       calculate_lake_fraction_on_surface_grid, &
+                                       clean_lake_model
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
    real(dp) :: seconds_per_day
    integer :: nlat_hd, nlon_hd
@@ -13940,23 +13925,22 @@ end subroutine testLakeModel15
 
 subroutine testLakeModel16
    use latlon_hd_model_interface_mod, only: run_hd_model, clean_hd_model, &
-                                            init_hd_model_for_testing => &
-                                            l2_init_hd_model_for_testing
-   use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_binary_lake_mask, &
-                                lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type, &
-                                get_lake_volume,clean_lake_model_prognostics, &
-                                clean_lakes
+                                            init_hd_model_for_testing
+   use lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
+                             calculate_binary_lake_mask, &
+                             lakepointer, dp, filling_lake_type, &
+                             overflowing_lake_type, subsumed_lake_type, &
+                             get_lake_volume,clean_lake_model_prognostics, &
+                             clean_lakes
 #ifdef TRANSPOSED_LAKE_MODEL
-   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
-                                                   calculate_diagnostic_lake_volumes_field
+   use lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                calculate_diagnostic_lake_volumes_field
 #else
-   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+   use lake_model_mod, only: calculate_diagnostic_lake_volumes_field
 #endif
-   use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
-                                          calculate_lake_fraction_on_surface_grid, &
-                                          clean_lake_model
+   use lake_model_interface_mod, only: get_lake_model_prognostics, &
+                                       calculate_lake_fraction_on_surface_grid, &
+                                       clean_lake_model
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
    real(dp) :: seconds_per_day
    integer :: nlat_hd, nlon_hd
@@ -14982,23 +14966,22 @@ end subroutine testLakeModel16
 
 subroutine testLakeModel17
    use latlon_hd_model_interface_mod, only: run_hd_model, clean_hd_model, &
-                                            init_hd_model_for_testing => &
-                                            l2_init_hd_model_for_testing
-   use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_binary_lake_mask, &
-                                lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type, &
-                                get_lake_volume,clean_lake_model_prognostics, &
-                                clean_lakes
+                                            init_hd_model_for_testing
+   use lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
+                             calculate_binary_lake_mask, &
+                             lakepointer, dp, filling_lake_type, &
+                             overflowing_lake_type, subsumed_lake_type, &
+                             get_lake_volume,clean_lake_model_prognostics, &
+                             clean_lakes
 #ifdef TRANSPOSED_LAKE_MODEL
-   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
-                                                   calculate_diagnostic_lake_volumes_field
+   use lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                calculate_diagnostic_lake_volumes_field
 #else
-   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+   use lake_model_mod, only: calculate_diagnostic_lake_volumes_field
 #endif
-   use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
-                                          calculate_lake_fraction_on_surface_grid, &
-                                          clean_lake_model
+   use lake_model_interface_mod, only: get_lake_model_prognostics, &
+                                       calculate_lake_fraction_on_surface_grid, &
+                                       clean_lake_model
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
    integer :: nlat_hd, nlon_hd
    integer :: nlat_surface, nlon_surface
@@ -16896,23 +16879,22 @@ end subroutine testLakeModel17
 
 subroutine testLakeModel18
    use latlon_hd_model_interface_mod, only: run_hd_model, clean_hd_model, &
-                                            init_hd_model_for_testing => &
-                                            l2_init_hd_model_for_testing
-   use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_binary_lake_mask, &
-                                lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type, &
-                                get_lake_volume,clean_lake_model_prognostics, &
-                                clean_lakes
+                                            init_hd_model_for_testing
+   use lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
+                             calculate_binary_lake_mask, &
+                             lakepointer, dp, filling_lake_type, &
+                             overflowing_lake_type, subsumed_lake_type, &
+                             get_lake_volume,clean_lake_model_prognostics, &
+                             clean_lakes
 #ifdef TRANSPOSED_LAKE_MODEL
-   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
-                                                   calculate_diagnostic_lake_volumes_field
+   use lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                calculate_diagnostic_lake_volumes_field
 #else
-   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+   use lake_model_mod, only: calculate_diagnostic_lake_volumes_field
 #endif
-   use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
-                                          calculate_lake_fraction_on_surface_grid, &
-                                          clean_lake_model
+   use lake_model_interface_mod, only: get_lake_model_prognostics, &
+                                       calculate_lake_fraction_on_surface_grid, &
+                                       clean_lake_model
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
    integer :: nlat_hd, nlon_hd
    integer :: nlat_surface, nlon_surface
@@ -17349,23 +17331,22 @@ end subroutine testLakeModel18
 
 subroutine testLakeModel19
    use latlon_hd_model_interface_mod, only: run_hd_model, clean_hd_model, &
-                                            init_hd_model_for_testing => &
-                                            l2_init_hd_model_for_testing
-   use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_binary_lake_mask, &
-                                lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type, &
-                                get_lake_volume,clean_lake_model_prognostics, &
-                                clean_lakes
+                                            init_hd_model_for_testing
+   use lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
+                             calculate_binary_lake_mask, &
+                             lakepointer, dp, filling_lake_type, &
+                             overflowing_lake_type, subsumed_lake_type, &
+                             get_lake_volume,clean_lake_model_prognostics, &
+                             clean_lakes
 #ifdef TRANSPOSED_LAKE_MODEL
-   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
-                                                   calculate_diagnostic_lake_volumes_field
+   use lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                calculate_diagnostic_lake_volumes_field
 #else
-   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+   use lake_model_mod, only: calculate_diagnostic_lake_volumes_field
 #endif
-   use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
-                                          calculate_lake_fraction_on_surface_grid, &
-                                          clean_lake_model
+   use lake_model_interface_mod, only: get_lake_model_prognostics, &
+                                       calculate_lake_fraction_on_surface_grid, &
+                                       clean_lake_model
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
    real(dp) :: seconds_per_day
    integer :: nlat_hd, nlon_hd
@@ -20120,23 +20101,22 @@ end subroutine testLakeModel19
 
 subroutine testLakeModel20
    use latlon_hd_model_interface_mod, only: run_hd_model, clean_hd_model, &
-                                            init_hd_model_for_testing => &
-                                            l2_init_hd_model_for_testing
-   use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_binary_lake_mask, &
-                                lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type, &
-                                get_lake_volume,clean_lake_model_prognostics, &
-                                clean_lakes
+                                            init_hd_model_for_testing
+   use lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
+                             calculate_binary_lake_mask, &
+                             lakepointer, dp, filling_lake_type, &
+                             overflowing_lake_type, subsumed_lake_type, &
+                             get_lake_volume,clean_lake_model_prognostics, &
+                             clean_lakes
 #ifdef TRANSPOSED_LAKE_MODEL
-   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
-                                                   calculate_diagnostic_lake_volumes_field
+   use lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                calculate_diagnostic_lake_volumes_field
 #else
-   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+   use lake_model_mod, only: calculate_diagnostic_lake_volumes_field
 #endif
-   use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
-                                          calculate_lake_fraction_on_surface_grid, &
-                                          clean_lake_model
+   use lake_model_interface_mod, only: get_lake_model_prognostics, &
+                                       calculate_lake_fraction_on_surface_grid, &
+                                       clean_lake_model
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
    real(dp) :: seconds_per_day
    integer :: nlat_hd, nlon_hd
@@ -21608,23 +21588,22 @@ end subroutine testLakeModel20
 
 subroutine testLakeModel21
    use latlon_hd_model_interface_mod, only: run_hd_model, clean_hd_model, &
-                                            init_hd_model_for_testing => &
-                                            l2_init_hd_model_for_testing
-   use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_binary_lake_mask, &
-                                lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type, &
-                                get_lake_volume,clean_lake_model_prognostics, &
-                                clean_lakes
+                                            init_hd_model_for_testing
+   use lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
+                             calculate_binary_lake_mask, &
+                             lakepointer, dp, filling_lake_type, &
+                             overflowing_lake_type, subsumed_lake_type, &
+                             get_lake_volume,clean_lake_model_prognostics, &
+                             clean_lakes
 #ifdef TRANSPOSED_LAKE_MODEL
-   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
-                                                   calculate_diagnostic_lake_volumes_field
+   use lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                calculate_diagnostic_lake_volumes_field
 #else
-   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+   use lake_model_mod, only: calculate_diagnostic_lake_volumes_field
 #endif
-   use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
-                                          calculate_lake_fraction_on_surface_grid, &
-                                          clean_lake_model
+   use lake_model_interface_mod, only: get_lake_model_prognostics, &
+                                       calculate_lake_fraction_on_surface_grid, &
+                                       clean_lake_model
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
    real(dp) :: seconds_per_day
    integer :: nlat_hd, nlon_hd
@@ -22954,23 +22933,22 @@ end subroutine testLakeModel21
 
 subroutine testLakeModel22
      use latlon_hd_model_interface_mod, only: run_hd_model, clean_hd_model, &
-                                            init_hd_model_for_testing => &
-                                            l2_init_hd_model_for_testing
-   use l2_lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
-                                calculate_binary_lake_mask, &
-                                lakepointer, dp, filling_lake_type, &
-                                overflowing_lake_type, subsumed_lake_type, &
-                                get_lake_volume,clean_lake_model_prognostics, &
-                                clean_lakes
+                                            init_hd_model_for_testing
+   use lake_model_mod, only: lakemodelprognostics, lakemodelparameters, &
+                             calculate_binary_lake_mask, &
+                             lakepointer, dp, filling_lake_type, &
+                             overflowing_lake_type, subsumed_lake_type, &
+                             get_lake_volume,clean_lake_model_prognostics, &
+                             clean_lakes
 #ifdef TRANSPOSED_LAKE_MODEL
-   use l2_lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
-                                                   calculate_diagnostic_lake_volumes_field
+   use lake_model_interface_switcher_mod, only: transposedlakemodelparameters, &
+                                                calculate_diagnostic_lake_volumes_field
 #else
-   use l2_lake_model_mod, only: calculate_diagnostic_lake_volumes_field
+   use lake_model_mod, only: calculate_diagnostic_lake_volumes_field
 #endif
-   use l2_lake_model_interface_mod, only: get_lake_model_prognostics, &
-                                          calculate_lake_fraction_on_surface_grid, &
-                                          clean_lake_model
+   use lake_model_interface_mod, only: get_lake_model_prognostics, &
+                                       calculate_lake_fraction_on_surface_grid, &
+                                       clean_lake_model
    use latlon_hd_model_mod, only: riverparameters, riverprognosticfields
    real(dp) :: seconds_per_day
    integer :: nlat_hd, nlon_hd
@@ -26278,4 +26256,4 @@ subroutine testLakeModel22
       call clean_lake_model()
 end subroutine testLakeModel22
 
-end module l2_latlon_lake_model_test_mod
+end module latlon_lake_model_test_mod

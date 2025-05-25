@@ -1,8 +1,8 @@
-module l2_lake_model_input_test_mod
+module lake_model_input_test_mod
 
 use fruit
-use l2_lake_model_mod
-use l2_lake_model_input
+use lake_model_mod
+use lake_model_input
 
 implicit none
 
@@ -25,7 +25,7 @@ subroutine testLakeInputTests1
    integer :: nlat_surface,nlon_surface
    character(len = 500) :: lake_para_filepath
       !Without binary mask
-      lake_para_filepath = "l2_lake_model_para.nc"
+      lake_para_filepath = "lake_model_para.nc"
       call set_lake_parameters_filename(lake_para_filepath)
       nlat_lake = 20
       nlon_lake = 20
@@ -316,7 +316,7 @@ end subroutine testLakeInputTests1
    character(len = 500) :: lake_para_filepath
       !Without binary mask
       lake_para_filepath = &
-         "l2_lake_model_para_with_mask.nc"
+         "lake_model_para_with_mask.nc"
       call set_lake_parameters_filename(lake_para_filepath)
       nlat_lake = 20
       nlon_lake = 20
@@ -592,4 +592,4 @@ end subroutine testLakeInputTests1
       deallocate(lake_parameters_as_array)
  end subroutine testLakeInputTests2
 
-end module l2_lake_model_input_test_mod
+end module lake_model_input_test_mod
