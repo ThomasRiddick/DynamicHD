@@ -1282,7 +1282,219 @@ contains
     end subroutine loop_breaker_all_tests
 
     subroutine latlon_hd_and_lake_model_all_tests
-    use latlon_hd_and_lake_model_test_mod
+    use latlon_hd_model_test_mod
+    use lake_model_array_decoder_test_mod
+    use latlon_lake_model_test_mod
+    use calculate_lake_fractions_test_mod
+    use lake_model_input_test_mod
+
+
+        if (verbose) write (*,('(/A)')) "..running test: testArrayDecoderOneLake"
+        call set_unit_name('test_something')
+        call run_test_case(testArrayDecoderOneLake,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Array decoder test one lake")
+        else
+            call case_passed_xml("test_something","Array decoder test one lake")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testArrayDecoderTwoLakes"
+        call set_unit_name('test_something')
+        call run_test_case(testArrayDecoderTwoLakes,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Array decoder test two lake")
+        else
+            call case_passed_xml("test_something","Array decoder test two lakes")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeFractionCalculationTest1"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeFractionCalculationTest1,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake fraction calc 1")
+        else
+            call case_passed_xml("test_something","Lake fraction calc 1")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeFractionCalculationTest2"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeFractionCalculationTest2,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake fraction calc 2")
+        else
+            call case_passed_xml("test_something","Lake fraction calc 2")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeFractionCalculationTest3"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeFractionCalculationTest3,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake fraction calc 3")
+        else
+            call case_passed_xml("test_something","Lake fraction calc 3")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeFractionCalculationTest4"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeFractionCalculationTest4,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake fraction calc 4")
+        else
+            call case_passed_xml("test_something","Lake fraction calc 4")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeFractionCalculationTest5"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeFractionCalculationTest5,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake fraction calc 5")
+        else
+            call case_passed_xml("test_something","Lake fraction calc 5")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeFractionCalculationTest6"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeFractionCalculationTest6,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake fraction calc 6")
+        else
+            call case_passed_xml("test_something","Lake fraction calc 6")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeFractionCalculationTest7"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeFractionCalculationTest7,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake fraction calc 7")
+        else
+            call case_passed_xml("test_something","Lake fraction calc 7")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeFractionCalculationTest8"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeFractionCalculationTest8,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake fraction calc 8")
+        else
+            call case_passed_xml("test_something","Lake fraction calc 8")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeFractionCalculationTest9"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeFractionCalculationTest9,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake fraction calc 9")
+        else
+            call case_passed_xml("test_something","Lake fraction calc 9")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeFractionCalculationTest10"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeFractionCalculationTest10,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake fraction calc 10")
+        else
+            call case_passed_xml("test_something","Lake fraction calc 10")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeFractionCalculationTest11"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeFractionCalculationTest11,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake fraction calc 11")
+        else
+            call case_passed_xml("test_something","Lake fraction calc 11")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeFractionCalculationTest12"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeFractionCalculationTest12,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake fraction calc 12")
+        else
+            call case_passed_xml("test_something","Lake fraction calc 12")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeFractionCalculationTest13"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeFractionCalculationTest13,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake fraction calc 13")
+        else
+            call case_passed_xml("test_something","Lake fraction calc 13")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeFractionCalculationTest14"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeFractionCalculationTest14,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake fraction calc 14")
+        else
+            call case_passed_xml("test_something","Lake fraction calc 14")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeFractionCalculationTest15"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeFractionCalculationTest15,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake fraction calc 15")
+        else
+            call case_passed_xml("test_something","Lake fraction calc 15")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeFractionCalculationTest16"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeFractionCalculationTest16,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake fraction calc 16")
+        else
+            call case_passed_xml("test_something","Lake fraction calc 16")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeFractionCalculationTest17"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeFractionCalculationTest17,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake fraction calc 17")
+        else
+            call case_passed_xml("test_something","Lake fraction calc 17")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeFractionCalculationTest18"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeFractionCalculationTest18,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake fraction calc 18")
+        else
+            call case_passed_xml("test_something","Lake fraction calc 18")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeFractionCalculationTest19"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeFractionCalculationTest19,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake fraction calc 19")
+        else
+            call case_passed_xml("test_something","Lake fraction calc 19")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeFractionCalculationTest20"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeFractionCalculationTest20,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake fraction calc 20")
+        else
+            call case_passed_xml("test_something","Lake fraction calc 20")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeFractionCalculationTest21"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeFractionCalculationTest21,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake fraction calc 21")
+        else
+            call case_passed_xml("test_something","Lake fraction calc 21")
+        end if
 
         call setup
         if (verbose) write (*,('(/A)')) "..running test: testHdModel"
@@ -1295,7 +1507,61 @@ contains
         end if
         call teardown
 
-        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testRedirectDictionary1"
+        call set_unit_name('test_something')
+        call run_test_case(testRedirectDictionary1,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Redirect Dictionary test 1")
+        else
+            call case_passed_xml("test_something","Redirect Dictionary test 1")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testRedirectDictionary2"
+        call set_unit_name('test_something')
+        call run_test_case(testRedirectDictionary2,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Redirect Dictionary test 2")
+        else
+            call case_passed_xml("test_something","Redirect Dictionary test 2")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testRedirectDictionary3"
+        call set_unit_name('test_something')
+        call run_test_case(testRedirectDictionary3,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Redirect Dictionary test 3")
+        else
+            call case_passed_xml("test_something","Redirect Dictionary test 3")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testRedirectDictionary4"
+        call set_unit_name('test_something')
+        call run_test_case(testRedirectDictionary4,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Redirect Dictionary test 4")
+        else
+            call case_passed_xml("test_something","Redirect Dictionary test 4")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testRedirectDictionary5"
+        call set_unit_name('test_something')
+        call run_test_case(testRedirectDictionary5,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Redirect Dictionary test 5")
+        else
+            call case_passed_xml("test_something","Redirect Dictionary test 5")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testRedirectDictionary6"
+        call set_unit_name('test_something')
+        call run_test_case(testRedirectDictionary6,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Redirect Dictionary test 6")
+        else
+            call case_passed_xml("test_something","Redirect Dictionary test 6")
+        end if
+
+        !call setup
         if (verbose) write (*,('(/A)')) "..running test: testLakeModel1"
         call set_unit_name('test_something')
         call run_test_case(testLakeModel1,'test_something')
@@ -1304,9 +1570,9 @@ contains
         else
             call case_passed_xml("test_something","Lake Model test 1")
         end if
-        call teardown
+        !call teardown
 
-        call setup
+        !call setup
         if (verbose) write (*,('(/A)')) "..running test: testLakeModel2"
         call set_unit_name('test_something')
         call run_test_case(testLakeModel2,'test_something')
@@ -1315,10 +1581,10 @@ contains
         else
             call case_passed_xml("test_something","Lake Model test 2")
         end if
-        call teardown
+        !call teardown
 
 
-        call setup
+        !call setup
         if (verbose) write (*,('(/A)')) "..running test: testLakeModel3"
         call set_unit_name('Lake model with Evaporation')
         call run_test_case(testLakeModel3,'Lake model with evaporation')
@@ -1327,9 +1593,9 @@ contains
         else
             call case_passed_xml("test_something","Lake Model test 3")
         end if
-        call teardown
+        !call teardown
 
-        call setup
+        !call setup
         if (verbose) write (*,('(/A)')) "..running test: testLakeModel4"
         call set_unit_name('Lake model with Evaporation')
         call run_test_case(testLakeModel4,'Lake model with evaporation')
@@ -1338,9 +1604,9 @@ contains
         else
             call case_passed_xml("test_something","Lake Model test 4")
         end if
-        call teardown
+        !call teardown
 
-        call setup
+        !call setup
         if (verbose) write (*,('(/A)')) "..running test: testLakeModel5"
         call set_unit_name('Lake model with Evaporation')
         call run_test_case(testLakeModel5,'Lake model with evaporation')
@@ -1349,9 +1615,9 @@ contains
         else
             call case_passed_xml("test_something","Lake Model test 5")
         end if
-        call teardown
+        !call teardown
 
-        call setup
+        !call setup
         if (verbose) write (*,('(/A)')) "..running test: testLakeModel6"
         call set_unit_name('Lake model with Evaporation')
         call run_test_case(testLakeModel6,'Lake model with evaporation')
@@ -1360,9 +1626,9 @@ contains
         else
             call case_passed_xml("test_something","Lake Model test 6")
         end if
-        call teardown
+        !call teardown
 
-        call setup
+        !call setup
         if (verbose) write (*,('(/A)')) "..running test: testLakeModel7"
         call set_unit_name('Lake model with Evaporation')
         call run_test_case(testLakeModel7,'Lake model with evaporation')
@@ -1371,9 +1637,9 @@ contains
         else
             call case_passed_xml("test_something","Lake Model test 7")
         end if
-        call teardown
+        !call teardown
 
-        call setup
+        !call setup
         if (verbose) write (*,('(/A)')) "..running test: testLakeModel8"
         call set_unit_name('Lake model with Evaporation')
         call run_test_case(testLakeModel8,'Lake model with evaporation')
@@ -1382,9 +1648,9 @@ contains
         else
             call case_passed_xml("test_something","Lake Model test 8")
         end if
-        call teardown
+        !call teardown
 
-        call setup
+        !call setup
         if (verbose) write (*,('(/A)')) "..running test: testLakeModel9"
         call set_unit_name('Lake model with Evaporation')
         call run_test_case(testLakeModel9,'Lake model with evaporation')
@@ -1393,9 +1659,9 @@ contains
         else
             call case_passed_xml("test_something","Lake Model test 9")
         end if
-        call teardown
+        !call teardown
 
-        call setup
+        !call setup
         if (verbose) write (*,('(/A)')) "..running test: testLakeModel10"
         call set_unit_name('Lake model with Evaporation')
         call run_test_case(testLakeModel10,'Lake model with evaporation')
@@ -1404,9 +1670,9 @@ contains
         else
             call case_passed_xml("test_something","Lake Model test 10")
         end if
-        call teardown
+        !call teardown
 
-        call setup
+        !call setup
         if (verbose) write (*,('(/A)')) "..running test: testLakeModel11"
         call set_unit_name('Lake model with Evaporation')
         call run_test_case(testLakeModel11,'Lake model with evaporation')
@@ -1415,9 +1681,9 @@ contains
         else
             call case_passed_xml("test_something","Lake Model test 11")
         end if
-        call teardown
+        !call teardown
 
-        call setup
+        !call setup
         if (verbose) write (*,('(/A)')) "..running test: testLakeModel12"
         call set_unit_name('Lake model with Evaporation')
         call run_test_case(testLakeModel12,'Lake model with evaporation')
@@ -1426,9 +1692,9 @@ contains
         else
             call case_passed_xml("test_something","Lake Model test 12")
         end if
-        call teardown
+        !call teardown
 
-        call setup
+        !call setup
         if (verbose) write (*,('(/A)')) "..running test: testLakeModel13"
         call set_unit_name('Lake model with Evaporation')
         call run_test_case(testLakeModel13,'Lake model with evaporation')
@@ -1437,9 +1703,9 @@ contains
         else
             call case_passed_xml("test_something","Lake Model test 13")
         end if
-        call teardown
+        !call teardown
 
-        call setup
+        !call setup
         if (verbose) write (*,('(/A)')) "..running test: testLakeModel14"
         call set_unit_name('Lake model with Evaporation')
         call run_test_case(testLakeModel14,'Lake model with evaporation')
@@ -1448,9 +1714,9 @@ contains
         else
             call case_passed_xml("test_something","Lake Model test 14")
         end if
-        call teardown
+        !call teardown
 
-        call setup
+        !call setup
         if (verbose) write (*,('(/A)')) "..running test: testLakeModel15"
         call set_unit_name('Lake model with Evaporation')
         call run_test_case(testLakeModel15,'Lake model with evaporation')
@@ -1459,9 +1725,9 @@ contains
         else
             call case_passed_xml("test_something","Lake Model test 15")
         end if
-        call teardown
+        !call teardown
 
-        call setup
+        !call setup
         if (verbose) write (*,('(/A)')) "..running test: testLakeModel16"
         call set_unit_name('Lake model with Evaporation')
         call run_test_case(testLakeModel16,'Lake model with evaporation')
@@ -1470,9 +1736,9 @@ contains
         else
             call case_passed_xml("test_something","Lake Model test 16")
         end if
-        call teardown
+        !call teardown
 
-        call setup
+        !call setup
         if (verbose) write (*,('(/A)')) "..running test: testLakeModel17"
         call set_unit_name('Lake model with Evaporation')
         call run_test_case(testLakeModel17,'Lake model with evaporation')
@@ -1481,9 +1747,9 @@ contains
         else
             call case_passed_xml("test_something","Lake Model test 17")
         end if
-        call teardown
+        !call teardown
 
-        call setup
+        !call setup
         if (verbose) write (*,('(/A)')) "..running test: testLakeModel18"
         call set_unit_name('Lake model')
         call run_test_case(testLakeModel18,'Lake model')
@@ -1492,35 +1758,72 @@ contains
         else
             call case_passed_xml("test_something","Lake Model test 18")
         end if
-        call teardown
+        !call teardown
 
-        call setup
-        if (verbose) write (*,('(/A)')) "..running test: testLakeNumberRetrieval"
-        call set_unit_name('Retreive lake numbers')
-        call run_test_case(testLakeNumberRetrieval,'Retrieve lake numbers from lake parameters')
+        !call setup
+        if (verbose) write (*,('(/A)')) "..running test: testLakeModel19"
+        call set_unit_name('Lake model')
+        call run_test_case(testLakeModel19,'Lake model')
         if (.not. is_case_passed()) then
-            call case_failed_xml("test_something","Lake Number Retrieval Test")
+            call case_failed_xml("test_something","Lake Model test 19")
         else
-            call case_passed_xml("test_something","Lake Number Retrieval Test")
+            call case_passed_xml("test_something","Lake Model test 19")
         end if
-        call teardown
+        !call teardown
 
-
-        call setup
-        if (verbose) write (*,('(/A)')) "..running test: testReadMergesFromArray"
-        call set_unit_name('Test reading merges from the array')
-        call run_test_case(testReadMergesFromArray,'Test reading merges from the array')
+        !call setup
+        if (verbose) write (*,('(/A)')) "..running test: testLakeModel20"
+        call set_unit_name('Lake model')
+        call run_test_case(testLakeModel20,'Lake model')
         if (.not. is_case_passed()) then
-            call case_failed_xml("test_something","Merge Reading Test")
+            call case_failed_xml("test_something","Lake Model test 20")
         else
-            call case_passed_xml("test_something","Merge Reading Testt")
+            call case_passed_xml("test_something","Lake Model test 20")
         end if
-        call teardown
+        !call teardown
+
+        !call setup
+        if (verbose) write (*,('(/A)')) "..running test: testLakeModel21"
+        call set_unit_name('Lake model')
+        call run_test_case(testLakeModel21,'Lake model')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake Model test 21")
+        else
+            call case_passed_xml("test_something","Lake Model test 21")
+        end if
+        !call teardown
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeModel22"
+        call set_unit_name('Lake model')
+        call run_test_case(testLakeModel22,'Lake model')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake Model test 22")
+        else
+            call case_passed_xml("test_something","Lake Model test 22")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeInputTests1"
+        call set_unit_name('Lake model')
+        call run_test_case(testLakeInputTests1,'Lake model')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake Model Input Test 1")
+        else
+            call case_passed_xml("test_something","Lake Model Input Test 1")
+        end if
+
+        if (verbose) write (*,('(/A)')) "..running test: testLakeInputTests2"
+        call set_unit_name('Lake model')
+        call run_test_case(testLakeInputTests2,'Lake model')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake Model Input Test 2")
+        else
+            call case_passed_xml("test_something","Lake Model Input Test 2")
+        end if
 
     end subroutine latlon_hd_and_lake_model_all_tests
 
     subroutine latlon_lake_model_tree_all_tests
-    use latlon_lake_model_tree_test_mod
+    use lake_model_tree_test_mod
 
         call setup
         if (verbose) write (*,('(/A)')) "..running test: testRootedTrees"
@@ -1535,23 +1838,7 @@ contains
 
     end subroutine latlon_lake_model_tree_all_tests
 
-    subroutine latlon_lake_model_merges_io_tests
-    use latlon_lake_model_merges_io_test_mod
-
-        call setup
-        if (verbose) write (*,('(/A)')) "..running test: testMergeIO"
-        call set_unit_name('Test rooted trees')
-        call run_test_case(testLakeModelMergeIO,'Test loading merge data')
-        if (.not. is_case_passed()) then
-            call case_failed_xml("test_something","Merge Data Loading Test")
-        else
-            call case_passed_xml("test_something","Merge Data Loading Test")
-        end if
-        call teardown
-
-    end subroutine latlon_lake_model_merges_io_tests
-
-    subroutine icosohedral_hd_and_lake_model_all_tests
+    subroutine icosohedral_hd_model_all_tests
     use icosohedral_hd_and_lake_model_test_mod
 
         call setup
@@ -1565,52 +1852,7 @@ contains
         end if
         call teardown
 
-        call setup
-        if (verbose) write (*,('(/A)')) "..running test: testLakeModel1 - ICON grid"
-        call set_unit_name('test_something')
-        call run_test_case(testLakeModel1,'test_something')
-        if (.not. is_case_passed()) then
-            call case_failed_xml("test_something","Lake Model test 1")
-        else
-            call case_passed_xml("test_something","Lake Model test 1")
-        end if
-        call teardown
-
-        call setup
-        if (verbose) write (*,('(/A)')) "..running test: testLakeModel2 - ICON grid"
-        call set_unit_name('test_something')
-        call run_test_case(testLakeModel2,'test_something')
-        if (.not. is_case_passed()) then
-            call case_failed_xml("test_something","Lake Model test 2")
-        else
-            call case_passed_xml("test_something","Lake Model test 2")
-        end if
-        call teardown
-
-
-        call setup
-        if (verbose) write (*,('(/A)')) "..running test: testLakeModel3 - ICON grid"
-        call set_unit_name('Lake model with Evaporation')
-        call run_test_case(testLakeModel3,'Lake model with evaporation')
-        if (.not. is_case_passed()) then
-            call case_failed_xml("test_something","Lake Model test 3")
-        else
-            call case_passed_xml("test_something","Lake Model test 3")
-        end if
-        call teardown
-
-        call setup
-        if (verbose) write (*,('(/A)')) "..running test: testLakeModel4 - ICON grid"
-        call set_unit_name('Lake model with Evaporation')
-        call run_test_case(testLakeModel4,'Lake model with evaporation')
-        if (.not. is_case_passed()) then
-            call case_failed_xml("test_something","Lake Model test 4")
-        else
-            call case_passed_xml("test_something","Lake Model test 4")
-        end if
-        call teardown
-
-    end subroutine icosohedral_hd_and_lake_model_all_tests
+    end subroutine icosohedral_hd_all_tests
 
     subroutine map_non_coincident_grids_all_tests
         use map_non_coincident_grids_test_mod
