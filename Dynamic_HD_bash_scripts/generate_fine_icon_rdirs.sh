@@ -34,7 +34,7 @@ python ${drivers_path}/determine_river_directions_icon_driver.py ${next_cell_ind
 if $bifurcate_rivers_flag ; then
   python ${drivers_path}/accumulate_flow_icon_driver.py ${grid_file} ${next_cell_index_file%%.nc}_temp.nc ${output_accumulated_flow_file%%.nc}_temp.nc "next_cell_index"
 
-  python ${drivers_path}/bifurcate_rivers_basic_icon_driver.py ${next_cell_index_file%%.nc}_temp.nc ${output_accumulated_flow_file%%.nc}_temp.nc ${lsmask_file} ${output_number_of_outflows_file} ${next_cell_index_file} ${output_next_cell_index_bifurcated_file} ${grid_file} ${input_mouth_position_file} "next_cell_index" "acc" ${input_lsmask_fieldname} 10 11 0.1
+  python ${drivers_path}/bifurcate_rivers_basic_icon_driver.py --remove-main-channel ${next_cell_index_file%%.nc}_temp.nc ${output_accumulated_flow_file%%.nc}_temp.nc ${lsmask_file} ${output_number_of_outflows_file} ${next_cell_index_file} ${output_next_cell_index_bifurcated_file} ${grid_file} ${input_mouth_position_file} "next_cell_index" "acc" ${input_lsmask_fieldname} 10 11 0.1
 else
    mv ${next_cell_index_file%%.nc}_temp.nc ${next_cell_index_file}
 fi

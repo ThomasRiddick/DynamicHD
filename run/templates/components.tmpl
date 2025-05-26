@@ -62,11 +62,13 @@ cd ${working_directory}
 
 {% macro set_variables_post_user_input() %}
 icon_atmo_grid_res=$(echo ${icon_atmo_grid_res} | tr [:upper] [:lower] | tr -d 0)
-etop01_filepath=/work/mh1421/m300468/data/ETOPO1_Ice_g_gmt4_grid_registered.nc
 config_filepath=${working_directory}/bash_script.cfg
 python_config_filepath=${working_directory}/python_script.cfg
 binary_lsmask_filepath=${working_directory}/binary_lsmask.nc
+{% if not input.high_res %}
+etop01_filepath=/work/mh1421/m300468/data/ETOPO1_Ice_g_gmt4_grid_registered.nc
 orography_filepath=${working_directory}/orography.nc
+{% endif %}
 max_land_binary_lsmask_filepath=${working_directory}/maxl_binary_lsmask.nc
 if [[ ${icon_atmo_grid_res} == "r2b3" ]] || [[ ${icon_atmo_grid_res} == "r2b4" ]] ||
    [[ ${icon_atmo_grid_res} == "r2b5" ]] || [[ ${icon_atmo_grid_res} == "r2b6" ]]; then
@@ -91,8 +93,14 @@ fi
 true_sinks_filepath_default=/work/mh1421/m300468/data/true_sinks_field_version_41.nc
 if ${use_true_sinks}; then
   true_sinks_filepath=${true_sinks_filepath:-${true_sinks_filepath_default}}
+{% if input.high_res %}
+  true_sinks_on_icon_grid_filepath=${working_directory}/true_sinks_on_icon_grid.nc
+{% endif %}
 else
   true_sinks_filepath=
+{% if input.high_res %}
+  true_sinks_on_icon_grid_filepath=
+{% endif %}
 fi
 
 {% if input.high_res %}
@@ -202,7 +210,18 @@ else
   exit 1
 fi
 
+{% if input.high_res %}
+#Transfer true sinks to atmospheric icon grid
+if ${use_true_sinks}; then
+cmd="julia ${repository_path}/src/julia_src/cross_grid_true_sink_transfer_tool/TransferTrueSinksToIconGridDriver.jl -g ${icon_grid_filepath} -i ${true_sinks_filepath} -f true_sinks -o ${true_sinks_on_icon_grid_filepath}"
+echo "Running"
+echo ${cmd}
+eval ${cmd}
+fi
+{% else %}
+#Remap orography to icon grid
 cdo remapbil,${icon_grid_filepath} ${etop01_filepath} ${orography_filepath}
+{% endif %}
 {%- endmacro -%}
 
 {% macro run() %}
@@ -210,7 +229,7 @@ cdo remapbil,${icon_grid_filepath} ${etop01_filepath} ${orography_filepath}
 {% if input.high_res %}
 if ! ${use_existing_river_mouth_position_file} && ${use_river_bifurcation} ; then
   #Determine non-bifurcated river direction and cumulative flow
-  cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh --rdirs-only ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_filepath} z cell_sea_land_mask true_sinks ${output_hdpara_filepath%%.nc}_non_bifurcated_rdirs_only.nc ${output_catchments_filepath%%.nc}_non_bifurcated.nc ${output_accumulated_flow_filepath%%.nc}_non_bifurcated.nc  ${config_filepath} ${working_directory} ${icon_grid_filepath} ${icon_atmo_grid_res} False"
+  cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh --rdirs-only ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_on_icon_grid_filepath} elevation cell_sea_land_mask true_sinks ${output_hdpara_filepath%%.nc}_non_bifurcated_rdirs_only.nc ${output_catchments_filepath%%.nc}_non_bifurcated.nc ${output_accumulated_flow_filepath%%.nc}_non_bifurcated.nc  ${config_filepath} ${working_directory} ${icon_grid_filepath} ${icon_atmo_grid_res} False"
   echo "Running (for non-bifurcated river directions - initial step):"
   echo ${cmd}
   eval ${cmd}
@@ -223,9 +242,9 @@ if ! ${use_existing_river_mouth_position_file} && ${use_river_bifurcation} ; the
 fi
 #Run bifurcated hdpara file generation
 if ${use_river_bifurcation} ; then
-  cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_filepath} z cell_sea_land_mask true_sinks ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} ${icon_atmo_grid_res} False True ${river_mouth_position_filepath}"
+  cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_on_icon_grid_filepath} elevation cell_sea_land_mask true_sinks ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} ${icon_atmo_grid_res} False True ${river_mouth_position_filepath}"
 else
-  cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_filepath} z cell_sea_land_mask true_sinks ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} ${icon_atmo_grid_res} False"
+  cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_on_icon_grid_filepath} elevation cell_sea_land_mask true_sinks ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} ${icon_atmo_grid_res} False"
 fi
 {% else %}
 cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath} ${config_filepath} ${working_directory} ${icon_grid_filepath} ${repository_path}/Dynamic_HD_Resources/cotat_plus_standard_params.nl ${icon_atmo_grid_res} False ${use_hfrac} ${max_land_binary_lsmask_filepath} ${true_sinks_filepath}"

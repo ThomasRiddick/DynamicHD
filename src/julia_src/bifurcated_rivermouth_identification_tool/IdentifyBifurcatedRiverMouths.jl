@@ -87,17 +87,17 @@ struct RiverDelta
 	end
 end
 
-function find_cells_on_line_section(line_section::@NamedTuple{start_point::
-																														  @NamedTuple{lat::Float64,
-																																				  lon::Float64},
-																															end_point::
-																															@NamedTuple{lat::Float64,
-																																			    lon::Float64}},
+function find_cells_on_line_section(line_section::Line,
 																		cells::Cells)
+	displacement::Float64 = 0.001
+	displaced_line_section::Line = (start_point=(lat=line_section.start_point.lat+displacement,
+	                          						 			 lon=line_section.start_point.lon+displacement),
+				 						 			  			end_point=(lat=line_section.end_point.lat+displacement,
+	                          					       lon=line_section.end_point.lon+displacement))
 	min_lat::Float64 = min(line_section.start_point.lat,line_section.end_point.lat)
-	max_lat::Float64 = max(line_section.start_point.lat,line_section.end_point.lat)
+	max_lat::Float64 = max(line_section.start_point.lat,line_section.end_point.lat) + displacement
 	min_lon::Float64 = min(line_section.start_point.lon,line_section.end_point.lon)
-	max_lon::Float64 = max(line_section.start_point.lon,line_section.end_point.lon)
+	max_lon::Float64 = max(line_section.start_point.lon,line_section.end_point.lon) + displacement
 	local is_wrapped_line::Bool
 	if abs(max_lon - min_lon) > 180.0
 			new_min_lon::Float64 = max_lon
@@ -122,6 +122,15 @@ function find_cells_on_line_section(line_section::@NamedTuple{start_point::
 	for i in filtered_cell_indices
 		#Note the map is over the set of vertices of a given triangle
 		if check_if_line_section_intersects_cell(line_section,
+																						 is_wrapped_line,
+																						 map(cell_vertex_coords::
+																								 @NamedTuple{lats::Array{Float64},
+																									           lons::Array{Float64}} ->
+																								 (lat=cell_vertex_coords.lats[i],
+																									lon=cell_vertex_coords.lons[i]),
+																								 cells.cell_vertices),
+																						 cells.is_wrapped_cell[i]) ||
+			 check_if_line_section_intersects_cell(displaced_line_section,
 																						 is_wrapped_line,
 																						 map(cell_vertex_coords::
 																								 @NamedTuple{lats::Array{Float64},
@@ -162,21 +171,14 @@ function check_if_line_section_passes_within_cell_extremes(cell_min_lat::Float64
 	return is_in_bounds
 end
 
-function check_if_line_section_intersects_cell(input_line_section::@NamedTuple{
-																							 		start_point::@NamedTuple{lat::Float64,
-										     																									 lon::Float64},
-							 		 																end_point::@NamedTuple{lat::Float64,
-									             																					 lon::Float64}},
+function check_if_line_section_intersects_cell(input_line_section::Line,
 									             								 is_wrapped_line::Bool,
 					       															 input_cell_vertices::Array{
 					       															 		@NamedTuple{lat::Float64,
 					       															 								lon::Float64}},
 					       															 is_wrapped_cell::Bool)
 	local cell_vertices::Array{@NamedTuple{lat::Float64,lon::Float64}}
-	local line_section::@NamedTuple{start_point::@NamedTuple{lat::Float64,
-										     																	 lon::Float64},
-							 		 								end_point::@NamedTuple{lat::Float64,
-									             													 lon::Float64}}
+	local line_section::Line
 	if is_wrapped_line
 		line_section = (start_point = (lat = input_line_section.start_point.lat,
 		                               lon = input_line_section.start_point.lon < 0.0 ?
@@ -232,12 +234,7 @@ function check_if_line_section_intersects_cell(input_line_section::@NamedTuple{
 	return intersection_found
 end
 
-function check_if_line_intersects_cell(line::@NamedTuple{start_point::
-							 																					 @NamedTuple{lat::Float64,
-								     																					       lon::Float64},
-							 																					 end_point::
-							 																					 @NamedTuple{lat::Float64,
-								     																								 lon::Float64}},
+function check_if_line_intersects_cell(line::Line,
 				       												 cell_vertices::Array{@NamedTuple{lat::Float64,
 																																				lon::Float64}})
 	norm_det_sum::Int64 = 0
@@ -282,20 +279,13 @@ function calculate_separation_measure(cell_index::CartesianIndex,cells::Cells,
 end
 
 function search_for_river_mouth_location_on_line_section(
-																line_section::@NamedTuple{
-																	start_point::@NamedTuple{lat::Float64,lon::Float64},
-																	end_point::@NamedTuple{lat::Float64,lon::Float64}},
+																line_section::Line,
 																cells::Cells,
 																lsmask::Array{Bool},
 							 									river_mouth_indices::Array{CartesianIndex})
 	cells_on_line_section_indices::Array{CartesianIndex} = find_cells_on_line_section(line_section,cells)
-	expanded_cells_on_line_section_indices::Array{CartesianIndex} =
-		deepcopy(cells_on_line_section_indices)
-	append!(expanded_cells_on_line_section_indices,
-	        Set(CartesianIndex[cells.cell_neighbors[i,j] for i in cells_on_line_section_indices,j=1:3
-	            if !(cells.cell_neighbors[i,j] in cells_on_line_section_indices) ]))
-	sort!(expanded_cells_on_line_section_indices,by=x->calculate_separation_measure(x,cells,line_section.start_point))
-	for cell_indices in expanded_cells_on_line_section_indices
+	sort!(cells_on_line_section_indices,by=x->calculate_separation_measure(x,cells,line_section.start_point))
+	for cell_indices in cells_on_line_section_indices
 		if lsmask[cell_indices]
 			is_coastal_cell::Bool = false
 			for neighbor in [cells.cell_neighbors[cell_indices,i] for i=1:3]
@@ -305,14 +295,8 @@ function search_for_river_mouth_location_on_line_section(
 				push!(river_mouth_indices,cell_indices)
 				return true
 			else
-				#It is possible for an ocean cell in the expanded line section
-				#to be ocean without having past a coastal cell - but not
-				#for a cell directly on the line section itself (assuming it does not
-				#exactly pass through a vertex)
-				if cell_indices in cells_on_line_section_indices
-					error("Have reached the ocean without passing a coastal cell!")
-					return false
-				end
+				error("Have reached the ocean without passing a coastal cell!")
+				return false
 			end
 		end 
 	end
