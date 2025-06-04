@@ -47,10 +47,13 @@ module latlon_hd_model_interface_mod
                                initial_spillover_to_rivers, &
                                global_prognostics%lake_interface_fields, &
                                global_step_length, &
+#ifdef TRANSPOSED_LAKE_MODEL
                                nlon_hd,nlat_hd, &
                                nlon_surface,nlat_surface)
-                               !nlat_hd,nlon_hd, &
-                               !nlat_surface,nlon_surface)
+#else
+                               nlat_hd,nlon_hd, &
+                               nlat_surface,nlon_surface)
+#endif
           initial_spillover_to_rivers(:,:) = initial_spillover_to_rivers(:,:) + &
             global_prognostics%lake_interface_fields%water_from_lakes(:,:)
           global_prognostics%lake_interface_fields%water_from_lakes(:,:) = 0.0_dp

@@ -1719,6 +1719,13 @@ subroutine run_lakes(lake_model_parameters,lake_model_prognostics)
           write(*,*) "Inconsistent cell count when assigning evaporation"
           stop
         end if
+      else if (lake_model_prognostics%evaporation_on_surface_grid(_COORDS_SURFACE_) /= 0.0_dp) then
+        write(*,*) "Evaporation assign to cell without a lake at lon,lat: ", lon_surface,lat_surface
+        write(*,*) "Evaporation flux: ", &
+          lake_model_prognostics%evaporation_on_surface_grid(_COORDS_SURFACE_)
+        if (abs(lake_model_prognostics%evaporation_on_surface_grid(_COORDS_SURFACE_)) > 1.0e-15_dp) then
+          stop
+        end if
       end if
     _LOOP_OVER_SURFACE_GRID_END_
     lake_model_prognostics%evaporation_applied(:) = .false.
@@ -2027,7 +2034,15 @@ subroutine set_lake_evaporation(lake_model_parameters,lake_model_prognostics, &
           lake_model_prognostics%effective_lake_height_on_surface_grid_to_lakes(_COORDS_SURFACE_) = &
             working_effective_lake_height_on_surface_grid
         else
-          lake_model_prognostics%effective_lake_height_on_surface_grid_to_lakes(_COORDS_SURFACE_) = 0.0_dp
+          if (lake_model_prognostics%&
+              &effective_lake_height_on_surface_grid_to_lakes(_COORDS_SURFACE_) < -1.0e-15_dp)
+            write(*,*) "Error - Negative lake height on surface grid, value:",
+              lake_model_prognostics%&
+                &effective_lake_height_on_surface_grid_to_lakes(_COORDS_SURFACE_)
+            stop
+          else
+            lake_model_prognostics%effective_lake_height_on_surface_grid_to_lakes(_COORDS_SURFACE_) = 0.0_dp
+          end if
         end if
       end if
     _LOOP_OVER_SURFACE_GRID_END_

@@ -23,7 +23,7 @@ function read_river_parameters(river_params_filename) &
   logical, pointer, dimension(:,:) :: landsea_mask
   real(dp), allocatable, dimension(:,:) :: temp_real_array
   integer, allocatable, dimension(:,:) :: temp_integer_array
-  integer, dimension(2) :: dimids
+  integer, dimension(nf90_max_var_dims) :: dimids
   integer :: ncid,varid
   integer :: nlat,nlon
 
