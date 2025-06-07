@@ -1673,6 +1673,7 @@ subroutine run_lakes(lake_model_parameters,lake_model_prognostics)
   real(dp) :: share_to_each_lake
   real(dp) :: inflow_minus_evaporation
   real(dp) :: evaporation
+  real(dp) :: total_water_to_lakes_check
   integer :: active_lakes_in_cell_count
   integer :: lake_cell_count
   integer :: cell_count_check
@@ -1731,6 +1732,8 @@ subroutine run_lakes(lake_model_parameters,lake_model_prognostics)
     lake_model_prognostics%evaporation_applied(:) = .false.
     do i=1,size(lake_model_parameters%_INDICES_LIST_cells_with_lakes_INDEX_NAME_FIRST_DIM_)
        _GET_COORDS_ _COORDS_coords_ _FROM_ lake_model_parameters%_INDICES_LIST_cells_with_lakes_INDEX_NAME_ i
+      total_water_to_lakes_check = total_water_to_lakes_check + &
+        lake_model_prognostics%water_to_lakes(_COORDS_ARG_coords_)
       if (lake_model_prognostics%water_to_lakes(_COORDS_ARG_coords_) > 0.0_dp) then
         basin_number = lake_model_parameters%basin_numbers(_COORDS_ARG_coords_)
         lakes_in_cell => &
@@ -1787,6 +1790,13 @@ subroutine run_lakes(lake_model_parameters,lake_model_prognostics)
         end do
       end if
     end do
+    if (sum(lake_model_prognostics%water_to_lakes) /= total_water_to_lakes_check) then
+      write(*,*) "Water directed to lakes in non-lake cell"
+      if (abs(sum(lake_model_prognostics%water_to_lakes) - &
+                  total_water_to_lakes_check) > 1.0e-15_dp) then
+        stop
+      end if
+    end if
     do i = 1,size(lake_model_prognostics%lakes)
       lake => lake_model_prognostics%lakes(i)%lake_pointer
       lake_index = lake%parameters%lake_number
@@ -2035,8 +2045,8 @@ subroutine set_lake_evaporation(lake_model_parameters,lake_model_prognostics, &
             working_effective_lake_height_on_surface_grid
         else
           if (lake_model_prognostics%&
-              &effective_lake_height_on_surface_grid_to_lakes(_COORDS_SURFACE_) < -1.0e-15_dp)
-            write(*,*) "Error - Negative lake height on surface grid, value:",
+              &effective_lake_height_on_surface_grid_to_lakes(_COORDS_SURFACE_) < -1.0e-15_dp) then
+            write(*,*) "Error - Negative lake height on surface grid, value:", &
               lake_model_prognostics%&
                 &effective_lake_height_on_surface_grid_to_lakes(_COORDS_SURFACE_)
             stop
