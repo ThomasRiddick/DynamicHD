@@ -1578,6 +1578,7 @@ subroutine create_lakes(lake_model_parameters, &
     allocate(basins_in_coarse_cell_temp((lake_model_parameters%_NPOINTS_TOTAL_LAKE_)&
                                         /(lake_model_parameters%_NPOINTS_TOTAL_HD_)))
     allocate(lake_model_parameters%basin_numbers(lake_model_parameters%_NPOINTS_HD_))
+    lake_model_parameters%basin_numbers(_DIMS_) = 0
     allocate(basins_temp(lake_model_parameters%_NPOINTS_TOTAL_HD_))
     allocate(_INDICES_LIST_cells_with_lakes_temp_INDEX_NAME(lake_model_parameters%_NPOINTS_TOTAL_HD_)_)
     _ASSIGN_INDICES_LIST_cells_with_lakes_temp_INDEX_NAME(:)_ = -1
@@ -1694,7 +1695,6 @@ subroutine run_lakes(lake_model_parameters,lake_model_prognostics)
     lake_model_prognostics%evaporation_on_surface_grid(_DIMS_) = &
       lake_model_prognostics%effective_volume_per_cell_on_surface_grid(_DIMS_) - &
       lake_model_prognostics%new_effective_volume_per_cell_on_surface_grid(_DIMS_)
-    lake_model_prognostics%effective_volume_per_cell_on_surface_grid(_DIMS_) = 0.0_dp
     _LOOP_OVER_SURFACE_GRID_ _COORDS_SURFACE_ _lake_model_parameters%_
       lake_cell_count = lake_model_prognostics%lake_cell_count(_COORDS_SURFACE_)
       if (lake_model_prognostics%evaporation_on_surface_grid(_COORDS_SURFACE_) /= 0.0_dp &
@@ -1721,15 +1721,20 @@ subroutine run_lakes(lake_model_parameters,lake_model_prognostics)
           stop
         end if
       else if (lake_model_prognostics%evaporation_on_surface_grid(_COORDS_SURFACE_) /= 0.0_dp) then
-        write(*,*) "Evaporation assign to cell without a lake at lon,lat: ", lon_surface,lat_surface
-        write(*,*) "Evaporation flux: ", &
-          lake_model_prognostics%evaporation_on_surface_grid(_COORDS_SURFACE_)
-        if (abs(lake_model_prognostics%evaporation_on_surface_grid(_COORDS_SURFACE_)) > 1.0e-15_dp) then
+        if (abs(lake_model_prognostics%evaporation_on_surface_grid(_COORDS_SURFACE_)/ &
+            (lake_model_prognostics%new_effective_volume_per_cell_on_surface_grid(_COORDS_SURFACE_) + &
+             lake_model_prognostics%effective_volume_per_cell_on_surface_grid)) > 5.0e-16_dp .and. &
+            abs(lake_model_prognostics%evaporation_on_surface_grid(_COORDS_SURFACE_) > 1.0e-15_dp) then
+          write(*,*) "Evaporation assign to cell without a lake at lon,lat: ", lon_surface,lat_surface
+          write(*,*) "Evaporation flux: ", &
+            lake_model_prognostics%evaporation_on_surface_grid(_COORDS_SURFACE_)
           stop
         end if
       end if
     _LOOP_OVER_SURFACE_GRID_END_
+    lake_model_prognostics%effective_volume_per_cell_on_surface_grid(_DIMS_) = 0.0_dp
     lake_model_prognostics%evaporation_applied(:) = .false.
+    total_water_to_lakes_check = 0.0_dp
     do i=1,size(lake_model_parameters%_INDICES_LIST_cells_with_lakes_INDEX_NAME_FIRST_DIM_)
        _GET_COORDS_ _COORDS_coords_ _FROM_ lake_model_parameters%_INDICES_LIST_cells_with_lakes_INDEX_NAME_ i
       total_water_to_lakes_check = total_water_to_lakes_check + &
@@ -1790,12 +1795,14 @@ subroutine run_lakes(lake_model_parameters,lake_model_prognostics)
         end do
       end if
     end do
-    if (sum(lake_model_prognostics%water_to_lakes) /= total_water_to_lakes_check) then
-      write(*,*) "Water directed to lakes in non-lake cell"
-      if (abs(sum(lake_model_prognostics%water_to_lakes) - &
-                  total_water_to_lakes_check) > 1.0e-15_dp) then
-        stop
-      end if
+    total_water_to_lakes_sum = sum(lake_model_prognostics%water_to_lakes
+    if (abs((total_water_to_lakes_sum - total_water_to_lakes_check)/ &
+            (total_water_to_lakes_sum + total_water_to_lakes_check)) > 5.0e-16_dp .and. &
+        abs(total_water_to_lakes_sum - total_water_to_lakes_check) > 1.0e-15_dp) then
+      write(*,*) "Water directed to lakes in non-lake cell(s): ", &
+        abs(sum(lake_model_prognostics%water_to_lakes) - &
+                total_water_to_lakes_check)
+      stop
     end if
     do i = 1,size(lake_model_prognostics%lakes)
       lake => lake_model_prognostics%lakes(i)%lake_pointer
