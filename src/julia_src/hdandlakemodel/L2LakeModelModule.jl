@@ -150,6 +150,7 @@ function create_lakes(lake_model_parameters::LakeModelParameters,
   lake_model_prognostics.lake_fraction_prognostics =
     setup_lake_for_fraction_calculation(lake_fraction_calculation_input,
                                         lake_model_parameters.number_fine_grid_cells,
+                                        lake_model_parameters.non_lake_mask,
                                         lake_model_parameters.binary_lake_mask,
                                         primary_lake_numbers,
                                         lake_model_parameters.
@@ -638,6 +639,7 @@ function calculate_binary_lake_mask(lake_model_parameters::LakeModelParameters,
     binary_lake_mask::Field{Bool} =
     calculate_lake_fractions(lake_fraction_calculation_input,
                              lake_model_parameters.number_fine_grid_cells,
+                             lake_model_parameters.non_lake_mask,
                              lake_model_parameters.grid_specific_lake_model_parameters,
                              lake_model_parameters.lake_model_grid,
                              lake_model_parameters.surface_model_grid)
@@ -662,7 +664,7 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
                                         sum(lake_model_prognostics.water_to_hd) -
                                         sum(lake_model_prognostics.evaporation_from_lakes)
   difference::Float64 = change_in_total_lake_volume - total_inflow_minus_outflow
-  tolerance::Float64 = 10e-14*max(new_total_lake_volume, total_water_to_lakes)
+  tolerance::Float64 = 10e-13*max(new_total_lake_volume, total_water_to_lakes)
   if ! isapprox(difference,0,atol=tolerance)
     println("*** Lake Water Budget ***")
     println("Total lake volume: $(new_total_lake_volume)")

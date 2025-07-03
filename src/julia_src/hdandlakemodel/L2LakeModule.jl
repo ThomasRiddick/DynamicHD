@@ -468,13 +468,26 @@ function split_lake(::FillingLake,water_deficit::Float64,
                     lake_parameters::LakeParameters,
                     lake_variables::LakeVariables,
                     lake_model_prognostics::LakeModelPrognostics)
+  if debug
+    println("Lake $(lake_parameters.lake_number) splitting")
+  end
   lake_variables.active_lake = false
   water_deficit_per_lake::Float64 = water_deficit/length(lake_parameters.secondary_lakes)
+  unprocessed_water_per_lake::Float64 = lake_variables.unprocessed_water/
+                                        length(lake_parameters.secondary_lakes)
+  lake_variables.unprocessed_water = 0.0
   for secondary_lake::Int64 in lake_parameters.secondary_lakes
     filling_lake::FillingLake =
       change_to_filling_lake(lake_model_prognostics.lakes[secondary_lake],
                              lake_parameters.lake_number)
     lake_model_prognostics.lakes[secondary_lake] = filling_lake
+    if unprocessed_water_per_lake > 0
+      lake_model_prognostics.lakes[secondary_lake] =
+        handle_event(filling_lake,AddWater(unprocessed_water_per_lake,true))
+    elseif unprocessed_water_per_lake < 0
+      lake_model_prognostics.lakes[secondary_lake] =
+        handle_event(filling_lake,RemoveWater(-unprocessed_water_per_lake,true))
+    end
     lake_model_prognostics.lakes[secondary_lake] =
       handle_event(filling_lake,RemoveWater(water_deficit_per_lake,false))
   end

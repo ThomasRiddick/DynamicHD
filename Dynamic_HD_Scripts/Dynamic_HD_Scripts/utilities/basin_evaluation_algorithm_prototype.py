@@ -557,6 +557,10 @@ class BasinEvaluationAlgorithm:
             self.level_q.append(BasinCell(self.new_center_cell_height,
                                           self.new_center_cell_height_type,
                                           self.new_center_coords))
+            if (self.lake_numbers[self.new_center_coords] != -1 and
+                self.lake_numbers[self.new_center_coords] != lake_number):
+                self.outflow_lake_numbers.append(self.lake_numbers[self.new_center_coords])
+                self.potential_exit_points.append(self.new_center_coords)
         while len(self.level_q) > 0:
             level_center_cell = self.level_q.pop()
             self.level_coords = level_center_cell.get_cell_coords()
