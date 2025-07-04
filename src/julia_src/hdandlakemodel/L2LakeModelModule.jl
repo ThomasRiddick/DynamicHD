@@ -197,7 +197,7 @@ function create_lakes(lake_model_parameters::LakeModelParameters,
                                       coords) do fine_coords::CartesianIndex
       if lake_model_parameters.lake_centers(fine_coords)
         for lake::Lake in lake_model_prognostics.lakes
-          if lake.parameters.center_coords == fine_coords
+          if lake.parameters.center_coords == fine_coords && lake.parameters.is_leaf
             push!(basins_in_coarse_cell,lake.parameters.lake_number)
             basins_found = true
           end

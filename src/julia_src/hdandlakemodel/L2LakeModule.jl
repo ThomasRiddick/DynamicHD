@@ -667,6 +667,9 @@ function handle_event(lake::Union{OverflowingLake,FillingLake},
   lake_parameters::LakeParameters,lake_variables::LakeVariables,
   lake_model_parameters::LakeModelParameters,
   lake_model_prognostics::LakeModelPrognostics = get_lake_data(lake)
+  if ! lake.variables.active_lake
+    return lake
+  end
   total_number_of_flooded_cells::Int64 = 0
   total_lake_volume::Float64 = 0.0
   working_cell_list::Vector{CartesianIndex} = CartesianIndex[]
@@ -675,6 +678,9 @@ function handle_event(lake::Union{OverflowingLake,FillingLake},
                                 lake.parameters.lake_number),
                       function (x)
                         other_lake::Lake = lake_model_prognostics.lakes[get_label(x)]
+                        if ! other_lake.variables.active_lake
+                          return
+                        end
                         total_lake_volume += get_lake_volume(other_lake)
                         other_lake_working_cells::Vector{CartesianIndex} =
                           get_lake_filled_cells(other_lake)

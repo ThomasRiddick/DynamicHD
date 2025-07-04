@@ -1337,6 +1337,9 @@ subroutine calculate_effective_lake_volume_per_cell(lake)
   integer :: i
     if (lake%lake_type == filling_lake_type .or. &
         lake%lake_type == overflowing_lake_type) then
+      if (.not. lake%active_lake) then
+        return
+      end if
       lake_parameters => lake%parameters
       lake_model_parameters => lake%lake_model_parameters
       lake_model_prognostics => lake%lake_model_prognostics
@@ -1350,6 +1353,9 @@ subroutine calculate_effective_lake_volume_per_cell(lake)
         root => find_root(x)
         if (root%get_label() == lake_number_root_label) then
           other_lake => lake_model_prognostics%lakes(x%get_label())%lake_pointer
+          if (.not. other_lake%active_lake) then
+            continue
+          end if
           total_lake_volume = total_lake_volume + &
             get_lake_volume(other_lake)
           if (other_lake%lake_type == filling_lake_type) then
@@ -1369,6 +1375,9 @@ subroutine calculate_effective_lake_volume_per_cell(lake)
         root => find_root(x)
         if (root%get_label() == lake_number_root_label) then
           other_lake => lake_model_prognostics%lakes(x%get_label())%lake_pointer
+          if (.not. other_lake%active_lake) then
+            continue
+          end if
           if (other_lake%lake_type == filling_lake_type) then
             number_of_filled_cells = other_lake%current_filling_cell_index
           else if (other_lake%lake_type == overflowing_lake_type .or. &
@@ -1378,7 +1387,7 @@ subroutine calculate_effective_lake_volume_per_cell(lake)
             write(*,*) "Unrecognised lake type"
             stop
           end if
-          do i = 1,other_lake%parameters%number_of_cells_when_filled
+          do i = 1,number_of_filled_cells
             _ASSIGN_COORDS_coords_ = other_lake%parameters%filling_order(i)%cell_pointer%_COORDS_coords_
             _GET_COORDS_ _COORDS_surface_model_coords_ _FROM_ lake_model_parameters%_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ _COORDS_coords_
             lake_model_prognostics%&
@@ -1599,7 +1608,8 @@ subroutine create_lakes(lake_model_parameters, &
           contains_lake = .true.
           do i=1,size(lake_model_prognostics%lakes)
             lake => lake_model_prognostics%lakes(i)%lake_pointer
-            if (_EQUALS_lake%parameters%_COORDS_center_coords_ == _COORDS_fine_coords_) then
+            if (_EQUALS_lake%parameters%_COORDS_center_coords_ == _COORDS_fine_coords_ .and. &
+                lake%parameters%is_leaf) then
               number_of_basins_in_coarse_cell = &
                 number_of_basins_in_coarse_cell + 1
               basins_in_coarse_cell_temp(number_of_basins_in_coarse_cell) = &
@@ -1684,6 +1694,7 @@ subroutine run_lakes(lake_model_parameters,lake_model_prognostics)
   real(dp) :: inflow_minus_evaporation
   real(dp) :: evaporation
   real(dp) :: total_water_to_lakes_check
+  real(dp) :: total_water_to_lakes_sum
   integer :: active_lakes_in_cell_count
   integer :: lake_cell_count
   integer :: cell_count_check
@@ -1743,7 +1754,7 @@ subroutine run_lakes(lake_model_parameters,lake_model_prognostics)
         if (abs(lake_model_prognostics%evaporation_on_surface_grid(_COORDS_SURFACE_)/ &
             (lake_model_prognostics%new_effective_volume_per_cell_on_surface_grid(_COORDS_SURFACE_) + &
              lake_model_prognostics%effective_volume_per_cell_on_surface_grid)) > 5.0e-16_dp .and. &
-            abs(lake_model_prognostics%evaporation_on_surface_grid(_COORDS_SURFACE_) > 1.0e-15_dp) then
+            abs(lake_model_prognostics%evaporation_on_surface_grid(_COORDS_SURFACE_)) > 1.0e-15_dp) then
           write(*,*) "Evaporation assign to cell without a lake at lon,lat: ", lon_surface,lat_surface
           write(*,*) "Evaporation flux: ", &
             lake_model_prognostics%evaporation_on_surface_grid(_COORDS_SURFACE_)
@@ -1814,7 +1825,7 @@ subroutine run_lakes(lake_model_parameters,lake_model_prognostics)
         end do
       end if
     end do
-    total_water_to_lakes_sum = sum(lake_model_prognostics%water_to_lakes
+    total_water_to_lakes_sum = sum(lake_model_prognostics%water_to_lakes)
     if (abs((total_water_to_lakes_sum - total_water_to_lakes_check)/ &
             (total_water_to_lakes_sum + total_water_to_lakes_check)) > 5.0e-16_dp .and. &
         abs(total_water_to_lakes_sum - total_water_to_lakes_check) > 1.0e-15_dp) then

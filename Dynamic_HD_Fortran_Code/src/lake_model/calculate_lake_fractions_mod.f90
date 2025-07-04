@@ -243,6 +243,7 @@ subroutine clean_lake_fraction_calculation_prognostics(prognostics)
     deallocate(prognostics%lakes)
     deallocate(prognostics%lake_index)
     deallocate(prognostics%primary_lake_numbers)
+    deallocate(prognostics%non_lake_filled_pixel_count_field
 end subroutine
 
 ! Utility routines
@@ -695,6 +696,7 @@ subroutine calculate_lake_fractions(lakes, &
     deallocate(lake_properties)
     deallocate(all_lake_potential_pixel_mask)
     deallocate(all_lake_potential_pixel_counts)
+    deallocate(non_lake_filled_pixel_count_field)
 end subroutine calculate_lake_fractions
 
 function setup_lake_for_fraction_calculation(lakes, &

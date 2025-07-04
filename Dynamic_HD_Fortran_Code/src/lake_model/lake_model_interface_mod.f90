@@ -107,6 +107,7 @@ subroutine init_lake_model_jsb(initial_spillover_to_rivers,cell_areas_from_jsbac
       get_lake_parameters_from_array(lake_parameters_as_array, &
                                      global_lake_model_parameters%_NPOINTS_LAKE_, &
                                      global_lake_model_parameters%_NPOINTS_HD_)
+    deallocate(lake_parameters_as_array)
     call create_lakes(global_lake_model_parameters, &
                       global_lake_model_prognostics, &
                       lake_parameters_array)
@@ -174,6 +175,7 @@ subroutine init_lake_model(lake_model_ctl_filename, &
       get_lake_parameters_from_array(lake_parameters_as_array, &
                                      global_lake_model_parameters%_NPOINTS_LAKE_, &
                                      global_lake_model_parameters%_NPOINTS_HD_)
+    deallocate(lake_parameters_as_array)
     call create_lakes(global_lake_model_parameters, &
                       global_lake_model_prognostics, &
                       lake_parameters_array)
@@ -224,10 +226,17 @@ subroutine init_lake_model_test(lake_model_parameters,lake_parameters_as_array, 
     lake_interface_fields%water_from_lakes(_DIMS_) = global_lake_model_prognostics%water_to_hd(_DIMS_)
 end subroutine init_lake_model_test
 
-subroutine clean_lake_model()
+subroutine clean_lake_model(clean_external_fields)
+  logical, optional, intent(in) :: clean_external_fields
 #ifdef USE_LOGGING
   call delete_logger
 #endif
+  if (present(clean_external_fields)) then
+    if (clean_external_fields) then
+      deallocate(global_lake_model_parameters%binary_lake_mask)
+      deallocate(global_lake_model_parameters%_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_)
+    end if
+  end if
   call clean_lake_model_prognostics(global_lake_model_prognostics)
   call clean_lake_model_parameters(global_lake_model_parameters)
   deallocate(global_lake_model_parameters)
