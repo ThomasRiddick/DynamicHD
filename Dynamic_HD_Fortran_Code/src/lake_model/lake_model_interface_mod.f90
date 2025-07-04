@@ -4,10 +4,9 @@ use lake_model_mod
 use lake_model_array_decoder_mod
 use lake_model_input, only: config_lakes, load_lake_model_parameters, &
                                load_lake_initial_values
-! use lake_model_io_mod
-! #ifdef USE_LOGGING
-!   use lake_logger_mod
-! #endif
+#ifdef USE_LOGGING
+  use lake_logger_mod
+#endif
 
 implicit none
 
@@ -226,9 +225,9 @@ subroutine init_lake_model_test(lake_model_parameters,lake_parameters_as_array, 
 end subroutine init_lake_model_test
 
 subroutine clean_lake_model()
-! #ifdef USE_LOGGING
-!   call delete_logger
-! #endif
+#ifdef USE_LOGGING
+  call delete_logger
+#endif
   call clean_lake_model_prognostics(global_lake_model_prognostics)
   call clean_lake_model_parameters(global_lake_model_parameters)
   deallocate(global_lake_model_parameters)
