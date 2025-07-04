@@ -1917,9 +1917,8 @@ subroutine write_lake_numbers(working_directory,lake_model_parameters, &
                                   lake_model_parameters%_NPOINTS_LAKE_)
 end subroutine write_lake_numbers
 
-subroutine write_lake_volumes(lake_volumes_filename,&
-                              lake_model_parameters,lake_model_prognostics)
-  character(len = *), intent(in) :: lake_volumes_filename
+function get_lake_volumes(lake_model_parameters,lake_model_prognostics) &
+    result(lake_volumes)
   type(lakemodelparameters), pointer, intent(in) :: lake_model_parameters
   type(lakemodelprognostics), pointer, intent(in) :: lake_model_prognostics
   type(lakeprognostics), pointer :: lake
@@ -1931,8 +1930,16 @@ subroutine write_lake_volumes(lake_volumes_filename,&
     do i=1,size(lake_model_prognostics%lakes)
       lake => lake_model_prognostics%lakes(i)%lake_pointer
       lake_volume = get_lake_volume(lake)
-      lake_volumes(lake%parameters%_COORDS_ARG_center_coords_) = lake_volume
+      lake_volumes(lake%parameters%_COORDS_ARG_center_coords_) = &
+        lake_volumes(lake%parameters%_COORDS_ARG_center_coords_) + lake_volume
     end do
+end function get_lake_volumes
+
+subroutine write_lake_volumes(lake_volumes_filename,&
+                              lake_model_parameters,lake_model_prognostics)
+  character(len = *), intent(in) :: lake_volumes_filename
+  real(dp), dimension(_DIMS_), pointer :: lake_volumes
+    lake_volumes => get_lake_volumes(lake_model_parameters,lake_model_prognostics)
     call write_lake_volumes_field(lake_volumes_filename, &
                                   lake_volumes,&
                                   lake_model_parameters%_NPOINTS_LAKE_)
@@ -2087,13 +2094,21 @@ subroutine set_lake_evaporation(lake_model_parameters,lake_model_prognostics, &
               lake_model_prognostics%&
                 &effective_lake_height_on_surface_grid_to_lakes(_COORDS_SURFACE_)
             stop
-          else
-            lake_model_prognostics%effective_lake_height_on_surface_grid_to_lakes(_COORDS_SURFACE_) = 0.0_dp
           end if
+          lake_model_prognostics%effective_lake_height_on_surface_grid_to_lakes(_COORDS_SURFACE_) = 0.0_dp
         end if
       end if
     _LOOP_OVER_SURFACE_GRID_END_
 end subroutine set_lake_evaporation
+
+subroutine get_lake_height(lake_model_parameters,lake_model_prognostics,lake_height)
+   real(dp), allocatable, dimension(_DIMS_), intent(inout) :: lake_height
+   type(lakemodelparameters), pointer, intent(in) :: lake_model_parameters
+   type(lakemodelprognostics), pointer, intent(inout) :: lake_model_prognostics
+     call calculate_effective_lake_height_on_surface_grid(&
+          lake_model_parameters, lake_model_prognostics)
+     lake_height(_DIMS_) = lake_model_prognostics%effective_lake_height_on_surface_grid_from_lakes(_DIMS_)
+end subroutine get_lake_height
 
 subroutine calculate_binary_lake_mask(lake_model_parameters,lake_model_prognostics, &
                                       lake_pixel_counts_field,lake_fractions_field, &
@@ -2233,6 +2248,17 @@ subroutine calculate_binary_lake_mask(lake_model_parameters,lake_model_prognosti
     deallocate(lake_fraction_calculation_input)
 end subroutine calculate_binary_lake_mask
 
+function get_total_lake_volume(lake_model_prognostics) result(total_lake_volume)
+  type(lakemodelprognostics), pointer :: lake_model_prognostics
+  real(dp) :: total_lake_volume
+  type(lakeprognostics), pointer :: lake
+  integer :: i
+    total_lake_volume = 0.0_dp
+    do i = 1,size(lake_model_prognostics%lakes)
+      lake => lake_model_prognostics%lakes(i)%lake_pointer
+      total_lake_volume = total_lake_volume + get_lake_volume(lake)
+    end do
+end function get_total_lake_volume
 
 subroutine check_water_budget(lake_model_prognostics, &
                               total_initial_water_volume)
