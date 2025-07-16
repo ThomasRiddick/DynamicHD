@@ -278,6 +278,45 @@ function calculate_separation_measure(cell_index::CartesianIndex,cells::Cells,
 	return delta_lat^2 + (cos(0.5*(cells.cell_coords.lats[cell_index] + point.lat))*delta_lon)^2
 end
 
+function for_all_secondary_neighbors(function_on_neighbor::Function,
+																		 cell_indices::CartesianIndex,
+																		 cell_neighbors::Array{CartesianIndex})
+	for i=1:3
+		neighbor::CartesianIndex = cell_neighbors[cell_indices,i]
+		for j=1:3
+			secondary_neighbor::CartesianIndex = cell_neighbors[neighbor,j]
+			if secondary_neighbor == cell_indices
+				continue
+			end
+			function_on_neighbor(secondary_neighbor)
+			for k=1:3
+				tertiary_neighbor::CartesianIndex = cell_neighbors[secondary_neighbor,k]
+				if tertiary_neighbor == neighbor
+					continue
+				end
+				for l=1:3
+					other_neighbor::CartesianIndex = cell_neighbors[cell_indices,l]
+					if i >= l
+						continue
+					end
+					for m=1:3
+						other_secondary_neighbor::CartesianIndex = cell_neighbors[other_neighbor,m]
+						for n=1:3
+							other_tertiary_neighbor::CartesianIndex = cell_neighbors[other_secondary_neighbor,n]
+							if other_tertiary_neighbor == other_neighbor
+								continue
+							end
+							if other_tertiary_neighbor == tertiary_neighbor
+								function_on_neighbor(tertiary_neighbor)
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
 function search_for_river_mouth_location_on_line_section(
 																line_section::Line,
 																cells::Cells,
@@ -295,8 +334,18 @@ function search_for_river_mouth_location_on_line_section(
 				push!(river_mouth_indices,cell_indices)
 				return true
 			else
-				error("Have reached the ocean without passing a coastal cell!")
-				return false
+				is_secondary_coastal_cell::Bool = false
+				for_all_secondary_neighbor(cell_indices,cells.cell_neighbors) do
+						secondary_neighbor_indices::CartesianIndex
+					is_secondary_coastal_cell = is_secondary_coastal_cell || ! lsmask[secondary_neighbor_indices]
+				end
+				if is_secondary_coastal_cell
+					push!(river_mouth_indices,cell_indices)
+					return true
+				else
+					error("Have reached the ocean without passing a coastal cell!")
+					return false
+				end
 			end
 		end 
 	end
