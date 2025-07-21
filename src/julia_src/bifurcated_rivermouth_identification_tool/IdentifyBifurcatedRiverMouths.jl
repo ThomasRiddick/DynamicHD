@@ -335,8 +335,8 @@ function search_for_river_mouth_location_on_line_section(
 				return true
 			else
 				is_secondary_coastal_cell::Bool = false
-				for_all_secondary_neighbor(cell_indices,cells.cell_neighbors) do
-						secondary_neighbor_indices::CartesianIndex
+				for_all_secondary_neighbors(cell_indices,
+						cells.cell_neighbors) do secondary_neighbor_indices::CartesianIndex
 					is_secondary_coastal_cell = is_secondary_coastal_cell || ! lsmask[secondary_neighbor_indices]
 				end
 				if is_secondary_coastal_cell
