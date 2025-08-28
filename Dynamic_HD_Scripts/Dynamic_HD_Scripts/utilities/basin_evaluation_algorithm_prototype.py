@@ -540,8 +540,9 @@ class BasinEvaluationAlgorithm:
         additional_cells_to_return_to_q = []
         if len(self.q) > 0:
             while (len(self.q) > 0 and
-                   self.q[0].get_height() == self.center_cell_height):
-                if self.lake_numbers[self.q[0].get_cell_coords()] == -1:
+                   self.q[0].get_height() <= self.center_cell_height):
+                if (self.lake_numbers[self.q[0].get_cell_coords()] == -1 and
+                    self.q[0].get_height() == self.center_cell_height):
                     self.level_q.append(heappop(self.q))
                 else:
                     additional_cells_to_return_to_q.append(heappop(self.q))
