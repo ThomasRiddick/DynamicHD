@@ -1091,7 +1091,7 @@ recursive subroutine split_lake(lake,water_deficit, &
     water_deficit_per_lake = water_deficit/size(lake_parameters%secondary_lakes)
     unprocessed_water_per_lake = lake%unprocessed_water/ &
                                  size(lake_parameters%secondary_lakes)
-    lake%unprocessed_water = 0.0
+    lake%unprocessed_water = 0.0_dp
     do i = 1,size(lake_parameters%secondary_lakes)
       secondary_lake = lake_parameters%secondary_lakes(i)
       call change_subsumed_to_filling_lake(lake_model_prognostics%lakes(secondary_lake)%lake_pointer, &
