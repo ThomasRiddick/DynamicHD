@@ -61,6 +61,8 @@ public:
 	// and thus will likely differ from the offset free number recorded for
 	// use with Fortran
 	int get_index(coords*);
+	//Getter
+	grid_types get_grid_type() {return grid_type;};
 	///Getter
 	virtual int get_edge_number(coords*) = 0;
 	///Getter
@@ -81,6 +83,13 @@ public:
 	///Run the supplied function over all the neighbors of the supplied
 	///coordinates dealing with wrapping and out of grid cells
 	virtual void for_all_nbrs_wrapped(coords* coords_in,function<void(coords*)> func) = 0;
+	///Run the supplied function over all the neighbors of the supplied
+	///coordinates
+	virtual void for_all_nbrs_reversed(coords*,function<void(coords*)>) = 0;
+	///Run the supplied function over all the neighbors of the supplied
+	///coordinates dealing with wrapping and out of grid cells
+	virtual void for_all_nbrs_wrapped_reversed(coords* coords_in,function<void(coords*)> func) = 0;
+	void for_all_nbrs_general(coords* coords_in,function<void(coords*)> func);
 	virtual void for_non_diagonal_nbrs_wrapped(coords* coords_in,function<void(coords*)> func) = 0;
 	///Run the supplied function over the entire field
 	virtual void for_all(function<void(coords*)> func) = 0;
@@ -178,6 +187,8 @@ public:
 	void for_non_diagonal_nbrs(coords*,function<void(coords*)>);
 	void for_all_nbrs(coords*,function<void(coords*)>);
 	void for_all_nbrs_wrapped(coords* coords_in,function<void(coords*)> func);
+	void for_all_nbrs_reversed(coords*,function<void(coords*)>);
+	void for_all_nbrs_wrapped_reversed(coords* coords_in,function<void(coords*)> func);
 	void for_non_diagonal_nbrs_wrapped(coords* coords_in,function<void(coords*)> func);
 	void for_all(function<void(coords*)>);
 	void for_all_with_line_breaks(function<void(coords*,bool)>);
@@ -240,6 +251,8 @@ public:
 	void for_non_diagonal_nbrs(coords*,function<void(coords*)>);
 	void for_all_nbrs(coords*,function<void(coords*)>);
 	void for_all_nbrs_wrapped(coords* coords_in,function<void(coords*)> func);
+	void for_all_nbrs_reversed(coords*,function<void(coords*)>);
+	void for_all_nbrs_wrapped_reversed(coords* coords_in,function<void(coords*)> func);
 	void for_non_diagonal_nbrs_wrapped(coords* coords_in,function<void(coords*)> func);
 	void for_all(function<void(coords*)>);
 	void for_all_with_line_breaks(function<void(coords*,bool)>);
@@ -333,6 +346,8 @@ public:
 	//As wrapping doesn't exist for the icon grid this is just a wrapper to the
 	//above function
 	void for_all_nbrs_wrapped(coords* coords_in,function<void(coords*)> func);
+	void for_all_nbrs_reversed(coords*,function<void(coords*)>);
+	void for_all_nbrs_wrapped_reversed(coords* coords_in,function<void(coords*)> func);
 	void for_non_diagonal_nbrs_wrapped(coords* coords_in,function<void(coords*)> func);
 	void for_all(function<void(coords*)>);
 	void for_all_with_line_breaks(function<void(coords*,bool)>);
