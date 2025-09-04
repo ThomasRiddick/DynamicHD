@@ -96,7 +96,7 @@ contains
 function lakecellconstructor(_COORDS_ARG_coarse_grid_coords_, &
                              pixel_count, &
                              potential_lake_pixel_count, &
-                             lake_pixels_original,
+                             lake_pixels_original, &
                              in_non_lake_mask) &
     result(constructor)
   _DEF_COORDS_coarse_grid_coords_
@@ -243,7 +243,7 @@ subroutine clean_lake_fraction_calculation_prognostics(prognostics)
     deallocate(prognostics%lakes)
     deallocate(prognostics%lake_index)
     deallocate(prognostics%primary_lake_numbers)
-    deallocate(prognostics%non_lake_filled_pixel_count_field
+    deallocate(prognostics%non_lake_filled_pixel_count_field)
 end subroutine
 
 ! Utility routines
@@ -427,7 +427,7 @@ subroutine setup_cells_lakes_and_pixels(lakes, &
           lakecell(_COORDS_ARG_cell_coords_, &
                    cell_pixel_counts(_COORDS_ARG_cell_coords_), &
                    potential_lake_pixel_count,pixels_in_cell, &
-                   non_lake_mask(_COORDS_ARG_cell_coords))
+                   non_lake_mask(_COORDS_ARG_cell_coords_))
         deallocate(pixels_in_cell)
       end do
       lake_cell_pixel_count = size(lake_input%_INDICES_LIST_lake_pixel_coords_list_INDEX_NAME_FIRST_DIM_)

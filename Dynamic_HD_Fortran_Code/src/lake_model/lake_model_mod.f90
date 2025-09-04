@@ -153,6 +153,7 @@ type :: lakemodelprognostics
   logical, pointer, dimension(:) :: evaporation_applied
   type(rooted_tree_forest), pointer :: set_forest
   type(lakefractioncalculationprognostics), pointer :: lake_fraction_prognostics
+  logical :: check_for_inconsistent_evaporation
 end type lakemodelprognostics
 
 interface lakemodelprognostics
@@ -443,6 +444,7 @@ function lakemodelprognosticsconstructor(lake_model_parameters) result(construct
       constructor%evaporation_applied(:) = .false.
       constructor%set_forest => rooted_tree_forest()
       constructor%lake_fraction_prognostics => null()
+      constructor%check_for_inconsistent_evaporation = .true.
 end function lakemodelprognosticsconstructor
 
 subroutine clean_lake_model_prognostics(lake_model_prognostics)
@@ -1099,10 +1101,10 @@ recursive subroutine split_lake(lake,water_deficit, &
       if (unprocessed_water_per_lake > 0.0_dp) then
         call add_water(lake_model_prognostics%lakes(secondary_lake)%lake_pointer, &
                        unprocessed_water_per_lake,.true.)
-      else if (unprocessed_water_per_lake < 0.0_dp)
+      else if (unprocessed_water_per_lake < 0.0_dp) then
         call remove_water(lake_model_prognostics%lakes(secondary_lake)%lake_pointer, &
                           -unprocessed_water_per_lake,.true.)
-      end
+      end if
       call remove_water(lake_model_prognostics%lakes(secondary_lake)%lake_pointer, &
                         water_deficit_per_lake,.false.)
     end do
@@ -1751,14 +1753,17 @@ subroutine run_lakes(lake_model_parameters,lake_model_prognostics)
           stop
         end if
       else if (lake_model_prognostics%evaporation_on_surface_grid(_COORDS_SURFACE_) /= 0.0_dp) then
-        if (abs(lake_model_prognostics%evaporation_on_surface_grid(_COORDS_SURFACE_)/ &
-            (lake_model_prognostics%new_effective_volume_per_cell_on_surface_grid(_COORDS_SURFACE_) + &
-             lake_model_prognostics%effective_volume_per_cell_on_surface_grid)) > 5.0e-16_dp .and. &
-            abs(lake_model_prognostics%evaporation_on_surface_grid(_COORDS_SURFACE_)) > 1.0e-15_dp) then
-          write(*,*) "Evaporation assign to cell without a lake at lon,lat: ", lon_surface,lat_surface
-          write(*,*) "Evaporation flux: ", &
-            lake_model_prognostics%evaporation_on_surface_grid(_COORDS_SURFACE_)
-          stop
+        if (lake_model_prognostics%check_for_inconsistent_evaporation) then
+          if (abs(lake_model_prognostics%evaporation_on_surface_grid(_COORDS_SURFACE_)/ &
+              (lake_model_prognostics%new_effective_volume_per_cell_on_surface_grid(_COORDS_SURFACE_) + &
+               lake_model_prognostics%effective_volume_per_cell_on_surface_grid(_COORDS_SURFACE_))) > &
+               5.0e-16_dp .and. &
+              abs(lake_model_prognostics%evaporation_on_surface_grid(_COORDS_SURFACE_)) > 1.0e-15_dp) then
+            write(*,*) "Evaporation assign to cell without a lake at lon,lat: ", lon_surface,lat_surface
+            write(*,*) "Evaporation flux: ", &
+              lake_model_prognostics%evaporation_on_surface_grid(_COORDS_SURFACE_)
+            stop
+          end if
         end if
       end if
     _LOOP_OVER_SURFACE_GRID_END_
@@ -1917,7 +1922,7 @@ subroutine write_lake_numbers(working_directory,lake_model_parameters, &
                                   lake_model_parameters%_NPOINTS_LAKE_)
 end subroutine write_lake_numbers
 
-function get_lake_volumes(lake_model_parameters,lake_model_prognostics) &
+function get_lake_volumes_field(lake_model_parameters,lake_model_prognostics) &
     result(lake_volumes)
   type(lakemodelparameters), pointer, intent(in) :: lake_model_parameters
   type(lakemodelprognostics), pointer, intent(in) :: lake_model_prognostics
@@ -1933,13 +1938,15 @@ function get_lake_volumes(lake_model_parameters,lake_model_prognostics) &
       lake_volumes(lake%parameters%_COORDS_ARG_center_coords_) = &
         lake_volumes(lake%parameters%_COORDS_ARG_center_coords_) + lake_volume
     end do
-end function get_lake_volumes
+end function get_lake_volumes_field
 
 subroutine write_lake_volumes(lake_volumes_filename,&
                               lake_model_parameters,lake_model_prognostics)
   character(len = *), intent(in) :: lake_volumes_filename
+  type(lakemodelparameters), pointer, intent(in) :: lake_model_parameters
+  type(lakemodelprognostics), pointer, intent(in) :: lake_model_prognostics
   real(dp), dimension(_DIMS_), pointer :: lake_volumes
-    lake_volumes => get_lake_volumes(lake_model_parameters,lake_model_prognostics)
+    lake_volumes => get_lake_volumes_field(lake_model_parameters,lake_model_prognostics)
     call write_lake_volumes_field(lake_volumes_filename, &
                                   lake_volumes,&
                                   lake_model_parameters%_NPOINTS_LAKE_)
@@ -2059,6 +2066,7 @@ subroutine set_lake_evaporation_for_testing(lake_model_parameters,lake_model_pro
   type(lakemodelparameters), pointer :: lake_model_parameters
   type(lakemodelprognostics), pointer :: lake_model_prognostics
   real(dp), dimension(_DIMS_), allocatable, intent(in) :: lake_evaporation
+    lake_model_prognostics%check_for_inconsistent_evaporation = .false.
     call calculate_effective_lake_height_on_surface_grid( &
       lake_model_parameters,lake_model_prognostics)
     lake_model_prognostics%effective_lake_height_on_surface_grid_to_lakes(_DIMS_) = &
@@ -2074,6 +2082,7 @@ subroutine set_lake_evaporation(lake_model_parameters,lake_model_prognostics, &
   real(dp), dimension(_DIMS_), intent(in) :: height_of_water_evaporated
   real(dp) :: working_effective_lake_height_on_surface_grid
   _DEF_LOOP_INDEX_SURFACE_
+    lake_model_prognostics%check_for_inconsistent_evaporation = .true.
     call calculate_effective_lake_height_on_surface_grid(&
       lake_model_parameters, lake_model_prognostics)
     lake_model_prognostics%effective_lake_height_on_surface_grid_to_lakes(_DIMS_) = &
