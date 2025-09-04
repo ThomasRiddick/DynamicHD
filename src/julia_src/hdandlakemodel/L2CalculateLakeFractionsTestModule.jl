@@ -117,6 +117,7 @@ using FieldModule: Field,LatLonField, set!
           false false false false false
           false false false false true
           false false false false true ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,false)
   grid_specific_lake_model_parameters::LatLonLakeModelParameters =
     LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
                               corresponding_surface_cell_lon_index)
@@ -141,6 +142,7 @@ using FieldModule: Field,LatLonField, set!
     binary_lake_mask::Field{Bool} =
     calculate_lake_fractions(lakes,
                              cell_pixel_counts,
+                             non_lake_mask,
                              grid_specific_lake_model_parameters,
                              lake_grid,
                              surface_grid)
@@ -253,6 +255,7 @@ end
           false  true false false false
           false false false false  true
           false  true false false  true ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,false)
   grid_specific_lake_model_parameters::LatLonLakeModelParameters =
     LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
                               corresponding_surface_cell_lon_index)
@@ -279,6 +282,7 @@ end
     binary_lake_mask::Field{Bool} =
     calculate_lake_fractions(lakes,
                              cell_pixel_counts,
+                             non_lake_mask,
                              grid_specific_lake_model_parameters,
                              lake_grid,
                              surface_grid)
@@ -391,6 +395,7 @@ end
           false  true false false  true
           false  true false  true  true
           false false false false false ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,false)
   grid_specific_lake_model_parameters::LatLonLakeModelParameters =
     LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
                               corresponding_surface_cell_lon_index)
@@ -417,6 +422,7 @@ end
     binary_lake_mask::Field{Bool} =
     calculate_lake_fractions(lakes,
                              cell_pixel_counts,
+                             non_lake_mask,
                              grid_specific_lake_model_parameters,
                              lake_grid,
                              surface_grid)
@@ -529,6 +535,7 @@ end
            true  true  true  true false
            true  true  false  true false
           false  true  true false false ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,false)
   grid_specific_lake_model_parameters::LatLonLakeModelParameters =
     LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
                               corresponding_surface_cell_lon_index)
@@ -555,6 +562,7 @@ end
     binary_lake_mask::Field{Bool} =
     calculate_lake_fractions(lakes,
                              cell_pixel_counts,
+                             non_lake_mask,
                              grid_specific_lake_model_parameters,
                              lake_grid,
                              surface_grid)
@@ -652,6 +660,7 @@ end
           false false false false false
            true false false false false
           false  false false false false ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,false)
   grid_specific_lake_model_parameters::LatLonLakeModelParameters =
     LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
                               corresponding_surface_cell_lon_index)
@@ -678,6 +687,7 @@ end
     binary_lake_mask::Field{Bool} =
     calculate_lake_fractions(lakes,
                              cell_pixel_counts,
+                             non_lake_mask,
                              grid_specific_lake_model_parameters,
                              lake_grid,
                              surface_grid)
@@ -816,6 +826,7 @@ end
           false false false false false
           false false false false false
           false false false false true ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,false)
   grid_specific_lake_model_parameters::LatLonLakeModelParameters =
     LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
                               corresponding_surface_cell_lon_index)
@@ -841,6 +852,7 @@ end
     binary_lake_mask::Field{Bool} =
     calculate_lake_fractions(lakes,
                              cell_pixel_counts,
+                             non_lake_mask,
                              grid_specific_lake_model_parameters,
                              lake_grid,
                              surface_grid)
@@ -978,6 +990,7 @@ end
           false false false false false
           false false false false  true
           false false false false false ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,false)
   grid_specific_lake_model_parameters::LatLonLakeModelParameters =
     LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
                               corresponding_surface_cell_lon_index)
@@ -1005,6 +1018,7 @@ end
     binary_lake_mask::Field{Bool} =
     calculate_lake_fractions(lakes,
                              cell_pixel_counts,
+                             non_lake_mask,
                              grid_specific_lake_model_parameters,
                              lake_grid,
                              surface_grid)
@@ -1142,6 +1156,7 @@ end
           false  true false false  true
           false false false  true false
           false false false false false ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,false)
   grid_specific_lake_model_parameters::LatLonLakeModelParameters =
     LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
                               corresponding_surface_cell_lon_index)
@@ -1169,6 +1184,7 @@ end
     binary_lake_mask::Field{Bool} =
     calculate_lake_fractions(lakes,
                              cell_pixel_counts,
+                             non_lake_mask,
                              grid_specific_lake_model_parameters,
                              lake_grid,
                              surface_grid)
@@ -1306,6 +1322,7 @@ end
           false  true true  true  false
            true false false  true false
           false  true  true false false ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,false)
   grid_specific_lake_model_parameters::LatLonLakeModelParameters =
     LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
                               corresponding_surface_cell_lon_index)
@@ -1333,6 +1350,7 @@ end
     binary_lake_mask::Field{Bool} =
     calculate_lake_fractions(lakes,
                              cell_pixel_counts,
+                             non_lake_mask,
                              grid_specific_lake_model_parameters,
                              lake_grid,
                              surface_grid)
@@ -1450,6 +1468,7 @@ end
           false false false false false
           false false false false false
            true false false false false ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,false)
   grid_specific_lake_model_parameters::LatLonLakeModelParameters =
     LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
                               corresponding_surface_cell_lon_index)
@@ -1477,6 +1496,7 @@ end
     binary_lake_mask::Field{Bool} =
     calculate_lake_fractions(lakes,
                              cell_pixel_counts,
+                             non_lake_mask,
                              grid_specific_lake_model_parameters,
                              lake_grid,
                              surface_grid)
@@ -1597,6 +1617,7 @@ end
              0.0 0.0 0.0 0.0 0.0
              0.0 0.0 0.0 0.0 1.0
              0.0 0.0 0.0 0.0 0.875 ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,false)
   grid_specific_lake_model_parameters::LatLonLakeModelParameters =
     LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
                               corresponding_surface_cell_lon_index)
@@ -1619,6 +1640,7 @@ end
   prognostics::LakeFractionCalculationPrognostics =
     setup_lake_for_fraction_calculation(lakes,
                                         cell_pixel_counts,
+                                        non_lake_mask,
                                         binary_lake_mask,
                                         lake_pixel_mask,
                                         grid_specific_lake_model_parameters,
@@ -1752,6 +1774,7 @@ end
              0.0 0.5625 0.0 0.0 0.0
              0.0 0.0 0.0 0.0 1.0
              0.0 0.5 0.0 0.0 0.875 ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,false)
   grid_specific_lake_model_parameters::LatLonLakeModelParameters =
     LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
                               corresponding_surface_cell_lon_index)
@@ -1776,6 +1799,7 @@ end
   prognostics::LakeFractionCalculationPrognostics =
     setup_lake_for_fraction_calculation(lakes,
                                         cell_pixel_counts,
+                                        non_lake_mask,
                                         binary_lake_mask,
                                         lake_pixel_mask,
                                         grid_specific_lake_model_parameters,
@@ -2004,6 +2028,7 @@ end
              0.0    1.0     0.0625 0.0    0.75
              0.0    0.9375  0.0625 0.75   0.875
              0.0625 0.0     0.1875 0.0625 0.0 ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,false)
   grid_specific_lake_model_parameters::LatLonLakeModelParameters =
     LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
                               corresponding_surface_cell_lon_index)
@@ -2028,6 +2053,7 @@ end
   prognostics::LakeFractionCalculationPrognostics =
     setup_lake_for_fraction_calculation(lakes,
                                         cell_pixel_counts,
+                                        non_lake_mask,
                                         binary_lake_mask,
                                         lake_pixel_mask,
                                         grid_specific_lake_model_parameters,
@@ -2262,6 +2288,7 @@ end
              0.5 0.9375 1.0 1.0 0.0
              0.6875 1.0 0.0 1.0 0.0
              0.0 1.0 1.0 0.0 0.0 ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,false)
   grid_specific_lake_model_parameters::LatLonLakeModelParameters =
     LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
                               corresponding_surface_cell_lon_index)
@@ -2286,6 +2313,7 @@ end
   prognostics::LakeFractionCalculationPrognostics =
     setup_lake_for_fraction_calculation(lakes,
                                         cell_pixel_counts,
+                                        non_lake_mask,
                                         binary_lake_mask,
                                         lake_pixel_mask,
                                         grid_specific_lake_model_parameters,
@@ -2399,6 +2427,7 @@ end
              0.0 0.0 0.0 0.0 0.0
              1.0 0.0 0.0 0.0 0.0
              0.375 0.0 0.0 0.0 0.0 ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,false)
   grid_specific_lake_model_parameters::LatLonLakeModelParameters =
     LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
                               corresponding_surface_cell_lon_index)
@@ -2423,6 +2452,7 @@ end
   prognostics::LakeFractionCalculationPrognostics =
     setup_lake_for_fraction_calculation(lakes,
                                         cell_pixel_counts,
+                                        non_lake_mask,
                                         binary_lake_mask,
                                         lake_pixel_mask,
                                         grid_specific_lake_model_parameters,
@@ -2593,6 +2623,7 @@ end
              0.0 0.0 0.0 0.0 0.0
              0.0 0.0 0.0 0.0 0.3125
              0.0 0.0 0.0 0.0 1.0 ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,false)
   grid_specific_lake_model_parameters::LatLonLakeModelParameters =
     LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
                               corresponding_surface_cell_lon_index)
@@ -2616,6 +2647,7 @@ end
   prognostics::LakeFractionCalculationPrognostics =
     setup_lake_for_fraction_calculation(lakes,
                                         cell_pixel_counts,
+                                        non_lake_mask,
                                         binary_lake_mask,
                                         potential_lake_pixel_mask,
                                         grid_specific_lake_model_parameters,
@@ -2759,6 +2791,7 @@ end
              0.0 0.375 0.0625 0.0 0.0
              0.0 0.0625 0.0 0.0 1.0
              0.0625 0.1875 0.0 0.0 0.125 ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,false)
   grid_specific_lake_model_parameters::LatLonLakeModelParameters =
     LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
                               corresponding_surface_cell_lon_index)
@@ -2784,6 +2817,7 @@ end
   prognostics::LakeFractionCalculationPrognostics =
     setup_lake_for_fraction_calculation(lakes,
                                         cell_pixel_counts,
+                                        non_lake_mask,
                                         binary_lake_mask,
                                         potential_lake_pixel_mask,
                                         grid_specific_lake_model_parameters,
@@ -2931,6 +2965,7 @@ end
              0.0 0.6875 0.0625 0.0 0.625
              0.25 0.0 0.0625 1.0 0.0
              0.0625 0.1875 0.0 0.0625 0.0625 ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,false)
   grid_specific_lake_model_parameters::LatLonLakeModelParameters =
     LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
                               corresponding_surface_cell_lon_index)
@@ -2956,6 +2991,7 @@ end
   prognostics::LakeFractionCalculationPrognostics =
     setup_lake_for_fraction_calculation(lakes,
                                         cell_pixel_counts,
+                                        non_lake_mask,
                                         binary_lake_mask,
                                         potential_lake_pixel_mask,
                                         grid_specific_lake_model_parameters,
@@ -3139,6 +3175,7 @@ end
              0.25 0.9375 1.0 1.0 0.0
              1.0 0.0 0.4375 1.0 0.0
              0.0 1.0 1.0 0.0 0.0 ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,false)
   grid_specific_lake_model_parameters::LatLonLakeModelParameters =
     LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
                               corresponding_surface_cell_lon_index)
@@ -3164,6 +3201,7 @@ end
   prognostics::LakeFractionCalculationPrognostics =
     setup_lake_for_fraction_calculation(lakes,
                                         cell_pixel_counts,
+                                        non_lake_mask,
                                         binary_lake_mask,
                                         potential_lake_pixel_mask,
                                         grid_specific_lake_model_parameters,
@@ -3567,6 +3605,7 @@ end
              0.0 0.0 0.0 0.0 0.0
              0.0 0.0 0.0 0.0 0.0
              0.5 0.0 0.0 0.0 0.0 ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,false)
   grid_specific_lake_model_parameters::LatLonLakeModelParameters =
     LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
                               corresponding_surface_cell_lon_index)
@@ -3591,6 +3630,7 @@ end
   prognostics::LakeFractionCalculationPrognostics =
     setup_lake_for_fraction_calculation(lakes,
                                         cell_pixel_counts,
+                                        non_lake_mask,
                                         binary_lake_mask,
                                         potential_lake_pixel_mask,
                                         grid_specific_lake_model_parameters,
@@ -3732,6 +3772,7 @@ end
     Int64[ 1  48 15
            0   6 21
            8  48 0 ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,false)
   grid_specific_lake_model_parameters::LatLonLakeModelParameters =
     LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
                               corresponding_surface_cell_lon_index)
@@ -3757,6 +3798,7 @@ end
   prognostics::LakeFractionCalculationPrognostics =
     setup_lake_for_fraction_calculation(lakes,
                                         cell_pixel_counts,
+                                        non_lake_mask,
                                         binary_lake_mask,
                                         potential_lake_pixel_mask,
                                         grid_specific_lake_model_parameters,
@@ -3772,6 +3814,663 @@ end
     end
   end
   @test lake_pixel_counts_field == expected_lake_pixel_counts_field
+end
+
+@testset "Lake Fraction Calculation Test 22" begin
+  #Multiple partially filled lakes and two non lake points
+  lake_grid::Grid = LatLonGrid(20,20,true)
+  surface_grid::Grid = LatLonGrid(5,5,true)
+  lakes::Vector{LakeInput} = LakeInput[]
+  potential_lake_pixel_mask::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[ 0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0
+           0 0 0 1  0 1 1 1  1 1 1 0  0 0 0 0  0 0 0 0
+           0 0 1 1  0 1 1 1  1 0 1 1  1 0 1 0  0 1 1 0
+           0 1 1 1  0 1 1 1  1 1 1 1  1 1 1 1  1 1 0 0
+
+           0 0 0 0  1 0 1 1  1 0 1 1  1 1 0 0  0 1 1 0
+           0 0 0 0  1 1 1 1  1 1 0 1  0 1 1 0  0 0 1 1
+           0 1 1 1  1 1 1 1  1 1 0 1  1 0 1 1  1 1 1 0
+           0 0 1 1  1 1 1 1  1 1 1 1  1 1 1 1  1 1 1 0
+
+           0 0 0 0  1 1 1 1  1 1 1 1  1 0 1 1  0 0 0 0
+           0 2 2 2  2 0 1 1  1 0 1 1  1 1 0 1  1 0 0 0
+           0 2 2 0  1 1 1 1  1 1 1 0  1 1 1 1  1 1 0 0
+           0 0 0 0  0 1 1 1  0 1 1 0  0 1 1 1  0 0 0 0
+
+           0 0 0 1  0 1 0 1  0 0 1 0  1 1 1 0  0 1 0 0
+           1 1 0 1  1 1 1 1  1 0 1 0  1 1 1 0  1 1 1 0
+           0 1 1 0  1 1 1 1  1 1 1 0  1 1 1 1  1 1 0 0
+           0 1 1 0  1 1 1 1  1 1 0 0  0 1 0 1  0 0 0 0
+
+           0 0 0 0  1 1 0 1  1 1 0 1  1 1 0 0  1 1 0 0
+           0 0 1 1  0 1 1 1  1 1 0 1  1 1 0 0  0 1 1 0
+           0 0 0 1  1 1 1 1  1 1 1 1  1 1 0 0  0 1 1 0
+           0 0 0 0  0 1 1 1  1 0 0 0  1 0 0 0  0 0 0 0 ])
+  lake_pixel_mask::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[ 0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0
+           0 0 0 1  0 1 1 1  1 1 1 0  0 0 0 0  0 0 0 0
+           0 0 1 1  0 1 1 1  1 0 1 1  1 0 1 0  0 1 1 0
+           0 1 1 1  0 1 1 1  0 1 0 1  1 1 1 1  1 1 0 0
+
+           0 0 0 0  1 0 1 1  1 0 1 1  1 1 0 0  0 1 1 0
+           0 0 0 0  0 0 0 1  0 0 0 1  0 1 1 0  0 0 1 1
+           0 1 1 1  0 0 0 0  0 0 0 1  1 0 1 1  1 1 1 0
+           0 0 1 1  0 0 1 0  0 0 1 1  1 1 1 1  1 1 1 0
+
+           0 0 0 0  1 1 1 1  1 1 1 1  1 0 1 1  0 0 0 0
+           0 2 2 2  0 0 1 1  1 0 1 1  0 1 0 1  1 0 0 0
+           0 2 0 0  1 1 1 1  1 1 1 0  1 0 0 1  1 1 0 0
+           0 0 0 0  0 1 1 1  0 1 1 0  0 1 1 1  0 0 0 0
+
+           0 0 0 1  0 0 0 1  0 0 1 0  1 1 1 0  0 0 0 0
+           1 1 0 1  0 0 0 0  1 0 1 0  1 1 1 0  0 0 1 0
+           0 1 1 0  0 0 1 0  1 1 1 0  1 1 1 1  0 0 0 0
+           0 1 1 0  1 0 1 1  1 1 0 0  0 1 0 1  0 0 0 0
+
+           0 0 0 0  1 0 0 1  1 1 0 1  1 1 0 0  1 1 0 0
+           0 0 1 1  0 1 1 1  1 1 0 1  1 1 0 0  0 1 1 0
+           0 0 0 1  1 1 1 1  1 1 1 1  1 1 0 0  0 1 1 0
+           0 0 0 0  0 1 1 1  1 0 0 0  1 0 0 0  0 0 0 0 ])
+  cell_pixel_counts::Field{Int64} = LatLonField{Int64}(surface_grid,
+    Int64[ 16 16 16 16 16
+           16 16 16 16 16
+           16 16 16 16 16
+           16 16 16 16 16
+           16 16 16 16 16 ])
+  corresponding_surface_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[ 1 1 1 1  1 1 1 1  1 1 1 1  1 1 1 1  1 1 1 1
+           1 1 1 1  1 1 1 1  1 1 1 1  1 1 1 1  1 1 1 1
+           1 1 1 1  1 1 1 1  1 1 1 1  1 1 1 1  1 1 1 1
+           1 1 1 1  1 1 1 1  1 1 1 1  1 1 1 1  1 1 1 1
+
+           2 2 2 2  2 2 2 2  2 2 2 2  2 2 2 2  2 2 2 2
+           2 2 2 2  2 2 2 2  2 2 2 2  2 2 2 2  2 2 2 2
+           2 2 2 2  2 2 2 2  2 2 2 2  2 2 2 2  2 2 2 2
+           2 2 2 2  2 2 2 2  2 2 2 2  2 2 2 2  2 2 2 2
+
+           3 3 3 3  3 3 3 3  3 3 3 3  3 3 3 3  3 3 3 3
+           3 3 3 3  3 3 3 3  3 3 3 3  3 3 3 3  3 3 3 3
+           3 3 3 3  3 3 3 3  3 3 3 3  3 3 3 3  3 3 3 3
+           3 3 3 3  3 3 3 3  3 3 3 3  3 3 3 3  3 3 3 3
+
+           4 4 4 4  4 4 4 4  4 4 4 4  4 4 4 4  4 4 4 4
+           4 4 4 4  4 4 4 4  4 4 4 4  4 4 4 4  4 4 4 4
+           4 4 4 4  4 4 4 4  4 4 4 4  4 4 4 4  4 4 4 4
+           4 4 4 4  4 4 4 4  4 4 4 4  4 4 4 4  4 4 4 4
+
+           5 5 5 5  5 5 5 5  5 5 5 5  5 5 5 5  5 5 5 5
+           5 5 5 5  5 5 5 5  5 5 5 5  5 5 5 5  5 5 5 5
+           5 5 5 5  5 5 5 5  5 5 5 5  5 5 5 5  5 5 5 5
+           5 5 5 5  5 5 5 5  5 5 5 5  5 5 5 5  5 5 5 5 ])
+  corresponding_surface_cell_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[ 1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5 ])
+  expected_lake_pixel_counts_field::Field{Int64} = LatLonField{Int64}(surface_grid,
+    Int64[ 0 0  16  0  0
+           0 0  16  16 16
+           4 15 16 16 0
+           16 0 16  16 0
+           0  0 16 7  0 ])
+  expected_lake_fractions_field::Field{Float64} = LatLonField{Float64}(surface_grid,
+    Float64[ 0.0 0.0 1.0 0.0 0.0
+             0.0 0.0 1.0 1.0 1.0
+             0.25 0.9375 1.0 1.0 0.0
+             1.0 0.0 1.0 1.0 0.0
+             0.0 0.0 1.0 0.4375 0.0 ])
+  expected_binary_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,
+    Bool[ false false  true false false
+          false false  true  true  true
+          false  true  true  true  false
+           true false  true  true false
+          false false  true false false ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,
+    Bool[ false  true false false false
+          false false false false false
+          false false false false false
+          false false false false false
+          false  true false false false ])
+  grid_specific_lake_model_parameters::LatLonLakeModelParameters =
+    LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
+                              corresponding_surface_cell_lon_index)
+  for lake_number::Int64=1:2
+    lake_pixel_coords_list::Vector{CartesianIndex} = findall(x -> x == lake_number,
+                                                             lake_pixel_mask.data)
+    potential_lake_pixel_coords_list::Vector{CartesianIndex} = findall(x -> x == lake_number,
+                                                               potential_lake_pixel_mask.data)
+    cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
+    for pixel in potential_lake_pixel_coords_list
+      cell_coords::CartesianIndex =
+        get_corresponding_surface_model_grid_cell(pixel,
+                                                  grid_specific_lake_model_parameters)
+      set!(cell_mask,cell_coords,true)
+    end
+    cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
+    input = LakeInput(lake_number,
+                      lake_pixel_coords_list,
+                      potential_lake_pixel_coords_list,
+                      cell_coords_list)
+    push!(lakes,input)
+  end
+  lake_pixel_counts_field::Field{Int64},
+    lake_fractions_field::Field{Float64},
+    binary_lake_mask::Field{Bool} =
+    calculate_lake_fractions(lakes,
+                             cell_pixel_counts,
+                             non_lake_mask,
+                             grid_specific_lake_model_parameters,
+                             lake_grid,
+                             surface_grid)
+  @test lake_pixel_counts_field == expected_lake_pixel_counts_field
+  @test lake_fractions_field == expected_lake_fractions_field
+  @test binary_lake_mask == expected_binary_lake_mask
+end
+
+
+@testset "Lake Fraction Calculation Test 23" begin
+  #Multiple partially filled lakes and two non lake points
+  lake_grid::Grid = LatLonGrid(20,20,true)
+  surface_grid::Grid = LatLonGrid(5,5,true)
+  lakes::Vector{LakeInput} = LakeInput[]
+  potential_lake_pixel_mask::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[ 0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0
+           0 0 0 1  0 1 1 1  1 1 1 0  0 0 0 0  0 0 0 0
+           0 0 1 1  0 1 1 1  1 0 1 1  1 0 1 0  0 1 1 0
+           0 1 1 1  0 1 1 1  1 1 1 1  1 1 1 1  1 1 0 0
+
+           0 0 0 0  1 0 1 1  1 0 1 1  1 1 0 0  0 1 1 0
+           0 0 0 0  1 1 1 1  1 1 0 1  0 1 1 0  0 0 1 1
+           0 1 1 1  1 1 1 1  1 1 0 1  1 0 1 1  1 1 1 0
+           0 0 1 1  1 1 1 1  1 1 1 1  1 1 1 1  1 1 1 0
+
+           0 0 0 0  1 1 1 1  1 1 1 1  1 0 1 1  0 0 0 0
+           0 2 2 2  2 0 1 1  1 0 1 1  1 1 0 1  1 0 0 0
+           0 2 2 0  1 1 1 1  1 1 1 0  1 1 1 1  1 1 0 0
+           0 0 0 0  0 1 1 1  0 1 1 0  0 1 1 1  0 0 0 0
+
+           0 0 0 1  0 1 0 1  0 0 1 0  1 1 1 0  0 1 0 0
+           1 1 0 1  1 1 1 1  1 0 1 0  1 1 1 0  1 1 1 0
+           0 1 1 0  1 1 1 1  1 1 1 0  1 1 1 1  1 1 0 0
+           0 1 1 0  1 1 1 1  1 1 0 0  0 1 0 1  0 0 0 0
+
+           0 0 0 0  1 1 0 1  1 1 0 1  1 1 0 0  1 1 0 0
+           0 0 1 1  0 1 1 1  1 1 0 1  1 1 0 0  0 1 1 0
+           0 0 0 1  1 1 1 1  1 1 1 1  1 1 0 0  0 1 1 0
+           0 0 0 0  0 1 1 1  1 0 0 0  1 0 0 0  0 0 0 0 ])
+  lake_pixel_mask::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[ 0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0
+           0 0 0 1  0 1 1 1  1 1 1 0  0 0 0 0  0 0 0 0
+           0 0 1 1  0 1 1 1  1 0 1 1  1 0 1 0  0 1 1 0
+           0 1 1 1  0 1 1 1  0 1 0 1  1 1 1 1  1 1 0 0
+
+           0 0 0 0  1 0 1 1  1 0 1 1  1 1 0 0  0 1 1 0
+           0 0 0 0  0 0 0 1  0 0 0 1  0 1 1 0  0 0 1 1
+           0 1 1 1  0 0 0 0  0 0 0 1  1 0 1 1  1 1 1 0
+           0 0 1 1  0 0 1 0  0 0 1 1  1 1 1 1  1 1 1 0
+
+           0 0 0 0  1 1 1 1  1 1 1 1  1 0 1 1  0 0 0 0
+           0 2 2 2  0 0 1 1  1 0 1 1  0 1 0 1  1 0 0 0
+           0 2 0 0  1 1 1 1  1 1 1 0  1 0 0 1  1 1 0 0
+           0 0 0 0  0 1 1 1  0 1 1 0  0 1 1 1  0 0 0 0
+
+           0 0 0 1  0 0 0 1  0 0 1 0  1 1 1 0  0 0 0 0
+           1 1 0 1  0 0 0 0  1 0 1 0  1 1 1 0  0 0 1 0
+           0 1 1 0  0 0 1 0  1 1 1 0  1 1 1 1  0 0 0 0
+           0 1 1 0  1 0 1 1  1 1 0 0  0 1 0 1  0 0 0 0
+
+           0 0 0 0  1 0 0 1  1 1 0 1  1 1 0 0  1 1 0 0
+           0 0 1 1  0 1 1 1  1 1 0 1  1 1 0 0  0 1 1 0
+           0 0 0 1  1 1 1 1  1 1 1 1  1 1 0 0  0 1 1 0
+           0 0 0 0  0 1 1 1  1 0 0 0  1 0 0 0  0 0 0 0 ])
+  cell_pixel_counts::Field{Int64} = LatLonField{Int64}(surface_grid,
+    Int64[ 16 16 16 16 16
+           16 16 16 16 16
+           16 16 16 16 16
+           16 16 16 16 16
+           16 16 16 16 16 ])
+    corresponding_surface_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[ 1 1 1 1  1 1 1 1  1 1 1 1  1 1 1 1  1 1 1 1
+           1 1 1 1  1 1 1 1  1 1 1 1  1 1 1 1  1 1 1 1
+           1 1 1 1  1 1 1 1  1 1 1 1  1 1 1 1  1 1 1 1
+           1 1 1 1  1 1 1 1  1 1 1 1  1 1 1 1  1 1 1 1
+
+           2 2 2 2  2 2 2 2  2 2 2 2  2 2 2 2  2 2 2 2
+           2 2 2 2  2 2 2 2  2 2 2 2  2 2 2 2  2 2 2 2
+           2 2 2 2  2 2 2 2  2 2 2 2  2 2 2 2  2 2 2 2
+           2 2 2 2  2 2 2 2  2 2 2 2  2 2 2 2  2 2 2 2
+
+           3 3 3 3  3 3 3 3  3 3 3 3  3 3 3 3  3 3 3 3
+           3 3 3 3  3 3 3 3  3 3 3 3  3 3 3 3  3 3 3 3
+           3 3 3 3  3 3 3 3  3 3 3 3  3 3 3 3  3 3 3 3
+           3 3 3 3  3 3 3 3  3 3 3 3  3 3 3 3  3 3 3 3
+
+           4 4 4 4  4 4 4 4  4 4 4 4  4 4 4 4  4 4 4 4
+           4 4 4 4  4 4 4 4  4 4 4 4  4 4 4 4  4 4 4 4
+           4 4 4 4  4 4 4 4  4 4 4 4  4 4 4 4  4 4 4 4
+           4 4 4 4  4 4 4 4  4 4 4 4  4 4 4 4  4 4 4 4
+
+           5 5 5 5  5 5 5 5  5 5 5 5  5 5 5 5  5 5 5 5
+           5 5 5 5  5 5 5 5  5 5 5 5  5 5 5 5  5 5 5 5
+           5 5 5 5  5 5 5 5  5 5 5 5  5 5 5 5  5 5 5 5
+           5 5 5 5  5 5 5 5  5 5 5 5  5 5 5 5  5 5 5 5 ])
+  corresponding_surface_cell_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[ 1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5
+           1 1 1 1  2 2 2 2  3 3 3 3  4 4 4 4  5 5 5 5 ])
+  binary_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,
+    Bool[ false false  true false false
+          false false false  true  true
+          false  true true  true  false
+           true false false  true false
+          false  true false false false ])
+  expected_lake_pixel_counts_field::Field{Int64} = LatLonField{Int64}(surface_grid,
+    Int64[ 0 1  16  6  4
+           0 0  3  16 16
+           3 16 16 16 3
+           16 1  7  16 1
+           1 16  1 5  6 ])
+  expected_intermediate_lake_pixel_counts_field::Field{Int64} = LatLonField{Int64}(surface_grid,
+    Int64[ 0 0  15  0  0
+           0 0  0  16 16
+           0 15 16 16 0
+           16 0  0  16 0
+           0 16 0 0  0 ])
+  expected_lake_pixel_counts_field_after_cycle::Field{Int64} = LatLonField{Int64}(surface_grid,
+    Int64[ 0 5  16  4  4
+           0 3  2  16 16
+           3 16 16 16 0
+           16 1  7  16 1
+           0 16  5 3  4  ])
+  expected_intermediate_lake_pixel_counts_field_two::Field{Int64} = LatLonField{Int64}(surface_grid,
+    Int64[ 0 0  15  0  0
+           0 0  0  16 16
+           0 15 16 16 0
+           16 0  0  16 0
+           0 16 0 0  0 ])
+  expected_intermediate_lake_pixel_counts_field_three::Field{Int64} = LatLonField{Int64}(surface_grid,
+    Int64[ 0 0  16  0  0
+           0 0  0  16 16
+           0 14 16 16 0
+           16 0  0  16 0
+           0 16 0 0  0 ])
+  expected_lake_pixel_counts_field_after_second_cycle::Field{Int64} = LatLonField{Int64}(surface_grid,
+    Int64[ 0 5  16  4  4
+           0 3  3  16 16
+           3 16 16 16 0
+           16 1  7  16 1
+           2 16  3 2  4  ])
+  expected_lake_pixel_counts_field_after_third_cycle::Field{Int64} = LatLonField{Int64}(surface_grid,
+    Int64[ 1 5  16  5  4
+           0 3  3  16 16
+           3 16 16 16 0
+           16 2  7  16 1
+           0 16  4 0  4  ])
+  expected_lake_fractions_field::Field{Float64} = LatLonField{Float64}(surface_grid,
+    Float64[ 0.0 1.0 1.0 0.0 0.0
+             0.0 0.0 0.0 1.0 1.0
+             0.25 0.9375 1.0 1.0 0.0
+             1.0 0.0 0.4375 1.0 0.0
+             0.0 1.0 1.0 0.0 0.0 ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,
+    Bool[ false  true false false false
+          false false false false false
+          false false false false false
+          false false false false false
+          false false  true false false ])
+  grid_specific_lake_model_parameters::LatLonLakeModelParameters =
+    LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
+                              corresponding_surface_cell_lon_index)
+  for lake_number::Int64=1:2
+    lake_pixel_coords_list::Vector{CartesianIndex} = findall(x -> x == lake_number,
+                                                             lake_pixel_mask.data)
+    potential_lake_pixel_coords_list::Vector{CartesianIndex} =
+      findall(x -> x == lake_number,potential_lake_pixel_mask.data)
+    cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
+    for pixel in potential_lake_pixel_coords_list
+      cell_coords::CartesianIndex =
+        get_corresponding_surface_model_grid_cell(pixel,
+                                                  grid_specific_lake_model_parameters)
+      set!(cell_mask,cell_coords,true)
+    end
+    cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
+    input = LakeInput(lake_number,
+                      CartesianIndex[],
+                      potential_lake_pixel_coords_list,
+                      cell_coords_list)
+    push!(lakes,input)
+  end
+  prognostics::LakeFractionCalculationPrognostics =
+    setup_lake_for_fraction_calculation(lakes,
+                                        cell_pixel_counts,
+                                        non_lake_mask,
+                                        binary_lake_mask,
+                                        potential_lake_pixel_mask,
+                                        grid_specific_lake_model_parameters,
+                                        lake_grid,
+                                        surface_grid)
+  lake_pixel_counts_field::Field{Int64} = Field{Int64}(surface_grid,0)
+  for lake_number::Int64=1:2
+    lake_pixel_coords_list::Vector{CartesianIndex} = findall(x -> x == lake_number,
+                                                             lake_pixel_mask.data)
+    for coords in lake_pixel_coords_list
+      add_pixel_by_coords(coords,
+                          lake_pixel_counts_field,prognostics)
+    end
+  end
+  @test lake_pixel_counts_field == expected_lake_pixel_counts_field
+  #@test lake_fractions_field == expected_lake_fractions_field
+  remove_pixel_by_coords(CartesianIndex(2,4),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(2,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(4,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(5,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(4,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,12),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,13),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,4),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,2),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(11,2),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(15,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(16,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,17),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(19,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(14,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(13,13),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(13,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(14,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(15,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(15,10),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(16,10),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,9),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,9),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,10),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(19,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(20,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(19,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(11,9),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(9,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(9,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(9,12),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(8,12),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(7,13),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(6,12),lake_pixel_counts_field,prognostics)
+  @test lake_pixel_counts_field == expected_intermediate_lake_pixel_counts_field
+  add_pixel_by_coords(CartesianIndex(2,4),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(2,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(4,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(5,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(4,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,12),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,13),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,4),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,2),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(11,2),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(15,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(16,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,17),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(19,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(14,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(13,13),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(13,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(14,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(15,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(15,10),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(16,10),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,9),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,9),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,10),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(19,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(20,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(19,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(11,9),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(9,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(9,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(9,12),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(8,12),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(7,13),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(6,12),lake_pixel_counts_field,prognostics)
+  @test lake_pixel_counts_field == expected_lake_pixel_counts_field_after_cycle
+  remove_pixel_by_coords(CartesianIndex(2,4),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(2,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(4,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(5,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(4,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,12),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,13),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,4),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,2),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(11,2),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(15,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(16,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,17),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(19,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(14,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(13,13),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(13,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(14,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(15,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(15,10),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(16,10),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,9),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,9),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,10),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(19,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(20,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(19,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(11,9),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(9,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(9,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(9,12),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(8,12),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(7,13),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(6,12),lake_pixel_counts_field,prognostics)
+  @test lake_pixel_counts_field == expected_intermediate_lake_pixel_counts_field_two
+  add_pixel_by_coords(CartesianIndex(2,4),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(2,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(4,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(5,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(4,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,12),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,13),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,4),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,2),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(11,2),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(15,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(16,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,17),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(19,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(14,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(13,13),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(13,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(14,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(15,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(15,10),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(16,10),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,9),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,9),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,10),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(19,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(20,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(19,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(11,9),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(9,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(9,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(9,12),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(8,12),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(7,13),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(6,12),lake_pixel_counts_field,prognostics)
+  @test lake_pixel_counts_field == expected_lake_pixel_counts_field_after_second_cycle
+  remove_pixel_by_coords(CartesianIndex(2,4),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(2,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(4,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(5,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(4,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,12),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,13),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(3,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,4),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,2),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(11,2),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(15,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(16,3),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,17),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(19,18),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(14,19),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(13,13),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(13,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(14,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(15,11),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(15,10),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(16,10),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,9),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(17,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,9),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,10),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(19,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(20,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(19,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(18,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(11,9),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(10,8),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(9,7),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(9,6),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(9,12),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(8,12),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(7,13),lake_pixel_counts_field,prognostics)
+  remove_pixel_by_coords(CartesianIndex(6,12),lake_pixel_counts_field,prognostics)
+  @test lake_pixel_counts_field == expected_intermediate_lake_pixel_counts_field_three
+  add_pixel_by_coords(CartesianIndex(2,4),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(2,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(4,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(5,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(4,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,12),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,13),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(3,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,4),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,2),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(11,2),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(15,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(16,3),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,17),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(19,18),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(14,19),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(13,13),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(13,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(14,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(15,11),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(15,10),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(16,10),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,9),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(17,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,9),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,10),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(19,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(20,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(19,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(18,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(11,9),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(10,8),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(9,7),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(9,6),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(9,12),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(8,12),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(7,13),lake_pixel_counts_field,prognostics)
+  add_pixel_by_coords(CartesianIndex(6,12),lake_pixel_counts_field,prognostics)
+  @test lake_pixel_counts_field == expected_lake_pixel_counts_field_after_third_cycle
 end
 
 end
