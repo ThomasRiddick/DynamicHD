@@ -149,6 +149,7 @@ class Lake:
     def __init__(self,
                  lake_number,
                  center_coords,
+                 lake_lower_boundary_height,
                  primary_lake=None,
                  secondary_lakes=None):
         #Keep references to lakes as number not objects
@@ -158,6 +159,8 @@ class Lake:
         self.secondary_lakes  = secondary_lakes
         self.outflow_points = {}
         self.filling_order = []
+        self.lake_lower_boundary_height = lake_lower_boundary_height
+        self.filled_lake_area = None
         #Working variables - don't need to exported
         self.center_cell_volume_threshold = 0.0
         self.lake_area = 0.0
@@ -169,6 +172,9 @@ class Lake:
 
     def set_potential_exit_points(self,potential_exit_points):
         self.potential_exit_points = potential_exit_points
+
+    def set_filled_lake_area(self):
+        self.filled_lake_area = self.lake_area
 
     def __repr__(self):
         return (f"center_coords={self.center_coords}\n"
@@ -397,7 +403,7 @@ class BasinEvaluationAlgorithm:
             minimum = minima_q[-1]
             minima_q.pop()
             lake_number = len(self.lakes)
-            lake = Lake(lake_number,minimum)
+            lake = Lake(lake_number,minimum,self.raw_orography[minimum])
             self.lakes.append(lake)
             self.lake_q.append(lake)
             self.lake_connections.add_set(lake_number)
@@ -432,6 +438,7 @@ class BasinEvaluationAlgorithm:
                                             self.lake_connections.make_new_link(lake_number,other_lake_number)
                                             merging_lakes.append(lake_number)
                                 lake.set_potential_exit_points(potential_exit_points)
+                                lake.set_filled_lake_area()
                                 self.raw_orography[
                                     np.logical_and(self.cells_in_lake,
                                                    self.raw_orography < self.center_cell_height)] = \
@@ -462,8 +469,10 @@ class BasinEvaluationAlgorithm:
                          self.lake_connections.get_set(lake_group).get_set_element_labels()
                          if self.lakes[sublake].primary_lake is None }
                     new_lake_number = len(self.lakes)
+                    new_lake_center_coords = self.lakes[list(sublakes_in_lake)[0]].center_coords
                     new_lake = Lake(new_lake_number,
-                                    self.lakes[list(sublakes_in_lake)[0]].center_coords,
+                                    new_lake_center_coords,
+                                    self.raw_orography[new_lake_center_coords],
                                     primary_lake=None,
                                     secondary_lakes=sublakes_in_lake)
                     self.lake_connections.add_set(new_lake_number)
@@ -731,6 +740,8 @@ class BasinEvaluationAlgorithm:
                                              array_offset=array_offset)
             store_to_array.add_outflow_points_dict(lake.outflow_points,
                                                    array_offset=array_offset)
+            store_to_array.add_number(lake.lake_lower_boundary_height)
+            store_to_array.add_number(lake.filled_lake_area)
             store_to_array.complete_object()
         return store_to_array.complete_array()
 
