@@ -247,12 +247,12 @@ subroutine testLakeInputTests1
          4, 5, 6, &
          7, 8, 0  /), &
          (/nlon_surface,nlat_surface/)))
-      call load_lake_parameters(cell_areas_on_surface_model_grid, &
-                                .false., &
-                                lake_model_parameters, &
-                                lake_parameters_as_array, &
-                                nlat_hd,nlon_hd, &
-                                nlat_surface,nlon_surface)
+      call load_lake_model_parameters(cell_areas_on_surface_model_grid, &
+                                      .false., &
+                                      lake_model_parameters, &
+                                      lake_parameters_as_array, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_surface,nlon_surface)
       call assert_equals(lake_parameters_as_array,expected_lake_parameters_as_array, &
                          size(expected_lake_parameters_as_array))
       call assert_equals(lake_model_parameters%corresponding_surface_cell_lat_index, &
@@ -542,12 +542,12 @@ end subroutine testLakeInputTests1
          4, 5, 6, &
          7, 8, 0  /), &
          (/nlon_surface,nlat_surface/)))
-      call load_lake_parameters(cell_areas_on_surface_model_grid, &
-                                .true., &
-                                lake_model_parameters, &
-                                lake_parameters_as_array, &
-                                nlat_hd,nlon_hd, &
-                                nlat_surface,nlon_surface)
+      call load_lake_model_parameters(cell_areas_on_surface_model_grid, &
+                                      .true., &
+                                      lake_model_parameters, &
+                                      lake_parameters_as_array, &
+                                      nlat_hd,nlon_hd, &
+                                      nlat_surface,nlon_surface)
       call assert_equals(lake_parameters_as_array,expected_lake_parameters_as_array, &
                          size(expected_lake_parameters_as_array))
       call assert_equals(lake_model_parameters%corresponding_surface_cell_lat_index, &
