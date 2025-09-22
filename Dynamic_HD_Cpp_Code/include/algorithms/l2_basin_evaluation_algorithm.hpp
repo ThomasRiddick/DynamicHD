@@ -22,6 +22,7 @@ public:
                       double volume_threshold_in, double cell_height_in) :
     cell_coords(cell_coords_in), height_type(height_type_in),
     volume_threshold(volume_threshold_in), cell_height(cell_height_in) {}
+  ~filling_order_entry() {delete cell_coords;}
   coords* cell_coords;
   height_types height_type;
   double volume_threshold;
@@ -61,10 +62,13 @@ class lake_variables {
 public:
   lake_variables(int lake_number_in,
                  coords* center_coords_in,
+                 double lake_lower_boundary_height_in,
                  int primary_lake_in=null_lake_number,
                  set<int>* secondary_lakes_in=new set<int>());
+  ~lake_variables();
   void set_primary_lake(int primary_lake_in);
   void set_potential_exit_points(vector<coords*>* potential_exit_points_in);
+  void set_filled_lake_area();
   int lake_number;
   coords* center_coords;
   //Keep references to lakes as number not objects
@@ -74,6 +78,9 @@ public:
   double lake_area;
   map<int,pair<coords*,bool>*> outflow_points;
   vector<filling_order_entry*> filling_order;
+  double lake_lower_boundary_height;
+  double filled_lake_area;
+
   //Working variables - don't need to exported
   //lake area
   map<int,coords*> spill_points;
@@ -89,12 +96,13 @@ class simple_search {
 public:
   simple_search(grid* grid_in,
                 grid_params* grid_params_in);
-  coords* search(function<bool(coords*)>* target_found_func,
-                 function<bool(coords*)>* ignore_nbr_func_in,
+  coords* search(function<bool(coords*)> target_found_func,
+                 function<bool(coords*)> ignore_nbr_func_in,
                  coords* start_point);
+  ~simple_search() { delete search_completed_cells; }
 private:
   void search_process_neighbors();
-  function<bool(coords*)>* ignore_nbr_func;
+  function<bool(coords*)> ignore_nbr_func;
   grid* _grid = nullptr;
   field<bool>* search_completed_cells = nullptr;
   queue<landsea_cell*> search_q;
@@ -114,7 +122,7 @@ public:
                              int additional_lat_offset_in,
                              grid_params* grid_params_in,
                              grid_params* coarse_grid_params_in);
-  virtual ~basin_evaluation_algorithm() {};
+  virtual ~basin_evaluation_algorithm();
   void evaluate_basins();
   void initialize_basin(lake_variables* lake);
   void search_for_outflows_on_level(int lake_number);
@@ -147,6 +155,7 @@ private:
   field<double>* cell_areas = nullptr;
   field<int>* prior_fine_catchment_nums = nullptr;
   field<int>* lake_numbers = nullptr;
+  field<bool>* lake_mask = nullptr;
   field<int>* coarse_catchment_nums = nullptr;
   field<int>* catchments_from_sink_filling = nullptr;
   disjoint_set_forest* lake_connections = nullptr;
@@ -179,7 +188,7 @@ private:
 class latlon_basin_evaluation_algorithm :
     public basin_evaluation_algorithm {
 public:
-  virtual ~latlon_basin_evaluation_algorithm() {};
+  virtual ~latlon_basin_evaluation_algorithm();
   latlon_basin_evaluation_algorithm(bool* minima_in,
                                     double* raw_orography_in,
                                     double* corrected_orography_in,

@@ -25,6 +25,7 @@
 
 #include <unordered_set>
 #include <map>
+#include <stack>
 #include "algorithms/l2_basin_evaluation_algorithm.hpp"
 
 using namespace std;
@@ -119,9 +120,11 @@ void store_to_array::add_outflow_points_dict(map<int,pair<coords*,bool>*> &outfl
         }
         entry_as_array->push_back((double)i->second->second);
         dict_array->insert(dict_array->end(),entry_as_array->begin(),entry_as_array->end());
+        delete entry_as_array;
     }
     working_object->push_back((double)outflow_points_in.size());
     working_object->insert(working_object->end(),dict_array->begin(),dict_array->end());
+    delete dict_array;
 }
 
 void store_to_array::add_filling_order(vector<filling_order_entry*> &filling_order_in,
@@ -156,16 +159,20 @@ vector<double>* store_to_array::complete_array(){
     for(vector<vector<double>*>::iterator obj = objects.begin();
         obj != objects.end(); ++obj){
       array->insert(array->end(),(*obj)->begin(),(*obj)->end());
+      delete *obj;
     }
     return array;
 }
 
 lake_variables::lake_variables(int lake_number_in,
                                coords* center_coords_in,
+                               double lake_lower_boundary_height_in,
                                int primary_lake_in,
                                set<int>* secondary_lakes_in) :
                                center_coords(center_coords_in),
                                lake_number(lake_number_in),
+                               lake_lower_boundary_height(lake_lower_boundary_height_in),
+                               filled_lake_area(-1.0),
                                primary_lake(primary_lake_in),
                                secondary_lakes(secondary_lakes_in),
                                center_cell_volume_threshold(0.0),
@@ -178,6 +185,23 @@ void lake_variables::set_primary_lake(int primary_lake_in) {
 
 void lake_variables::set_potential_exit_points(vector<coords*>* potential_exit_points_in) {
     potential_exit_points = potential_exit_points_in;
+}
+
+void lake_variables::set_filled_lake_area(){
+    filled_lake_area = lake_area;
+}
+
+lake_variables::~lake_variables() {
+  delete center_coords;
+  delete secondary_lakes;
+  for (auto entry : outflow_points) {
+    delete entry.second->first;
+    delete entry.second;
+  }
+  for (auto entry : filling_order) delete entry;
+  for (auto entry : spill_points) delete entry.second;
+  for (auto entry : *potential_exit_points) delete entry;
+  delete potential_exit_points;
 }
 
 void lake_variables::print(ostream& outstr){
@@ -220,24 +244,31 @@ simple_search::simple_search(grid* grid_in,
         _grid = grid_in;
 }
 
-coords* simple_search::search(function<bool(coords*)>* target_found_func,
-                              function<bool(coords*)>* ignore_nbr_func_in,
+coords* simple_search::search(function<bool(coords*)> target_found_func,
+                              function<bool(coords*)> ignore_nbr_func_in,
                               coords* start_point){
     if (! search_q.empty()) {
         throw runtime_error("Search Failed");
     }
-    search_q.push(new landsea_cell(start_point));
+    search_q.push(new landsea_cell(start_point->clone()));
     search_completed_cells->set_all(false);
     ignore_nbr_func = ignore_nbr_func_in;
     while ( ! search_q.empty()) {
         landsea_cell* search_cell = search_q.front();
         search_q.pop();
         search_coords = search_cell->get_cell_coords();
-        if ((*target_found_func)(search_coords)) {
-            while ( ! search_q.empty()) search_q.pop();
-            return search_coords;
+        if (target_found_func(search_coords)) {
+            coords* end_point = search_coords->clone();
+            delete search_cell;
+            while ( ! search_q.empty()) {
+                search_cell = search_q.front();
+                search_q.pop();
+                delete search_cell;
+            }
+            return end_point;
         }
         search_process_neighbors();
+        delete search_cell;
     }
     throw runtime_error("Search Failed");
 }
@@ -245,10 +276,11 @@ coords* simple_search::search(function<bool(coords*)>* target_found_func,
 void simple_search::search_process_neighbors() {
     _grid->for_all_nbrs_general(search_coords,[&](coords* search_nbr_coords){
         if (! ((*search_completed_cells)(search_nbr_coords) ||
-               (*ignore_nbr_func)(search_nbr_coords))) {
+               ignore_nbr_func(search_nbr_coords))) {
             search_q.push(new landsea_cell(search_nbr_coords->clone()));
             (*search_completed_cells)(search_nbr_coords) = true;
         }
+        delete search_nbr_coords;
     });
 }
 
@@ -280,6 +312,8 @@ basin_evaluation_algorithm::basin_evaluation_algorithm(bool* minima_in,
         new field<int>(catchments_from_sink_filling_in,_grid_params);
     lake_numbers = new field<int>(_grid_params);
     lake_numbers->set_all(null_lake_number);
+    lake_mask = new field<bool>(_grid_params);
+    lake_mask->set_all(false);
     completed_cells = new field<bool>(_grid_params);
     completed_cells->set_all(false);
     cells_in_lake = new field<bool>(_grid_params);
@@ -293,11 +327,30 @@ basin_evaluation_algorithm::basin_evaluation_algorithm(bool* minima_in,
 
 }
 
+basin_evaluation_algorithm::~basin_evaluation_algorithm(){
+    for (lake_variables* lake : lakes) delete lake;
+    delete minima;
+    delete raw_orography;
+    delete corrected_orography;
+    delete cell_areas;
+    delete prior_fine_catchment_nums;
+    delete coarse_catchment_nums;
+    delete catchments_from_sink_filling;
+    delete lake_numbers;
+    delete lake_mask;
+    delete completed_cells;
+    delete cells_in_lake;
+    delete level_completed_cells;
+    delete search_alg;
+    delete coarse_search_alg;
+    delete _coarse_grid;
+    delete _grid;
+}
+
 void basin_evaluation_algorithm::evaluate_basins(){
-    sink_points = vector<coords*>();
     //Leave room for a catchment 0
     for (int i = 0;i <= prior_fine_catchment_nums->get_max_element();i++){
-        sink_points.push_back(null_coords->clone());
+        sink_points.push_back(null_coords);
     }
     lakes.clear();
     if (! lake_q.empty()) {
@@ -309,14 +362,14 @@ void basin_evaluation_algorithm::evaluate_basins(){
     _grid->for_all([&](coords* coords_in){
         if ((*minima)(coords_in)){
             minima_q.push(coords_in);
-        }
+        } else delete coords_in;
     });
     vector<int> merging_lakes;
     while (! minima_q.empty()) {
         coords* minimum = minima_q.top();
         minima_q.pop();
         int lake_number = lakes.size();
-        lake_variables* lake = new lake_variables(lake_number,minimum);
+        lake_variables* lake = new lake_variables(lake_number,minimum,(*raw_orography)(minimum));
         lakes.push_back(lake);
         lake_q.push(lake);
         lake_connections->add_set(lake_number);
@@ -337,7 +390,7 @@ void basin_evaluation_algorithm::evaluate_basins(){
                 //until after making the test for merges then relabel. Center cell height/coords
                 //without the 'new' moniker refers to the previous center cell; previous center cell
                 //height/coords the previous previous center cell
-                new_center_coords = center_cell->get_cell_coords();
+                new_center_coords = center_cell->get_cell_coords()->clone();
                 new_center_cell_height_type = center_cell->get_height_type();
                 new_center_cell_height = center_cell->get_orography();
                 //Exit to basin or level area found
@@ -360,6 +413,7 @@ void basin_evaluation_algorithm::evaluate_basins(){
                             }
                         }
                         lake->set_potential_exit_points(potential_exit_points);
+                        if (lake->filled_lake_area == -1.0) lake->filled_lake_area = 1.0;
                         _grid->for_all([&](coords* coords_in){
                             if ((*cells_in_lake)(coords_in) &&
                                 ((*raw_orography)(coords_in) < center_cell_height)){
@@ -369,15 +423,19 @@ void basin_evaluation_algorithm::evaluate_basins(){
                                 ((*corrected_orography)(coords_in) < center_cell_height)){
                                 (*corrected_orography)(coords_in) = center_cell_height;
                             }
+                            delete coords_in;
                         });
+                        delete center_cell;
                         break;
                     } else {
+                        delete potential_exit_points;
                         //Don't rescan level later
                         searched_level_height = center_cell_height;
                     }
                 }
                 //Process neighbors of new center coords
                 process_neighbors();
+                delete previous_cell_coords;
                 previous_cell_coords = center_coords;
                 previous_cell_height = center_cell_height;
                 previous_cell_height_type = center_cell_height_type;
@@ -385,8 +443,16 @@ void basin_evaluation_algorithm::evaluate_basins(){
                 center_cell_height = new_center_cell_height;
                 center_coords = new_center_coords;
                 process_center_cell(lake);
+                delete center_cell;
             }
-            while (! q.empty()) q.pop();
+            delete new_center_coords;
+            delete center_coords;
+            delete previous_cell_coords;
+            while (! q.empty()) {
+                center_cell = static_cast<basin_cell*>(q.top());
+                q.pop();
+                delete center_cell;
+            }
         }
         if ( ! merging_lakes.empty()) {
             unordered_set<int> unique_lake_groups;
@@ -402,11 +468,14 @@ void basin_evaluation_algorithm::evaluate_basins(){
                         sublakes_in_lake->insert(sublake);
                     }
                 }
+                delete potential_sublakes_in_lake;
                 int new_lake_number = lakes.size();
                 int first_sublake = *(sublakes_in_lake->lower_bound(-1));
+                coords* new_lake_center_coords = lakes[first_sublake]->center_coords;
                 lake_variables* new_lake =
                     new lake_variables(new_lake_number,
-                                       lakes[first_sublake]->center_coords,
+                                       new_lake_center_coords->clone(),
+                                       (*raw_orography)(new_lake_center_coords),
                                        null_lake_number,
                                        sublakes_in_lake);
                 lake_connections->add_set(new_lake_number);
@@ -423,9 +492,9 @@ void basin_evaluation_algorithm::evaluate_basins(){
                         if (*sublake != *other_sublake) {
                             lakes[*sublake]->spill_points[*other_sublake] =
                                 search_alg->
-                                search(new function<bool(coords*)>([this,sublake,other_sublake](coords* coords_in) {
+                                search(function<bool(coords*)>([this,sublake,other_sublake](coords* coords_in) {
                                        return (*lake_numbers)(coords_in) == *other_sublake; }),
-                                       new function<bool(coords*)>([this,sublake](coords* coords_in) {
+                                       function<bool(coords*)>([this,sublake](coords* coords_in) {
                                        return (*corrected_orography)(coords_in) !=
                                        (*corrected_orography)(lakes[*sublake]->center_coords); }),
                                        lakes[*sublake]->center_coords);
@@ -439,6 +508,7 @@ void basin_evaluation_algorithm::evaluate_basins(){
                         if ((*lake_numbers)(coords_in) == *sublake) {
                             (*lake_numbers)(coords_in) = new_lake->lake_number;
                         }
+                        delete coords_in;
                     });
                     lakes[*sublake]->set_primary_lake(new_lake->lake_number);
                 }
@@ -448,6 +518,7 @@ void basin_evaluation_algorithm::evaluate_basins(){
         } else break;
     }
     set_outflows();
+    delete lake_connections;
 }
 
 void basin_evaluation_algorithm::initialize_basin(lake_variables* lake) {
@@ -456,7 +527,7 @@ void basin_evaluation_algorithm::initialize_basin(lake_variables* lake) {
     completed_cells->set_all(false);
     cells_in_lake->set_all(false);
     lake->center_cell_volume_threshold = 0.0;
-    center_coords = lake->center_coords;
+    center_coords = lake->center_coords->clone();
     double raw_height = (*raw_orography)(center_coords);
     double corrected_height = (*corrected_orography)(center_coords);
     if (raw_height <= corrected_height) {
@@ -486,7 +557,7 @@ void basin_evaluation_algorithm::initialize_basin(lake_variables* lake) {
     process_neighbors();
     center_cell = static_cast<basin_cell*>(q.top());
     q.pop();
-    new_center_coords = center_cell->get_cell_coords();
+    new_center_coords = center_cell->get_cell_coords()->clone();
     new_center_cell_height_type = center_cell->get_height_type();
     new_center_cell_height = center_cell->get_orography();
     process_neighbors();
@@ -494,6 +565,7 @@ void basin_evaluation_algorithm::initialize_basin(lake_variables* lake) {
     center_cell_height = new_center_cell_height;
     center_coords = new_center_coords;
     process_center_cell(lake);
+    delete center_cell;
 }
 
 void basin_evaluation_algorithm::search_for_outflows_on_level(int lake_number) {
@@ -518,18 +590,18 @@ void basin_evaluation_algorithm::search_for_outflows_on_level(int lake_number) {
     }
     //put removed items back in q
     for(basin_cell* cell : level_q){
-        q.push(cell);
+        q.push(cell->clone());
     }
     for(basin_cell* cell : additional_cells_to_return_to_q){
         q.push(cell);
     }
     level_q.push_back(new basin_cell(center_cell_height,
                                      center_cell_height_type,
-                                     center_coords));
+                                     center_coords->clone()));
     if (center_cell_height == new_center_cell_height) {
         level_q.push_back(new basin_cell(new_center_cell_height,
                                          new_center_cell_height_type,
-                                         new_center_coords));
+                                         new_center_coords->clone()));
         if ((*lake_numbers)(new_center_coords) != -1 &&
             (*lake_numbers)(new_center_coords) != lake_number) {
             outflow_lake_numbers.push_back((*lake_numbers)(new_center_coords));
@@ -542,6 +614,7 @@ void basin_evaluation_algorithm::search_for_outflows_on_level(int lake_number) {
         coords* level_coords = level_center_cell->get_cell_coords();
         (*level_completed_cells)(level_coords) = true;
         process_level_neighbors(lake_number,level_coords);
+        delete level_center_cell;
     }
 }
 
@@ -575,6 +648,7 @@ void basin_evaluation_algorithm::process_level_neighbors(int lake_number,
                                                  nbr_coords->clone()));
             }
         }
+        delete nbr_coords;
     });
 }
 
@@ -587,13 +661,13 @@ void basin_evaluation_algorithm::process_center_cell(lake_variables* lake) {
             lake->lake_area*(center_cell_height-previous_cell_height);
     if (previous_cell_height_type == connection_height) {
         q.push(new basin_cell((*raw_orography)(previous_cell_coords),
-               flood_height,previous_cell_coords));
-        lake->filling_order.push_back(new filling_order_entry(previous_cell_coords,
+               flood_height,previous_cell_coords->clone()));
+        lake->filling_order.push_back(new filling_order_entry(previous_cell_coords->clone(),
                                                               connection_height,
                                                               lake->center_cell_volume_threshold,
                                                               center_cell_height));
     } else if (previous_cell_height_type == flood_height) {
-        lake->filling_order.push_back(new filling_order_entry(previous_cell_coords,
+        lake->filling_order.push_back(new filling_order_entry(previous_cell_coords->clone(),
                                                               flood_height,
                                                               lake->center_cell_volume_threshold,
                                                               center_cell_height));
@@ -601,6 +675,7 @@ void basin_evaluation_algorithm::process_center_cell(lake_variables* lake) {
         throw runtime_error("Cell type not recognized");
     }
     if (center_cell_height_type == flood_height) {
+        lake->set_filled_lake_area();
         lake->lake_area += (*cell_areas)(center_coords);
     } else if (center_cell_height_type != connection_height) {
         throw runtime_error("Cell type not recognized");
@@ -629,6 +704,7 @@ void basin_evaluation_algorithm::process_neighbors() {
                                   nbr_coords->clone()));
             (*completed_cells)(nbr_coords) = true;
         }
+        delete nbr_coords;
     });
 }
 
@@ -649,7 +725,7 @@ void basin_evaluation_algorithm::set_outflows(){
                 //overall catchment both at a lower level - in this
                 //case arbitrarily use the first
                 lake->outflow_points[first_potential_exit_point_lake_number] =
-                    new pair<coords*,bool>(null_coords,true);
+                    new pair<coords*,bool>(null_coords->clone(),true);
             } else {
                 coords* first_cell_beyond_rim_coords = first_potential_exit_point;
                 lake->outflow_points[-1] = new pair<coords*,bool>
@@ -667,12 +743,20 @@ void basin_evaluation_algorithm::set_outflows(){
                     _coarse_grid->convert_fine_coords(lakes[other_lake]->center_coords,
                                                      _grid_params);
                 if ((*spill_point_coarse_coords) == (*lake_center_coarse_coords)) {
-                    lake->outflow_points[other_lake] = new pair<coords*,bool>(null_coords,true);
+                    lake->outflow_points[other_lake] = new pair<coords*,bool>(null_coords->clone(),
+                                                                              true);
                 } else {
                     lake->outflow_points[other_lake] =
                         new pair<coords*,bool>(find_non_local_outflow_point(spill_point),false);
                 }
+                delete spill_point_coarse_coords;
+                delete lake_center_coarse_coords;
             }
+        }
+    }
+    for (coords* entry : sink_points) {
+        if (*entry != *null_coords){
+            delete entry;
         }
     }
 }
@@ -698,8 +782,11 @@ coords* basin_evaluation_algorithm::find_non_local_outflow_point(coords* first_c
                     catchment_outlet_coarse_coords =
                         _coarse_grid->convert_fine_coords(current_coords,
                                                           _grid_params);
+                    delete current_coords;
+                    delete downstream_coords;
                     break;
                 }
+                delete current_coords;
                 current_coords = downstream_coords;
             }
             if ((*catchment_outlet_coarse_coords) == (*null_coords)) {
@@ -712,13 +799,14 @@ coords* basin_evaluation_algorithm::find_non_local_outflow_point(coords* first_c
         coords* coarse_first_cell_beyond_rim_coords =
             _coarse_grid->convert_fine_coords(first_cell_beyond_rim_coords,
                                               _grid_params);
-        outflow_coords = coarse_search_alg->search(new function<bool(coords*)>
+        outflow_coords = coarse_search_alg->search(function<bool(coords*)>
                                                    ([this,coarse_catchment_number](coords* coords_in) {
                                                    return (*coarse_catchment_nums)(coords_in) ==
                                                    coarse_catchment_number; }),
-                                                   new function<bool(coords*)>
+                                                   function<bool(coords*)>
                                                    ([](coords* coords_in) { return false; }),
                                                    coarse_first_cell_beyond_rim_coords);
+        delete coarse_first_cell_beyond_rim_coords;
     }
     return outflow_coords;
 }
@@ -747,6 +835,7 @@ vector<double>* basin_evaluation_algorithm::get_lakes_as_array() {
             //Add empty field
             store_to_array_inst.add_field(secondary_lakes_with_offset);
         }
+        delete secondary_lakes_with_offset;
         store_to_array_inst.add_coords(lake->center_coords,array_offset,
                                        additional_lat_offset);
         store_to_array_inst.add_filling_order(lake->filling_order,_grid,
@@ -755,6 +844,8 @@ vector<double>* basin_evaluation_algorithm::get_lakes_as_array() {
                                                     _grid,
                                                     array_offset,
                                                     additional_lat_offset);
+        store_to_array_inst.add_number(lake->lake_lower_boundary_height);
+        store_to_array_inst.add_number(lake->filled_lake_area);
         store_to_array_inst.complete_object();
     }
     return store_to_array_inst.complete_array();
@@ -762,12 +853,12 @@ vector<double>* basin_evaluation_algorithm::get_lakes_as_array() {
 
 
 field<bool>* basin_evaluation_algorithm::get_lake_mask(){
-    field<bool>* lake_mask = new field<bool>(_grid_params);
     lake_mask->set_all(false);
     _grid->for_all([&](coords* coords_in){
         if ((*lake_numbers)(coords_in) != null_lake_number){
             (*lake_mask)(coords_in) = true;
         }
+        delete coords_in;
     });
     return lake_mask;
 }
@@ -810,6 +901,11 @@ latlon_basin_evaluation_algorithm::
     null_coords = new latlon_coords(-1,-1);
 }
 
+latlon_basin_evaluation_algorithm::~latlon_basin_evaluation_algorithm(){
+    delete prior_fine_rdirs;
+    delete null_coords;
+}
+
 pair<bool,coords*> latlon_basin_evaluation_algorithm::
                    check_for_sinks_and_get_downstream_coords(coords* coords_in){
     double rdir = (*prior_fine_rdirs)(coords_in);
@@ -822,7 +918,6 @@ bool latlon_basin_evaluation_algorithm::check_if_fine_cell_is_sink(coords* coord
     int rdir = (*prior_fine_rdirs)(coords_in);
     return rdir == 5;
 }
-
 
 single_index_basin_evaluation_algorithm::
     single_index_basin_evaluation_algorithm(bool* minima_in,
