@@ -438,7 +438,8 @@ class BasinEvaluationAlgorithm:
                                             self.lake_connections.make_new_link(lake_number,other_lake_number)
                                             merging_lakes.append(lake_number)
                                 lake.set_potential_exit_points(potential_exit_points)
-                                lake.set_filled_lake_area()
+                                if lake.filled_lake_area == None:
+                                    lake.filled_lake_area = 1.0
                                 self.raw_orography[
                                     np.logical_and(self.cells_in_lake,
                                                    self.raw_orography < self.center_cell_height)] = \
@@ -627,6 +628,7 @@ class BasinEvaluationAlgorithm:
         else:
             raise RuntimeError("Cell type not recognized")
         if (self.center_cell_height_type == HeightType.flood_height):
+            lake.set_filled_lake_area()
             lake.lake_area += float(self.cell_areas[self.center_coords])
         elif self.center_cell_height_type != HeightType.connection_height:
             raise RuntimeError("Cell type not recognized")
