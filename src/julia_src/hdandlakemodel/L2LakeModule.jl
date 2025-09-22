@@ -59,12 +59,16 @@ struct LakeParameters
   secondary_lakes::Vector{Int64}
   filling_order::Vector{Cell}
   outflow_points::Dict{Int64,Redirect}
+  lake_lower_boundary_height::Float64
+  filled_lake_area::Float64
   function LakeParameters(lake_number::Int64,
                           primary_lake::Int64,
                           secondary_lakes::Vector{Int64},
                           center_coords::CartesianIndex,
                           filling_order::Vector{Cell},
                           outflow_points::Dict{Int64,Redirect},
+                          lake_lower_boundary_height::Float64,
+                          filled_lake_area::Float64,
                           fine_grid::Grid,coarse_grid::Grid)
   center_cell_coarse_coords::CartesianIndex =
     find_coarse_cell_containing_fine_cell(fine_grid,coarse_grid,
@@ -78,7 +82,9 @@ struct LakeParameters
       lake_number,is_primary,is_leaf,
       primary_lake,secondary_lakes,
       filling_order,
-      outflow_points)
+      outflow_points,
+      lake_lower_boundary_height,
+      filled_lake_area)
   end
 end
 
@@ -100,6 +106,8 @@ mutable struct FillingLake <: Lake
   current_filling_cell_index::Int64
   next_cell_volume_threshold::Float64
   previous_cell_volume_threshold::Float64
+  next_cell_height::Float64
+  previous_cell_height::Float64
   lake_volume::Float64
   function FillingLake(lake_parameters::LakeParameters,
                        lake_variables::LakeVariables,
@@ -112,11 +120,14 @@ mutable struct FillingLake <: Lake
       current_filling_cell_index = length(lake_parameters.filling_order)
       next_cell_volume_threshold =
         lake_parameters.filling_order[end].fill_threshold
+      next_cell_height = lake_parameters.filling_order[end].height
       if length(lake_parameters.filling_order) > 1
         previous_cell_volume_threshold =
           lake_parameters.filling_order[end-1].fill_threshold
+        previous_cell_height = lake_parameters.filling_order[end-1].height
       else
         previous_cell_volume_threshold = 0.0
+        previous_cell_height = lake_parameters.lake_lower_boundary_height
       end
       lake_volume = lake_parameters.filling_order[end].fill_threshold
     else
@@ -128,11 +139,14 @@ mutable struct FillingLake <: Lake
       next_cell_volume_threshold =
         lake_parameters.filling_order[1].fill_threshold
       previous_cell_volume_threshold = 0.0
+      next_cell_height = lake_parameters.filling_order[1].height
+      previous_cell_height = lake_parameters.lake_lower_boundary_height
       lake_volume = 0.0
     end
     new(lake_parameters,lake_variables,lake_model_parameters,lake_model_prognostics,
         current_cell_to_fill,current_height_type,current_filling_cell_index,
-        next_cell_volume_threshold,previous_cell_volume_threshold,lake_volume)
+        next_cell_volume_threshold,previous_cell_volume_threshold,next_cell_height,
+        previous_cell_height,lake_volume)
   end
 end
 
@@ -220,6 +234,9 @@ function handle_event(lake::FillingLake,add_water::AddWater)
       lake.previous_cell_volume_threshold = lake.next_cell_volume_threshold
       lake.next_cell_volume_threshold =
         lake.parameters.filling_order[lake.current_filling_cell_index].fill_threshold
+      lake.previous_cell_height = lake.next_cell_height
+      lake.next_cell_height =
+        lake.parameters.filling_order[lake.current_filling_cell_index].height
       lake.current_cell_to_fill =
         lake.parameters.filling_order[lake.current_filling_cell_index].coords
       lake.current_height_type =
@@ -356,11 +373,15 @@ function handle_event(lake::FillingLake,remove_water::RemoveWater)
       end
       lake.current_filling_cell_index -= 1
       lake.next_cell_volume_threshold = lake.previous_cell_volume_threshold
+      lake.next_cell_height = lake.previous_cell_height
       if lake.current_filling_cell_index > 1
         lake.previous_cell_volume_threshold =
           lake.parameters.filling_order[lake.current_filling_cell_index-1].fill_threshold
+        lake.previous_cell_height =
+          lake.parameters.filling_order[lake.current_filling_cell_index-1].height
       else
         lake.previous_cell_volume_threshold = 0.0
+        lake.previous_cell_height = lake.parameters.lake_lower_boundary_height
       end
       lake.current_cell_to_fill = lake.parameters.filling_order[lake.current_filling_cell_index].coords
       lake.current_height_type =
@@ -652,6 +673,25 @@ get_lake_filled_cells(lake::FillingLake) =
 
 get_lake_filled_cells(lake::Union{OverflowingLake,SubsumedLake}) =
   map(f->f.coords,lake.parameters.filling_order)
+
+function get_lake_height(lake::FillingLake)
+  if lake.next_cell_volume_threshold == lake.previous_cell_volume_threshold
+    return lake.previous_cell_height
+  else
+    return lake.previous_cell_height +
+           (lake.next_cell_height - lake.previous_cell_height)*
+           (lake.lake_volume + lake.variables.unprocessed_water
+            - lake.previous_cell_volume_threshold)/
+           (lake.next_cell_volume_threshold - lake.previous_cell_volume_threshold)
+  end
+end
+
+get_lake_height(lake::OverflowingLake) = lake.parameters.filling_order[end].height +
+                                         (lake.excess_water +
+                                          lake.variables.unprocessed_water)/
+                                          lake.parameters.filled_lake_area
+
+get_lake_height(lake::SubsumedLake) = lake.parameters.filling_order[end].height
 
 function find_top_level_primary_lake_number(lake::Lake)
   if lake.parameters.is_primary
