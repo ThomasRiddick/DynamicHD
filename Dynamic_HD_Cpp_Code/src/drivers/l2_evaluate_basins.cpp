@@ -10,63 +10,65 @@
 #include "drivers/fill_sinks.hpp"
 using namespace std;
 
-// void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
-//                                            double* raw_orography_in,
-//                                            double* corrected_orography_in,
-//                                            double* cell_areas_in,
-//                                            double* connection_volume_thresholds_in,
-//                                            double* flood_volume_thresholds_in,
-//                                            double* connection_heights_in,
-//                                            double* flood_heights_in,
-//                                            double* prior_fine_rdirs_in,
-//                                            double* prior_coarse_rdirs_in,
-//                                            int* prior_fine_catchments_in,
-//                                            int* coarse_catchment_nums_in,
-//                                            int* flood_next_cell_lat_index_in,
-//                                            int* flood_next_cell_lon_index_in,
-//                                            int* connect_next_cell_lat_index_in,
-//                                            int* connect_next_cell_lon_index_in,
-//                                            int* connect_merge_and_redirect_indices_index_in,
-//                                            int* flood_merge_and_redirect_indices_index_in,
-//                                            int nlat_fine, int nlon_fine,
-//                                            int nlat_coarse,int nlon_coarse,
-//                                            int* flood_merges_and_redirects_in,
-//                                            int* connect_merges_and_redirects_in,
-//                                            int* flood_merges_and_redirects_dims_in,
-//                                            int* connect_merges_and_redirects_dims_in,
-//                                            int* basin_catchment_numbers_in,
-//                                            int* sinkless_rdirs_in){
-//   auto minima_in = new bool[nlat_fine*nlon_fine];
-//   for (int i = 0; i < nlat_fine*nlon_fine; i++) {
-//     minima_in[i] = bool(minima_in_int[i]);
-//   }
-//   latlon_evaluate_basins(minima_in,
-//                          raw_orography_in,
-//                          corrected_orography_in,
-//                          cell_areas_in,
-//                          connection_volume_thresholds_in,
-//                          flood_volume_thresholds_in,
-//                          connection_heights_in,
-//                          flood_heights_in,
-//                          prior_fine_rdirs_in,
-//                          prior_coarse_rdirs_in,
-//                          prior_fine_catchments_in,
-//                          coarse_catchment_nums_in,
-//                          flood_next_cell_lat_index_in,
-//                          flood_next_cell_lon_index_in,
-//                          connect_next_cell_lat_index_in,
-//                          connect_next_cell_lon_index_in,
-//                          connect_merge_and_redirect_indices_index_in,
-//                          flood_merge_and_redirect_indices_index_in,
-//                          nlat_fine, nlon_fine,
-//                          nlat_coarse,nlon_coarse,
-//                          flood_merges_and_redirects_in,
-//                          connect_merges_and_redirects_in,
-//                          flood_merges_and_redirects_dims_in,
-//                          connect_merges_and_redirects_dims_in,
-//                          basin_catchment_numbers_in,
-//                          sinkless_rdirs_in);
-// }
+double* latlon_evaluate_basins_cython_wrapper(int* landsea_in_int,
+                                              int* minima_in_int,
+                                              double* raw_orography_in,
+                                              double* corrected_orography_in,
+                                              double* cell_areas_in,
+                                              int* prior_fine_rdirs_in,
+                                              int* prior_fine_catchments_in,
+                                              int* coarse_catchment_nums_in,
+                                              int nlat_fine, int nlon_fine,
+                                              int nlat_coarse,int nlon_coarse,
+                                              int* lake_numbers_out,
+                                              double* sinkless_rdirs_out_double,
+                                              int* number_of_lakes_out_ptr,
+                                              int* lake_mask_out_int,
+                                              int* lakes_as_array_size){
+  auto landsea_in = new bool[nlat_fine*nlon_fine];
+  for (int i = 0; i < nlat_fine*nlon_fine; i++) {
+    landsea_in[i] = bool(landsea_in_int[i]);
+  }
+  auto minima_in = new bool[nlat_fine*nlon_fine];
+  for (int i = 0; i < nlat_fine*nlon_fine; i++) {
+    minima_in[i] = bool(minima_in_int[i]);
+  }
+  short* sinkless_rdirs_out = new short[nlat_fine*nlon_fine];
+  bool* lake_mask_out = new bool[nlat_fine*nlon_fine];
+  fill_n(sinkless_rdirs_out,nlat_fine*nlon_fine,0);
+  int number_of_lakes_out;
+  vector<double>* lakes_as_vector_of_doubles =
+    latlon_evaluate_basins(landsea_in,
+                           minima_in,
+                           raw_orography_in,
+                           corrected_orography_in,
+                           cell_areas_in,
+                           prior_fine_rdirs_in,
+                           prior_fine_catchments_in,
+                           coarse_catchment_nums_in,
+                           nlat_fine,nlon_fine,
+                           nlat_coarse,nlon_coarse,
+                           lake_numbers_out,
+                           sinkless_rdirs_out,
+                           number_of_lakes_out,
+                           lake_mask_out);
+  *number_of_lakes_out_ptr = number_of_lakes_out;
+  *lakes_as_array_size = lakes_as_vector_of_doubles->size();
+  double* lakes_as_array = new double[*lakes_as_array_size];
+  int i = 0;
+  for (double element : *lakes_as_vector_of_doubles) {
+    lakes_as_array[i] = element;
+    i++;
+  }
+  for (int i = 0; i < nlat_fine*nlon_fine; i++) {
+    lake_mask_out_int[i] = int(lake_mask_out[i]);
+  }
+  for (auto i = 0; i < nlat_fine*nlon_fine;i++){
+    sinkless_rdirs_out_double[i] = sinkless_rdirs_out[i];
+  }
+  delete[] sinkless_rdirs_out;
+  return lakes_as_array;
+}
 
 vector<double>* latlon_evaluate_basins(bool* landsea_in,
                                        bool* minima_in,
@@ -184,10 +186,24 @@ vector<double>* latlon_evaluate_basins(bool* landsea_in,
   bool* lake_mask_out_ext = alg.get_lake_mask()->get_array();
   for (int i = scale_factor*nlon_fine; i < (nlat_fine+scale_factor)*nlon_fine; i++) {
     lake_numbers_out[i-scale_factor*nlon_fine] = lake_numbers_out_ext[i];
-    sinkless_rdirs_out[i-scale_factor*nlon_fine] = int(sinkless_rdirs_out[i]);
+    sinkless_rdirs_out[i-scale_factor*nlon_fine] = sinkless_rdirs_out_ext[i];
     lake_mask_out[i-scale_factor*nlon_fine] = lake_mask_out_ext[i];
   }
   delete grid_params_in;
   delete coarse_grid_params_in;
+  delete[] minima_in_ext;
+  delete[] true_sinks_ext;
+  delete[] raw_orography_in_ext;
+  delete[] corrected_orography_in_ext;
+  delete[] cell_areas_in_ext;
+  delete[] prior_fine_rdirs_in_ext;
+  delete[] prior_fine_catchments_in_ext;
+  delete[] coarse_catchment_nums_in_ext;
+  delete[] next_cell_lat_index_dummy_in;
+  delete[] next_cell_lon_index_dummy_in;
+  delete[] sinkless_rdirs_out_ext;
+  delete[] catchments_from_sink_filling_in;
+  delete[] true_sinks_in;
+  delete[] landsea_in_ext;
   return lakes_as_array;
 }
