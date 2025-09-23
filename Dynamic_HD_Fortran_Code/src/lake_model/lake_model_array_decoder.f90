@@ -227,6 +227,8 @@ function get_lake_parameters_from_array(array, &
   _DEF_COORDS_center_coords_
   integer :: lake_number
   integer :: primary_lake
+  real(dp) :: lake_lower_boundary_height
+  real(dp) :: filled_lake_area
   integer :: i
     decoder = arraydecoder(array)
     allocate(lake_parameters(decoder%expected_total_objects))
@@ -238,6 +240,8 @@ function get_lake_parameters_from_array(array, &
       call read_coords(decoder,_COORDS_ARG_center_coords_)
       filling_order => read_filling_order(decoder)
       outflow_points => read_outflow_points_dict(decoder)
+      lake_lower_boundary_height = read_float(decoder)
+      filled_lake_area = read_float(decoder)
       call finish_object(decoder)
       lake_parameters(i) = lakeparameterspointer(&
                               lakeparameters(lake_number, &
@@ -246,6 +250,8 @@ function get_lake_parameters_from_array(array, &
                               _COORDS_ARG_center_coords_, &
                               filling_order, &
                               outflow_points, &
+                              lake_lower_boundary_height, &
+                              filled_lake_area, &
                               _NPOINTS_LAKE_, &
                               _NPOINTS_HD_))
 

@@ -127,6 +127,7 @@ type :: lakemodelparameters
   integer, pointer, dimension(_DIMS_) :: number_fine_grid_cells
   type(coordslist), pointer, dimension(:) :: surface_cell_to_fine_cell_maps
   integer, pointer, dimension(_DIMS_) :: surface_cell_to_fine_cell_map_numbers
+  real(dp), pointer, dimension(_DIMS_) :: raw_orography
   logical, pointer, dimension(_DIMS_) :: non_lake_mask
   logical, pointer, dimension(_DIMS_) :: binary_lake_mask
 end type lakemodelparameters
@@ -171,6 +172,8 @@ type :: lakeparameters
   integer, pointer, dimension(:) :: secondary_lakes
   type(cellpointer), pointer, dimension(:) :: filling_order
   type(redirectdictionary), pointer :: outflow_points
+  real(dp) :: lake_lower_boundary_height
+  real(dp) :: filled_lake_area
 end type lakeparameters
 
 interface lakeparameters
@@ -191,6 +194,8 @@ type :: lakeprognostics
   integer :: current_filling_cell_index
   real(dp) :: next_cell_volume_threshold
   real(dp) :: previous_cell_volume_threshold
+  real(dp) :: next_cell_height
+  real(dp) :: previous_cell_height
   real(dp) :: lake_volume
   ! Overflowing lake variables
   type(redirect),pointer :: current_redirect
@@ -269,6 +274,7 @@ function lakemodelparametersconstructor( &
     cell_areas_on_surface_model_grid, &
     number_of_lakes, &
     is_lake, &
+    raw_orography, &
     non_lake_mask, &
     binary_lake_mask, &
     _NPOINTS_HD_, &
@@ -283,6 +289,7 @@ function lakemodelparametersconstructor( &
   _DEF_NPOINTS_SURFACE_ _INTENT_in_
   _DEF_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ _INTENT_in_
   real(dp), pointer, dimension(_DIMS_), intent(in) :: cell_areas_on_surface_model_grid
+  real(dp), pointer, dimension(_DIMS_), intent(in) :: raw_orography
   logical, pointer, dimension(_DIMS_), intent(in) :: non_lake_mask
   logical, pointer, dimension(_DIMS_), intent(in) :: binary_lake_mask
   real(dp), intent(inout), optional :: lake_retention_constant
@@ -388,6 +395,8 @@ function lakemodelparametersconstructor( &
     constructor%number_fine_grid_cells => number_fine_grid_cells
     constructor%surface_cell_to_fine_cell_maps => surface_cell_to_fine_cell_maps
     constructor%surface_cell_to_fine_cell_map_numbers => surface_cell_to_fine_cell_map_numbers
+    constructor%raw_orography => &
+      raw_orography
     constructor%non_lake_mask => non_lake_mask
     constructor%binary_lake_mask => binary_lake_mask
 end function lakemodelparametersconstructor
@@ -514,6 +523,8 @@ function lakeparametersconstructor(lake_number, &
                                    _COORDS_ARG_center_coords_, &
                                    filling_order, &
                                    outflow_points, &
+                                   lake_lower_boundary_height, &
+                                   filled_lake_area, &
                                    _NPOINTS_LAKE_, &
                                    _NPOINTS_HD_) &
                                    result(constructor)
@@ -523,6 +534,8 @@ function lakeparametersconstructor(lake_number, &
   _DEF_COORDS_center_coords_ _INTENT_in_
   type(cellpointer), pointer, dimension(:), intent(in) :: filling_order
   type(redirectdictionary), pointer, intent(in) :: outflow_points
+  real(dp), intent(in) :: lake_lower_boundary_height
+  real(dp), intent(in) :: filled_lake_area
   _DEF_NPOINTS_LAKE_ _INTENT_in_
   _DEF_NPOINTS_HD_ _INTENT_in_
   _DEF_COORDS_fine_cells_per_coarse_cell_
@@ -544,6 +557,8 @@ function lakeparametersconstructor(lake_number, &
     constructor%secondary_lakes => secondary_lakes
     constructor%filling_order => filling_order
     constructor%outflow_points => outflow_points
+    constructor%lake_lower_boundary_height = lake_lower_boundary_height
+    constructor%filled_lake_area = filled_lake_area
     constructor%number_of_cells_when_filled = size(filling_order)
 end function lakeparametersconstructor
 
@@ -595,11 +610,14 @@ subroutine initialise_filling_lake(lake,initialise_filled)
       lake%current_filling_cell_index = filling_order_length
       lake%next_cell_volume_threshold = &
         lake_parameters%filling_order(filling_order_length)%cell_pointer%fill_threshold
+      lake%next_cell_height = lake_parameters%filling_order(filling_order_length)%cell_pointer%height
       if (size(lake_parameters%filling_order) > 1) then
         lake%previous_cell_volume_threshold = &
           lake_parameters%filling_order(filling_order_length-1)%cell_pointer%fill_threshold
+        lake%previous_cell_height = lake_parameters%filling_order(filling_order_length-1)%cell_pointer%height
       else
         lake%previous_cell_volume_threshold = 0.0_dp
+        lake%previous_cell_height = lake_parameters%lake_lower_boundary_height
       end if
       lake%lake_volume = lake_parameters%filling_order(filling_order_length)&
                          &%cell_pointer%fill_threshold
@@ -612,6 +630,8 @@ subroutine initialise_filling_lake(lake,initialise_filled)
       lake%next_cell_volume_threshold = &
         lake_parameters%filling_order(1)%cell_pointer%fill_threshold
       lake%previous_cell_volume_threshold = 0.0_dp
+      lake%next_cell_height = lake_parameters%filling_order(1)%cell_pointer%height
+      lake%previous_cell_height = lake_parameters%lake_lower_boundary_height
       lake%lake_volume = 0.0_dp
     end if
 end subroutine initialise_filling_lake
@@ -644,6 +664,8 @@ subroutine set_filling_lake_prognostics_to_null_values(lake)
     lake%current_filling_cell_index = -1
     lake%next_cell_volume_threshold = 0.0_dp
     lake%previous_cell_volume_threshold = 0.0_dp
+    lake%next_cell_height = 0.0_dp
+    lake%previous_cell_height = 0.0_dp
     lake%lake_volume = 0.0_dp
 end subroutine set_filling_lake_prognostics_to_null_values
 
@@ -821,6 +843,9 @@ recursive subroutine add_water(lake,inflow,store_water)
           lake%previous_cell_volume_threshold = lake%next_cell_volume_threshold
           lake%next_cell_volume_threshold = &
             lake%parameters%filling_order(lake%current_filling_cell_index)%cell_pointer%fill_threshold
+          lake%previous_cell_height = lake%next_cell_height
+          lake%next_cell_height = &
+            lake%parameters%filling_order(lake%current_filling_cell_index)%cell_pointer%height
           _ASSIGN_lake%_COORDS_current_cell_to_fill_ = &
             lake%parameters%filling_order(lake%current_filling_cell_index)%cell_pointer%_COORDS_coords_
           lake%current_height_type = &
@@ -958,11 +983,15 @@ recursive subroutine remove_water(lake,outflow,store_water)
           end if
           lake%current_filling_cell_index = lake%current_filling_cell_index - 1
           lake%next_cell_volume_threshold = lake%previous_cell_volume_threshold
+          lake%next_cell_height = lake%previous_cell_height
           if (lake%current_filling_cell_index > 1) then
             lake%previous_cell_volume_threshold = &
               lake%parameters%filling_order(lake%current_filling_cell_index-1)%cell_pointer%fill_threshold
+            lake%previous_cell_height = &
+              lake%parameters%filling_order(lake%current_filling_cell_index-1)%cell_pointer%height
           else
             lake%previous_cell_volume_threshold = 0.0_dp
+            lake%previous_cell_height = lake%parameters%lake_lower_boundary_height
           end if
           _ASSIGN_lake%_COORDS_current_cell_to_fill_ = lake%parameters%filling_order(lake%current_filling_cell_index)%cell_pointer%_COORDS_coords_
           lake%current_height_type = &
@@ -1307,6 +1336,34 @@ function get_lake_volume(lake) result(lake_volume)
       stop
     end if
 end function get_lake_volume
+
+function get_true_lake_height(lake) result(lake_height)
+  type(lakeprognostics), pointer, intent(in) :: lake
+  real(dp) :: lake_height
+    if (lake%lake_type == filling_lake_type) then
+      if (lake%next_cell_volume_threshold == lake%previous_cell_volume_threshold) then
+        lake_height = lake%previous_cell_height
+      else
+        lake_height =  lake%previous_cell_height + &
+                       (lake%next_cell_height - lake%previous_cell_height)* &
+                       (lake%lake_volume + lake%unprocessed_water &
+                        - lake%previous_cell_volume_threshold)/ &
+                       (lake%next_cell_volume_threshold - lake%previous_cell_volume_threshold)
+      end if
+    else if (lake%lake_type == overflowing_lake_type) then
+      lake_height = lake%parameters%filling_order(lake%parameters%&
+                      &number_of_cells_when_filled)%cell_pointer%height + &
+                    (lake%excess_water + &
+                     lake%unprocessed_water)/ &
+                     lake%parameters%filled_lake_area
+    else if (lake%lake_type == subsumed_lake_type) then
+      lake_height = lake%parameters%filling_order(lake%parameters%&
+                      &number_of_cells_when_filled)%cell_pointer%height
+    else
+      write(*,*) "Unrecognised lake type"
+      stop
+    end if
+end function get_true_lake_height
 
 recursive function find_top_level_primary_lake_number(lake) result(top_level_primary_lake)
   type(lakeprognostics), pointer, intent(inout) :: lake
@@ -2060,6 +2117,50 @@ function calculate_diagnostic_lake_volumes_field(lake_model_parameters, &
     _LOOP_OVER_LAKE_GRID_END_
     deallocate(lake_volumes_by_lake_number)
 end function calculate_diagnostic_lake_volumes_field
+
+function calculate_lake_depths(lake_model_parameters, &
+                               lake_model_prognostics) &
+    result(lake_depths)
+  type(lakemodelparameters), intent(in), pointer :: lake_model_parameters
+  type(lakemodelprognostics), intent(in), pointer :: lake_model_prognostics
+  real(dp), dimension(_DIMS_), pointer :: lake_depths
+  real(dp), dimension(:), allocatable :: lake_height_by_lake_number
+  type(lakeprognostics), pointer :: lake
+  type(lakeprognostics), pointer :: top_level_primary_lake
+  real(dp) :: lake_depth
+  integer :: lake_number
+  integer :: top_level_primary_lake_number
+  integer :: i
+  _DEF_LOOP_INDEX_LAKE_
+    allocate(lake_depths(lake_model_parameters%_NPOINTS_LAKE_))
+    lake_depths(_DIMS_) = 0.0_dp
+    allocate(lake_height_by_lake_number(size(lake_model_prognostics%lakes)))
+    lake_height_by_lake_number(:) = 0.0_dp
+    do i = 1,size(lake_model_prognostics%lakes)
+      lake => lake_model_prognostics%lakes(i)%lake_pointer
+      top_level_primary_lake_number = lake_model_prognostics%set_forest%&
+        &find_root_from_label(lake%parameters%lake_number)
+      top_level_primary_lake => lake_model_prognostics%&
+        &lakes(top_level_primary_lake_number)%lake_pointer
+      if (top_level_primary_lake%active_lake) then
+        lake_height_by_lake_number(i) = get_true_lake_height(top_level_primary_lake)
+      end if
+    end do
+    _LOOP_OVER_LAKE_GRID_ _COORDS_LAKE_ _lake_model_parameters%_
+      lake_number = lake_model_prognostics%lake_numbers(_COORDS_LAKE_)
+      if (lake_number > 0) then
+        !Possible for a lake with only connect height cells and zero volume to
+        !have a height greater than the raw orography. In this case leave the
+        !depth as zero
+        lake_depth = lake_height_by_lake_number(lake_number) - &
+           lake_model_parameters%raw_orography(_COORDS_LAKE_)
+        if (lake_depth > 0.0) then
+          lake_depths(_COORDS_LAKE_) = lake_depth
+        end if
+      end if
+    _LOOP_OVER_LAKE_GRID_END_
+    deallocate(lake_height_by_lake_number)
+end
 
 subroutine set_lake_evaporation_for_testing(lake_model_parameters,lake_model_prognostics, &
                                 lake_evaporation)
