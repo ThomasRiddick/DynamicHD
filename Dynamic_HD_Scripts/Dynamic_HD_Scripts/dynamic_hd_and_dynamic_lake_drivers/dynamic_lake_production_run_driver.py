@@ -27,7 +27,6 @@ from Dynamic_HD_Scripts.tools import extract_lake_volumes
 from Dynamic_HD_Scripts.tools import connect_coarse_lake_catchments as cclc
 from Dynamic_HD_Scripts.tools import river_mouth_marking_driver
 from Dynamic_HD_Scripts.utilities import utilities
-from Dynamic_HD_Scripts.utilities.basin_evaluation_algorithm_prototype import LatLonEvaluateBasin
 from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers \
     import dynamic_hd_driver as dyn_hd_dr
 from tests.context import data_dir
@@ -954,30 +953,23 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         #                                   "catch30":catchments_30min},
         #                                   "/home/m/m300468/")
         output = \
-            LatLonEvaluateBasin.evaluate_basins(
-                landsea_in=
-                np.ascontiguousarray(ls_mask_10min.get_data(),dtype=np.int32),
-                minima_in=
-                np.ascontiguousarray(minima.get_data(),dtype=np.int32),
-                raw_orography_in=
-                np.ascontiguousarray(orography_10min.get_data(),dtype=np.float64),
-                corrected_orography_in=
-                np.ascontiguousarray(orography_10min.get_data(),dtype=np.float64),
-                cell_areas_in=
-                np.ascontiguousarray(input_cell_areas.get_data(),dtype=np.float64),
-                prior_fine_rdirs_in=
-                np.ascontiguousarray(rdirs_10min.get_data(),dtype=np.float64),
-                prior_fine_catchments_in=
-                np.ascontiguousarray(catchments_10min.get_data(),dtype=np.int32),
-                coarse_catchment_nums_in=
-                np.ascontiguousarray(catchments_30min.get_data(),dtype=np.int32),
-                return_algorithm_object=False)
-        fields_to_write = [field.Field(output["lake_mask"],grid=rdirs_10min.get_grid()),
+            dynamic_lake_operators.\
+                evaluate_basins(landsea_in=ls_mask_10min,
+                                minima_in=minima,
+                                raw_orography_in=orography_10min,
+                                corrected_orography_in=orography_10min,
+                                cell_areas_in=input_cell_areas,
+                                prior_fine_rdirs_in=rdirs_10min,
+                                prior_fine_catchments_in=catchments_10min,
+                                coarse_catchment_nums_in=catchments_30min)
+        fields_to_write = [output["lake_mask"],
                            corresponding_surface_cell_lat_index,
-                           corresponding_surface_cell_lon_index]
+                           corresponding_surface_cell_lon_index,
+                           orography_10min]
         fieldnames_for_fields_to_write = ["lake_mask",
-                                        "corresponding_surface_cell_lat_index",
-                                        "corresponding_surface_cell_lon_index", ]
+                                          "corresponding_surface_cell_lat_index",
+                                          "corresponding_surface_cell_lon_index",
+                                          "raw_orography"]
         iodriver.advanced_field_writer(fields_filename,
                                        fields_to_write,
                                        fieldname=fieldnames_for_fields_to_write)
@@ -993,7 +985,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         cdo_inst = cdo.Cdo()
         cdo_inst.merge(input=" ".join([array_filename,fields_filename]),
                        output=self.output_lakeparas_filepath)
-        basin_catchment_numbers = field.Field(output["lake_numbers"],fine_grid)
+        basin_catchment_numbers = output["lake_numbers"]
         #Write out basins maps
         basin_catchment_numbers_filename = path.join(self.working_directory_path,
                                                      "10min_basin_catchment_numbers.nc")
