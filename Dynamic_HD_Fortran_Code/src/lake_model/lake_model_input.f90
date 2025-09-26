@@ -49,8 +49,8 @@ subroutine load_lake_model_parameters(cell_areas_on_surface_model_grid, &
   real(dp), dimension(:), pointer, intent(out) :: lake_parameters_as_array
   _DEF_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_
   real(dp), dimension(_DIMS_), pointer :: raw_orography
+  real(dp), dimension(_DIMS_), pointer :: temp_real_array
   integer, dimension(_DIMS_), pointer :: temp_integer_array
-  integer, dimension(_DIMS_), pointer :: temp_real_array
   integer, dimension(_DIMS_), pointer :: non_lake_mask_int_temp_array
   integer, dimension(_DIMS_), pointer :: binary_lake_mask_int_temp_array
   integer, dimension(:), pointer :: number_of_lakes_temp_array
