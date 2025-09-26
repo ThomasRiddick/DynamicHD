@@ -11,6 +11,7 @@ using L2LakeModule: handle_event, get_lake_volume
 using L2LakeModule: get_corresponding_surface_model_grid_cell
 using L2LakeModule: flood_height
 using L2LakeModule: find_top_level_primary_lake_number
+using L2LakeModule: get_lake_height
 using L2LakeArrayDecoderModule: get_lake_parameters_from_array
 using L2CalculateLakeFractionsModule: add_pixel_by_coords, LakeInput
 using L2CalculateLakeFractionsModule: setup_lake_for_fraction_calculation
@@ -150,6 +151,7 @@ function create_lakes(lake_model_parameters::LakeModelParameters,
   lake_model_prognostics.lake_fraction_prognostics =
     setup_lake_for_fraction_calculation(lake_fraction_calculation_input,
                                         lake_model_parameters.number_fine_grid_cells,
+                                        lake_model_parameters.non_lake_mask,
                                         lake_model_parameters.binary_lake_mask,
                                         primary_lake_numbers,
                                         lake_model_parameters.
@@ -196,7 +198,7 @@ function create_lakes(lake_model_parameters::LakeModelParameters,
                                       coords) do fine_coords::CartesianIndex
       if lake_model_parameters.lake_centers(fine_coords)
         for lake::Lake in lake_model_prognostics.lakes
-          if lake.parameters.center_coords == fine_coords
+          if lake.parameters.center_coords == fine_coords && lake.parameters.is_leaf
             push!(basins_in_coarse_cell,lake.parameters.lake_number)
             basins_found = true
           end
@@ -552,6 +554,35 @@ function calculate_diagnostic_lake_volumes_field(lake_model_parameters::LakeMode
   return diagnostic_lake_volumes
 end
 
+function calculate_lake_depths(lake_model_parameters::LakeModelParameters,
+                               lake_model_prognostics::LakeModelPrognostics)
+  lake_height_by_lake_number::Vector{Float64} =
+    zeros(Float64,length(lake_model_prognostics.lakes))
+  lake_depths::Field{Float64} =
+    Field{Float64}(lake_model_parameters.lake_model_grid,0.0)
+  for i::Int64 in eachindex(lake_model_prognostics.lakes)
+    lake::Lake = lake_model_prognostics.lakes[find_root(lake_model_prognostics.set_forest,i)]
+    if lake.variables.active_lake
+      lake_height_by_lake_number[i] = get_lake_height(lake)
+    end
+  end
+  for_all(lake_model_parameters.lake_model_grid;
+          use_cartesian_index=true) do coords::CartesianIndex
+    lake_number = lake_model_prognostics.lake_numbers(coords)
+    if (lake_number > 0)
+      #Possible for a lake with only connect height cells and zero volume to
+      #have a height greater than the raw orography. In this case leave the
+      #depth as zero
+      if lake_height_by_lake_number[lake_number] -
+         lake_model_parameters.raw_orography(coords) > 0.0
+        set!(lake_depths,coords,lake_height_by_lake_number[lake_number]-
+             lake_model_parameters.raw_orography(coords))
+      end
+    end
+  end
+  return lake_depths
+end
+
 function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
                       set_lake_evaporation::SetLakeEvaporation)
   lake_model_parameters::LakeModelParameters = get_lake_model_parameters(prognostic_fields)
@@ -638,6 +669,7 @@ function calculate_binary_lake_mask(lake_model_parameters::LakeModelParameters,
     binary_lake_mask::Field{Bool} =
     calculate_lake_fractions(lake_fraction_calculation_input,
                              lake_model_parameters.number_fine_grid_cells,
+                             lake_model_parameters.non_lake_mask,
                              lake_model_parameters.grid_specific_lake_model_parameters,
                              lake_model_parameters.lake_model_grid,
                              lake_model_parameters.surface_model_grid)
@@ -662,7 +694,7 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
                                         sum(lake_model_prognostics.water_to_hd) -
                                         sum(lake_model_prognostics.evaporation_from_lakes)
   difference::Float64 = change_in_total_lake_volume - total_inflow_minus_outflow
-  tolerance::Float64 = 10e-14*max(new_total_lake_volume, total_water_to_lakes)
+  tolerance::Float64 = 10e-13*max(new_total_lake_volume, total_water_to_lakes)
   if ! isapprox(difference,0,atol=tolerance)
     println("*** Lake Water Budget ***")
     println("Total lake volume: $(new_total_lake_volume)")

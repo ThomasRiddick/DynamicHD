@@ -206,13 +206,15 @@ end subroutine init_hd_model_for_testing
         end if
       end do
       if (global_prognostics%using_lakes) then
+        if (write_output) then
           call write_lake_volumes_interface(trim(working_directory_local) // "/new_lake_volumes.nc")
           call write_binary_lake_mask_and_adjusted_lake_fraction_interface( &
                 trim(working_directory_local) // "/binary_lake_mask.nc")
-          deallocate(lake_evaporations_local)
-          deallocate(lake_fraction_adjusted_evaporation)
-          deallocate(evaporation)
-          deallocate(lake_fractions)
+        end if
+        deallocate(lake_evaporations_local)
+        deallocate(lake_fraction_adjusted_evaporation)
+        deallocate(evaporation)
+        deallocate(lake_fractions)
       end if
       deallocate(runoff)
       deallocate(drainage)

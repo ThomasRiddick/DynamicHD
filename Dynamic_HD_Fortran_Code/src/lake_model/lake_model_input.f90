@@ -48,12 +48,17 @@ subroutine load_lake_model_parameters(cell_areas_on_surface_model_grid, &
   type(lakemodelparameters), pointer, intent(out) :: lake_model_parameters
   real(dp), dimension(:), pointer, intent(out) :: lake_parameters_as_array
   _DEF_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_
+  real(dp), dimension(_DIMS_), pointer :: raw_orography
+  real(dp), dimension(_DIMS_), pointer :: temp_real_array
   integer, dimension(_DIMS_), pointer :: temp_integer_array
+  integer, dimension(_DIMS_), pointer :: non_lake_mask_int_temp_array
   integer, dimension(_DIMS_), pointer :: binary_lake_mask_int_temp_array
   integer, dimension(:), pointer :: number_of_lakes_temp_array
   integer, dimension(_DIMS_), pointer :: is_lake_int
+  integer, dimension(_DIMS_), pointer :: non_lake_mask_int
   integer, dimension(_DIMS_), pointer :: binary_lake_mask_int
   logical, dimension(_DIMS_), pointer :: is_lake
+  logical, dimension(_DIMS_), pointer :: non_lake_mask
   logical, dimension(_DIMS_), pointer :: binary_lake_mask
   integer :: number_of_lakes
   integer :: npoints
@@ -80,7 +85,9 @@ subroutine load_lake_model_parameters(cell_areas_on_surface_model_grid, &
     call check_return_code(nf90_inquire_dimension(ncid,dimid,len=npoints))
 
     allocate(temp_integer_array(nlon_lake,nlat_lake))
+    allocate(temp_real_array(nlon_lake,nlat_lake))
     allocate(binary_lake_mask_int_temp_array(nlon_surface,nlat_surface))
+    allocate(non_lake_mask_int_temp_array(nlon_surface,nlat_surface))
     allocate(number_of_lakes_temp_array(1))
     allocate(lake_parameters_as_array(npoints))
 
@@ -119,6 +126,15 @@ subroutine load_lake_model_parameters(cell_areas_on_surface_model_grid, &
     is_lake_int = transpose(temp_integer_array)
     _END_IF_USE_LONLAT_
 
+    call check_return_code(nf90_inq_varid(ncid,'raw_orography',varid))
+    call check_return_code(nf90_get_var(ncid, varid,temp_real_array))
+    allocate(raw_orography(_NPOINTS_LAKE_))
+    _IF_USE_LONLAT_
+    raw_orography = temp_real_array
+    _ELSE_IF_NOT_USE_LONLAT_
+    raw_orography = transpose(temp_real_array)
+    _END_IF_USE_LONLAT_
+
     allocate(binary_lake_mask_int(_NPOINTS_SURFACE_))
     if (load_binary_mask) then
       call check_return_code(nf90_inq_varid(ncid,'binary_lake_mask',varid))
@@ -131,6 +147,15 @@ subroutine load_lake_model_parameters(cell_areas_on_surface_model_grid, &
     else
       binary_lake_mask_int(_DIMS_) = 0
     end if
+
+    allocate(non_lake_mask_int(_NPOINTS_SURFACE_))
+    call check_return_code(nf90_inq_varid(ncid,'non_lake_mask',varid))
+    call check_return_code(nf90_get_var(ncid, varid,non_lake_mask_int_temp_array))
+    _IF_USE_LONLAT_
+    non_lake_mask_int  = non_lake_mask_int_temp_array
+    _ELSE_IF_NOT_USE_LONLAT_
+    non_lake_mask_int  = transpose(non_lake_mask_int_temp_array)
+    _END_IF_USE_LONLAT_
 
     call check_return_code(nf90_inq_varid(ncid,'lakes_as_array',varid))
     call check_return_code(nf90_get_var(ncid, varid,lake_parameters_as_array))
@@ -151,10 +176,19 @@ subroutine load_lake_model_parameters(cell_areas_on_surface_model_grid, &
       binary_lake_mask = .false.
     end where
 
+    allocate(non_lake_mask(_NPOINTS_SURFACE_))
+    where (non_lake_mask_int == 1)
+      non_lake_mask = .true.
+    elsewhere
+      non_lake_mask = .false.
+    end where
+
     deallocate(is_lake_int)
     deallocate(binary_lake_mask_int)
+    deallocate(non_lake_mask_int)
     deallocate(temp_integer_array)
     deallocate(binary_lake_mask_int_temp_array)
+    deallocate(non_lake_mask_int_temp_array)
     deallocate(number_of_lakes_temp_array)
 
     lake_model_parameters => &
@@ -162,6 +196,8 @@ subroutine load_lake_model_parameters(cell_areas_on_surface_model_grid, &
                           cell_areas_on_surface_model_grid, &
                           number_of_lakes, &
                           is_lake, &
+                          raw_orography, &
+                          non_lake_mask, &
                           binary_lake_mask, &
                           _NPOINTS_HD_, &
                           _NPOINTS_LAKE_, &

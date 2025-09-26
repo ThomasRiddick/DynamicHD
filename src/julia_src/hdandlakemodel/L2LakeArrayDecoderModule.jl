@@ -143,6 +143,8 @@ function get_lake_parameters_from_array(array::Array{Float64},fine_grid::Grid,
     outflow_points::Dict{Int64,Redirect} =
       read_outflow_points_dict(decoder;
                                single_index=single_index)
+    lake_lower_boundary_height::Float64 = read_float(decoder)
+    filled_lake_area::Float64 = read_float(decoder)
     finish_object(decoder)
     push!(lake_parameters,LakeParameters(lake_number,
                                          primary_lake,
@@ -150,6 +152,8 @@ function get_lake_parameters_from_array(array::Array{Float64},fine_grid::Grid,
                                          center_coords,
                                          filling_order,
                                          outflow_points,
+                                         lake_lower_boundary_height,
+                                         filled_lake_area,
                                          fine_grid,
                                          coarse_grid))
   end

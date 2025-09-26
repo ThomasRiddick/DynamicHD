@@ -33,10 +33,12 @@ mutable struct LakeCell
   lake_pixels_added_count::Int64
   max_pixels_from_lake::Int64
   in_binary_mask::Bool
+  in_non_lake_mask::Bool
   function LakeCell(coarse_grid_coords::CartesianIndex,
                     pixel_count::Int64,
                     potential_lake_pixel_count::Int64,
-                    lake_pixels_original::Dict{Int64,Pixel})
+                    lake_pixels_original::Dict{Int64,Pixel},
+                    in_non_lake_mask::Bool)
     return new(coarse_grid_coords,-1,
                potential_lake_pixel_count,
                lake_pixels_original,
@@ -45,7 +47,8 @@ mutable struct LakeCell
                length(lake_pixels_original),
                0,
                -1,
-               false)
+               false,
+               in_non_lake_mask)
   end
 end
 
@@ -157,6 +160,7 @@ end
 
 function setup_cells_lakes_and_pixels(lakes::Vector{LakeInput},
                                       cell_pixel_counts::Field{Int64},
+                                      non_lake_mask::Field{Bool},
                                       all_lake_potential_pixel_mask::Field{Bool},
                                       lake_properties::Vector{LakeProperties},
                                       pixel_numbers::Field{Int64},
@@ -204,7 +208,8 @@ function setup_cells_lakes_and_pixels(lakes::Vector{LakeInput},
         end
       end
       push!(lake_cells,LakeCell(cell_coords,cell_pixel_counts(cell_coords),
-                                potential_lake_pixel_count,pixels_in_cell))
+                                potential_lake_pixel_count,pixels_in_cell,
+                                non_lake_mask(cell_coords)))
     end
     lake_cell_pixel_count::Int64 = length(lake.lake_pixel_coords_list)
     push!(lake_properties,LakeProperties(lake.lake_number,
@@ -249,6 +254,7 @@ end
 
 function calculate_lake_fractions(lakes::Vector{LakeInput},
                                   cell_pixel_counts::Field{Int64},
+                                  non_lake_mask::Field{Bool},
                                   grid_specific_lake_model_parameters::GridSpecificLakeModelParameters,
                                   lake_grid::Grid,
                                   surface_grid::Grid)
@@ -261,6 +267,7 @@ function calculate_lake_fractions(lakes::Vector{LakeInput},
   non_lake_filled_pixel_count_field::Field{Int64} =  Field{Int64}(surface_grid,0)
   all_lake_total_pixels::Int64 =
     setup_cells_lakes_and_pixels(lakes,cell_pixel_counts,
+                                 non_lake_mask,
                                  all_lake_potential_pixel_mask,
                                  lake_properties,
                                  pixel_numbers,pixels,
@@ -272,7 +279,9 @@ function calculate_lake_fractions(lakes::Vector{LakeInput},
     for cell in lake.cell_list
       set_max_pixels_from_lake_for_cell(cell,non_lake_filled_pixel_count_field)
     end
-    sort!(lake.cell_list,by=x->x.lake_pixel_count/x.pixel_count,rev=true)
+    sort!(lake.cell_list,by=x-> ! x.in_non_lake_mask ?
+                                x.lake_pixel_count/x.pixel_count :
+                                0.0 ,rev=true)
     j = length(lake.cell_list)
     unprocessed_cells_total_pixel_count = 0
     for cell in lake.cell_list
@@ -349,6 +358,7 @@ end
 
 function setup_lake_for_fraction_calculation(lakes::Vector{LakeInput},
                                              cell_pixel_counts::Field{Int64},
+                                             non_lake_mask::Field{Bool},
                                              binary_lake_mask::Field{Bool},
                                              primary_lake_numbers::Field{Int64},
                                              grid_specific_lake_model_parameters::
@@ -363,6 +373,7 @@ function setup_lake_for_fraction_calculation(lakes::Vector{LakeInput},
   all_lake_potential_pixel_counts::Field{Int64} = Field{Int64}(surface_grid,0)
   lake_pixel_counts_field::Field{Int64} =  Field{Int64}(surface_grid,0)
   setup_cells_lakes_and_pixels(lakes,cell_pixel_counts,
+                               non_lake_mask,
                                all_lake_potential_pixel_mask,
                                lake_properties,
                                pixel_numbers,pixels,
@@ -373,6 +384,9 @@ function setup_lake_for_fraction_calculation(lakes::Vector{LakeInput},
     for cell in lake.cell_list
       cell.in_binary_mask = binary_lake_mask(cell.coarse_grid_coords)
       if cell.in_binary_mask
+        if cell.in_non_lake_mask
+          error("Cell in both binary lake mask and non lake mask")
+        end
         lake.has_cells_in_binary_mask = true
       end
     end
@@ -404,8 +418,10 @@ function add_pixel(lake::LakeProperties,pixel::Pixel,
     for working_pixel in values(cell.lake_pixels_added)
       working_pixel_origin_cell = get_lake_cell_from_coords(lake,working_pixel.original_coarse_grid_coords)
       working_pixel_origin_cell_lake_fraction::Float64 =
+        ! working_pixel_origin_cell.in_non_lake_mask ?
         working_pixel_origin_cell.lake_pixel_count/
-        working_pixel_origin_cell.pixel_count
+        working_pixel_origin_cell.pixel_count :
+        0.0
       if working_pixel_origin_cell_lake_fraction > max_other_pixel_origin_cell_lake_fraction
         other_pixel = working_pixel
         other_pixel_origin_cell =  working_pixel_origin_cell
@@ -489,8 +505,10 @@ function remove_pixel(lake::LakeProperties,pixel::Pixel,
     local least_filled_cell_lake_fraction::Float64 = 999.0
     local least_filled_cell::LakeCell
     for other_cell in lake.cell_list
-      other_cell_lake_fraction = other_cell.lake_pixel_count/
-                                 other_cell.pixel_count
+      other_cell_lake_fraction = ! other_cell.in_non_lake_mask ?
+                                 other_cell.lake_pixel_count/
+                                 other_cell.pixel_count :
+                                 2.0
       if ! other_cell.in_binary_mask && other_cell.lake_pixel_count > 0 &&
           other_cell_lake_fraction < least_filled_cell_lake_fraction
          least_filled_cell_lake_fraction = other_cell_lake_fraction

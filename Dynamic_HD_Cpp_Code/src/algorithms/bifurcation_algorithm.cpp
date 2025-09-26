@@ -203,6 +203,7 @@ void bifurcation_algorithm::track_main_channel(coords* mouth_coords){
   for(vector<coords*>::iterator i = cells_to_remove_from_main_channel.begin();
                                     i != cells_to_remove_from_main_channel.end(); ++i){
     (*main_channel_mask)(*i) = not_main_channel;
+    delete *i;
   }
 }
 

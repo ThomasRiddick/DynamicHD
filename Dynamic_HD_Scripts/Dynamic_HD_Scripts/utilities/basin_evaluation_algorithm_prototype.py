@@ -149,6 +149,7 @@ class Lake:
     def __init__(self,
                  lake_number,
                  center_coords,
+                 lake_lower_boundary_height,
                  primary_lake=None,
                  secondary_lakes=None):
         #Keep references to lakes as number not objects
@@ -158,6 +159,8 @@ class Lake:
         self.secondary_lakes  = secondary_lakes
         self.outflow_points = {}
         self.filling_order = []
+        self.lake_lower_boundary_height = lake_lower_boundary_height
+        self.filled_lake_area = None
         #Working variables - don't need to exported
         self.center_cell_volume_threshold = 0.0
         self.lake_area = 0.0
@@ -169,6 +172,9 @@ class Lake:
 
     def set_potential_exit_points(self,potential_exit_points):
         self.potential_exit_points = potential_exit_points
+
+    def set_filled_lake_area(self):
+        self.filled_lake_area = self.lake_area
 
     def __repr__(self):
         return (f"center_coords={self.center_coords}\n"
@@ -397,7 +403,7 @@ class BasinEvaluationAlgorithm:
             minimum = minima_q[-1]
             minima_q.pop()
             lake_number = len(self.lakes)
-            lake = Lake(lake_number,minimum)
+            lake = Lake(lake_number,minimum,self.raw_orography[minimum])
             self.lakes.append(lake)
             self.lake_q.append(lake)
             self.lake_connections.add_set(lake_number)
@@ -432,6 +438,8 @@ class BasinEvaluationAlgorithm:
                                             self.lake_connections.make_new_link(lake_number,other_lake_number)
                                             merging_lakes.append(lake_number)
                                 lake.set_potential_exit_points(potential_exit_points)
+                                if lake.filled_lake_area == None:
+                                    lake.filled_lake_area = 1.0
                                 self.raw_orography[
                                     np.logical_and(self.cells_in_lake,
                                                    self.raw_orography < self.center_cell_height)] = \
@@ -462,8 +470,10 @@ class BasinEvaluationAlgorithm:
                          self.lake_connections.get_set(lake_group).get_set_element_labels()
                          if self.lakes[sublake].primary_lake is None }
                     new_lake_number = len(self.lakes)
+                    new_lake_center_coords = self.lakes[list(sublakes_in_lake)[0]].center_coords
                     new_lake = Lake(new_lake_number,
-                                    self.lakes[list(sublakes_in_lake)[0]].center_coords,
+                                    new_lake_center_coords,
+                                    self.raw_orography[new_lake_center_coords],
                                     primary_lake=None,
                                     secondary_lakes=sublakes_in_lake)
                     self.lake_connections.add_set(new_lake_number)
@@ -540,8 +550,9 @@ class BasinEvaluationAlgorithm:
         additional_cells_to_return_to_q = []
         if len(self.q) > 0:
             while (len(self.q) > 0 and
-                   self.q[0].get_height() == self.center_cell_height):
-                if self.lake_numbers[self.q[0].get_cell_coords()] == -1:
+                   self.q[0].get_height() <= self.center_cell_height):
+                if (self.lake_numbers[self.q[0].get_cell_coords()] == -1 and
+                    self.q[0].get_height() == self.center_cell_height):
                     self.level_q.append(heappop(self.q))
                 else:
                     additional_cells_to_return_to_q.append(heappop(self.q))
@@ -557,6 +568,10 @@ class BasinEvaluationAlgorithm:
             self.level_q.append(BasinCell(self.new_center_cell_height,
                                           self.new_center_cell_height_type,
                                           self.new_center_coords))
+            if (self.lake_numbers[self.new_center_coords] != -1 and
+                self.lake_numbers[self.new_center_coords] != lake_number):
+                self.outflow_lake_numbers.append(self.lake_numbers[self.new_center_coords])
+                self.potential_exit_points.append(self.new_center_coords)
         while len(self.level_q) > 0:
             level_center_cell = self.level_q.pop()
             self.level_coords = level_center_cell.get_cell_coords()
@@ -613,6 +628,7 @@ class BasinEvaluationAlgorithm:
         else:
             raise RuntimeError("Cell type not recognized")
         if (self.center_cell_height_type == HeightType.flood_height):
+            lake.set_filled_lake_area()
             lake.lake_area += float(self.cell_areas[self.center_coords])
         elif self.center_cell_height_type != HeightType.connection_height:
             raise RuntimeError("Cell type not recognized")
@@ -726,6 +742,8 @@ class BasinEvaluationAlgorithm:
                                              array_offset=array_offset)
             store_to_array.add_outflow_points_dict(lake.outflow_points,
                                                    array_offset=array_offset)
+            store_to_array.add_number(lake.lake_lower_boundary_height)
+            store_to_array.add_number(lake.filled_lake_area)
             store_to_array.complete_object()
         return store_to_array.complete_array()
 

@@ -20,6 +20,11 @@ function load_lake_parameters(lake_para_filepath::AbstractString,
     is_lake_int::Field{Int64} =
         load_field(file_handle,lake_grid,"lake_mask",Int64)
     is_lake::Field{Bool} = equals(is_lake_int,1)
+    raw_orography::Field{Float64} =
+        load_field(file_handle,lake_grid,"raw_orography",Float64)
+    non_lake_mask_int::Field{Int64} =
+        load_field(file_handle,surface_model_grid,"non_lake_mask",Int64)
+    non_lake_mask::Field{Bool} = equals(non_lake_mask_int,1)
     local binary_lake_mask::Field{Bool}
     if load_binary_mask
       binary_lake_mask_int::Field{Int64} =
@@ -37,6 +42,8 @@ function load_lake_parameters(lake_para_filepath::AbstractString,
                           LakeModelSettings(),
                           number_of_lakes,
                           is_lake,
+                          raw_orography,
+                          non_lake_mask,
                           binary_lake_mask)
     variable = file_handle["lakes_as_array"]
     lake_parameters_as_array::Array{Float64} = NetCDF.readvar(variable)

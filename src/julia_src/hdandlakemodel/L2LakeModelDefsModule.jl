@@ -36,6 +36,8 @@ struct LakeModelParameters
   number_fine_grid_cells::Field{Int64}
   surface_cell_to_fine_cell_maps::Vector{Vector{CartesianIndex}}
   surface_cell_to_fine_cell_map_numbers::Field{Int64}
+  raw_orography::Field{Float64}
+  non_lake_mask::Field{Bool}
   binary_lake_mask::Field{Bool}
   function LakeModelParameters(grid_specific_lake_model_parameters::GridSpecificLakeModelParameters,
                                lake_model_grid::Grid,
@@ -45,6 +47,8 @@ struct LakeModelParameters
                                lake_model_settings::LakeModelSettings,
                                number_of_lakes::Int64,
                                is_lake::Field{Bool},
+                               raw_orography::Field{Float64},
+                               non_lake_mask::Field{Bool},
                                binary_lake_mask::Field{Bool})
     number_fine_grid_cells::Field{Int64} =
       Field{Int64}(surface_model_grid,0)
@@ -89,6 +93,8 @@ struct LakeModelParameters
         number_fine_grid_cells,
         surface_cell_to_fine_cell_maps,
         surface_cell_to_fine_cell_map_numbers,
+        raw_orography,
+        non_lake_mask,
         binary_lake_mask)
   end
 end

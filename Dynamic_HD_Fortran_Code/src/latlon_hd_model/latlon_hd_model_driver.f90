@@ -74,9 +74,10 @@ program latlon_hd_model_driver
     !evaporations(:,:,middle_timestep+1:timesteps) = 100.0_dp*0.0000000227_dp*2.6*10000000000.0_dp*20480.0_dp/259200.0_dp*100000.0_dp
     call run_hd_model(timesteps,drainages,runoffs,evaporations,.true.,working_directory)
     call clean_hd_model()
-    if (using_lakes) call clean_lake_model()
+    if (using_lakes) call clean_lake_model(.true.)
     deallocate(runoffs)
     deallocate(drainages)
     deallocate(evaporations)
+    deallocate(cell_areas_on_surface_model_grid)
 
 end program latlon_hd_model_driver

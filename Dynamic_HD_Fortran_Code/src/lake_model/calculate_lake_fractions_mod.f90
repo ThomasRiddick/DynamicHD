@@ -34,6 +34,7 @@ type :: lakecell
   integer :: lake_pixels_added_count
   integer :: max_pixels_from_lake
   logical :: in_binary_mask
+  logical :: in_non_lake_mask
 end type lakecell
 
 interface lakecell
@@ -95,12 +96,14 @@ contains
 function lakecellconstructor(_COORDS_ARG_coarse_grid_coords_, &
                              pixel_count, &
                              potential_lake_pixel_count, &
-                             lake_pixels_original) &
+                             lake_pixels_original, &
+                             in_non_lake_mask) &
     result(constructor)
   _DEF_COORDS_coarse_grid_coords_
   integer :: pixel_count
   integer :: potential_lake_pixel_count
   integer, dimension(:), pointer :: lake_pixels_original
+  logical :: in_non_lake_mask
   type(lakecell), pointer :: constructor
   integer :: i
     allocate(constructor)
@@ -119,6 +122,7 @@ function lakecellconstructor(_COORDS_ARG_coarse_grid_coords_, &
     constructor%lake_pixels_added_count = 0
     constructor%max_pixels_from_lake = -1
     constructor%in_binary_mask = .false.
+    constructor%in_non_lake_mask = in_non_lake_mask
 end function lakecellconstructor
 
 subroutine clean_lake_cell(lake_cell)
@@ -239,6 +243,7 @@ subroutine clean_lake_fraction_calculation_prognostics(prognostics)
     deallocate(prognostics%lakes)
     deallocate(prognostics%lake_index)
     deallocate(prognostics%primary_lake_numbers)
+    deallocate(prognostics%non_lake_filled_pixel_count_field)
 end subroutine
 
 ! Utility routines
@@ -328,6 +333,7 @@ end function get_lake_cell_from_coords
 
 subroutine setup_cells_lakes_and_pixels(lakes, &
                                         cell_pixel_counts, &
+                                        non_lake_mask, &
                                         all_lake_potential_pixel_mask, &
                                         lake_properties, &
                                         pixel_numbers, &
@@ -338,6 +344,7 @@ subroutine setup_cells_lakes_and_pixels(lakes, &
                                         _NPOINTS_LAKE_)
   type(lakeinputpointer), dimension(:), pointer :: lakes
   integer, dimension(_DIMS_), pointer :: cell_pixel_counts
+  logical, dimension(_DIMS_), pointer :: non_lake_mask
   type(lakepropertiespointer), dimension(:), pointer :: lake_properties
   logical, dimension(_DIMS_), pointer :: all_lake_potential_pixel_mask
   integer, dimension(_DIMS_), pointer :: pixel_numbers
@@ -419,7 +426,8 @@ subroutine setup_cells_lakes_and_pixels(lakes, &
         lake_cells(i)%lake_cell_pointer => &
           lakecell(_COORDS_ARG_cell_coords_, &
                    cell_pixel_counts(_COORDS_ARG_cell_coords_), &
-                   potential_lake_pixel_count,pixels_in_cell)
+                   potential_lake_pixel_count,pixels_in_cell, &
+                   non_lake_mask(_COORDS_ARG_cell_coords_))
         deallocate(pixels_in_cell)
       end do
       lake_cell_pixel_count = size(lake_input%_INDICES_LIST_lake_pixel_coords_list_INDEX_NAME_FIRST_DIM_)
@@ -479,6 +487,7 @@ end subroutine set_max_pixels_from_lake_for_cell
 
 subroutine calculate_lake_fractions(lakes, &
                                     cell_pixel_counts, &
+                                    non_lake_mask, &
                                     lake_pixel_counts_field, &
                                     lake_fractions_field, &
                                     binary_lake_mask, &
@@ -487,6 +496,7 @@ subroutine calculate_lake_fractions(lakes, &
                                     _NPOINTS_SURFACE_)
   type(lakeinputpointer), dimension(:), pointer :: lakes
   integer, dimension(_DIMS_), pointer :: cell_pixel_counts
+  logical, dimension(_DIMS_), pointer :: non_lake_mask
   integer, dimension(_DIMS_), pointer :: lake_pixel_counts_field
   real(dp), dimension(_DIMS_), pointer :: lake_fractions_field
   logical, dimension(_DIMS_), pointer :: binary_lake_mask
@@ -529,6 +539,7 @@ subroutine calculate_lake_fractions(lakes, &
     allocate(non_lake_filled_pixel_count_field(_NPOINTS_SURFACE_))
     non_lake_filled_pixel_count_field(_DIMS_) = 0
     call setup_cells_lakes_and_pixels(lakes,cell_pixel_counts, &
+                                      non_lake_mask, &
                                       all_lake_potential_pixel_mask, &
                                       lake_properties, &
                                       pixel_numbers,pixels, &
@@ -565,8 +576,12 @@ subroutine calculate_lake_fractions(lakes, &
         max_lake_fraction_found = -1.0_dp
         do m = 1,size(lake%cell_list)
           if (associated(lake%cell_list(m)%lake_cell_pointer)) then
-            lake_fraction = real(lake%cell_list(m)%lake_cell_pointer%lake_pixel_count,dp)/ &
-                            real(lake%cell_list(m)%lake_cell_pointer%pixel_count,dp)
+            if (lake%cell_list(m)%lake_cell_pointer%in_non_lake_mask) then
+              lake_fraction = 0.0_dp
+            else
+              lake_fraction = real(lake%cell_list(m)%lake_cell_pointer%lake_pixel_count,dp)/ &
+                              real(lake%cell_list(m)%lake_cell_pointer%pixel_count,dp)
+            end if
             if (lake_fraction > &
                 max_lake_fraction_found) then
               max_lake_fraction_found = lake_fraction
@@ -681,10 +696,12 @@ subroutine calculate_lake_fractions(lakes, &
     deallocate(lake_properties)
     deallocate(all_lake_potential_pixel_mask)
     deallocate(all_lake_potential_pixel_counts)
+    deallocate(non_lake_filled_pixel_count_field)
 end subroutine calculate_lake_fractions
 
 function setup_lake_for_fraction_calculation(lakes, &
                                              cell_pixel_counts, &
+                                             non_lake_mask, &
                                              binary_lake_mask, &
                                              primary_lake_numbers, &
                                               _INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_, &
@@ -692,6 +709,7 @@ function setup_lake_for_fraction_calculation(lakes, &
                                              _NPOINTS_SURFACE_) result(prognostics)
   type(lakeinputpointer), dimension(:), pointer :: lakes
   integer, dimension(_DIMS_), pointer :: cell_pixel_counts
+  logical, dimension(_DIMS_), pointer :: non_lake_mask
   logical, dimension(_DIMS_), pointer :: binary_lake_mask
   integer, dimension(_DIMS_), pointer :: primary_lake_numbers
   _DEF_INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_ _INTENT_in_
@@ -716,6 +734,7 @@ function setup_lake_for_fraction_calculation(lakes, &
     allocate(all_lake_potential_pixel_counts(_NPOINTS_SURFACE_))
     all_lake_potential_pixel_counts(_DIMS_) = 0
     call setup_cells_lakes_and_pixels(lakes,cell_pixel_counts, &
+                                      non_lake_mask, &
                                       all_lake_potential_pixel_mask, &
                                       lake_properties, &
                                       pixel_numbers,pixels, &
@@ -729,6 +748,10 @@ function setup_lake_for_fraction_calculation(lakes, &
         working_cell => lake%cell_list(i)%lake_cell_pointer
         working_cell%in_binary_mask = binary_lake_mask(working_cell%_COORDS_ARG_coarse_grid_coords_)
         if (working_cell%in_binary_mask) then
+          if (working_cell%in_non_lake_mask) then
+            write(*,*) "Cell in both binary lake mask and non lake mask"
+            stop
+          end if
           lake%has_cells_in_binary_mask = .true.
         end if
       end do
@@ -778,9 +801,13 @@ recursive subroutine add_pixel(lake,pixel_in,pixels,lake_pixel_counts_field, &
         working_pixel => pixels(working_cell%lake_pixels_added(i))%pixel_pointer
         working_pixel_origin_cell => &
           get_lake_cell_from_coords(lake,working_pixel%_COORDS_ARG_original_coarse_grid_coords_)
-        working_pixel_origin_cell_lake_fraction = &
-          real(working_pixel_origin_cell%lake_pixel_count,dp)/ &
-          real(working_pixel_origin_cell%pixel_count,dp)
+        if (working_pixel_origin_cell%in_non_lake_mask) then
+          working_pixel_origin_cell_lake_fraction = 0.0_dp
+        else
+          working_pixel_origin_cell_lake_fraction = &
+            real(working_pixel_origin_cell%lake_pixel_count,dp)/ &
+            real(working_pixel_origin_cell%pixel_count,dp)
+        end if
         if (working_pixel_origin_cell_lake_fraction > max_other_pixel_origin_cell_lake_fraction) then
           other_pixel => working_pixel
           other_pixel_origin_cell =>  working_pixel_origin_cell
@@ -879,8 +906,12 @@ subroutine remove_pixel(lake,pixel_in,pixels,lake_pixel_counts_field, &
       least_filled_cell_lake_fraction = 999.0_dp
       do i = 1,size(lake%cell_list)
         other_cell => lake%cell_list(i)%lake_cell_pointer
-        other_cell_lake_fraction = real(other_cell%lake_pixel_count,dp)/ &
-                                   real(other_cell%pixel_count,dp)
+        if (other_cell%in_non_lake_mask) then
+          other_cell_lake_fraction = 2.0_dp
+        else
+          other_cell_lake_fraction = real(other_cell%lake_pixel_count,dp)/ &
+                                     real(other_cell%pixel_count,dp)
+        end if
         if (.not. other_cell%in_binary_mask .and.  other_cell%lake_pixel_count > 0 .and. &
              other_cell_lake_fraction < least_filled_cell_lake_fraction) then
            least_filled_cell_lake_fraction = other_cell_lake_fraction

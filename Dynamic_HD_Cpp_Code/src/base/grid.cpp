@@ -36,6 +36,11 @@ bool grid::fine_coords_in_same_cell(coords* fine_coords_set_one,
 	return coords_in_same_cell;
 }
 
+void grid::for_all_nbrs_general(coords* coords_in,function<void(coords*)> func) {
+	if(nowrap) for_all_nbrs_reversed(coords_in,func);
+	else for_all_nbrs_wrapped_reversed(coords_in,func);
+}
+
 latlon_grid::latlon_grid(grid_params* params){
 	grid_type = grid_types::latlon;
 	if(latlon_grid_params* params_local = dynamic_cast<latlon_grid_params*>(params)){
@@ -82,6 +87,34 @@ void latlon_grid::for_all_nbrs_wrapped(coords* coords_in,function<void(coords*)>
 	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
 	for (auto i = latlon_coords_in->get_lat()-1; i <= latlon_coords_in->get_lat()+1;i++){
 		for (auto j = latlon_coords_in->get_lon()-1; j <=latlon_coords_in->get_lon()+1; j++){
+			if (i == latlon_coords_in->get_lat() && j == latlon_coords_in->get_lon()) continue;
+			latlon_coords* nbr_coords = new latlon_coords(i,j);
+			if (outside_limits(nbr_coords)) delete nbr_coords;
+			else {
+				coords* wrapped_coords = latlon_wrapped_coords(nbr_coords);
+				if (wrapped_coords != nbr_coords) {
+					delete nbr_coords;
+				}
+				func(wrapped_coords);
+			}
+		}
+	}
+}
+
+void latlon_grid::for_all_nbrs_reversed(coords* coords_in,function<void(coords*)> func){
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	for (auto j = latlon_coords_in->get_lon()+1; j >=latlon_coords_in->get_lon()-1; j--){
+		for (auto i = latlon_coords_in->get_lat()+1; i >= latlon_coords_in->get_lat()-1;i--){
+			if (i == latlon_coords_in->get_lat() && j == latlon_coords_in->get_lon()) continue;
+			func(new latlon_coords(i,j));
+		}
+	}
+};
+
+void latlon_grid::for_all_nbrs_wrapped_reversed(coords* coords_in,function<void(coords*)> func){
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	for (auto j = latlon_coords_in->get_lon()+1; j >=latlon_coords_in->get_lon()-1; j--){
+		for (auto i = latlon_coords_in->get_lat()+1; i >= latlon_coords_in->get_lat()-1;i--){
 			if (i == latlon_coords_in->get_lat() && j == latlon_coords_in->get_lon()) continue;
 			latlon_coords* nbr_coords = new latlon_coords(i,j);
 			if (outside_limits(nbr_coords)) delete nbr_coords;
@@ -329,6 +362,23 @@ void irregular_latlon_grid::for_all_nbrs(coords* coords_in,function<void(coords*
 
 // This function is not meaningful on a irregular grid; pass to for_all_nbrs
 void irregular_latlon_grid::for_all_nbrs_wrapped(coords* coords_in,function<void(coords*)> func){
+	for_all_nbrs(coords_in,func);
+}
+
+void irregular_latlon_grid::for_all_nbrs_reversed(coords* coords_in,function<void(coords*)> func){
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	for (auto j = latlon_coords_in->get_lon()+1; j >=latlon_coords_in->get_lon()-1; j--){
+		for (auto i = latlon_coords_in->get_lat()+1; i >= latlon_coords_in->get_lat()-1;i--){
+			if (i == latlon_coords_in->get_lat() && j == latlon_coords_in->get_lon()) continue;
+			latlon_coords* nbr_coords = new latlon_coords(i,j);
+			if (grid_mask[latlon_get_index(nbr_coords)]) func(nbr_coords);
+			else delete nbr_coords;
+		}
+	}
+};
+
+// This function is not meaningful on a irregular grid; pass to for_all_nbrs
+void irregular_latlon_grid::for_all_nbrs_wrapped_reversed(coords* coords_in,function<void(coords*)> func){
 	for_all_nbrs(coords_in,func);
 }
 
@@ -617,6 +667,15 @@ void icon_single_index_grid::for_all_nbrs(coords* coords_in,function<void(coords
 }
 
 void icon_single_index_grid::for_all_nbrs_wrapped(coords* coords_in,function<void(coords*)> func){
+	for_all_nbrs(coords_in,func);
+}
+
+void icon_single_index_grid::for_all_nbrs_reversed(coords* coords_in,function<void(coords*)> func) {
+	for_diagonal_nbrs(coords_in,func);
+	for_non_diagonal_nbrs(coords_in,func);
+}
+
+void icon_single_index_grid::for_all_nbrs_wrapped_reversed(coords* coords_in,function<void(coords*)> func){
 	for_all_nbrs(coords_in,func);
 }
 
