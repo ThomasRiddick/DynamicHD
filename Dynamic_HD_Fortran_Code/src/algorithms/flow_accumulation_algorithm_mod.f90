@@ -674,7 +674,7 @@ end subroutine label_loop
   end subroutine check_for_bifurcations_in_cell
 
 
-  subroutine update_bifurcated_flow(this,initial_coords,additional_accumulated_flow)
+  recursive subroutine update_bifurcated_flow(this,initial_coords,additional_accumulated_flow)
   class(flow_accumulation_algorithm), intent(inout) :: this
   class(coords), pointer, intent(inout) :: initial_coords
   integer, intent(in) :: additional_accumulated_flow
