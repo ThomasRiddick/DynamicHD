@@ -206,6 +206,8 @@ function transposed_lakemodelparametersconstructor( &
     cell_areas_on_surface_model_grid, &
     number_of_lakes, &
     is_lake, &
+    raw_orography, &
+    non_lake_mask, &
     binary_lake_mask, &
     nlat_hd,nlon_hd, &
     nlat_lake,nlon_lake, &
@@ -217,6 +219,8 @@ function transposed_lakemodelparametersconstructor( &
   integer, dimension(:,:), pointer, intent(in) :: corresponding_surface_cell_lat_index
   integer, dimension(:,:), pointer, intent(in) :: corresponding_surface_cell_lon_index
   real(dp), dimension(:,:), pointer, intent(in) :: cell_areas_on_surface_model_grid
+  real(dp), pointer, dimension(_DIMS_), intent(in) :: raw_orography
+  logical, pointer, dimension(_DIMS_), intent(in) :: non_lake_mask
   logical, dimension(:,:), pointer, intent(in) :: binary_lake_mask
   integer, intent(in) :: number_of_lakes
   integer, intent(in) :: nlat_hd,nlon_hd
@@ -238,6 +242,10 @@ function transposed_lakemodelparametersconstructor( &
     transposed_corresponding_surface_cell_lon_index = transpose(corresponding_surface_cell_lon_index)
     allocate(transposed_cell_areas_on_surface_model_grid(nlon_surface,nlat_surface))
     transposed_cell_areas_on_surface_model_grid = transpose(cell_areas_on_surface_model_grid)
+    allocate(transposed_raw_orography(nlon_lake,nlat_lake))
+    transposed_raw_orography = transpose(transposed_raw_orography)
+    allocate(transposed_non_lake_mask(nlon_surface,nlat_surface))
+    transposed_non_lake_mask = transpose(non_lake_mask)
     allocate(transposed_binary_lake_mask(nlon_surface,nlat_surface))
     transposed_binary_lake_mask = transpose(binary_lake_mask)
     constructor => lakemodelparametersconstructor_orig( &
@@ -246,6 +254,8 @@ function transposed_lakemodelparametersconstructor( &
       transposed_cell_areas_on_surface_model_grid, &
       number_of_lakes, &
       transposed_is_lake, &
+      transposed_raw_orography, &
+      transposed_non_lake_mask, &
       transposed_binary_lake_mask, &
       nlon_hd,nlat_hd, &
       nlon_lake,nlat_lake, &
