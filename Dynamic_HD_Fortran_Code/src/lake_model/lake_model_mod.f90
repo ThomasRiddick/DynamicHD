@@ -118,6 +118,8 @@ type :: lakemodelparameters
   _DEF_NPOINTS_SURFACE_
   real(dp) :: lake_retention_constant
   real(dp) :: minimum_lake_volume_threshold
+  real(dp) :: minimum_flow
+  real(dp) :: maximum_lake_outflow_fraction
   integer :: number_of_lakes
   type(integerlist), pointer, dimension(:) :: basins
   integer, pointer, dimension(_DIMS_) :: basin_numbers
@@ -281,7 +283,9 @@ function lakemodelparametersconstructor( &
     _NPOINTS_LAKE_, &
     _NPOINTS_SURFACE_, &
     lake_retention_constant, &
-    minimum_lake_volume_threshold) result(constructor)
+    minimum_lake_volume_threshold, &
+    minimum_flow , &
+    maximum_lake_outflow_fraction) result(constructor)
   integer, intent(in) :: number_of_lakes
   logical, pointer, dimension(_DIMS_), intent(in) :: is_lake
   _DEF_NPOINTS_HD_ _INTENT_in_
@@ -294,6 +298,8 @@ function lakemodelparametersconstructor( &
   logical, pointer, dimension(_DIMS_), intent(in) :: binary_lake_mask
   real(dp), intent(inout), optional :: lake_retention_constant
   real(dp), intent(inout), optional :: minimum_lake_volume_threshold
+  real(dp), intent(inout), optional :: minimum_flow
+  real(dp), intent(inout), optional :: maximum_lake_outflow_fraction
   type(lakemodelparameters), pointer :: constructor
   type(integerlist), pointer, dimension(:) :: basins
   integer, pointer, dimension(_DIMS_) :: basin_numbers
@@ -307,6 +313,8 @@ function lakemodelparametersconstructor( &
   _DEF_COORDS_surface_model_
   real(dp) :: lake_retention_constant_local
   real(dp) :: minimum_lake_volume_threshold_local
+  real(dp) :: minimum_flow_local
+  real(dp) :: maximum_lake_outflow_fraction_local
   integer :: number_of_lake_cells
   integer :: surface_cell_to_fine_cell_map_number
   integer :: map_number
@@ -317,12 +325,22 @@ function lakemodelparametersconstructor( &
     if (present(lake_retention_constant)) then
       lake_retention_constant_local = lake_retention_constant
     else
-      lake_retention_constant_local = 0.1_dp
+      lake_retention_constant_local = 0.00001_dp
     end if
     if (present(minimum_lake_volume_threshold)) then
       minimum_lake_volume_threshold_local = minimum_lake_volume_threshold
     else
       minimum_lake_volume_threshold_local = 0.0000001_dp
+    end if
+    if (present(minimum_flow)) then
+      minimum_flow_local = minimum_flow
+    else
+      minimum_flow_local = 0.00000001
+    end if
+    if (present(maximum_lake_outflow_fraction)) then
+      maximum_lake_outflow_fraction_local = maximum_lake_outflow_fraction
+    else
+      maximum_lake_outflow_fraction_local = 1.0
     end if
     allocate(number_fine_grid_cells(_NPOINTS_SURFACE_))
     number_fine_grid_cells(_DIMS_) = 0
@@ -385,6 +403,8 @@ function lakemodelparametersconstructor( &
       _INDICES_FIELD_corresponding_surface_cell_INDEX_NAME_index_
     constructor%lake_retention_constant = lake_retention_constant_local
     constructor%minimum_lake_volume_threshold = minimum_lake_volume_threshold_local
+    constructor%minimum_flow = minimum_flow_local
+    constructor%maximum_lake_outflow_fraction = maximum_lake_outflow_fraction_local
     constructor%number_of_lakes = number_of_lakes
     constructor%basins => null()
     constructor%basin_numbers => null()
@@ -1293,9 +1313,16 @@ subroutine drain_excess_water(lake)
               get_lake_volume(lake_model_prognostics%lakes(x%get_label())%lake_pointer)
           end if
         end do
-        flow = (total_lake_volume)/ &
-               (lake_model_parameters%lake_retention_constant + 1.0_dp)
-        flow = min(flow,lake%excess_water)
+        !Use weir equation assuming the length of the sill is proportional to the
+        !square root of depth hence increase power scaling from 1.5 to 2
+        flow = (lake%excess_water/lake%parameters%filled_lake_area)**2/ &
+               lake_model_parameters%lake_retention_constant
+        if (flow < lake_model_parameters%minimum_flow) then
+          flow = min(lake_model_parameters%minimum_flow,lake%excess_water)
+        else
+          flow = min(flow,lake%excess_water* &
+                     lake_model_parameters%maximum_lake_outflow_fraction)
+        end if
         lake_model_prognostics%water_to_hd( &
           lake%current_redirect%_COORDS_ARG_non_local_redirect_target_) = &
              lake_model_prognostics%water_to_hd( &

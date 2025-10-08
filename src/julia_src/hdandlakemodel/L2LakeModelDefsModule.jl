@@ -13,11 +13,17 @@ abstract type Lake <: State end
 struct LakeModelSettings
   lake_retention_constant::Float64
   minimum_lake_volume_threshold::Float64
+  minimum_flow::Float64
+  maximum_lake_outflow_fraction::Float64
   function LakeModelSettings()
-    lake_retention_constant::Float64 = 0.1
+    lake_retention_constant::Float64 = 0.00001
     minimum_lake_volume_threshold::Float64 = 0.0000001
+    minimum_flow::Float64 = 0.00000001
+    maximum_lake_outflow_fraction::Float64 = 1.0
     return new(lake_retention_constant,
-               minimum_lake_volume_threshold)
+               minimum_lake_volume_threshold,
+               minimum_flow,
+               maximum_lake_outflow_fraction)
   end
 end
 

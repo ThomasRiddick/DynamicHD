@@ -108,8 +108,13 @@ subroutine init_lake_model_jsb(initial_spillover_to_rivers,cell_areas_from_jsbac
    deallocate(transposed_initial_spillover_to_rivers)
 end subroutine init_lake_model_jsb
 
-subroutine clean_lake_model()
-        call clean_lake_model_orig()
+subroutine clean_lake_model(clean_external_fields)
+  logical, optional, intent(in) :: clean_external_fields
+    if (present(clean_external_fields)) then
+      call clean_lake_model_orig(clean_external_fields)
+    else
+      call clean_lake_model_orig()
+    end if
 end subroutine clean_lake_model
 
 subroutine run_lake_model(lake_interface_fields)
@@ -232,6 +237,8 @@ function transposed_lakemodelparametersconstructor( &
   integer, dimension(:,:), pointer :: transposed_corresponding_surface_cell_lat_index
   integer, dimension(:,:), pointer :: transposed_corresponding_surface_cell_lon_index
   real(dp), dimension(:,:), pointer :: transposed_cell_areas_on_surface_model_grid
+  real(dp), dimension(:,:), pointer :: transposed_raw_orography
+  logical, dimension(:,:), pointer :: transposed_non_lake_mask
   logical, dimension(:,:), pointer :: transposed_binary_lake_mask
   type(lakemodelparameters), pointer :: constructor
     allocate(transposed_is_lake(nlon_lake,nlat_lake))
@@ -243,7 +250,7 @@ function transposed_lakemodelparametersconstructor( &
     allocate(transposed_cell_areas_on_surface_model_grid(nlon_surface,nlat_surface))
     transposed_cell_areas_on_surface_model_grid = transpose(cell_areas_on_surface_model_grid)
     allocate(transposed_raw_orography(nlon_lake,nlat_lake))
-    transposed_raw_orography = transpose(transposed_raw_orography)
+    transposed_raw_orography = transpose(raw_orography)
     allocate(transposed_non_lake_mask(nlon_surface,nlat_surface))
     transposed_non_lake_mask = transpose(non_lake_mask)
     allocate(transposed_binary_lake_mask(nlon_surface,nlat_surface))
