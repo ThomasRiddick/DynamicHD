@@ -628,15 +628,15 @@ function handle_event(lake::OverflowingLake,::DrainExcessWater)
       lake_model_prognostics.lakes[other_lake_number] =
         handle_event(other_lake,AddWater(excess_water,false))
     else
-      total_lake_volume::Float64 = 0.0
-      for_elements_in_set(lake_model_prognostics.set_forest,
-                          find_root(lake_model_prognostics.set_forest,
-                                    lake_parameters.lake_number),
-                          x -> total_lake_volume +=
-                          get_lake_volume(lake_model_prognostics.lakes[get_label(x)]))
-      flow = (total_lake_volume)/
-             (lake_model_parameters.lake_model_settings.lake_retention_constant + 1.0)
-      flow = min(flow,lake.excess_water)
+      #Use weir equation assuming the length of the sill is proportional to the
+      #square root of depth hence increase power scaling from 1.5 to 2
+      flow = (lake.excess_water/lake.parameters.filled_lake_area)^2/
+             lake_model_parameters.lake_model_settings.lake_retention_constant
+      if flow < lake_model_parameters.lake_model_settings.minimum_flow
+        flow = min(lake_model_parameters.lake_model_settings.minimum_flow,lake.excess_water)
+      else
+        flow = min(flow,lake.excess_water*lake_model_parameters.lake_model_settings.maximum_lake_outflow_fraction)
+      end
       set!(lake_model_prognostics.water_to_hd,
            lake.current_redirect.non_local_redirect_target,
            lake_model_prognostics.water_to_hd(lake.current_redirect.
