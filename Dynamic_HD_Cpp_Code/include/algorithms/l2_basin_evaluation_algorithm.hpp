@@ -85,6 +85,7 @@ public:
   //lake area
   map<int,coords*> spill_points;
   vector<coords*>* potential_exit_points;
+  vector<coords*> list_of_cells_in_lake;
   void print(ostream& outstr);
   friend ostream& operator<< (ostream& outstr, lake_variables& lake) {
     lake.print(outstr);
