@@ -1,5 +1,5 @@
 cpp_src += files('basic_bifurcation_algorithm.cpp',
-                 'basin_evaluation_algorithm.cpp',
+                 'l2_basin_evaluation_algorithm.cpp',
                  'basin_post_processing_algorithm.cpp',
                  'bifurcation_algorithm.cpp',
                  'carved_river_direction_burning_algorithm.cpp',

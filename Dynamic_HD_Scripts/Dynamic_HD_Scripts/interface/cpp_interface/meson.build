@@ -2,7 +2,7 @@
                        'create_connected_lsmask_wrapper',
                        'create_orography_wrapper',
                        'determine_river_directions_wrapper',
-                       'evaluate_basins_wrapper',
+                       'l2_evaluate_basins_wrapper',
                        'fill_sinks_wrapper',
                        'fill_sinks_wrapper_low_mem',
                        'follow_streams_wrapper',
