@@ -349,7 +349,8 @@ basin_evaluation_algorithm::~basin_evaluation_algorithm(){
 
 void basin_evaluation_algorithm::evaluate_basins(){
     //Leave room for a catchment 0
-    for (int i = 0;i <= prior_fine_catchment_nums->get_max_element();i++){
+    int max_catchment_number = prior_fine_catchment_nums->get_max_element();
+    for (int i = 0;i <= max_catchment_number;i++){
         sink_points.push_back(null_coords);
     }
     lakes.clear();
@@ -621,7 +622,12 @@ void basin_evaluation_algorithm::search_for_outflows_on_level(int lake_number) {
 void basin_evaluation_algorithm::process_level_neighbors(int lake_number,
                                                          coords* level_coords) {
     _grid->for_all_nbrs_general(level_coords,[&](coords* nbr_coords){
+        int nbr_catchment = (*catchments_from_sink_filling)(nbr_coords);
+        bool in_different_catchment =
+          ( nbr_catchment != catchments_from_sink_filling_catchment_num) &&
+          ( nbr_catchment != -1);
         if ((! (*level_completed_cells)(nbr_coords)) &&
+            ! in_different_catchment &&
             ! (*cells_in_lake)(nbr_coords)) {
             double raw_height = (*raw_orography)(nbr_coords);
             double corrected_height = (*corrected_orography)(nbr_coords);

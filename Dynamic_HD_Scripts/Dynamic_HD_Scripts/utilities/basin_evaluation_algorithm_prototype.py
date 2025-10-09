@@ -585,7 +585,12 @@ class BasinEvaluationAlgorithm:
         while len(neighbors_coords) > 0:
             nbr_coords = neighbors_coords[-1]
             neighbors_coords.pop(-1)
+            nbr_catchment = self.catchments_from_sink_filling[nbr_coords]
+            in_different_catchment = \
+              ( nbr_catchment != self.catchments_from_sink_filling_catchment_num) and \
+              ( nbr_catchment != -1)
             if (not self.level_completed_cells[nbr_coords] and
+                not in_different_catchment and
                 not self.cells_in_lake[nbr_coords]):
                 raw_height = float(self.raw_orography[nbr_coords])
                 corrected_height = float(self.corrected_orography[nbr_coords])

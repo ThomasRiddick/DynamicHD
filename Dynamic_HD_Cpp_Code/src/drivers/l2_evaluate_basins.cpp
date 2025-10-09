@@ -5,6 +5,7 @@
  *      Author: thomasriddick
  */
 
+#include <limits>
 #include "algorithms/l2_basin_evaluation_algorithm.hpp"
 #include "drivers/l2_evaluate_basins.hpp"
 #include "drivers/fill_sinks.hpp"
@@ -102,6 +103,7 @@ vector<double>* latlon_evaluate_basins(bool* landsea_in,
   short* sinkless_rdirs_out_ext = new short[(nlat_fine+2*scale_factor)*nlon_fine];
   fill_n(sinkless_rdirs_out_ext,(nlat_fine+2*scale_factor)*nlon_fine,0);
   int* catchments_from_sink_filling_in = new int[(nlat_fine+2*scale_factor)*nlon_fine];
+  fill_n(catchments_from_sink_filling_in,(nlat_fine+2*scale_factor)*nlon_fine,-1);
   bool* true_sinks_in = new bool[(nlat_fine+2*scale_factor)*nlon_fine];
   fill_n(true_sinks_in,(nlat_fine+2*scale_factor)*nlon_fine,false);
   bool* landsea_in_ext = new bool[(nlat_fine+2*scale_factor)*nlon_fine];
