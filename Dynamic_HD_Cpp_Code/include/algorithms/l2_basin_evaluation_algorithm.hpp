@@ -100,12 +100,14 @@ public:
   coords* search(function<bool(coords*)> target_found_func,
                  function<bool(coords*)> ignore_nbr_func_in,
                  coords* start_point);
-  ~simple_search() { delete search_completed_cells; }
+  ~simple_search();
 private:
   void search_process_neighbors();
   function<bool(coords*)> ignore_nbr_func;
   grid* _grid = nullptr;
   field<bool>* search_completed_cells = nullptr;
+  //Allow for a fast reset of the array
+  vector<coords*> search_completed_cell_list;
   queue<landsea_cell*> search_q;
   coords* search_coords;
 };
@@ -167,6 +169,7 @@ private:
   //Mostly FIFO access but once need to iterate over
   //entire container hence vector not queue
   vector<basin_cell*> level_q;
+  vector<coords*> level_completed_cell_list;
   simple_search* search_alg = nullptr;
   simple_search* coarse_search_alg = nullptr;
   basin_cell* center_cell;
