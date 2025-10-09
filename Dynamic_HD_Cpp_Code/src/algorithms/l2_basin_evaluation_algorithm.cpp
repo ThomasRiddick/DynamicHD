@@ -201,6 +201,7 @@ lake_variables::~lake_variables() {
   for (auto entry : filling_order) delete entry;
   for (auto entry : spill_points) delete entry.second;
   for (auto entry : *potential_exit_points) delete entry;
+  for (auto entry : list_of_cells_in_lake) delete entry;
   delete potential_exit_points;
 }
 
@@ -415,17 +416,14 @@ void basin_evaluation_algorithm::evaluate_basins(){
                         }
                         lake->set_potential_exit_points(potential_exit_points);
                         if (lake->filled_lake_area == -1.0) lake->filled_lake_area = 1.0;
-                        _grid->for_all([&](coords* coords_in){
-                            if ((*cells_in_lake)(coords_in) &&
-                                ((*raw_orography)(coords_in) < center_cell_height)){
+                        for (coords* coords_in : lake->list_of_cells_in_lake) {
+                            if ((*raw_orography)(coords_in) < center_cell_height){
                                 (*raw_orography)(coords_in) = center_cell_height;
                             }
-                            if ((*cells_in_lake)(coords_in) &&
-                                ((*corrected_orography)(coords_in) < center_cell_height)){
+                            if ((*corrected_orography)(coords_in) < center_cell_height){
                                 (*corrected_orography)(coords_in) = center_cell_height;
                             }
-                            delete coords_in;
-                        });
+                        }
                         delete center_cell;
                         break;
                     } else {
@@ -505,12 +503,9 @@ void basin_evaluation_algorithm::evaluate_basins(){
                 for(set<int>::iterator sublake =
                     sublakes_in_lake->begin();
                     sublake != sublakes_in_lake->end();++sublake){
-                    _grid->for_all([&](coords* coords_in){
-                        if ((*lake_numbers)(coords_in) == *sublake) {
+                        for (coords* coords_in : lakes[*sublake]->list_of_cells_in_lake) {
                             (*lake_numbers)(coords_in) = new_lake->lake_number;
                         }
-                        delete coords_in;
-                    });
                     lakes[*sublake]->set_primary_lake(new_lake->lake_number);
                 }
             }
@@ -660,6 +655,7 @@ void basin_evaluation_algorithm::process_level_neighbors(int lake_number,
 
 void basin_evaluation_algorithm::process_center_cell(lake_variables* lake) {
     (*cells_in_lake)(previous_cell_coords) = true;
+    lake->list_of_cells_in_lake.push_back(previous_cell_coords->clone());
     if ((*lake_numbers)(previous_cell_coords) == null_lake_number) {
         (*lake_numbers)(previous_cell_coords) = lake->lake_number;
     }
