@@ -102,7 +102,8 @@ field<field_type>::~field(){
 //Set all the cells/points in this field to a given value
 template <typename field_type>
 void field<field_type>::set_all(field_type value){
-	for (auto i = 0; i < _grid->get_total_size(); i++){
+	int npoints = _grid->get_total_size();
+	for (auto i = 0; i < npoints; i++){
 		array[i] = value;
 	}
 }

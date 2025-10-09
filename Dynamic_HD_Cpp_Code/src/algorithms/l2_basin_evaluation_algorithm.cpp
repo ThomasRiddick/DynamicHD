@@ -241,8 +241,14 @@ void lake_variables::print(ostream& outstr){
 simple_search::simple_search(grid* grid_in,
                              grid_params* grid_params_in){
         search_completed_cells = new field<bool>(grid_params_in);
-        search_completed_cells->set_all(null_lake_number);
+        search_completed_cells->set_all(false);
         _grid = grid_in;
+}
+
+simple_search::~simple_search(){
+    delete search_completed_cells;
+    for (coords* coords_in : search_completed_cell_list) delete coords_in;
+    search_completed_cell_list.clear();
 }
 
 coords* simple_search::search(function<bool(coords*)> target_found_func,
@@ -252,7 +258,11 @@ coords* simple_search::search(function<bool(coords*)> target_found_func,
         throw runtime_error("Search Failed");
     }
     search_q.push(new landsea_cell(start_point->clone()));
-    search_completed_cells->set_all(false);
+    for (coords* coords_in : search_completed_cell_list) {
+       (*search_completed_cells)(coords_in) = false;
+       delete coords_in;
+    }
+    search_completed_cell_list.clear();
     ignore_nbr_func = ignore_nbr_func_in;
     while ( ! search_q.empty()) {
         landsea_cell* search_cell = search_q.front();
@@ -280,8 +290,8 @@ void simple_search::search_process_neighbors() {
                ignore_nbr_func(search_nbr_coords))) {
             search_q.push(new landsea_cell(search_nbr_coords->clone()));
             (*search_completed_cells)(search_nbr_coords) = true;
-        }
-        delete search_nbr_coords;
+            search_completed_cell_list.push_back(search_nbr_coords);
+        } else delete search_nbr_coords;
     });
 }
 
@@ -330,6 +340,8 @@ basin_evaluation_algorithm::basin_evaluation_algorithm(bool* minima_in,
 
 basin_evaluation_algorithm::~basin_evaluation_algorithm(){
     for (lake_variables* lake : lakes) delete lake;
+    for (coords* coords_in : level_completed_cell_list) delete coords_in;
+    level_completed_cell_list.clear();
     delete minima;
     delete raw_orography;
     delete corrected_orography;
@@ -503,9 +515,9 @@ void basin_evaluation_algorithm::evaluate_basins(){
                 for(set<int>::iterator sublake =
                     sublakes_in_lake->begin();
                     sublake != sublakes_in_lake->end();++sublake){
-                        for (coords* coords_in : lakes[*sublake]->list_of_cells_in_lake) {
-                            (*lake_numbers)(coords_in) = new_lake->lake_number;
-                        }
+                    for (coords* coords_in : lakes[*sublake]->list_of_cells_in_lake) {
+                        (*lake_numbers)(coords_in) = new_lake->lake_number;
+                    }
                     lakes[*sublake]->set_primary_lake(new_lake->lake_number);
                 }
             }
@@ -565,7 +577,11 @@ void basin_evaluation_algorithm::initialize_basin(lake_variables* lake) {
 }
 
 void basin_evaluation_algorithm::search_for_outflows_on_level(int lake_number) {
-    level_completed_cells->set_all(false);
+    for (coords* coords_in : level_completed_cell_list) {
+        (*level_completed_cells)(coords_in) = false;
+        delete coords_in;
+    }
+    level_completed_cell_list.clear();
     outflow_lake_numbers.clear();
     potential_exit_points = new vector<coords*>();
     if ( ! level_q.empty()) throw runtime_error("level q not empty at start of search");
@@ -609,6 +625,7 @@ void basin_evaluation_algorithm::search_for_outflows_on_level(int lake_number) {
         level_q.pop_back();
         coords* level_coords = level_center_cell->get_cell_coords();
         (*level_completed_cells)(level_coords) = true;
+        level_completed_cell_list.push_back(level_coords->clone());
         process_level_neighbors(lake_number,level_coords);
         delete level_center_cell;
     }
@@ -627,6 +644,7 @@ void basin_evaluation_algorithm::process_level_neighbors(int lake_number,
             double raw_height = (*raw_orography)(nbr_coords);
             double corrected_height = (*corrected_orography)(nbr_coords);
             (*level_completed_cells)(nbr_coords) = true;
+            level_completed_cell_list.push_back(nbr_coords->clone());
             double nbr_height; height_types nbr_height_type;
             if (raw_height <= corrected_height) {
                 nbr_height = raw_height;
