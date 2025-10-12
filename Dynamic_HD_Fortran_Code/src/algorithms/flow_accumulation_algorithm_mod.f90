@@ -271,15 +271,18 @@ end subroutine latlon_destructor
 
 subroutine icon_single_index_destructor(this)
   class(icon_single_index_flow_accumulation_algorithm), intent(inout) :: this
+  integer :: i
     deallocate(this%next_cell_index)
-    !Not deallocating causes a leak but deallocating causes a seg-fault
-    !futher investigation required
-    !if (associated(this%bifurcation_complete)) then
-    !  deallocate(this%bifurcation_complete)
-    !end if
-    !if (associated(this%bifurcated_next_cell_index)) then
-    !  deallocate(this%bifurcated_next_cell_index)
-    !end if
+    if (associated(this%bifurcation_complete)) then
+      do i=1,size(this%bifurcation_complete)
+        call this%bifurcation_complete(i)%ptr%destructor()
+        deallocate(this%bifurcation_complete(i)%ptr)
+      end do
+      deallocate(this%bifurcation_complete)
+    end if
+    if (associated(this%bifurcated_next_cell_index)) then
+      deallocate(this%bifurcated_next_cell_index)
+    end if
     call this%destructor
 end subroutine icon_single_index_destructor
 
@@ -758,6 +761,7 @@ end subroutine label_loop
             bifurcated = (bifurcated_next_cell_index_value_ptr &
                           /= this%no_bifurcation_value)
         end select
+        deallocate(bifurcated_next_cell_index_value_ptr)
       else
         bifurcated = .false.
         do i = 1,this%max_neighbors - 1
@@ -769,6 +773,7 @@ end subroutine label_loop
                          (bifurcated_next_cell_index_value_ptr &
                          /= this%no_bifurcation_value)
           end select
+          deallocate(bifurcated_next_cell_index_value_ptr)
           if (bifurcated) exit
         end do
       end if
