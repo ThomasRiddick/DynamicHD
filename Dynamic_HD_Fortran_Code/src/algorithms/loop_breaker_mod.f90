@@ -277,6 +277,7 @@ contains
             class is (loop_breaker)
                 call this%unprocessed_loops%set_value(coords_in,.false.)
             end select
+            deallocate(coords_in)
     end subroutine
 
     subroutine break_loops(this,loop_nums)
@@ -304,6 +305,10 @@ contains
             deallocate(this%fine_rdirs_field)
         if  (associated(this%fine_cumulative_flow_field)) &
             deallocate(this%fine_cumulative_flow_field)
+        if (associated(this%unprocessed_loops)) then
+            call this%unprocessed_loops%deallocate_data()
+            deallocate(this%unprocessed_loops)
+        end if
     end subroutine destructor
 
     subroutine break_loop(this,loop_num)
@@ -346,7 +351,11 @@ contains
             first_iteration = .true.
             do
                 allocate(new_cell_coords,source=cell_coords)
-                if (this%find_next_cell_downstream_and_check_for_end_of_flow(new_cell_coords)) exit
+                if (this%find_next_cell_downstream_and_check_for_end_of_flow(new_cell_coords)) then
+                    deallocate(new_cell_coords)
+                    deallocate(cell_coords)
+                    exit
+                end if
                 if (first_iteration) then
                     first_iteration = .false.
                 else
@@ -359,7 +368,11 @@ contains
                             deallocate(new_cell_coords)
                             allocate(new_cell_coords,source=cell_coords)
                             if (this%find_next_cell_downstream_and_check_for_end_of_flow(&
-                                                                    new_cell_coords)) exit
+                                                                    new_cell_coords)) then
+                                deallocate(new_cell_coords)
+                                deallocate(cell_coords)
+                                exit
+                            end if
                         end if
                     end select
                     deallocate(catchment_value)
@@ -625,6 +638,7 @@ contains
                                         permitted_diagonal_outflow_rdir => &
                                             this%generate_permitted_rdir(working_coords, &
                                                 fine_resolution_section_coords)
+                                        deallocate(working_coords)
                                 else
                                     if (associated(permitted_diagonal_outflow_rdir)) &
                                         deallocate(permitted_diagonal_outflow_rdir)
@@ -1087,6 +1101,7 @@ contains
                             call this%unprocessed_loops%set_value(working_coords,value)
                         end if
                     end select
+                    deallocate(working_catch_num)
                     deallocate(working_coords)
                 end do
             end do
