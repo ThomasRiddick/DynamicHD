@@ -8,7 +8,7 @@ if [[ ${resolution} == 'r2b9' ]]; then
   echo "Retuning included in paragen program for r2b9... "
   cp ${icon_para_input_filename} ${icon_para_output_filename}
   exit 0
-elif [[ ${resolution} == 'r2b8' ]]; then
+elif [[ ${resolution} == 'r2b8' ]] || [[ ${resolution} == 'r3b7' ]]; then
   new_arf_k=0.027
   arf_k_adjustment_thres=0.1
   new_alf_k=4.82
