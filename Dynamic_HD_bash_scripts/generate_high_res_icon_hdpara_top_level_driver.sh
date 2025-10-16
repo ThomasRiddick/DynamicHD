@@ -289,10 +289,14 @@ fi
 
 if ! $no_modules ; then
   load_module nco
+  load_module julia
 fi
 
 #Setup correct python path
 export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${source_directory}/lib:${PYTHONPATH}
+
+#Setup correct julia path
+export JULIA_LOAD_PATH=${source_directory}/src/julia_src/bifurcated_rivermouth_identification_tool:${source_directory}/src/julia_src/cross_grid_true_sink_transfer_tool:${JULIA_LOAD_PATH}
 
 #Call compilation script
 ${source_directory}/Dynamic_HD_bash_scripts/compile_dynamic_hd_code.sh ${compilation_required} false ${source_directory} ${working_directory} false "tools_only"
