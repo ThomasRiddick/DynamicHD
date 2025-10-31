@@ -517,6 +517,7 @@ void basin_evaluation_algorithm::evaluate_basins(){
                     sublake != sublakes_in_lake->end();++sublake){
                     for (coords* coords_in : lakes[*sublake]->list_of_cells_in_lake) {
                         (*lake_numbers)(coords_in) = new_lake->lake_number;
+                        new_lake->list_of_cells_in_lake.push_back(coords_in->clone());
                     }
                     lakes[*sublake]->set_primary_lake(new_lake->lake_number);
                 }
