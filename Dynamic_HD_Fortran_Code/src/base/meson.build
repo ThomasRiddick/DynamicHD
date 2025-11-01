@@ -1,5 +1,4 @@
 fortran_src += files('area_mod.f90',
-                     'check_return_code_netcdf_mod.f90',
                      'convert_rdirs_to_indices.f90',
                      'coords_mod.f90',
                      'doubly_linked_list_link_mod.f90',
@@ -10,3 +9,4 @@ fortran_src += files('area_mod.f90',
                      'precision_mod.f90',
                      'subfield_mod.f90',
                      'unstructured_grid_mod.f90')
+fortran_hd_model_src += files('check_return_code_netcdf_mod.f90')

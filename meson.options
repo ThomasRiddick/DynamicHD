@@ -1,2 +1,3 @@
 option('build_unit_tests',type : 'boolean', value : false)
 option('build_cython',type : 'boolean', value : true)
+option('build_hd_and_lake_model',type : 'boolean', value : false)
