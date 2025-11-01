@@ -34,7 +34,10 @@ cpp_inc = include_directories(['Dynamic_HD_Cpp_Code/include',
                                'Dynamic_HD_Cpp_Code'])
 fortran_inc = include_directories(['Dynamic_HD_Fortran_Code/include'])
 cpp = meson.get_compiler('cpp')
-netcdf_fortran_lib = dependency('netcdf', language: 'fortran')
+if (get_option('build_unit_tests') or
+    get_option('build_hd_and_lake_model'))
+  netcdf_fortran_lib = dependency('netcdf', language: 'fortran')
+endif
 lib_cpp = library('dyhd_cpp',cpp_src,
                   include_directories: cpp_inc)
 if get_option('build_unit_tests')
