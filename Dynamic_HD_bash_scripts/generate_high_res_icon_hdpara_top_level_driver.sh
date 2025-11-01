@@ -316,7 +316,7 @@ mv accumulated_flow.nc ${output_accumulated_flow_filepath}
 cp ${grid_file} grid_in_temp.nc
 cp ${input_ls_mask_filepath} mask_in_temp.nc
 if $rdirs_only ; then
-  cp ${next_cell_index_filepath} ${output_hdpara_filepath}.nc
+  cp ${next_cell_index_filepath} ${output_hdpara_filepath}
 else
   rm -f paragen/area_dlat_dlon.txt
   rm -f paragen/ddir.inp

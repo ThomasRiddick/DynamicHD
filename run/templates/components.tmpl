@@ -6,6 +6,7 @@
 #SBATCH --account=YOUR_ACCOUNT
 #SBATCH --ntasks=1
 #SBATCH --time=02:00:00
+#SBATCH --mem=0
 #SBATCH --output=create_icon_hdpara.o%j    # File name for standard output
 #SBATCH --error=create_icon_hdpara.e%j     # File name for standard error output
 #SBATCH --mail-type=FAIL                   # Notify user by email in case of job failure
@@ -118,12 +119,12 @@ if ! ${use_existing_river_mouth_position_file} ; then
     echo "as use_existing_river_mouth_position_file is set to False" 1>&2
   fi
   search_areas_filepath=/work/mh1421/m300468/data/search_areas.txt
-  river_deltas_filepath=/work/mh1421/m300468/data/river_deltas_${icon_atmo_grid_res}.txt
+  river_deltas_filepath=/work/mh1421/m300468/data/river_channels_${icon_atmo_grid_res}.txt
   if [[ ${icon_atmo_grid_res} == "r2b8" ]] || [[ ${icon_atmo_grid_res} == "r2b9" ]] ||
    [[ ${icon_atmo_grid_res} == "r2b10" ]] || [[ ${icon_atmo_grid_res} == "r2b11" ]]; then
-    river_deltas_filepath=/work/mh1421/m300468/data/river_deltas_${icon_atmo_grid_res}.txt
+    river_deltas_filepath=/work/mh1421/m300468/data/river_channels_${icon_atmo_grid_res}.txt
   else
-    river_deltas_filepath=/work/mh1421/m300468/data/river_deltas_default.txt
+    river_deltas_filepath=/work/mh1421/m300468/data/river_channels_default.txt
   fi
 else
   if [[ -z ${river_mouth_position_filepath} ]]; then
@@ -211,6 +212,9 @@ else
 fi
 
 {% if input.high_res %}
+#Setup julia environment
+module load julia
+export JULIA_LOAD_PATH=${repository_path}/src/julia_src/bifurcated_rivermouth_identification_tool:${repository_path}/src/julia_src/cross_grid_true_sink_transfer_tool:${JULIA_LOAD_PATH}
 #Transfer true sinks to atmospheric icon grid
 if ${use_true_sinks}; then
 cmd="julia ${repository_path}/src/julia_src/cross_grid_true_sink_transfer_tool/TransferTrueSinksToIconGridDriver.jl -g ${icon_grid_filepath} -i ${true_sinks_filepath} -f true_sinks -o ${true_sinks_on_icon_grid_filepath}"
