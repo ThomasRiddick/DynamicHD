@@ -9,8 +9,23 @@ using IdentifyExistingRiverMouths: Area
 function load_river_deltas_from_file(filename::String)
   river_deltas_raw::Dict{String,Any} = TOML.parsefile(filename)
   river_deltas::Array{RiverDelta} = RiverDelta[]
+  local reverse_searches::Array{String}
+  if haskey(river_deltas_raw,"reverse_searches")
+    reverse_searches =
+      river_deltas_raw["reverse_searches"]
+  else
+    reverse_searches = String[]
+  end
   for (name,river_delta_raw) in river_deltas_raw
-    push!(river_deltas,RiverDelta(name,river_delta_raw))
+    if name == "reverse_searches"
+      continue
+    end
+    reverse_search::Bool = name in reverse_searches
+    if reverse_search
+      println("Using reverse search for river $(name)")
+    end
+    push!(river_deltas,RiverDelta(name,reverse_search,
+                                  river_delta_raw))
   end
   return river_deltas
 end
@@ -18,8 +33,23 @@ end
 function load_river_deltas_from_string(river_deltas_input_string::String)
   river_deltas_raw::Dict{String,Any} = TOML.parse(river_deltas_input_string)
   river_deltas::Array{RiverDelta} = RiverDelta[]
+  local reverse_searches::Array{String}
+  if haskey(river_deltas_raw,"reverse_searches")
+    reverse_searches =
+      river_deltas_raw["reverse_searches"]
+  else
+    reverse_searches = String[]
+  end
   for (name,river_delta_raw) in river_deltas_raw
-    push!(river_deltas,RiverDelta(name,river_delta_raw))
+    if name == "reverse_searches"
+      continue
+    end
+    reverse_search::Bool = name in reverse_searches
+    if reverse_search
+      println("Using reverse search for river $(name)")
+    end
+    push!(river_deltas,RiverDelta(name,reverse_search,
+                                  river_delta_raw))
   end
   return river_deltas
 end
