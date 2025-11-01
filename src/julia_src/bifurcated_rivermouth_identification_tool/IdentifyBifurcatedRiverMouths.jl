@@ -361,7 +361,12 @@ function check_connection(cell_indices::CartesianIndex,
 end
 
 function find_inland_cell_indices(line::Vector{Line},cells::Cells)
-  cells_on_line_section_indices::Array{CartesianIndex} = find_cells_on_line_section(line[1],cells)
+  cells_on_line_section_indices::Array{CartesianIndex} = CartesianIndex[]
+  i::Int64 = 1
+  while length(cells_on_line_section_indices) == 0
+    cells_on_line_section_indices = find_cells_on_line_section(line[i],cells)
+    i += 1
+  end
   sort!(cells_on_line_section_indices,
         by=x->calculate_separation_measure(x,cells,line[1].start_point))
   return cells_on_line_section_indices[1]
@@ -375,6 +380,9 @@ function search_for_river_mouth_location_on_line_section(
                                 reverse_search::Bool=false,
                                 inland_cell_indices::CartesianIndexOrNothing=nothing)
   cells_on_line_section_indices::Array{CartesianIndex} = find_cells_on_line_section(line_section,cells)
+  if length(cells_on_line_section_indices) == 0
+    return false
+  end
   sort!(cells_on_line_section_indices,by=x->calculate_separation_measure(x,cells,line_section.start_point),
         rev=reverse_search)
   passing_disconnected_land_cells::Bool = false
@@ -436,6 +444,7 @@ function identify_bifurcated_river_mouths(river_deltas::Array{RiverDelta},
   river_mouth_indices_for_all_rivers::Dict{String,Array{CartesianIndex}} =
                                       Dict{String,Array{CartesianIndex}}()
   for delta in river_deltas
+    println("Processing $(delta.name)")
     river_mouth_indices::Array{CartesianIndex} = Array{CartesianIndex}[]
     local inland_cell_indices::CartesianIndexOrNothing
     if delta.reverse_search
