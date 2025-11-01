@@ -6,6 +6,7 @@
  */
 
 #include <math.h>
+#include <stdexcept>
 #include "algorithms/bifurcation_algorithm.hpp"
 using namespace std;
 
@@ -90,6 +91,7 @@ void bifurcation_algorithm::bifurcate_river(pair<coords*,vector<coords*>> river)
 }
 
 void bifurcation_algorithm::find_shortest_path_to_main_channel(coords* mouth_coords){
+  bool river_mouth_relocated = false;
   completed_cells->set_all(false);
   connection_found = false;
   push_cell(mouth_coords->clone());
@@ -97,9 +99,24 @@ void bifurcation_algorithm::find_shortest_path_to_main_channel(coords* mouth_coo
     cell* center_cell = q.top();
     q.pop();
     center_coords = center_cell->get_cell_coords();
-    process_neighbors();
+    process_neighbors(false);
     delete center_cell;
   }
+  //Allow movement along coastal ocean cells till a path
+  //is possible
+  if (! connection_found){
+    completed_cells->set_all(false);
+    push_cell(mouth_coords->clone());
+    while (!q.empty()){
+      cell* center_cell = q.top();
+      q.pop();
+      center_coords = center_cell->get_cell_coords();
+      process_neighbors(true);
+      delete center_cell;
+    }
+    if (connection_found) river_mouth_relocated = true;
+  }
+  if (! connection_found) throw runtime_error("Unable to route distributary");
   coords* working_coords = connection_location;
   bool sea_reached = false;
   while(! sea_reached){
@@ -110,22 +127,27 @@ void bifurcation_algorithm::find_shortest_path_to_main_channel(coords* mouth_coo
     delete working_coords;
     working_coords = new_working_coords;
   }
+  if (river_mouth_relocated) {
+    cout << "River mouth relocated" << endl;
+    cout << "Old position: " << *mouth_coords << endl;
+    cout << "New position: " << *working_coords << endl;
+  }
   //Allow single sea point to recieve multiple distributory
   (*major_side_channel_mask)(working_coords) = false;
   delete working_coords;
 }
 
 //No longer providing option for non-diagonal neighbors only as it never gets used
-void bifurcation_algorithm::process_neighbors()
+void bifurcation_algorithm::process_neighbors(bool allow_coastal_cells)
 {
   neighbors_coords = completed_cells->get_neighbors_coords(center_coords,1);
   while( ! neighbors_coords->empty() ) {
-    process_neighbor();
+    process_neighbor(allow_coastal_cells);
   }
   delete neighbors_coords;
 }
 
-inline void bifurcation_algorithm::process_neighbor()
+inline void bifurcation_algorithm::process_neighbor(bool allow_coastal_cells)
 {
   coords* nbr_coords = neighbors_coords->back();
   neighbors_coords->pop_back();
@@ -163,6 +185,19 @@ inline void bifurcation_algorithm::process_neighbor()
       (*completed_cells)(nbr_coords) = true;
       mark_river_direction(nbr_coords,center_coords);
     }
+  } else if ((! (*completed_cells)(nbr_coords)) &&
+             (*landsea_mask)(nbr_coords) &&
+             allow_coastal_cells) {
+      bool is_coastal_cell = false;
+      _grid->for_all_nbrs_wrapped(nbr_coords,
+                                  [&](coords* second_nbr_coords){
+        if (! (*landsea_mask)(second_nbr_coords)) is_coastal_cell = true;
+        delete second_nbr_coords;
+      });
+      if (is_coastal_cell) {
+        push_coastal_cell(nbr_coords);
+        (*completed_cells)(nbr_coords) = true;
+      } else delete nbr_coords;
   } else delete nbr_coords;
 }
 
@@ -171,6 +206,7 @@ void bifurcation_algorithm::track_main_channel(coords* mouth_coords){
   cells_from_mouth = 0;
   push_cell(mouth_coords->clone());
   (*main_channel_mask)(mouth_coords) = main_channel_invalid;
+  cells_to_remove_from_main_channel.push_back(mouth_coords->clone());
   while (!q.empty()){
     cell* center_cell = q.top();
     q.pop();
@@ -256,13 +292,16 @@ inline void bifurcation_algorithm_icon_single_index::transcribe_river_direction(
 
 void bifurcation_algorithm_latlon::mark_bifurcated_river_direction(coords* initial_coords,
                                                                          coords* destination_coords){
+  bool successful = false;
   for (int i = 0;i<maximum_bifurcations;i++){
     if ((*bifurcation_rdirs[i])(initial_coords) == no_bifurcation_code) {
       (*bifurcation_rdirs[i])(initial_coords) =
         _grid->calculate_dir_based_rdir(initial_coords,destination_coords);
+      successful = true;
       break;
     }
   }
+  if (! successful) throw runtime_error("Too many bifurcations at a single point");
 }
 
 void bifurcation_algorithm_icon_single_index::mark_bifurcated_river_direction(coords* initial_coords,
