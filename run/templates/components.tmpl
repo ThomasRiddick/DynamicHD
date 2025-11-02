@@ -27,7 +27,7 @@ function find_abs_path {
 }
 script_path=$(dirname ${0})
 script_path=$(find_abs_path ${script_path})
-{%- endif -%}
+{%- endif %}
 project_name={{ input.project_name }}
 
 {%- if input.create_project_at_runtime or is_create_project_script %}
