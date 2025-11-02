@@ -18,7 +18,6 @@
 
 {% if is_create_project_script %}
 script_path={{ input.script_path }}
-project_name={{ input.project_name }}
 {% else -%}
 function find_abs_path {
   rel_path=${1}
@@ -28,9 +27,8 @@ function find_abs_path {
 }
 script_path=$(dirname ${0})
 script_path=$(find_abs_path ${script_path})
-project_name=$(basename ${0})
-project_name=${project_name%.run}
 {%- endif -%}
+project_name={{ input.project_name }}
 
 {%- if input.create_project_at_runtime or is_create_project_script %}
 repository_path=${script_path%/run}
