@@ -20,7 +20,8 @@
 			],
 			"folder_exclude_patterns":
 			[
-				"build",
+				".cache",".ruby-lsp",
+				"build","lib",
 				"Dynamic_HD_Cpp_Code/Release",
 				"Dynamic_HD_Cpp_Code/docs",
 				"Dynamic_HD_Fortran_Code/Release",
@@ -29,6 +30,7 @@
 				"Dynamic_HD_Scripts/Dynamic_HD_Script_Tests/__pycache__",
 				"Dynamic_HD_Scripts/HD_Plots/__pycache__",
 				"utils/plotting_utilities/__pycache__",
+				"utils/run_utilities/__pycache__",
 				"Dynamic_HD_Scripts/HD_Plots/plots/__pycache__",
 				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/base/__pycache__",
 				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/command_line_drivers/__pycache__",
@@ -45,7 +47,7 @@
 				"Dynamic_HD_Fortran_Code/docs",
 				"Dynamic_HD_Fortran_Code/mods"
 			],
-			"path": "."
+			"path": ".",
 		}
 	]
 }

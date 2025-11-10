@@ -4,11 +4,24 @@ using UserExceptionModule: UserError
 using CoordsModule: Coords,DirectionIndicator,LatLonCoords,get_next_cell_coords
 using CoordsModule: LatLonSectionCoords,Generic1DCoords
 using InteractiveUtils
+using Distributed: @distributed
+using SharedArrays
 
 abstract type Grid end
 
 function for_all(function_on_point::Function,
+                 grid::Grid;
+                 use_cartesian_index::Bool=false)
+  throw(UserError())
+end
+
+function for_all_parallel(function_on_point::Function,
                  grid::Grid)
+  throw(UserError())
+end
+
+function for_all_parallel_sum(function_on_point::Function,
+                          grid::Grid)
   throw(UserError())
 end
 
@@ -18,8 +31,19 @@ function for_all_fine_cells_in_coarse_cell(function_on_point::Function,
   throw(UserError())
 end
 
+function for_all_fine_cells_in_coarse_cell(function_on_point::Function,
+                                           fine_grid::Grid,coarse_grid::Grid,
+                                           coarse_cell_coords::CartesianIndex)
+  throw(UserError())
+end
+
 function find_coarse_cell_containing_fine_cell(fine_grid::Grid,coarse_grid::Grid,
                                                fine_cell_coords::Coords)
+  throw(UserError())
+end
+
+function find_coarse_cell_containing_fine_cell(fine_grid::Grid,coarse_grid::Grid,
+                                               fine_cell_coords::CartesianIndex)
   throw(UserError())
 end
 
@@ -41,23 +65,30 @@ function get_number_of_cells(grid::Grid)
   throw(UserError)
 end
 
+function get_linear_indices(grid::Grid)
+  throw(UserError)
+end
+
 get_number_of_dimensions(obj::T) where {T <: Grid} =
   obj.number_of_dimensions::Int64
 
 struct LatLonGrid <: Grid
   nlat::Int64
   nlon::Int64
+  nneighbors::Int64
   wrap_east_west::Bool
   number_of_dimensions::Int64
   function LatLonGrid(nlat::Int64,
                       nlon::Int64,
                       wrap_east_west::Bool)
-    return new(nlat,nlon,wrap_east_west,2)
+    return new(nlat,nlon,8,wrap_east_west,2)
   end
 end
 
+#Use ICON icosahedral grid value of 12 for nneighbors by default
 struct UnstructuredGrid <: Grid
   ncells::Int64
+  nneighbors::Int64
   number_of_dimensions::Int64
   clat::Array{Float64,1}
   clon::Array{Float64,1}
@@ -67,7 +98,7 @@ struct UnstructuredGrid <: Grid
   function UnstructuredGrid(ncells::Int64,clat::Array{Float64,1},clon::Array{Float64,1},
                             clat_bounds::Array{Float64,2},clon_bounds::Array{Float64,2},
                             mapping_to_coarse_grid::Array{Int64,1})
-    return new(ncells,1,clat,clon,clat_bounds,clon_bounds,mapping_to_coarse_grid)
+    return new(ncells,12,1,clat,clon,clat_bounds,clon_bounds,mapping_to_coarse_grid)
   end
 end
 
@@ -81,9 +112,6 @@ UnstructuredGrid(ncells::Int64,clat::Array{Float64,1},clon::Array{Float64,1},
 UnstructuredGrid(ncells::Int64) = UnstructuredGrid(ncells,Array{Float64,1}(undef,ncells),Array{Float64,1}(undef,ncells),
                                                    Array{Float64,2}(undef,3,ncells),Array{Float64,2}(undef,3,ncells))
 
-UnstructuredGrid(ncells::Int64) = UnstructuredGrid(ncells,Array{Float64,1}(undef,ncells),Array{Float64,1}(undef,ncells),
-                                                   Array{Float64,2}(undef,3,ncells),Array{Float64,2}(undef,3,ncells))
-
 UnstructuredGrid(ncells::Int64,
                  mapping_to_coarse_grid::Array{Int64,1}) =
   UnstructuredGrid(ncells,Array{Float64,1}(undef,ncells),Array{Float64,1}(undef,ncells),
@@ -93,18 +121,66 @@ UnstructuredGrid(ncells::Int64,
 LatLonGridOrUnstructuredGrid = Union{LatLonGrid,UnstructuredGrid}
 
 function for_all(function_on_point::Function,
-                 grid::LatLonGrid)
-  for j = 1:grid.nlon
-    for i = 1:grid.nlat
+                 grid::LatLonGrid;
+                 use_cartesian_index::Bool=false)
+  if use_cartesian_index
+    for j = 1:grid.nlon
+      for i = 1:grid.nlat
+        function_on_point(CartesianIndex(i,j))
+      end
+    end
+  else
+    for j = 1:grid.nlon
+      for i = 1:grid.nlat
         function_on_point(LatLonCoords(i,j))
       end
+    end
+  end
+end
+
+function for_all_parallel(function_on_point::Function,
+                          grid::LatLonGrid)
+  @sync @distributed for j = 1:grid.nlon
+    for i = 1:grid.nlat
+      function_on_point(CartesianIndex(i,j))
+    end
+  end
+end
+
+function for_all_parallel_sum(function_on_point::Function,
+                          grid::LatLonGrid)
+  @sync @distributed (+) for j = 1:grid.nlon
+    for i = 1:grid.nlat
+      function_on_point(CartesianIndex(i,j))
+    end
   end
 end
 
 function for_all(function_on_point::Function,
-                 grid::UnstructuredGrid)
-  for i = 1:grid.ncells
-    function_on_point(Generic1DCoords(i))
+                 grid::UnstructuredGrid,
+                 use_cartesian_index::Bool=false)
+  if use_cartesian_index
+    for i = 1:grid.ncells
+      function_on_point(CartesianIndex(i))
+    end
+  else
+    for i = 1:grid.ncells
+      function_on_point(Generic1DCoords(i))
+    end
+  end
+end
+
+function for_all_parallel(function_on_point::Function,
+                          grid::UnstructuredGrid)
+  @sync @distributed for i = 1:grid.ncells
+    function_on_point(CartesianIndex(i))
+  end
+end
+
+function for_all_parallel_sum(function_on_point::Function,
+                          grid::UnstructuredGrid)
+  @sync @distributed (+) for i = 1:grid.ncells
+    function_on_point(CartesianIndex(i))
   end
 end
 
@@ -180,6 +256,19 @@ function for_all_fine_cells_in_coarse_cell(function_on_point::Function,
 end
 
 function for_all_fine_cells_in_coarse_cell(function_on_point::Function,
+                                           fine_grid::LatLonGrid,
+                                           coarse_grid::LatLonGrid,
+                                           coarse_cell_coords::CartesianIndex)
+  nlat_scale_factor = Int64(fine_grid.nlat/coarse_grid.nlat)
+  nlon_scale_factor = Int64(fine_grid.nlon/coarse_grid.nlon)
+  for j = 1+(coarse_cell_coords[2] - 1)*nlon_scale_factor:coarse_cell_coords[2]*nlon_scale_factor
+    for i = 1+(coarse_cell_coords[1] - 1)*nlat_scale_factor:coarse_cell_coords[1]*nlat_scale_factor
+      function_on_point(CartesianIndex(i,j))
+    end
+  end
+end
+
+function for_all_fine_cells_in_coarse_cell(function_on_point::Function,
                                            fine_grid::UnstructuredGrid,
                                            coarse_grid::UnstructuredGrid,
                                            coarse_cell_coords::Generic1DCoords)
@@ -190,19 +279,46 @@ function for_all_fine_cells_in_coarse_cell(function_on_point::Function,
   end
 end
 
+function for_all_fine_cells_in_coarse_cell(function_on_point::Function,
+                                           fine_grid::UnstructuredGrid,
+                                           coarse_grid::UnstructuredGrid,
+                                           coarse_cell_coords::CartesianIndex)
+  for i = 1:fine_grid.ncells
+    if (fine_grid.mapping_to_coarse_grid[i] == coarse_cell_coords[1])
+      function_on_point(CartesianIndex(i))
+    end
+  end
+end
+
 function find_coarse_cell_containing_fine_cell(fine_grid::LatLonGrid,coarse_grid::LatLonGrid,
                                                fine_cell_coords::LatLonCoords)
   fine_cells_per_coarse_cell_lat::Int64 = fine_grid.nlat/coarse_grid.nlat
   fine_cells_per_coarse_cell_lon::Int64 = fine_grid.nlon/coarse_grid.nlon
-  coarse_lat::Int64 = ceil(fine_cell_coords.lat/fine_cells_per_coarse_cell_lat);
-  coarse_lon::Int64 = ceil(fine_cell_coords.lon/fine_cells_per_coarse_cell_lon);
-  return LatLonCoords(coarse_lat,coarse_lon);
+  coarse_lat::Int64 = ceil(fine_cell_coords.lat/fine_cells_per_coarse_cell_lat)
+  coarse_lon::Int64 = ceil(fine_cell_coords.lon/fine_cells_per_coarse_cell_lon)
+  return LatLonCoords(coarse_lat,coarse_lon)
+end
+
+function find_coarse_cell_containing_fine_cell(fine_grid::LatLonGrid,coarse_grid::LatLonGrid,
+                                               fine_cell_coords::CartesianIndex)
+  fine_lat,fine_lon = Tuple(fine_cell_coords)
+  fine_cells_per_coarse_cell_lat::Int64 = fine_grid.nlat/coarse_grid.nlat
+  fine_cells_per_coarse_cell_lon::Int64 = fine_grid.nlon/coarse_grid.nlon
+  coarse_lat::Int64 = ceil(fine_lat/fine_cells_per_coarse_cell_lat)
+  coarse_lon::Int64 = ceil(fine_lon/fine_cells_per_coarse_cell_lon)
+  return CartesianIndex(coarse_lat,coarse_lon)
 end
 
 function find_coarse_cell_containing_fine_cell(fine_grid::UnstructuredGrid,
-                                               coarse_grid::UnstructuredGrid,
+                                               ::UnstructuredGrid,
                                                fine_cell_coords::Generic1DCoords)
   return Generic1DCoords(fine_grid.mapping_to_coarse_grid[fine_cell_coords.index])
+end
+
+function find_coarse_cell_containing_fine_cell(fine_grid::UnstructuredGrid,
+                                               ::UnstructuredGrid,
+                                               fine_cell_coords::CartesianIndex)
+  return CartesianIndex(fine_grid.mapping_to_coarse_grid[fine_cell_coords])
 end
 
 function find_downstream_coords(grid::T,
@@ -226,12 +342,28 @@ function wrap_coords(grid::LatLonGrid,coords::LatLonCoords)
   return LatLonCoords(coords.lat,wrapped_lon)
 end
 
+function get_number_of_neighbors(grid::LatLonGridOrUnstructuredGrid)
+  return grid.nneighbors
+end
+
 function get_number_of_cells(grid::LatLonGrid)
   return grid.nlat*grid.nlon
 end
 
 function get_number_of_cells(grid::UnstructuredGrid)
   return grid.ncells
+end
+
+function get_linear_indices(grid::LatLonGrid)
+  empty_array::Array{Int64,2} = Array{Int64,2}(undef,
+                                               grid.nlat,grid.nlon)
+  return LinearIndices(empty_array)::LinearIndices
+end
+
+function get_linear_indices(grid::UnstructuredGrid)
+  empty_array::Array{Int64,1} = Array{Int64,1}(undef,
+                                               grid.ncells)
+  return LinearIndices(empty_array)::LinearIndices
 end
 
 end

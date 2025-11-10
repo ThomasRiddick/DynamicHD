@@ -14,6 +14,8 @@ using GridModule: for_section_with_line_breaks,find_coarse_cell_containing_fine_
 using FieldModule: Field, set!,elementwise_divide, elementwise_multiple
 using SplittableRootedTree: RootedTreeForest,make_new_link,split_set,add_set,find_root
 using SplittableRootedTree: get_all_node_labels_of_set
+using OutputModule: write_diagnostic_lake_volumes_field, write_lake_volumes_field
+using OutputModule: write_lake_numbers_field
 import HDModule: water_to_lakes,water_from_lakes
 import HierarchicalStateMachineModule: handle_event
 import FieldModule: add_offset
@@ -596,10 +598,9 @@ get_lake_parameters(river_and_lake_prognostics::RiverAndLakePrognosticFields) =
 get_lake_diagnostic_variables(river_and_lake_prognostics::RiverAndLakePrognosticFields) =
   river_and_lake_prognostics.lake_diagnostics_variables::LakeDiagnosticVariables
 
-function water_to_lakes(prognostic_fields::RiverAndLakePrognosticFields,coords::Coords,
-                        inflow::Float64,step_length::Float64)
+function water_to_lakes(prognostic_fields::RiverAndLakePrognosticFields)
   lake_fields = get_lake_fields(prognostic_fields)
-  set!(lake_fields.water_to_lakes,coords,inflow*step_length)
+  return lake_fields.water_to_lakes
 end
 
 function water_from_lakes(prognostic_fields::RiverAndLakePrognosticFields,
@@ -1193,10 +1194,6 @@ function handle_event(lake::OverflowingLake,
      lake_parameters.connection_heights(lake_variables.current_cell_to_fill))
   volume_above_sill::Float64 = lake.overflowing_lake_variables.excess_water +
                                lake_variables.unprocessed_water
-  println("----------")
-  println(lake.overflowing_lake_variables.excess_water)
-  println(lake_variables.unprocessed_water)
-  println(volume_above_sill)
   working_cell_list::Vector{Coords} =
     lake_variables.filled_lake_cells
   push!(working_cell_list,lake_variables.current_cell_to_fill)
@@ -1221,7 +1218,6 @@ function handle_event(lake::OverflowingLake,
   end
   depth_above_sill::Float64 =
     volume_above_sill / total_lake_area
-  println(depth_above_sill)
   for coords::Coords in working_cell_list
     if lake_fields.flooded_lake_cells(coords) ||
        lake_parameters.flood_only(coords)
@@ -1768,13 +1764,9 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
                       write_lake_numbers::WriteLakeNumbers)
   lake_parameters::LakeParameters = get_lake_parameters(prognostic_fields)
   lake_fields::LakeFields = get_lake_fields(prognostic_fields)
-  write_lake_numbers_field(lake_parameters,lake_fields,timestep=write_lake_numbers.timestep)
+  write_lake_numbers_field(lake_parameters.grid,lake_fields.lake_numbers,
+                           timestep=write_lake_numbers.timestep)
   return prognostic_fields
-end
-
-function write_lake_numbers_field(lake_parameters::LakeParameters,lake_fields::LakeFields;
-                                  timestep::Int64=-1)
-  throw(UserError())
 end
 
 function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
@@ -1788,7 +1780,7 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
     set!(lake_volumes,lake_center_cell,lake_variables.lake_volume +
                                       lake_variables.unprocessed_water)
   end
-  write_lake_volumes_field(lake_parameters,lake_volumes)
+  write_lake_volumes_field(lake_parameters.grid,lake_volumes)
   return prognostic_fields
 end
 
@@ -1800,7 +1792,7 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
   diagnostic_lake_volumes::Field{Float64} = calculate_diagnostic_lake_volumes_field(lake_parameters,
                                                                                     lake_fields,
                                                                                     lake_prognostics)
-  write_diagnostic_lake_volumes_field(lake_parameters,diagnostic_lake_volumes,
+  write_diagnostic_lake_volumes_field(lake_parameters.grid,diagnostic_lake_volumes,
                                       timestep=write_diagnostic_lake_volumes.timestep)
   return prognostic_fields
 end
@@ -1871,16 +1863,6 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
   set_effective_lake_height_on_surface_grid_to_lakes(lake_parameters,lake_fields,
                                                      effective_lake_height_on_surface_grid)
   return prognostic_fields
-end
-
-function write_lake_volumes_field(lake_parameters::LakeParameters,lake_volumes::Field{Float64})
-  throw(UserError())
-end
-
-function write_diagnostic_lake_volumes_field(lake_parameters::LakeParameters,
-                                             diagnostic_lake_volumes::Field{Float64};
-                                             timestep::Int64=-1)
-  throw(UserError())
 end
 
 function handle_event(prognostic_fields::RiverAndLakePrognosticFields,

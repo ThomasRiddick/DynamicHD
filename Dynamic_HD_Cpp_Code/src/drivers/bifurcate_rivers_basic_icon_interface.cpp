@@ -17,7 +17,8 @@ void bifurcate_rivers_basic_icon_cython_interface(int ncells,
                                                   string mouth_positions_filepath,
                                                   int minimum_cells_from_split_to_main_mouth_in,
                                                   int maximum_cells_from_split_to_main_mouth_in,
-                                                  double cumulative_flow_threshold_fraction_in){
+                                                  double cumulative_flow_threshold_fraction_in,
+                                                  int remove_main_channel_in){
   map<int,vector<int>> river_mouths;
   regex primary_mouth_regex("primary mouth:\\s*([0-9]+)");
   regex secondary_mouth_regex("secondary mouth:\\s*([0-9]+)");
@@ -68,5 +69,6 @@ void bifurcate_rivers_basic_icon_cython_interface(int ncells,
                                            minimum_cells_from_split_to_main_mouth_in,
                                            maximum_cells_from_split_to_main_mouth_in,
                                            ncells,
-                                           neighboring_cell_indices_in);
+                                           neighboring_cell_indices_in,
+                                           bool(remove_main_channel_in));
 }

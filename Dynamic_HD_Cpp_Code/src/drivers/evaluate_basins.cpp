@@ -133,6 +133,7 @@ void latlon_evaluate_basins(bool* minima_in,
   int* next_cell_lat_index_dummy_in = new int[(nlat_fine+2*scale_factor)*nlon_fine];
   int* next_cell_lon_index_dummy_in = new int[(nlat_fine+2*scale_factor)*nlon_fine];
   short* sinkless_rdirs_out = new short[(nlat_fine+2*scale_factor)*nlon_fine];
+  fill_n(sinkless_rdirs_out,(nlat_fine+2*scale_factor)*nlon_fine,0);
   int* catchment_nums_dummy_in = new int[(nlat_fine+2*scale_factor)*nlon_fine];
   bool* true_sinks_in = new bool[(nlat_fine+2*scale_factor)*nlon_fine];
   fill_n(true_sinks_in,(nlat_fine+2*scale_factor)*nlon_fine,false);
@@ -266,7 +267,7 @@ void latlon_evaluate_basins(bool* minima_in,
     }
     if(sinkless_rdirs_in){
       sinkless_rdirs_in[i-scale_factor*nlon_fine] =
-        sinkless_rdirs_out[i];
+        int(sinkless_rdirs_out[i]);
     }
   }
   //Consistency checks

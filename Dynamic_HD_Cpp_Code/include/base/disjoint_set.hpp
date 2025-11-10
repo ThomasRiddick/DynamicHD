@@ -35,6 +35,14 @@ class disjoint_set {
     void increase_size(int size_increment_in) {size += size_increment_in;}
     int get_size() { return size;}
     int get_label() { return label;}
+    vector<int>* get_set_element_labels() {
+      vector<int>* labels = new vector<int>();
+      labels->push_back(label);
+      for (disjoint_set* node : (*nodes)) {
+        labels->push_back(node->get_label());
+      }
+      return labels;
+    }
     friend ostream& operator<<(ostream& out, disjoint_set& set_object)
     { return out << set_object.get_label(); }
 };

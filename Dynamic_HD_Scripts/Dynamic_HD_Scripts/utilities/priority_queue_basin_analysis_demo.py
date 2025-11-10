@@ -236,7 +236,7 @@ def check_for_multiple_connections(q,previous_height,
 															grid_shape_for_latlon,
 															cell_neighbors_for_icon):
 				if (not processed_cells[neighbor_coords] and
-					neighbor_coords =/ ffirst_outflow_downstream_coords):
+					neighbor_coords =/ first_outflow_downstream_coords):
 					if print_output:
 						print(f" Additional outflow to : {neighbor_coords}")
 					extra_connections.append(neighbor_coords)

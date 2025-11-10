@@ -501,4 +501,4 @@ def getFileHelper(file_type):
                 '.txt'    :TextFileIOHelper,
                 '.txtint' :TextFileIOHelper}[file_type]
     except KeyError:
-        raise RuntimeError('Invalid File Type')
+        raise RuntimeError(f"Invalid File Type: {file_type}")

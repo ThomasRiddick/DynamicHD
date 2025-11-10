@@ -5,7 +5,26 @@ maxland_mask=${1}
 minland_mask=${2}
 input_hdpara=${3}
 output_hdpara=${4}
-average_alfk=${5}
+resolution=${5}
+
+if [[ ${resolution} == 'r2b8' ]]; then
+  average_alfk=4.82
+elif [[ ${resolution} == 'r2b3' ]]; then
+  average_alfk=98.0
+elif [[ ${resolution} == 'r2b4' ]]; then
+  average_alfk=45.3
+elif [[ ${resolution} == 'r2b5' ]]; then
+  average_alfk=25.0
+elif [[ ${resolution} == 'r2b6' ]]; then
+  average_alfk=19.0
+elif [[ ${resolution} == 'r2b7' ]]; then
+  average_alfk=10.12
+elif [[ ${resolution} == 'r2b10' ]]; then
+  average_alfk=1.1
+else
+  echo "Unrecognised resolution"
+  exit 1
+fi
 
 cdo sub ${maxland_mask} ${minland_mask} difference_in_masks.nc
 cdo merge difference_in_masks.nc ${input_hdpara} hdpara_temp.nc

@@ -10288,10 +10288,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;
+  delete[] flood_heights_in; delete[] connection_heights_in;
   delete[] prior_coarse_rdirs_in;
   delete[] prior_fine_rdirs_in; delete[] prior_fine_catchments_in;
   delete[] connection_volume_thresholds_in; delete[] flood_volume_thresholds_in;
-  delete[] connection_heights_in; delete[] flood_heights_in;
   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
   delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
   delete[] flood_volume_thresholds_expected_out;
@@ -10990,6 +10990,7 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;
+  delete[] flood_heights_in; delete[] connection_heights_in;
   delete[] prior_coarse_rdirs_in;
   delete[] prior_fine_rdirs_in; delete[] prior_fine_catchments_in;
   delete[] connection_volume_thresholds_in; delete[] flood_volume_thresholds_in;
@@ -11713,6 +11714,7 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;
+  delete[] flood_heights_in; delete[] connection_heights_in;
   delete[] prior_coarse_rdirs_in;
   delete[] prior_fine_rdirs_in; delete[] prior_fine_catchments_in;
   delete[] connection_volume_thresholds_in; delete[] flood_volume_thresholds_in;
@@ -12841,6 +12843,7 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;
+  delete[] flood_heights_in; delete[] connection_heights_in;
   delete[] prior_coarse_rdirs_in;
   delete[] prior_fine_rdirs_in; delete[] prior_fine_catchments_in;
   delete[] connection_volume_thresholds_in; delete[] flood_volume_thresholds_in;
@@ -15473,6 +15476,7 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;
+  delete[] flood_heights_in; delete[] connection_heights_in;
   delete[] prior_coarse_rdirs_in;
   delete[] prior_fine_rdirs_in; delete[] prior_fine_catchments_in;
   delete[] connection_volume_thresholds_in; delete[] flood_volume_thresholds_in;
@@ -15707,14 +15711,27 @@ TEST_F(BasinEvaluationTest, TestConvertingMergesToArray) {
                                connect_merge_and_redirect_indices_vector,
                                flood_merge_and_redirect_indices_vector,
                                grid_params_in);
+  auto merges_and_redirects_as_array_pair_one = working_merges_and_redirects.get_merges_and_redirects_as_array(true); 
+  auto merges_and_redirects_as_array_one = merges_and_redirects_as_array_pair_one->second; 
   for (auto i =0; i < 240; i++){
-    EXPECT_EQ((working_merges_and_redirects.get_merges_and_redirects_as_array(true)->second)[i],
+    EXPECT_EQ((merges_and_redirects_as_array_one)[i],
                flood_merge_indices_as_array[i]);
   }
+  auto merges_and_redirects_as_array_pair_two = working_merges_and_redirects.get_merges_and_redirects_as_array(false); 
+  auto merges_and_redirects_as_array_two = merges_and_redirects_as_array_pair_two->second;
   for (auto i =0; i < 6; i++){
-    EXPECT_EQ((working_merges_and_redirects.get_merges_and_redirects_as_array(false)->second)[i],
+    EXPECT_EQ((merges_and_redirects_as_array_two)[i],
                connect_merge_indices_as_array[i]);
   }
+  delete grid_params_in;
+  delete[] merges_and_redirects_as_array_one; 
+  delete merges_and_redirects_as_array_pair_one->first;
+  delete merges_and_redirects_as_array_pair_one;
+  delete[] merges_and_redirects_as_array_two; 
+  delete merges_and_redirects_as_array_pair_two->first;
+  delete merges_and_redirects_as_array_pair_two;
+  delete[] connect_merge_indices_as_array;
+  delete[] flood_merge_indices_as_array;
 }
 
 } //namespace

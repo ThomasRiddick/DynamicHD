@@ -13,10 +13,8 @@ from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.tools import compute_catchments as cc
 from Dynamic_HD_Scripts.tools import determine_river_directions
 from Dynamic_HD_Scripts.tools import connect_coarse_lake_catchments as cclc
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import create_connected_lsmask_wrapper
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import lake_operators_wrapper
+import create_connected_lsmask_wrapper
+import lake_operators_wrapper
 
 def extract_lake_volumes(flood_volume_thresholds,
                          basin_catchment_numbers,

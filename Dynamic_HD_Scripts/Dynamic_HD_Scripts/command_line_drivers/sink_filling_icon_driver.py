@@ -1,4 +1,7 @@
 import xarray as xr
+import argparse
+import numpy as np
+from sink_filling_icon_wrapper import sink_filling_icon_cpp
 from Dynamic_HD_Scripts.utilities.check_driver_inputs \
     import check_input_files, check_output_files
 
@@ -17,37 +20,47 @@ class SinkFillingIconDriver:
                            self.args["true_sinks_filepath"],
                            self.args["grid_params_filepath"]])
         check_output_files([self.args["output_orography_filepath"]])
-        orography_in_ds = open_dataset(self.args["input_orography_filepath"])
+        orography_in_ds = xr.open_dataset(self.args["input_orography_filepath"])
         orography_inout = \
-            next_cell_index_in_ds[self.args["input_orography_fieldname"]].values
-        landsea_in_ds = open_dataset(self.args["landsea_filepath"])
+            orography_in_ds[self.args["input_orography_fieldname"]].values
+        landsea_in_ds = xr.open_dataset(self.args["landsea_filepath"])
         landsea_in = \
             landsea_in_ds[self.args["landsea_fieldname"]].values
-        if landsea_in.dtype == np.int64 or landsea.dtype == np.int32
-            landsea_in_int = landsea_in
-            landsea_in_double = None
-        else if landsea_in.dtype == np.float64 or landsea.dtype == np.float32:
-            landsea_in_int = None
+        if self.args["fractional_landsea_mask"]:
+            landsea_in_int = np.zeros((1,),dtype=np.int32)
             landsea_in_double = landsea_in
-        else raise RuntimeError("Landsea mask type not recognised")
-        true_sinks_in_ds = open_dataset(self.args["true_sinks_filepath"])
+        else:
+            landsea_in_int = landsea_in
+            landsea_in_double = np.zeros((1,),dtype=np.float64)
+        true_sinks_in_ds = xr.open_dataset(self.args["true_sinks_filepath"])
         true_sinks_in_int = \
             true_sinks_in_ds[self.args["true_sinks_fieldname"]].values
-        grid_params_ds = open_dataset(self.args["grid_params_filepath"])
-        neighboring_cell_indices_in = grid_params_ds["neighbor_cell_index"]
-        sink_filling_icon_cpp(neighboring_cell_indices_in,
+        grid_params_ds = xr.open_dataset(self.args["grid_params_filepath"])
+        neighboring_cell_indices_in = grid_params_ds["neighbor_cell_index"].values
+        #Reassign variable to be the result of astype so that we retain reference
+        #to output
+        orography_inout = orography_inout.astype(np.float64)
+        sink_filling_icon_cpp(neighboring_cell_indices_in.\
+                              astype(np.int32).swapaxes(0,1).flatten(),
                               orography_inout,
-                              landsea_in_int,
-                              landsea_in_double,
-                              true_sinks_in_int,
-                              self.arg["fractional_landsea_mask_flag"],
-                              self.arg["set_ls_as_no_data_flag"],
-                              self.arg["add_slope_flag"],
-                              self.arg["epsilon"])
+                              landsea_in_int.astype(np.int32),
+                              landsea_in_double.astype(np.float64),
+                              true_sinks_in_int.astype(np.int32),
+                              self.args["fractional_landsea_mask"],
+                              self.args["set_land_sea_as_no_data"],
+                              self.args["add_slope"] != 0.0,
+                              self.args["add_slope"])
+
         output_orography_ds = \
-            orography_in_ds.Copy(deep=True,
-                                 data={"cell_elevation":
-                                       orography_inout})
+            xr.Dataset(data_vars={"cell_elevation":(["cell"],orography_inout)},
+                       coords={"clat":orography_in_ds["clat"],
+                               "clon":orography_in_ds["clon"],
+                               "clon_bnds":(["cell","nv"],orography_in_ds["clon_bnds"].values),
+                               "clat_bnds":(["cell","nv"],orography_in_ds["clat_bnds"].values)},
+                       attrs={"number_of_grid_used":orography_in_ds.attrs["number_of_grid_used"],
+                              "grid_file_uri":orography_in_ds.attrs["grid_file_uri"],
+                              "uuidOfHGrid":orography_in_ds.attrs["uuidOfHGrid"]})
+        output_orography_ds["cell_elevation"].attrs["CDI_grid_type"] = "unstructured"
         output_orography_ds.\
             to_netcdf(self.args["output_orography_filepath"])
 
@@ -63,52 +76,44 @@ def parse_arguments():
                                                  "flood technique on a ICON "
                                                  "icosohedral grid",
                                      epilog='')
-    parser.add_argument(input_orography_filepath,metavar='Input Orography Filepath',
+    parser.add_argument("input_orography_filepath",metavar='Input_Orography_Filepath',
                         type=str,
                         help="Full path to the input orography file")
-    parser.add_argument(landsea_filepath,metavar='Landsea Mask Filepath',
+    parser.add_argument("landsea_filepath",metavar='Landsea_Mask_Filepath',
                         type=str,
                         help="Full path to input landsea mask file")
-    parser.add_argument(true_sinks_filepath,metavar='True Sinks Filepath',
+    parser.add_argument("true_sinks_filepath",metavar='True_Sinks_Filepath',
                         type=str,
                         help="Full path to input true sinks file")
-    parser.add_argument(output_orography_filepath,metavar='Output Orography Filepath',
+    parser.add_argument("output_orography_filepath",metavar='Output_Orography_Filepath',
                         type=str,
                         help="Full path to target output orography file")
-    parser.add_argument(grid_params_filepath,metavar='Grid Parameters Filepath',
+    parser.add_argument("grid_params_filepath",metavar='Grid_Parameters_Filepath',
                         type=str,
                         help="Full path to the grid description file for the ICON "
                              "grid being used")
-    parser.add_argument(input_orography_fieldname,metavar='Input Orography Fieldname',
+    parser.add_argument("input_orography_fieldname",metavar='Input_Orography_Fieldname',
                         type=str,
                         help="Name of input orography field within the specified file")
-    parser.add_argument(landsea_fieldname,metavar='Landsea Fieldname',
+    parser.add_argument("landsea_fieldname",metavar='Landsea_Fieldname',
                         type=str,
                         help="Name of the landsea mask field within the specified file")
-    parser.add_argument(true_sinks_fieldname,metavar='True Sinks Fieldname',
+    parser.add_argument("true_sinks_fieldname",metavar='True_Sinks_Fieldname',
                         type=str,
                         help="Name of the true sinks field within the specified file")
-    parser.add_argument(set_land_sea_as_no_data_flag,metavar='Set Landsea as No Data Flag',
-                        type=bool,
+    parser.add_argument("-n","--set-land-sea-as-no-data",
+                        action="store_true",
+                        default=False,
                         help="Flag to turn on and off setting "
                              "all landsea points to no data")
-    parser.add_argument(add_slope_flag,metavar='Add Slope Flag',
-                        type=bool,
-                        help="Land sea mask expresses fraction of land "
-                             "as a floating point number which requires "
-                             "conversion to a binary mask(default false)")
-    parser.add_argument(epsilon,metavar='Epsilon',
+    parser.add_argument("-s","--add-slope",
                         type=float,
-                        help="Additional height added to each progressive cell when"
-                             "adding a slight slope")
-    parser.add_argument(use_secondary_neighbors_flag,
-                        metavar="Use Secondary Neighbors Flag",
-                        type=bool,
-                        default=True,
-                        help="Use the 8 or 9 additional neighbors which "
-                             "share vertices with this cell but not edges")
-    parser.add_argument(fractional_landsea_mask_flag,metavar='Fractional Landsea Mask Flag',
-                        type=bool,
+                        nargs="?",
+                        default=0.0,
+                        help="Add slight slope to filled sinks, increase the height "
+                             "of each progressive cell by the given value")
+    parser.add_argument("-f","--fractional-landsea-mask",
+                        action="store_true",
                         default=False,
                         help="Land sea mask expresses fraction of land "
                              "as a floating point number which requires "
@@ -117,7 +122,7 @@ def parse_arguments():
     return args
 
 def setup_and_run_sink_filling_icon_driver(args):
-    driver = SinkFillingIconDriver(**vars(args))
+    driver = SinkFillingIconDriver(vars(args))
     driver.run()
 
 if __name__ == '__main__':

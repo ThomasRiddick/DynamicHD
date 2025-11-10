@@ -4750,19 +4750,19 @@ class LakePlots(Plots):
                                          river_grid_type='HD')
 
   def LakeAndRiverMaps(self):
-    river_flow_file_basename=("/Users/thomasriddick/Documents/data/lake_transient_data/run_1/"
+    river_flow_file_basename=("/Users/thomasriddick/Documents/data/simulation_data/lake_transient_data/run_1/"
                               "pmt0531_Tom_lake_16k_DATETIME01.01_hd_higres_ym.nc")
-    lsmask_file_basename=("/Users/thomasriddick/Documents/data/lake_transient_data/run_1/"
+    lsmask_file_basename=("/Users/thomasriddick/Documents/data/simulation_data/lake_transient_data/run_1/"
                           "10min_slm_DATETIME.nc")
-    basin_catchment_num_file_basename=("/Users/thomasriddick/Documents/data/lake_transient_data/run_1/"
+    basin_catchment_num_file_basename=("/Users/thomasriddick/Documents/data/simulation_data/lake_transient_data/run_1/"
                                        "lake_numbers_DATETIME.nc")
-    lake_data_file_basename=("/Users/thomasriddick/Documents/data/lake_transient_data/run_1/"
+    lake_data_file_basename=("/Users/thomasriddick/Documents/data/simulation_data/lake_transient_data/run_1/"
                              "pmt0531_Tom_lake_16k_DATETIME01.01_diagnostic_lake_volumes.nc")
-    glacier_file_basename=("/Users/thomasriddick/Documents/data/lake_transient_data/run_1/"
+    glacier_file_basename=("/Users/thomasriddick/Documents/data/simulation_data/lake_transient_data/run_1/"
                            "10min_glac_DATETIMEk.nc")
-    rdirs_file_basename=("/Users/thomasriddick/Documents/data/lake_transient_data/run_1/"
+    rdirs_file_basename=("/Users/thomasriddick/Documents/data/simulation_data/lake_transient_data/run_1/"
                          "hdpara_DATETIMEk.nc")
-    catchment_nums_file_basename=("/Users/thomasriddick/Documents/data/lake_transient_data/run_1/"
+    catchment_nums_file_basename=("/Users/thomasriddick/Documents/data/simulation_data/lake_transient_data/run_1/"
                                   "connected_catchments_DATETIME.nc")
     river_flow_fieldname = "friv"
     lsmask_fieldname = "slm"

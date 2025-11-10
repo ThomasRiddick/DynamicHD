@@ -1,2 +1,3 @@
 namelist /lake_model_ctl/ &
-  lake_params_filename,lake_start_filename,lake_retention_coefficient,run_water_budget_check
+  lake_params_filename,lake_start_filename,lake_retention_coefficient,minimum_lake_volume_threshold, &
+  minimum_flow,maximum_lake_outflow_fraction,run_water_budget_check,use_binary_lake_mask

@@ -10,8 +10,7 @@ from os.path import join
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from Dynamic_HD_Scripts.base.iodriver import advanced_field_loader
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import follow_streams_wrapper
+import follow_streams_wrapper
 from plotting_utilities.dynamic_lake_analysis_plotting_routines import generate_catchment_and_cflow_comp_sequence
 from plotting_utilities.dynamic_lake_analysis_plotting_routines import find_highest_version
 from plotting_utilities.dynamic_lake_analysis_plotting_routines import InteractiveTimeSlicePlots
@@ -524,6 +523,11 @@ def latest_lake_version_vs_base_version_lakes_comparison():
                                               second_corrected_orography,
                                               third_corrected_orography,
                                               fourth_corrected_orography,
+                                              first_corrected_orography,
+                                              second_corrected_orography,
+                                              third_corrected_orography,
+                                              fourth_corrected_orography,
+                                              true_sinks,
                                               true_sinks,
                                               date_sequence=dates,
                                               minflowcutoff=100,
@@ -533,14 +537,14 @@ def latest_lake_version_vs_base_version_lakes_comparison():
 
 def latest_lake_version_vs_previous_analysis_lakes_comparison():
     dates = []#[0]
-    dates.extend(list(range(14450,14200,-50)))
+    dates.extend(list(range(14450,14150,-50)))
     colors = ColorPalette('default')
     current_analysis_base_dir = ("/Users/thomasriddick/Documents/data/"
-                                 "lake_analysis_runs/lake_analysis_two_26_Mar_2022/")
+                                 "lake_analysis_runs/lake_analysis_four_4_Jan_2024/")
     # previous_analysis_base_dir = ("/Users/thomasriddick/Documents/data/"
     #                              "lake_analysis_runs/lake_analysis_one_21_Jun_2021/")
     previous_analysis_base_dir = ("/Users/thomasriddick/Documents/data/"
-                                  "lake_analysis_runs/lake_analysis_two_26_Mar_2022/")
+                                  "lake_analysis_runs/lake_analysis_four_4_Jan_2024/")
     glac_template = ("/Users/thomasriddick/Documents/"
                      "data/simulation_data/lake_transient_data/run_1/"
                      "10min_glac_DATEk.nc")
@@ -557,8 +561,11 @@ def latest_lake_version_vs_previous_analysis_lakes_comparison():
     initial_configuration["sequence_one_base_dir"] = current_analysis_base_dir
     initial_configuration["sequence_two_base_dir"] = previous_analysis_base_dir
     initial_configuration["glacier_mask_file_template"] = glac_template
-    initial_configuration["input_orography_file_template"] = orog_template
-    initial_configuration["present_day_base_input_orography_filepath"] = \
+    initial_configuration["input_orography_file_template_one"] = orog_template
+    initial_configuration["input_orography_file_template_two"] = orog_template
+    initial_configuration["present_day_base_input_orography_one_filepath"] = \
+        present_day_base_input_orography_filepath
+    initial_configuration["present_day_base_input_orography_two_filepath"] = \
         present_day_base_input_orography_filepath
     initial_configuration["super_fine_orography_filepath"] = \
         super_fine_orography_filepath
@@ -568,6 +575,8 @@ def latest_lake_version_vs_previous_analysis_lakes_comparison():
     initial_configuration["sequence_one_fixed_version"] = -1
     initial_configuration["use_latest_version_for_sequence_two"] = True
     initial_configuration["sequence_two_fixed_version"] = -1
+    initial_configuration["sequence_one_is_transient_run_data"] = False
+    initial_configuration["sequence_two_is_transient_run_data"] = False
     plotter = DynamicLakeAnalysisPlotter(colors,
                                          initial_configuration_in=initial_configuration,
                                          dataset_catalog_filepath=

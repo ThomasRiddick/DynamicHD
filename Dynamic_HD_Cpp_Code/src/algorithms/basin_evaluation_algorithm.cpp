@@ -427,6 +427,7 @@ inline bool basin_evaluation_algorithm::
 		primary_merge_q.pop();
 		process_primary_merge(primary_merge_basin_numbers->first,
 		                      primary_merge_basin_numbers->second);
+                delete primary_merge_basin_numbers;
 	}
 	if (secondary_merge_found){
 		process_secondary_merge(secondary_merge_coords);
@@ -869,6 +870,7 @@ void basin_evaluation_algorithm::set_remaining_redirects() {
 					                                        				first_cell_beyond_rim_coords,
                                                      						coarse_catchment_number);
 		if (prior_fine_catchment_num == 0) delete catchment_outlet_coarse_coords;
+                delete first_cell_beyond_rim_coords;
 		}
 		delete coords_in;
 	});
@@ -1072,6 +1074,12 @@ void latlon_basin_evaluation_algorithm::
 	rebuild_secondary_basin(root_target_basin_number);
 	//process primary merge calls set primary redirect
 	process_primary_merge(target_basin_number,root_target_basin_number);
+        delete catchments_from_sink_filling;
+        while (! q.empty()){
+          center_cell = static_cast<basin_cell*>(q.top());
+          q.pop();
+          delete center_cell;
+        }
 }
 
 void latlon_basin_evaluation_algorithm::test_set_secondary_redirect(double* prior_coarse_rdirs_in,

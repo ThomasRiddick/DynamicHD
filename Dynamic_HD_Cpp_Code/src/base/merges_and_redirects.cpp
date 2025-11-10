@@ -173,8 +173,11 @@ collected_merge_and_redirect_indices::get_collection_as_array(){
       secondary_merge_and_redirect_indices->get_indices_as_array();
     merge_and_redirect_indices_size = secondary_merge_dimension_and_array->first;
   } else {
-    merge_and_redirect_indices_size =
-      (*primary_merge_and_redirect_indices)[0]->get_indices_as_array()->first;
+    pair<int,int*>* primary_merge_dimension_and_array =
+      (*primary_merge_and_redirect_indices)[0]->get_indices_as_array();
+    merge_and_redirect_indices_size = primary_merge_dimension_and_array->first;
+    delete[] primary_merge_dimension_and_array->second;
+    delete primary_merge_dimension_and_array;   
   }
   int* array = new int[merge_and_redirect_indices_size*
                        (1+primary_merge_and_redirect_indices->size())];
@@ -185,13 +188,20 @@ collected_merge_and_redirect_indices::get_collection_as_array(){
       array[i] = -1;
     }
   }
-  for(unsigned int i = 0; i < primary_merge_and_redirect_indices->size(); i++){
-    int* primary_merge_array =
-      (*primary_merge_and_redirect_indices)[i]->get_indices_as_array()->second;
+ if (secondary_merge_and_redirect_indices) { 
+   delete[] secondary_merge_dimension_and_array->second;
+   delete secondary_merge_dimension_and_array;
+ }
+ for(unsigned int i = 0; i < primary_merge_and_redirect_indices->size(); i++){
+    pair<int,int*>* primary_merge_dimension_and_array =
+      (*primary_merge_and_redirect_indices)[i]->get_indices_as_array();
+    int* primary_merge_array = primary_merge_dimension_and_array->second;
     for (int j = 0; j<merge_and_redirect_indices_size;j++){
         array[((i+1)*merge_and_redirect_indices_size)+j] =
           primary_merge_array[j];
     }
+    delete[] primary_merge_array;
+    delete primary_merge_dimension_and_array;
   }
   return new pair<pair<int,int>*,int*>
     (new pair<int,int>(1+primary_merge_and_redirect_indices->size(),
@@ -403,6 +413,7 @@ merges_and_redirects::
   fill_n(array,array_size,0);
   int slice_size = max_primary_merges_at_single_point_plus_one*
                    merge_and_redirect_indices_size;
+  int array_slices_size = array_slices.size();
   for (unsigned int i = 0; i < array_slices.size(); i++ ){
     pair<pair<int,int>*,int*>* array_slice = array_slices[i];
     int j = 0;
@@ -413,9 +424,12 @@ merges_and_redirects::
     for (; j < slice_size; j++){
       array[(i*slice_size)+j] = -1;
     }
+    delete array_slice->first;
+    delete[] array_slice->second;
+    delete array_slice;
   }
   return new pair<tuple<int,int,int>*,int*>
-    (new tuple<int,int,int>(array_slices.size(),
+    (new tuple<int,int,int>(array_slices_size,
                             max_primary_merges_at_single_point_plus_one,
                             merge_and_redirect_indices_size),array);
 }

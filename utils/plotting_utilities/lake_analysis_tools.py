@@ -7,16 +7,11 @@ import matplotlib as mpl
 import sys
 import warnings
 from enum import Enum
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import fill_sinks_wrapper
+import fill_sinks_wrapper
 from Dynamic_HD_Scripts.utilities.utilities import downscale_ls_mask
 from Dynamic_HD_Scripts.base.field import Field
 
-warnings.warn("What does the input area bounds variable do???? Ditto dates")
-
-#Not wrapping - no known paleo-lakes that
-#would require this
-def get_neighbors(coords):
+def get_neighbors(coords,bounds):
     nbr_coords = []
     if len(coords) == 2:
         (i,j) = coords
@@ -24,7 +19,17 @@ def get_neighbors(coords):
             for l in range(-1,2):
                 if k == 0 and l == 0:
                     continue
-                nbr_coords.append((k+i,j+l))
+                m = k+i
+                n = j+l
+                if m >= bounds[0]:
+                    m = bounds[0] - 1
+                if m < 0:
+                    m = 0
+                if n >= bounds[1]:
+                    n = n - bounds[1]
+                elif n < 0:
+                    n = n + bounds[1]
+                nbr_coords.append((m,n))
     return nbr_coords
 
 def in_bounds(coords,array):
@@ -33,7 +38,8 @@ def in_bounds(coords,array):
             and coords[1] < array.shape[1])
 
 class Basins(Enum):
-    CAR = 1
+    UNKNOWN = 0
+    GOM = 1
     ART = 2
     NATL = 3
 
@@ -60,6 +66,8 @@ class LakeTracker:
     def __init__(self,initial_connected_lake_numbers,initial_lake_center):
         initial_lake_center = tuple(initial_lake_center)
         initial_lake_number = initial_connected_lake_numbers[initial_lake_center]
+        if initial_lake_number == 0:
+            raise RuntimeError("Tracked lake not found with center: {}".format(initial_lake_center))
         self.lake = (initial_connected_lake_numbers == initial_lake_number)
 
     def get_current_lake_mask(self):
@@ -80,7 +88,8 @@ class LakeTracker:
                 while len(q) > 0:
                     working_coords = q.pop()
                     lake_numbers[working_coords] = lake_number
-                    for nbr_coords in get_neighbors(working_coords):
+                    for nbr_coords in get_neighbors(working_coords,
+                                                    completed_cells.shape):
                         if (lake_mask[nbr_coords] and
                             not (completed_cells[nbr_coords])):
                             completed_cells[nbr_coords] = True
@@ -110,7 +119,6 @@ class LakePointExtractor:
                                     initial_lake_center,
                                     lake_emergence_date,
                                     dates,
-                                    input_area_bounds,
                                     connected_lake_basin_numbers_sequence,
                                     continue_from_previous_subsequence=False):
         if not continue_from_previous_subsequence:
@@ -120,7 +128,12 @@ class LakePointExtractor:
              ((lake_emergence_date < max(dates)) or
                continue_from_previous_subsequence)):
             if not continue_from_previous_subsequence:
-                lake_emergence_date_index = dates.index(lake_emergence_date)
+                if lake_emergence_date in dates:
+                    lake_emergence_date_index = dates.index(lake_emergence_date)
+                else:
+                    lake_emergence_date_index = \
+                        dates.index(max(filter(lambda d : d <= lake_emergence_date,
+                                               dates)))
                 lake_point_sequence = [ None for _ in
                                         range(lake_emergence_date_index)]
             else:
@@ -136,10 +149,10 @@ class LakePointExtractor:
 
     def extract_lake(self,connected_lake_basin_numbers):
         if self.lake_tracker is None:
-           self.lake_tracker = LakeTracker(connected_lake_basin_numbers,self.initial_lake_center)
-           lake_mask = self.lake_tracker.get_current_lake_mask()
+            self.lake_tracker = LakeTracker(connected_lake_basin_numbers,self.initial_lake_center)
+            lake_mask = self.lake_tracker.get_current_lake_mask()
         else:
-           lake_mask = self.lake_tracker.track_lake(connected_lake_basin_numbers)
+            lake_mask = self.lake_tracker.track_lake(connected_lake_basin_numbers)
         lake_points = np.argwhere(lake_mask)
         num_lake_points = len(lake_points)
         lat_sum = 0
@@ -261,7 +274,8 @@ class CoastlineIdentifier:
         starting_point_coords = None
         #Islands???
         for cell_coords in midpoint_transect_ocean_cell_coords:
-            for nbr_coords in get_neighbors(cell_coords):
+            for nbr_coords in get_neighbors(cell_coords,
+                                            landsea_mask.shape):
                 if not landsea_mask[nbr_coords]:
                     starting_point_coords = nbr_coords;
                     break
@@ -276,21 +290,24 @@ class CoastlineIdentifier:
         completed_cells[starting_point_coords] = True
         while len(q) > 0:
             working_coords = q.pop()
-            for nbr_coords in get_neighbors(working_coords):
+            for nbr_coords in get_neighbors(working_coords,
+                                            landsea_mask.shape):
                 if not (completed_cells[nbr_coords] or
                         landsea_mask[nbr_coords] or
                         self.limiting_transect_mask[nbr_coords]):
                     completed_cells[nbr_coords] = True
                     next_to_ocean = False
                     for secondary_nbr_coords in \
-                        get_neighbors(nbr_coords):
+                        get_neighbors(nbr_coords,
+                                      landsea_mask.shape):
                         if landsea_mask[secondary_nbr_coords]:
                             next_to_ocean = True
                     if next_to_ocean:
                         coastal_land_cells[nbr_coords] = True
                         q.appendleft(nbr_coords)
                         for secondary_nbr_coords in \
-                            get_neighbors(nbr_coords):
+                            get_neighbors(nbr_coords,
+                                          landsea_mask.shape):
                             if landsea_mask[secondary_nbr_coords]:
                                 coastal_ocean_cells[secondary_nbr_coords] = True
         return coastal_land_cells,coastal_ocean_cells
@@ -298,7 +315,7 @@ class CoastlineIdentifier:
 class OutflowBasinIdentifier:
 
     ocean_basins_30min_latlon = {Basins.ART:[[[30,88],[60,88]],[[12,190],[45,190]]],
-                                 Basins.CAR:[[[133,167],[122,167]],[[107,190],[121,207]]],
+                                 Basins.GOM:[[[133,167],[122,167]],[[107,190],[121,207]]],
                                  Basins.NATL:[[[112,221],[104,188]],[[80,262],[80,200]]]}
     ocean_basins_definitions = {"30minLatLong":ocean_basins_30min_latlon}
     field_shapes = {"30minLatLong":(360,720)}
@@ -328,8 +345,7 @@ class OutflowBasinIdentifier:
     def identify_ocean_basin_for_lake_outflow(self,
                                               ocean_basin_numbers,
                                               connected_catchments,
-                                              lake_point,
-                                              input_area_bounds):
+                                              lake_point):
         if lake_point is None:
             return -1
         catchment = connected_catchments[tuple(lake_point)]
@@ -342,17 +358,17 @@ class OutflowBasinIdentifier:
                                                            ocean_basin_numbers >= 0)] = 3
             fig.axes[0].imshow(ocean_basin_number_with_outflow,interpolation='none')
         ocean_basin_number = ocean_basin_number_opt[0] if len(ocean_basin_number_opt) > 0 else -1
+        if ocean_basin_number == -1:
+            return Basins.UNKNOWN
         return self.ocean_basin_names[ocean_basin_number]
 
     def extract_ocean_basin_for_lake_outflow_sequence(self,
-                                                      dates,
-                                                      input_area_bounds,
                                                       lake_point_sequence,
                                                       connected_catchments_sequence,
                                                       scale_factor):
         lake_outflow_basins = []
-        for date,ocean_basin_numbers,lake_point,connected_catchments in \
-              zip(dates,self.ocean_basin_numbers_sequence,lake_point_sequence,
+        for ocean_basin_numbers,lake_point,connected_catchments in \
+              zip(self.ocean_basin_numbers_sequence,lake_point_sequence,
                   connected_catchments_sequence):
               if lake_point is not None:
                 lake_point_coarse = [round(coord/scale_factor)
@@ -361,31 +377,29 @@ class OutflowBasinIdentifier:
                 lake_point_coarse = None
               basin_name = self.identify_ocean_basin_for_lake_outflow(ocean_basin_numbers,
                                                                       connected_catchments,
-                                                                      lake_point_coarse,
-                                                                      input_area_bounds)
+                                                                      lake_point_coarse)
               lake_outflow_basins.append(basin_name)
         return lake_outflow_basins
 
     def calculate_discharge_to_ocean_basins(self,
                                             ocean_basin_numbers,
-                                            discharge_to_ocean,
-                                            input_area_bounds):
-        discharge_to_ocean_basins = []
+                                            discharge_to_ocean):
+        discharge_to_ocean_basins = {}
         for ocean_basin_number in range(len(self.coastline_identifiers)):
-            discharge_to_ocean_basins.append(sum(discharge_to_ocean[ocean_basin_numbers ==
-                                                                    ocean_basin_number]))
+            ocean_basin_name = self.ocean_basin_names[ocean_basin_number]
+            discharge_to_ocean_basins[ocean_basin_name] = \
+                sum(discharge_to_ocean[ocean_basin_numbers ==
+                                       ocean_basin_number])
         return discharge_to_ocean_basins
 
     def calculate_discharge_to_ocean_basins_sequence(self,
-                                                     dates,
                                                      discharge_to_ocean_sequence):
         discharge_to_ocean_basin_timeseries = []
-        for date,ocean_basin_numbers,discharge_to_ocean in \
-              zip(dates,self.ocean_basin_numbers_sequence,discharge_to_ocean_sequence):
+        for ocean_basin_numbers,discharge_to_ocean in \
+              zip(self.ocean_basin_numbers_sequence,discharge_to_ocean_sequence):
               discharge_to_ocean_basins = \
                 self.calculate_discharge_to_ocean_basins(ocean_basin_numbers,
-                                                         discharge_to_ocean,
-                                                         input_area_bounds)
+                                                         discharge_to_ocean)
               discharge_to_ocean_basin_timeseries.append(discharge_to_ocean_basins)
         return discharge_to_ocean_basin_timeseries
 
@@ -464,7 +478,9 @@ class ExitProfiler:
 
     EndPoints = namedtuple("EndPoints",["start","end","adjust"])
     blocking_ridges = [EndPoints((200,507),(5,520),True),
-                       EndPoints((323,582),(545,995),True),
+                       EndPoints((308,600),(577,1024),False),
+                       EndPoints((299,571),(268,544),False),
+                       EndPoints((268,544),(308,600),False),
                        EndPoints((274,457),(630,187),True)]
     reference_lake_center = (260,500)
     section_bounds = ((0,0),(450,750))

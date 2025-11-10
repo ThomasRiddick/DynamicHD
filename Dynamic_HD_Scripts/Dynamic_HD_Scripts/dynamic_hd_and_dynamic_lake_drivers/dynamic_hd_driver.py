@@ -42,7 +42,13 @@ class Dynamic_HD_Drivers:
         Arguments: None
         """
 
-        data_dir = "/Users/thomasriddick/Documents/data/HDdata"
+        if path.exists(path.expanduser("~/Documents/data/HDdata")):
+            data_dir = path.expanduser("~/Documents/data/HDdata")
+        elif path.exists(path.expanduser("~/data/HDdata")):
+            data_dir = path.expanduser("~/data/HDdata")
+        else:
+            warnings.warn("No data directory set!")
+            data_dir = path.expanduser("~/")
         rdirs_path_extension = "rdirs"
         rmouth_path_extension = "rmouths"
         orog_path_extension  = "orographys"

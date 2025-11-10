@@ -1,7 +1,10 @@
 #!/bin/bash
 set -e
 
-echo "Running Version 1.2 of the HD Command Line Operator Code"
+cd $(dirname ${0})
+version=$(git describe --match 'latlon_hd_tools_version_*')
+cd -
+echo "Running Version ${version} of the HD Command Line Operator Code"
 
 #Define module loading function
 function load_module
@@ -112,13 +115,13 @@ if ! [[ -d $source_directory ]]; then
 fi
 
 shopt -s nocasematch
-no_conda=${no_conda:-"false"}
-if [[ $no_conda == "true" ]] || [[ $no_conda == "t" ]]; then
-	no_conda=true
-elif [[ $no_conda == "false" ]] || [[ $no_conda == "f" ]]; then
-	no_conda=false
+no_mamba=${no_mamba:-"false"}
+if [[ $no_mamba == "true" ]] || [[ $no_mamba == "t" ]]; then
+	no_mamba=true
+elif [[ $no_mamba == "false" ]] || [[ $no_mamba == "f" ]]; then
+	no_mamba=false
 else
-	echo "Format of no_conda flag (${no_conda}) is unknown, please use True/False or T/F" 1>&2
+	echo "Format of no_mamba flag (${no_mamba}) is unknown, please use True/False or T/F" 1>&2
 	exit 1
 fi
 
@@ -152,7 +155,7 @@ else
 	compilation_required=false
 fi
 
-#Setup conda environment
+#Setup mamba environment
 echo "Setting up environment"
 if ! $no_modules ; then
   if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
@@ -166,22 +169,20 @@ if ! $no_modules ; then
   fi
 fi
 
-if ! $no_modules && ! $no_conda ; then
+if ! $no_modules && ! $no_mamba ; then
 	if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
 		load_module python3
-	else
-		load_module anaconda3
 	fi
 fi
 
-if ! $no_conda ; then
-	if $compilation_required && conda info -e | grep -q "dyhdenv3"; then
-		conda env remove --yes --name dyhdenv3
+if ! $no_mamba ; then
+	if $compilation_required && mamba info -e | grep -q "dyhdenv_mamba"; then
+		mamba env remove --yes --name dyhdenv_mamba
 	fi
-	if ! conda info -e | grep -q "dyhdenv3"; then
-		${source_directory}/Dynamic_HD_bash_scripts/regenerate_conda_environment.sh $no_modules
+	if ! mamba info -e | grep -q "dyhdenv_mamba"; then
+		${source_directory}/Dynamic_HD_bash_scripts/regenerate_mamba_environment.sh $no_modules
 	fi
-	source activate dyhdenv3
+	source activate dyhdenv_mamba
 fi
 
 #Load a new version of gcc that doesn't have the polymorphic variable bug
@@ -194,7 +195,7 @@ if ! $no_modules ; then
 fi
 
 #Setup correct python path
-export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${PYTHONPATH}
+export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${source_directory}/lib:${PYTHONPATH}
 
 #Call compilation script
 ${source_directory}/Dynamic_HD_bash_scripts/compile_dynamic_hd_code.sh ${compilation_required} false ${source_directory} . true "compile_only"
