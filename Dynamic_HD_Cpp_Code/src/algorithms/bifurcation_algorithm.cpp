@@ -58,12 +58,8 @@ void bifurcation_algorithm::setup_fields(int* cumulative_flow_in,
 
 void bifurcation_algorithm::setup_flags(double cumulative_flow_threshold_fraction_in,
                                         int minimum_cells_from_split_to_main_mouth_in,
-<<<<<<< HEAD
-                                        int maximum_cells_from_split_to_main_mouth_in) {
-=======
                                         int maximum_cells_from_split_to_main_mouth_in,
                                         bool remove_main_channel_in) {
->>>>>>> master
   cumulative_flow_threshold_fraction = cumulative_flow_threshold_fraction_in;
   minimum_cells_from_split_to_main_mouth = minimum_cells_from_split_to_main_mouth_in;
   maximum_cells_from_split_to_main_mouth = maximum_cells_from_split_to_main_mouth_in;
