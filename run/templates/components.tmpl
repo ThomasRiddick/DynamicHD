@@ -65,7 +65,7 @@ config_filepath=${working_directory}/bash_script.cfg
 python_config_filepath=${working_directory}/python_script.cfg
 binary_lsmask_filepath=${working_directory}/binary_lsmask.nc
 {% if not input.high_res %}
-etop01_filepath=/work/mh1421/m300468/data/ETOPO1_Ice_g_gmt4_grid_registered.nc
+etop01_filepath=${input_data_directory}/ETOPO1_Ice_g_gmt4_grid_registered.nc
 orography_filepath=${working_directory}/orography.nc
 {% endif %}
 max_land_binary_lsmask_filepath=${working_directory}/maxl_binary_lsmask.nc
@@ -89,7 +89,7 @@ fi
 if [[ -z ${use_true_sinks} ]]; then
   use_true_sinks=false
 fi
-true_sinks_filepath_default=/work/mh1421/m300468/data/true_sinks_field_version_41.nc
+true_sinks_filepath_default=${input_data_directory}/true_sinks_field_version_41.nc
 if ${use_true_sinks}; then
   true_sinks_filepath=${true_sinks_filepath:-${true_sinks_filepath_default}}
 {% if input.high_res %}
@@ -151,8 +151,8 @@ fi
 cat > ${python_config_filepath} << EOF
 #Output option for test run of dynamic hd production code
 [input_options]
-ten_minute_corrected_orography_filename=/work/mh1421/m300468/workdirs/icon_rdirs_r2b5_workdir_sc_0030_0035_seamless_p3/corrected_orog_intermediary_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_20170517_003802_with_grid.nc
-ten_minute_hydrosheds_au_auf_sa_river_directions_filename=/work/mh1421/m300468/workdirs/icon_rdirs_r2b5_workdir_sc_0030_0035_seamless_p3/rdirs_hydrosheds_au_af_sa_upscaled_10min_20200203_163646_corrg.nc
+ten_minute_corrected_orography_filename=${input_data_directory}/corrected_orog_intermediary_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_20170517_003802_with_grid.nc
+ten_minute_hydrosheds_au_auf_sa_river_directions_filename=${input_data_directory}/rdirs_hydrosheds_au_af_sa_upscaled_10min_20200203_163646_corrg.nc
 [input_fieldname_options]
 ten_minute_hydrosheds_au_auf_sa_river_directions_fieldname=rdirs
 ten_minute_corrected_orography_fieldname=field_value
