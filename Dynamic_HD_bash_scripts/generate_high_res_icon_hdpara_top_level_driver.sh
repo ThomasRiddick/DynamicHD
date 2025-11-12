@@ -326,7 +326,7 @@ else
 
   #Clean up temporary files
   unlink paragen/bifurcated_next_cell_index_for_upstream_cell.nc || true
-  rmdir -rf paragen
+  rm -rf paragen
   rm -f orography_filled.nc
   rm -f grid_in_temp.nc
   rm -f mask_in_temp.nc
