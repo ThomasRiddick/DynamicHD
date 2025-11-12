@@ -7,7 +7,10 @@
  */
 
 #include <cmath>
+#include <algorithm>
 #include "base/grid.hpp"
+
+using namespace std;
 
 
 /* IMPORTANT!

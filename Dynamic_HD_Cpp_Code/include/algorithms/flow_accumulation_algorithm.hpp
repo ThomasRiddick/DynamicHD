@@ -22,7 +22,7 @@ class flow_accumulation_algorithm {
     int no_bifurcation_value;
     bool search_for_loops = true;
   public:
-    virtual ~flow_accumulation_algorithm(){};
+    virtual ~flow_accumulation_algorithm();
     void generate_cumulative_flow(bool set_links);
     void update_bifurcated_flows();
   protected:
@@ -58,7 +58,7 @@ class latlon_flow_accumulation_algorithm : public flow_accumulation_algorithm{
                       int* next_cell_index_lon,
                       int* cumulative_flow,
                       grid_params* grid_params_in);
-    virtual ~latlon_flow_accumulation_algorithm(){};
+    virtual ~latlon_flow_accumulation_algorithm();
   private:
     int tile_min_lat;
     int tile_max_lat;
@@ -88,7 +88,7 @@ class icon_single_index_flow_accumulation_algorithm : public flow_accumulation_a
                       int* cumulative_flow,
                       grid_params* grid_params_in,
                       int* bifurcated_next_cell_index_in = nullptr);
-    virtual ~icon_single_index_flow_accumulation_algorithm(){};
+    virtual ~icon_single_index_flow_accumulation_algorithm();
   private:
     field<int>* next_cell_index = nullptr;
     vector<field<int>*> bifurcated_next_cell_index;
