@@ -135,4 +135,47 @@ inline coords* coords::clone(){
 	}
 }
 
+// An abstract class holding a generic indicator of cell that
+// a given cell flows to; this could be implemented as a direction
+// or as the coordinates/index of the next cell
+class direction_indicator {
+public:
+    // Check if this direction indicator object is equal to  a direction
+    // given as a polymorphic pointer to an object of the correct type;
+    // if it is return TRUE else return FALSE
+    virtual bool is_equal_to() = 0;
+};
+
+// A concrete subclass of direction indicator which holds a number based
+// direction indicator - for example for a latitude longitude grid this
+// is often a number between 1 and 9 indicating direction according to
+// the direction from the centre of a numeric keyboard (the D9 method)
+// with 5 as a sink. However any other single number system is also
+// possible
+class dir_based_direction_indicator : direction_indicator {
+protected:
+    int direction;
+public:
+	dir_based_direction_indicator(int direction_in) : direction(direction_in) {};
+    // Getter for the direction indicator integer value
+    int get_direction() { return direction; };
+    // Check if this direction indicator object is equal to a given value
+    // where the value is supplied as a polymorphic pointer to an integer
+    // if it is return TRUE else return FALSE
+    bool is_equal_to(int value) { return (direction == value); };
+};
+
+class index_based_direction_indicator : direction_indicator {
+protected:
+    int index;
+public:
+    index_based_direction_indicator(int index_in) : index(index_in) {};
+    // Getter for the direction indicator integer value
+    int get_index() { return index; };
+    // Check if this direction indicator object is equal to a given value
+    // where the value is supplied as a polymorphic pointer to an integer
+    // if it is return TRUE else return FALSE
+    bool is_equal_to(int value) { return (index == value); };
+};
+
 #endif /* INCLUDE_COORDS_HPP_ */

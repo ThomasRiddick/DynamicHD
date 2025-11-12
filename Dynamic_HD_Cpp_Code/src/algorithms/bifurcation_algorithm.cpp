@@ -39,9 +39,9 @@ bifurcation_algorithm_icon_single_index::
 }
 
 void bifurcation_algorithm::setup_fields(int* cumulative_flow_in,
-                                               int* number_of_outflows_in,
-                                               bool* landsea_mask_in,
-                                               grid_params* grid_params_in) {
+                                         int* number_of_outflows_in,
+                                         bool* landsea_mask_in,
+                                         grid_params* grid_params_in) {
   _grid_params = grid_params_in;
   _grid = grid_factory(_grid_params);
   cumulative_flow = new field<int>(cumulative_flow_in,_grid_params);

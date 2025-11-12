@@ -17,41 +17,21 @@ from Dynamic_HD_Scripts.context import fortran_source_path
 from Dynamic_HD_Scripts.context import fortran_project_object_path
 from Dynamic_HD_Scripts.context import fortran_project_source_path
 from Dynamic_HD_Scripts.context import fortran_project_include_path
+from accumulate_flow_icon_wrapper import accumulate_flow_icon_cpp
 
 def accumulate_flow_icon_single_index(cell_neighbors,
                                       input_river_directions,
                                       input_bifurcated_river_directions=None):
-    additional_fortran_filenames = ["Dynamic_HD_Fortran_Code_src_algorithms_accumulate_flow_mod.f90.o",
-                                    "Dynamic_HD_Fortran_Code_src_base_coords_mod.f90.o",
-                                    "Dynamic_HD_Fortran_Code_src_algorithms_flow_accumulation_algorithm_mod.f90.o",
-                                    "Dynamic_HD_Fortran_Code_src_base_convert_rdirs_to_indices.f90.o",
-                                    "Dynamic_HD_Fortran_Code_src_base_doubly_linked_list_mod.f90.o",
-                                    "Dynamic_HD_Fortran_Code_src_base_doubly_linked_list_link_mod.f90.o",
-                                    "Dynamic_HD_Fortran_Code_src_base_subfield_mod.f90.o",
-                                    "Dynamic_HD_Fortran_Code_src_base_unstructured_grid_mod.f90.o",
-                                    "Dynamic_HD_Fortran_Code_src_base_precision_mod.f90.o"]
-    additional_fortran_filepaths = [path.join(fortran_project_object_path,filename) for filename in\
-                                    additional_fortran_filenames]
-    f2py_mngr = f2py_mg.f2py_manager(path.join(fortran_project_source_path,
-                                               "drivers",
-                                               "accumulate_flow_driver_mod.f90"),
-                                          func_name=
-                                          "bifurcated_accumulate_flow_icon_f2py_wrapper" if
-                                          input_bifurcated_river_directions is not None else
-                                          "accumulate_flow_icon_f2py_wrapper",
-                                          additional_fortran_files=additional_fortran_filepaths,
-                                          include_path=fortran_project_include_path)
+    paths_map = np.empty(shape=input_river_directions.shape,dtype=np.int32)
     if input_bifurcated_river_directions is not None:
-        paths_map = f2py_mngr.\
-        run_current_function_or_subroutine(np.asfortranarray(cell_neighbors),
-                                           np.asfortranarray(input_river_directions),
-                                           np.asfortranarray(input_bifurcated_river_directions),
-                                           *input_river_directions.shape)
+        accumulate_flow_icon_cpp(cell_neighbors.flatten(),
+                                 input_river_directions,
+                                 paths_map,
+                                 np.swapaxes(input_bifurcated_river_directions,0,1).flatten())
     else:
-        paths_map = f2py_mngr.\
-        run_current_function_or_subroutine(np.asfortranarray(cell_neighbors),
-                                           np.asfortranarray(input_river_directions),
-                                           *input_river_directions.shape)
+        accumulate_flow_icon_cpp(cell_neighbors.flatten(),
+                                 input_river_directions,
+                                 paths_map)
     #Make a minor postprocessing correction
     paths_map[np.logical_and(np.logical_or(input_river_directions == 5,
                                            input_river_directions == 0),
