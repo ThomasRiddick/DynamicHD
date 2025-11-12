@@ -319,32 +319,14 @@ cp ${input_ls_mask_filepath} mask_in_temp.nc
 if $rdirs_only ; then
   cp ${next_cell_index_filepath} ${output_hdpara_filepath}
 else
-  rm -f paragen/area_dlat_dlon.txt
-  rm -f paragen/ddir.inp
-  rm -f paragen/hd_partab.txt
-  rm -f paragen/hd_up
-  rm -f paragen/hdpara_icon.nc
-  rm -f paragen/mo_read_icon_trafo.mod
-  rm -f paragen/paragen.inp
-  rm -f paragen/paragen_icon.mod
-  rm -f paragen/paragen_icon_driver
-  rmdir paragen || true
+  rm -rf paragen
   mkdir paragen
   ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/generate_icon_hd_file_driver.sh ${working_directory}/paragen ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran ${working_directory} grid_in_temp.nc mask_in_temp.nc ${next_cell_index_filepath} orography_filled.nc ${bifurcate_rivers} ${next_cell_index_bifurcated_filepath} ${number_of_outflows_filepath}
   ${source_directory}/Dynamic_HD_bash_scripts/adjust_icon_k_parameters.sh  ${working_directory}/paragen/hdpara_icon.nc ${output_hdpara_filepath} ${atmos_resolution}
 
   #Clean up temporary files
-  rm -f paragen/area_dlat_dlon.txt
-  rm -f paragen/ddir.inp
-  rm -f paragen/hd_partab.txt
-  rm -f paragen/hd_up
-  rm -f paragen/hdpara_icon.nc
-  rm -f paragen/mo_read_icon_trafo.mod
-  rm -f paragen/paragen.inp
-  rm -f paragen/paragen_icon.mod
-  rm -f paragen/paragen_icon_driver
   unlink paragen/bifurcated_next_cell_index_for_upstream_cell.nc || true
-  rmdir paragen || true
+  rmdir -rf paragen
   rm -f orography_filled.nc
   rm -f grid_in_temp.nc
   rm -f mask_in_temp.nc

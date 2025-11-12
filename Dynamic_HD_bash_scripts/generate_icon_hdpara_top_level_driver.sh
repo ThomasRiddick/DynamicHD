@@ -369,16 +369,7 @@ python ${drivers_path}/accumulate_flow_icon_driver.py ${grid_file} ${icon_interm
 python ${drivers_path}/latlon_to_icon_loop_breaker_driver.py ${ten_minute_accumulated_flow_filepath}  ${ten_minute_river_direction_filepath}  ${cell_numbers_filepath}  ${grid_file} ${icon_final_filepath} ${icon_intermediate_catchments_filepath} ${icon_intermediate_accumulated_flow_filepath} ${icon_intermediate_rdirs_filepath}  "rdirs" "acc" "cell_numbers" "catchment" "acc" "next_cell_index"  ${icon_intermediate_catchments_filepath%%.nc}_loops_log.log
 python ${drivers_path}/compute_catchments_icon_driver.py --sort-catchments-by-size ${icon_final_filepath} ${output_catchments_filepath} ${grid_file} "next_cell_index" ${output_catchments_filepath%%.nc}_loops_log.log
 python ${drivers_path}/accumulate_flow_icon_driver.py ${grid_file} ${icon_final_filepath} ${output_accumulated_flow_filepath} "next_cell_index"
-  rm -f paragen/area_dlat_dlon.txt
-  rm -f paragen/ddir.inp
-  rm -f paragen/hd_partab.txt
-  rm -f paragen/hd_up
-  rm -f paragen/hdpara_icon.nc
-  rm -f paragen/mo_read_icon_trafo.mod
-  rm -f paragen/paragen.inp
-  rm -f paragen/paragen_icon.mod
-  rm -f paragen/paragen_icon_driver
-  rmdir paragen || true
+  rm -rf paragen
   mkdir paragen
   cp ${grid_file} grid_in_temp.nc
   cp ${input_ls_mask_filepath} mask_in_temp.nc
@@ -393,17 +384,7 @@ else
   rm -f hdpara_adjusted_temp.nc
 fi
   #Clean up temporary files
-  rm -f paragen/area_dlat_dlon.txt
-  rm -f paragen/ddir.inp
-  rm -f paragen/hd_partab.txt
-  rm -f paragen/hd_up
-  rm -f paragen/hdpara_icon.nc
-  rm -f paragen/mo_read_icon_trafo.mod
-  rm -f paragen/paragen.inp
-  rm -f paragen/paragen_icon.mod
-  rm -f paragen/paragen_icon_driver
-  rm -f paragen/icon_fdir_temp.nc
-  rmdir paragen
+  rm -rf paragen
   rm -f downscaled_ls_mask_temp.nc
   rm -f downscaled_ls_mask_temp_inverted.nc
   rm -f grid_in_temp.nc
