@@ -3,6 +3,7 @@ set -e
 
 cd $(dirname ${0})
 version=$(git describe --match 'icon_hd_tools_version_*')
+export VS=${version}
 cd -
 echo "Running Version ${version} of the ICON HD Parameters Generation Code"
 
