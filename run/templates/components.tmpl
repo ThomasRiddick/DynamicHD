@@ -40,7 +40,7 @@ output_directory=${repository_path}/projects/${project_name}/output
 working_directory=${repository_path}/projects/${project_name}/workdir
 {%- endmacro -%}
 
-{% macro validate_inputs %}
+{% macro validate_inputs() %}
 if ! [[ -f ${icon_grid_filepath} ]]; then
   cat << EOF
   Error - input grid file:
@@ -55,6 +55,7 @@ if [[ ${icon_grid_filepath##*.}  == "nc" ]]; then
           ${icon_grid_filepath}
           has the wrong extension
   EOF
+  exit 1
 fi
 if ! [[ -f ${fractional_lsmask_filepath} ]]; then
   cat << EOF
@@ -70,6 +71,7 @@ if [[ ${fractional_lsmask_filepath##*.}  == "nc" ]]; then
           ${fractional_lsmask_filepath}
           has the wrong extension
   EOF
+  exit 1
 fi
 cell_sea_land_mask_count=$(cdo showname ${fractional_lsmask_filepath} |
                            grep -c "^\s*cell_sea_land_mask\s*$")
@@ -79,6 +81,7 @@ if [[ ${cell_sea_land_mask_count} -ne 1 ]]; then
           ${fractional_lsmask_filepath}
           has no field cell_sea_land_mask
   EOF
+  exit 1
 fi
 {% if input.high_res %}
 if ! [[ -f ${orography_filepath} ]]; then
@@ -95,6 +98,7 @@ if [[ ${orography_filepath##*.}  == "nc" ]]; then
           ${orography_filepath}
           has the wrong extension
   EOF
+  exit 1
 fi
 {%- endif -%}
 {%- endmacro -%}
@@ -315,7 +319,7 @@ echo ${cmd}
 eval ${cmd}
 {%- endmacro -%}
 
-{%- macro postprocessing -%}
+{%- macro postprocessing() -%}
 cp /home/m/m300468/hdpara_creation_plotter/hdpara_basic_output_plots.py \
   ${working_directory}/hdpara_basic_output_plots.py
 #source activate dyhdenv_mamba

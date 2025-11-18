@@ -35,7 +35,7 @@ icon_atmo_grid_res={{ input.icon_atmo_grid_res }}
 {%- endblock %}
 
 {%- block validate_inputs -%}
-{{ components.validate_inputs }}
+{{ components.validate_inputs() }}
 {%- endblock -%}
 
 {%- block user_commands_pre_create_project -%}
