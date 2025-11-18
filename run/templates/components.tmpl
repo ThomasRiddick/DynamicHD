@@ -74,7 +74,7 @@ EOF
   exit 1
 fi
 cell_sea_land_mask_count=$(cdo showname ${fractional_lsmask_filepath} |
-                           grep -c "^\s*cell_sea_land_mask\s*$")
+                           grep -c "\scell_sea_land_mask\s")
 if [[ ${cell_sea_land_mask_count} -ne 1 ]]; then
   cat << EOF
   Error - input fractional lsmask file:
@@ -101,7 +101,7 @@ EOF
   exit 1
 fi
 elevation_count=$(cdo showname ${orography_filepath} |
-                  grep -c "^\s*elevation\s*$")
+                  grep -c "\selevation\s")
 if [[ ${elevation_count} -ne 1 ]]; then
   cat << EOF
   Error - orography file:
