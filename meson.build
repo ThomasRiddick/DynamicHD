@@ -50,8 +50,7 @@ if get_option('build_unit_tests')
   test('Cpp unit tests',e)
 endif
 if get_option('build_cython')
-  py = import('python').find_installation(
-          meson.get_external_property('python_installation_path'))
+  py = import('python').find_installation()
   py_dependency = py.dependency()
   numpy_inc = run_command(py,['-c',
     'import numpy as np; print(np.get_include())'],check : true).stdout().strip()

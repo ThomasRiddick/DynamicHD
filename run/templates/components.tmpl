@@ -46,15 +46,15 @@ if ! [[ -f ${icon_grid_filepath} ]]; then
   Error - input grid file:
           ${icon_grid_filepath}
           does not exist!
-  EOF
+EOF
   exit 1
 fi
-if [[ ${icon_grid_filepath##*.}  == "nc" ]]; then
+if ! [[ ${icon_grid_filepath##*.}  == "nc" ]]; then
   cat << EOF
   Error - input grid file:
           ${icon_grid_filepath}
           has the wrong extension
-  EOF
+EOF
   exit 1
 fi
 if ! [[ -f ${fractional_lsmask_filepath} ]]; then
@@ -62,15 +62,15 @@ if ! [[ -f ${fractional_lsmask_filepath} ]]; then
   Error - input fractional lsmask file:
           ${fractional_lsmask_filepath}
           does not exist!
-  EOF
+EOF
   exit 1
 fi
-if [[ ${fractional_lsmask_filepath##*.}  == "nc" ]]; then
+if ! [[ ${fractional_lsmask_filepath##*.}  == "nc" ]]; then
   cat << EOF
   Error - input fractional lsmask file:
           ${fractional_lsmask_filepath}
           has the wrong extension
-  EOF
+EOF
   exit 1
 fi
 cell_sea_land_mask_count=$(cdo showname ${fractional_lsmask_filepath} |
@@ -80,7 +80,7 @@ if [[ ${cell_sea_land_mask_count} -ne 1 ]]; then
   Error - input fractional lsmask file:
           ${fractional_lsmask_filepath}
           has no field cell_sea_land_mask
-  EOF
+EOF
   exit 1
 fi
 {% if input.high_res %}
@@ -89,15 +89,25 @@ if ! [[ -f ${orography_filepath} ]]; then
   Error - input orography file:
           ${orography_filepath}
           does not exist!
-  EOF
+EOF
   exit 1
 fi
-if [[ ${orography_filepath##*.}  == "nc" ]]; then
+if ! [[ ${orography_filepath##*.}  == "nc" ]]; then
   cat << EOF
   Error - input orography file:
           ${orography_filepath}
           has the wrong extension
-  EOF
+EOF
+  exit 1
+fi
+elevation_count=$(cdo showname ${orography_filepath} |
+                  grep -c "^\s*elevation\s*$")
+if [[ ${elevation_count} -ne 1 ]]; then
+  cat << EOF
+  Error - orography file:
+          ${orography_filepath}
+          has no field elevation
+EOF
   exit 1
 fi
 {%- endif -%}
