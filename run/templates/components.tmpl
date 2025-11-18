@@ -40,6 +40,65 @@ output_directory=${repository_path}/projects/${project_name}/output
 working_directory=${repository_path}/projects/${project_name}/workdir
 {%- endmacro -%}
 
+{% macro validate_inputs %}
+if ! [[ -f ${icon_grid_filepath} ]]; then
+  cat << EOF
+  Error - input grid file:
+          ${icon_grid_filepath}
+          does not exist!
+  EOF
+  exit 1
+fi
+if [[ ${icon_grid_filepath##*.}  == "nc" ]]; then
+  cat << EOF
+  Error - input grid file:
+          ${icon_grid_filepath}
+          has the wrong extension
+  EOF
+fi
+if ! [[ -f ${fractional_lsmask_filepath} ]]; then
+  cat << EOF
+  Error - input fractional lsmask file:
+          ${fractional_lsmask_filepath}
+          does not exist!
+  EOF
+  exit 1
+fi
+if [[ ${fractional_lsmask_filepath##*.}  == "nc" ]]; then
+  cat << EOF
+  Error - input fractional lsmask file:
+          ${fractional_lsmask_filepath}
+          has the wrong extension
+  EOF
+fi
+cell_sea_land_mask_count=$(cdo showname ${fractional_lsmask_filepath} |
+                           grep -c "^\s*cell_sea_land_mask\s*$")
+if [[ ${cell_sea_land_mask_count} -ne 1 ]]; then
+  cat << EOF
+  Error - input fractional lsmask file:
+          ${fractional_lsmask_filepath}
+          has no field cell_sea_land_mask
+  EOF
+fi
+{% if input.high_res %}
+if ! [[ -f ${orography_filepath} ]]; then
+  cat << EOF
+  Error - input orography file:
+          ${orography_filepath}
+          does not exist!
+  EOF
+  exit 1
+fi
+if [[ ${orography_filepath##*.}  == "nc" ]]; then
+  cat << EOF
+  Error - input orography file:
+          ${orography_filepath}
+          has the wrong extension
+  EOF
+fi
+{%- endif -%}
+{%- endmacro -%}
+
 {% macro create_project_dirs(is_create_project_script=false) %}
 #Prepare folders
 {% if not is_create_project_script %}
@@ -255,4 +314,19 @@ echo "Running:"
 echo ${cmd}
 eval ${cmd}
 {%- endmacro -%}
+
+{%- macro postprocessing -%}
+cp /home/m/m300468/hdpara_creation_plotter/hdpara_basic_output_plots.py \
+  ${working_directory}/hdpara_basic_output_plots.py
+#source activate dyhdenv_mamba
+#python ${working_directory}/hdpara_basic_output_plots.py ${icon_grid_filepath} \
+       ${output_catchments_filepath} ${output_accumulated_flow_filepath} \
+       ${fractional_lsmask_filepath} ${true_sinks_on_icon_grid_filepath}
+{% if input.high_res %}
+cp /home/m/m300468/hdpara_creation_plotter/hdpara_creation_plotter.py \
+  ${working_directory}/hdpara_creation_plotter.py
+#python ${working_directory}/hdpara_creation_plotter.py ${icon_grid_filepath} \
+#       ${output_catchments_filepath} ${output_accumulated_flow_filepath} \
+{% endif %}
+{% endmacro -%}
 
