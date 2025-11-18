@@ -189,13 +189,13 @@ if ! ${use_existing_river_mouth_position_file} ; then
     echo "Warning - file ${river_mouth_position_filepath} not used" 1>&2
     echo "as use_existing_river_mouth_position_file is set to False" 1>&2
   fi
-  search_areas_filepath=/work/mh1421/m300468/data/search_areas.toml
-  river_deltas_filepath=/work/mh1421/m300468/data/river_channels_${icon_atmo_grid_res}.toml
+  search_areas_filepath=${input_data_directory}/search_areas.toml
+  river_deltas_filepath=${input_data_directory}/river_channels_${icon_atmo_grid_res}.toml
   if [[ ${icon_atmo_grid_res} == "r2b8" ]] || [[ ${icon_atmo_grid_res} == "r2b9" ]] ||
    [[ ${icon_atmo_grid_res} == "r2b10" ]] || [[ ${icon_atmo_grid_res} == "r2b11" ]]; then
-    river_deltas_filepath=/work/mh1421/m300468/data/river_channels_${icon_atmo_grid_res}.toml
+    river_deltas_filepath=${input_data_directory}/river_channels_${icon_atmo_grid_res}.toml
   else
-    river_deltas_filepath=/work/mh1421/m300468/data/river_channels_default.toml
+    river_deltas_filepath=${input_data_directory}/river_channels_default.toml
   fi
 else
   if [[ -z ${river_mouth_position_filepath} ]]; then
