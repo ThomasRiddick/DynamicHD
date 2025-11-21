@@ -244,7 +244,7 @@ function check_if_line_section_intersects_cell(input_line_section::Line,
                                   parallel_vertices[2].lon)
       return (edge_min_lat <= line_max_lat &&
               edge_max_lat >= line_min_lat &&
-              edge_min_lon <= edge_max_lon &&
+              edge_min_lon <= line_max_lon &&
               edge_max_lon >= line_min_lon)
     else
       #Line intersects one vertex
