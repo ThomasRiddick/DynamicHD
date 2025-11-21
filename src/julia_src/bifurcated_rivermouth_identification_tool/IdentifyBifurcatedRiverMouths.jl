@@ -1,4 +1,8 @@
 module IdentifyBifurcatedRiverMouths
+import Base.getindex
+import Base.setindex!
+import Base.firstindex
+import Base.lastindex
 
 CartesianIndexOrNothing = Union{CartesianIndex,Nothing}
 
@@ -93,9 +97,44 @@ struct RiverDelta
   end
 end
 
+struct CompletedCells
+  completed_cells::BitArray
+  completed_cell_locations::Vector{CartesianIndex}
+  function CompletedCells(dimensions::Tuple{Vararg{Int64}})
+    new(falses(dimensions),CartesianIndex[])
+  end
+end
+
+function reset!(completed_cells::CompletedCells)
+  for location in completed_cells.completed_cell_locations
+    completed_cells[location] = false
+  end
+  empty!(completed_cells.completed_cell_locations)
+end
+
+function getindex(completed_cells::CompletedCells,i::CartesianIndex)
+  return completed_cells.completed_cells[i]
+end
+
+function setindex!(completed_cells::CompletedCells,value::Bool,i::CartesianIndex)
+  completed_cells.completed_cells[i] = value
+  if value
+    push!(completed_cells.completed_cell_locations,i)
+  end
+end
+
+function firstindex(completed_cells::CompletedCells)
+  return completed_cells.completed_cells[begin]
+end
+
+function lastindex(completed_cells::CompletedCells)
+  return completed_cells.completed_cells[end]
+end
+
 function find_cells_on_line_section(line_section::Line,
                                     cells::Cells,
-                                    previous_section_cells_on_line::Array{CartesianIndex})
+                                    previous_section_cells_on_line::Array{CartesianIndex},
+                                    completed_cells::CompletedCells)
   displacement::Float64 = 0.001
   displaced_line_section::Line = (start_point=(lat=line_section.start_point.lat+displacement,
                                                lon=line_section.start_point.lon+displacement),
@@ -111,7 +150,7 @@ function find_cells_on_line_section(line_section::Line,
   end
   cells_on_line_section::Array{CartesianIndex} = CartesianIndex[]
   q::Vector{CartesianIndex} = CartesianIndex[]
-  completed_cells::BitArray = falses(size(cells.cell_indices))
+  reset!(completed_cells)
   initial_cell::CartesianIndex =
     find_cell_containing_point(line_section.start_point.lat,
                                line_section.start_point.lon,cells,
@@ -159,7 +198,7 @@ function find_cells_on_line_section(line_section::Line,
 end
 
 function add_unprocessed_neighbors_to_q(q::Vector{CartesianIndex},
-                                        completed_cells::BitArray,
+                                        completed_cells::CompletedCells,
                                         center_cell::CartesianIndex,
                                         cells::Cells)
   for_all_neighbors(center_cell,cells.cell_neighbors) do neighbor_indices::CartesianIndex
@@ -556,9 +595,10 @@ end
 function check_connection(cell_indices::CartesianIndex,
                           inland_cell_indices::CartesianIndex,
                           cells::Cells,
-                          lsmask::Array{Bool})
+                          lsmask::Array{Bool},
+                          completed_cells::CompletedCells)
   q::Vector{CartesianIndex} = CartesianIndex[cell_indices]
-  completed_cells::BitArray = falses(size(lsmask))
+  reset!(completed_cells)
   completed_cells[cell_indices] = true
   connection_found::Bool = false
   while length(q) > 0 && ! connection_found
@@ -589,10 +629,12 @@ function search_for_river_mouth_location_on_line_section(
                                 #river_mouth_indices::SharedArray{CartesianIndex},
                                 #line_index::Int64,
                                 previous_section_cells_on_line::Array{CartesianIndex},
+                                completed_cells::CompletedCells,
                                 reverse_search::Bool=false,
                                 inland_cell_indices::CartesianIndexOrNothing=nothing)
   cells_on_line_section_indices::Array{CartesianIndex} =
-    find_cells_on_line_section(line_section,cells,previous_section_cells_on_line)
+    find_cells_on_line_section(line_section,cells,previous_section_cells_on_line,
+                               completed_cells)
   if length(cells_on_line_section_indices) == 0
     return false
   end
@@ -606,7 +648,8 @@ function search_for_river_mouth_location_on_line_section(
     cell_indices::CartesianIndex = cells_on_line_section_indices[1]
     if ! lsmask[cell_indices] &&
        ! check_connection(cell_indices,
-                          inland_cell_indices,cells,lsmask)
+                          inland_cell_indices,cells,lsmask,
+                          completed_cells)
       passing_disconnected_land_cells = true
     end
   end
@@ -619,7 +662,7 @@ function search_for_river_mouth_location_on_line_section(
       end
       if is_coastal_cell
         if reverse_search && ! check_connection(cell_indices,inland_cell_indices,
-                                                cells,lsmask)
+                                                cells,lsmask,completed_cells)
           passing_disconnected_land_cells = true
           continue
         end
@@ -634,7 +677,7 @@ function search_for_river_mouth_location_on_line_section(
         end
         if is_secondary_coastal_cell
           if reverse_search && ! check_connection(cell_indices,inland_cell_indices,
-                                                  cells,lsmask)
+                                                  cells,lsmask,completed_cells)
             passing_disconnected_land_cells = true
             continue
           end
@@ -685,6 +728,7 @@ function identify_bifurcated_river_mouths(river_deltas::Array{RiverDelta},
         modified_line = line
       end
       previous_section_cells_on_line::Array{CartesianIndex} = CartesianIndex[]
+      completed_cells::CompletedCells = CompletedCells(size(lsmask))
       for line_section in modified_line
         if search_for_river_mouth_location_on_line_section(line_section,
                                                            cells,
@@ -692,6 +736,7 @@ function identify_bifurcated_river_mouths(river_deltas::Array{RiverDelta},
                                                            river_mouth_indices,
                                                            #i,
                                                            previous_section_cells_on_line,
+                                                           completed_cells,
                                                            delta.reverse_search,
                                                            inland_cell_indices)
           break
