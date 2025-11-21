@@ -430,9 +430,26 @@ function find_cell_containing_point(point_lat::Float64,point_lon::Float64,cells:
     cell_indices = CartesianIndex[]
     append!(cell_indices,previous_section_cells_on_line)
     for center_cell_indices in previous_section_cells_on_line
+      if check_if_point_is_within_cell_extremes(
+          cells.cell_extremes.min_lats[center_cell_indices],
+          cells.cell_extremes.max_lats[center_cell_indices],
+          cells.cell_extremes.min_lons[center_cell_indices],
+          cells.cell_extremes.max_lons[center_cell_indices],
+          cells.is_wrapped_cell[center_cell_indices],
+          point_lat,point_lon)
+        push!(cell_indices,center_cell_indices)
+      end
       for_all_neighbors(center_cell_indices,
                         cells.cell_neighbors) do neighbor_indices::CartesianIndex
-        push!(cell_indices,neighbor_indices)
+        if check_if_point_is_within_cell_extremes(
+            cells.cell_extremes.min_lats[neighbor_indices],
+            cells.cell_extremes.max_lats[neighbor_indices],
+            cells.cell_extremes.min_lons[neighbor_indices],
+            cells.cell_extremes.max_lons[neighbor_indices],
+            cells.is_wrapped_cell[neighbor_indices],
+            point_lat,point_lon)
+          push!(cell_indices,neighbor_indices)
+        end
       end
     end
   else
