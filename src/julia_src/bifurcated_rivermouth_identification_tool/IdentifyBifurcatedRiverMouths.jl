@@ -94,38 +94,44 @@ struct RiverDelta
 end
 
 function find_cells_on_line_section(line_section::Line,
-                                    cells::Cells)
+                                    cells::Cells,
+                                    previous_section_cells_on_line::Array{CartesianIndex})
   displacement::Float64 = 0.001
   displaced_line_section::Line = (start_point=(lat=line_section.start_point.lat+displacement,
                                                lon=line_section.start_point.lon+displacement),
                                   end_point=(lat=line_section.end_point.lat+displacement,
                                              lon=line_section.end_point.lon+displacement))
-  min_lat::Float64 = min(line_section.start_point.lat,line_section.end_point.lat)
-  max_lat::Float64 = max(line_section.start_point.lat,line_section.end_point.lat) + displacement
   min_lon::Float64 = min(line_section.start_point.lon,line_section.end_point.lon)
   max_lon::Float64 = max(line_section.start_point.lon,line_section.end_point.lon) + displacement
   local is_wrapped_line::Bool
   if abs(max_lon - min_lon) > 180.0
-      new_min_lon::Float64 = max_lon
-      max_lon = min_lon
-      min_lon = new_min_lon
       is_wrapped_line = true
   else
       is_wrapped_line = false
   end
-  filtered_cell_indices::Array{CartesianIndex} =
-    filter(i::CartesianIndex ->
-           check_if_line_section_passes_within_cell_extremes(
-              cells.cell_extremes.min_lats[i],
-              cells.cell_extremes.max_lats[i],
-              cells.cell_extremes.min_lons[i],
-              cells.cell_extremes.max_lons[i],
-              cells.is_wrapped_cell[i],
-              min_lat,max_lat,min_lon,max_lon,
-              is_wrapped_line),
-           cells.cell_indices)
   cells_on_line_section::Array{CartesianIndex} = CartesianIndex[]
-  for i in filtered_cell_indices
+  q::Vector{CartesianIndex} = CartesianIndex[]
+  completed_cells::BitArray = falses(size(cells.cell_indices))
+  initial_cell::CartesianIndex =
+    find_cell_containing_point(line_section.start_point.lat,
+                               line_section.start_point.lon,cells,
+                               previous_section_cells_on_line)
+  displaced_initial_cell::CartesianIndex =
+    find_cell_containing_point(displaced_line_section.start_point.lat,
+                               displaced_line_section.start_point.lon,cells,
+                               previous_section_cells_on_line)
+  push!(cells_on_line_section,initial_cell)
+  completed_cells[initial_cell] = true
+  if displaced_initial_cell != initial_cell
+    completed_cells[displaced_initial_cell] = true
+    push!(cells_on_line_section,displaced_initial_cell)
+  end
+  add_unprocessed_neighbors_to_q(q,completed_cells,initial_cell,cells)
+  if displaced_initial_cell != initial_cell
+    add_unprocessed_neighbors_to_q(q,completed_cells,displaced_initial_cell,cells)
+  end
+  while length(q) > 0
+    i = pop!(q)
     #Note the map is over the set of vertices of a given triangle
     if check_if_line_section_intersects_cell(line_section,
                                              is_wrapped_line,
@@ -146,36 +152,24 @@ function find_cells_on_line_section(line_section::Line,
                                                  cells.cell_vertices),
                                              cells.is_wrapped_cell[i])
       push!(cells_on_line_section,i)
+      add_unprocessed_neighbors_to_q(q,completed_cells,i,cells)
     end
   end
   return cells_on_line_section
 end
 
-function check_if_line_section_passes_within_cell_extremes(cell_min_lat::Float64,
-                                                           cell_max_lat::Float64,
-                                                           cell_min_lon::Float64,
-                                                           cell_max_lon::Float64,
-                                                           is_wrapped_cell::Bool,
-                                                           line_min_lat::Float64,
-                                                           line_max_lat::Float64,
-                                                           line_min_lon::Float64,
-                                                           line_max_lon::Float64,
-                                                           is_wrapped_line::Bool)
-  is_in_bounds::Bool = cell_max_lat > line_min_lat &&
-                       cell_min_lat < line_max_lat
-  if is_wrapped_line && is_wrapped_cell
-    return is_in_bounds
-  elseif is_wrapped_line || is_wrapped_cell
-    is_in_bounds = is_in_bounds &&
-                   (cell_max_lon > line_min_lon ||
-                    cell_min_lon < line_max_lon)
-  else
-    is_in_bounds = is_in_bounds &&
-                   cell_max_lon > line_min_lon &&
-                   cell_min_lon < line_max_lon
+function add_unprocessed_neighbors_to_q(q::Vector{CartesianIndex},
+                                        completed_cells::BitArray,
+                                        center_cell::CartesianIndex,
+                                        cells::Cells)
+  for_all_neighbors(center_cell,cells.cell_neighbors) do neighbor_indices::CartesianIndex
+    if ! completed_cells[neighbor_indices]
+      push!(q,neighbor_indices)
+      completed_cells[neighbor_indices] = true
+    end
   end
-  return is_in_bounds
 end
+
 
 function check_if_line_section_intersects_cell(input_line_section::Line,
                                                is_wrapped_line::Bool,
@@ -197,8 +191,8 @@ function check_if_line_section_intersects_cell(input_line_section::Line,
   else
     line_section = input_line_section
   end
-  if is_wrapped_cell || is_wrapped_line
-    if line_section.start_point.lon > 0.0 || is_wrapped_line
+  if is_wrapped_cell
+    if line_section.start_point.lon > 0.0
       cell_vertices = [ (lat = input_cell_vertices[i].lat,
                          lon = input_cell_vertices[i].lon < 0.0 ?
                                input_cell_vertices[i].lon + 360.0 :
@@ -209,35 +203,119 @@ function check_if_line_section_intersects_cell(input_line_section::Line,
                                input_cell_vertices[i].lon - 360.0 :
                                input_cell_vertices[i].lon) for i = 1:3 ]
     end
+  elseif is_wrapped_line
+    min_lon::Float64 = minimum([input_cell_vertices[i].lon for i = 1:3 ])
+    if min_lon < 0
+      cell_vertices = [ (lat = input_cell_vertices[i].lat,
+                         lon = input_cell_vertices[i].lon + 360.0) for i = 1:3 ]
+    else
+      cell_vertices = input_cell_vertices
+    end
   else
     cell_vertices = input_cell_vertices
   end
-  line_intersects_cell::Bool,divided_vertex_index::Int64 =
+  line_intersects_cell::Bool,divided_vertex_index::Int64,
+    intersects_cell_vertex::Bool =
     check_if_line_intersects_cell(line_section,cell_vertices)
   if ! line_intersects_cell
     return false
   end
-  if divided_vertex_index == 0
-    return true
-  end
-  divided_vertex::@NamedTuple{lat::Float64,lon::Float64} =
-    cell_vertices[divided_vertex_index]
-  other_vertices::Array{@NamedTuple{lat::Float64,lon::Float64}} =
-    [cell_vertices[i] for i=1:3 if i != divided_vertex_index]
-  intersection_found::Bool = false
-  for other_vertex in other_vertices
-    if (point_line_determinant_sign(line_section.start_point.lat,
-                                    line_section.start_point.lon,
-                                    other_vertex.lat,other_vertex.lon,
-                                    divided_vertex.lat,divided_vertex.lon) !=
-        point_line_determinant_sign(line_section.end_point.lat,
-                                    line_section.end_point.lon,
-                                    other_vertex.lat,other_vertex.lon,
-                                    divided_vertex.lat,divided_vertex.lon))
-      intersection_found = true
+  local other_vertices::Array{@NamedTuple{lat::Float64,lon::Float64}}
+  if intersects_cell_vertex
+    line_min_lat::Float64 = min(line_section.start_point.lat,
+                                line_section.end_point.lat)
+    line_max_lat::Float64 = max(line_section.start_point.lat,
+                                line_section.end_point.lat)
+    line_min_lon::Float64 = min(line_section.start_point.lon,
+                                line_section.end_point.lon)
+    line_max_lon::Float64 = max(line_section.start_point.lon,
+                                line_section.end_point.lon)
+    if divided_vertex_index < 0
+      #Line exactly parallel to cell edge
+      parallel_vertices::Array{@NamedTuple{lat::Float64,lon::Float64}} =
+        [cell_vertices[i] for i=1:3 if i != -divided_vertex_index]
+      edge_min_lat::Float64 = min(parallel_vertices[1].lat,
+                                  parallel_vertices[2].lat)
+      edge_max_lat::Float64 = max(parallel_vertices[1].lat,
+                                  parallel_vertices[2].lat)
+      edge_min_lon::Float64 = min(parallel_vertices[1].lon,
+                                  parallel_vertices[2].lon)
+      edge_max_lon::Float64 = max(parallel_vertices[1].lon,
+                                  parallel_vertices[2].lon)
+      return (edge_min_lat <= line_max_lat &&
+              edge_max_lat >= line_min_lat &&
+              edge_min_lon <= edge_max_lon &&
+              edge_max_lon >= line_min_lon)
+    else
+      #Line intersects one vertex
+      intersected_cell_vertex::@NamedTuple{lat::Float64,lon::Float64} =
+        cell_vertices[divided_vertex_index]
+      if line_min_lat <= intersected_cell_vertex.lat &&
+         line_max_lat >= intersected_cell_vertex.lat &&
+         line_min_lon <= intersected_cell_vertex.lon &&
+         line_max_lon >= intersected_cell_vertex.lon
+        #Line section reaches that vertex
+         return true
+      else
+        #Does line section pass between other two vertices?
+        other_vertices =
+          [cell_vertices[i] for i=1:3 if i != divided_vertex_index]
+        if point_line_determinant_sign(line_section.start_point.lat,
+                                       line_section.start_point.lon,
+                                       other_vertices[1].lat,other_vertices[1].lon,
+                                       other_vertices[2].lat,other_vertices[2].lon) !=
+           point_line_determinant_sign(line_section.end_point.lat,
+                                       line_section.end_point.lon,
+                                       other_vertices[1].lat,other_vertices[1].lon,
+                                       other_vertices[2].lat,other_vertices[2].lon)
+          local line_vertex_in_opposite_plane::@NamedTuple{lat::Float64,lon::Float64}
+          if point_line_determinant_sign(line_section.start_point.lat,
+                                         line_section.start_point.lon,
+                                         other_vertices[1].lat,other_vertices[1].lon,
+                                         other_vertices[2].lat,other_vertices[2].lon) !=
+             point_line_determinant_sign(intersected_cell_vertex.lat,
+                                         intersected_cell_vertex.lon,
+                                         other_vertices[1].lat,other_vertices[1].lon,
+                                         other_vertices[2].lat,other_vertices[2].lon)
+             line_vertex_in_opposite_plane = line_section.start_point
+          else
+             line_vertex_in_opposite_plane = line_section.end_point
+          end
+          return point_line_determinant_sign(line_vertex_in_opposite_plane.lat,
+                                             line_vertex_in_opposite_plane.lon,
+                                             other_vertices[1].lat,other_vertices[1].lon,
+                                             intersected_cell_vertex.lat,
+                                             intersected_cell_vertex.lon) !=
+                 point_line_determinant_sign(line_vertex_in_opposite_plane.lat,
+                                             line_vertex_in_opposite_plane.lon,
+                                             other_vertices[2].lat,other_vertices[2].lon,
+                                             intersected_cell_vertex.lat,
+                                             intersected_cell_vertex.lon)
+        else
+          return false
+        end
+      end
     end
+  else
+    divided_vertex::@NamedTuple{lat::Float64,lon::Float64} =
+      cell_vertices[divided_vertex_index]
+    other_vertices =
+      [cell_vertices[i] for i=1:3 if i != divided_vertex_index]
+    intersection_found::Bool = false
+    for other_vertex in other_vertices
+      if (point_line_determinant_sign(line_section.start_point.lat,
+                                      line_section.start_point.lon,
+                                      other_vertex.lat,other_vertex.lon,
+                                      divided_vertex.lat,divided_vertex.lon) !=
+          point_line_determinant_sign(line_section.end_point.lat,
+                                      line_section.end_point.lon,
+                                      other_vertex.lat,other_vertex.lon,
+                                      divided_vertex.lat,divided_vertex.lon))
+        intersection_found = true
+      end
+    end
+    return intersection_found
   end
-  return intersection_found
 end
 
 function check_if_line_intersects_cell(line::Line,
@@ -245,6 +323,9 @@ function check_if_line_intersects_cell(line::Line,
                                                                         lon::Float64}})
   norm_det_sum::Int64 = 0
   norm_dets::Array{Tuple{Int64,Int64}} = Int64[]
+  det_zero_count::Int64 = 0
+  zero_det_index::Int64 = -1
+  non_zero_det_index::Int64 = -1
   for i = 1:3
     norm_det = point_line_determinant_sign(cell_vertices[i].lat,
                                            cell_vertices[i].lon,
@@ -253,16 +334,24 @@ function check_if_line_intersects_cell(line::Line,
                                            line.end_point.lat,
                                            line.end_point.lon)
     if norm_det == 0
-      return true,0
+      det_zero_count += 1
+      zero_det_index = i
+    else
+      non_zero_det_index = i
     end
     norm_det_sum += norm_det
     push!(norm_dets,(i,norm_det))
   end
+  if det_zero_count == 2
+    return true,-non_zero_det_index,true
+  elseif det_zero_count == 1
+    return true,zero_det_index,true
+  end
   if abs(norm_det_sum) == 1
     return true, filter(nd::Tuple{Int64,Int64} ->
-                        nd[2] != sign(norm_det_sum),norm_dets)[1][1]
+                        nd[2] != sign(norm_det_sum),norm_dets)[1][1],false
   else
-    return false,-1
+    return false,0,false
   end
 end
 
@@ -334,6 +423,119 @@ function for_all_neighbors(function_on_neighbor::Function,
                               cell_neighbors)
 end
 
+function find_cell_containing_point(point_lat::Float64,point_lon::Float64,cells::Cells,
+                                    previous_section_cells_on_line::Array{CartesianIndex})
+  local cell_indices::Array{CartesianIndex}
+  if length(previous_section_cells_on_line) > 0
+    cell_indices = CartesianIndex[]
+    append!(cell_indices,previous_section_cells_on_line)
+    for center_cell_indices in previous_section_cells_on_line
+      for_all_neighbors(center_cell_indices,
+                        cells.cell_neighbors) do neighbor_indices::CartesianIndex
+        push!(cell_indices,neighbor_indices)
+      end
+    end
+  else
+    cell_indices =
+      filter(i::CartesianIndex ->
+             check_if_point_is_within_cell_extremes(
+                cells.cell_extremes.min_lats[i],
+                cells.cell_extremes.max_lats[i],
+                cells.cell_extremes.min_lons[i],
+                cells.cell_extremes.max_lons[i],
+                cells.is_wrapped_cell[i],
+                point_lat,point_lon),
+             cells.cell_indices)
+  end
+  for i in cell_indices
+    cell_vertices::Array{@NamedTuple{lat::Float64,
+                                     lon::Float64}} =
+      map(cell_vertex_coords::
+          @NamedTuple{lats::Array{Float64},
+          lons::Array{Float64}} ->
+          (lat=cell_vertex_coords.lats[i],
+           lon=cell_vertex_coords.lons[i]),
+          cells.cell_vertices)
+    if cells.is_wrapped_cell[i]
+      if point_lon > 0.0
+        modified_cell_vertices = [ (lat = cell_vertices[i].lat,
+                                    lon = cell_vertices[i].lon < 0.0 ?
+                                    cell_vertices[i].lon + 360.0 :
+                                    cell_vertices[i].lon) for i = 1:3 ]
+      else
+        modified_cell_vertices = [ (lat = cell_vertices[i].lat,
+                                    lon = cell_vertices[i].lon > 0.0 ?
+                                    cell_vertices[i].lon - 360.0 :
+                                    cell_vertices[i].lon) for i = 1:3 ]
+      end
+    else
+      modified_cell_vertices = cell_vertices
+    end
+    if check_if_point_is_in_cell(point_lat,point_lon,modified_cell_vertices)
+      return i
+    end
+  end
+  error("No cell containing point found")
+  return 0
+end
+
+function check_if_point_is_within_cell_extremes(cell_min_lat::Float64,
+                                                cell_max_lat::Float64,
+                                                cell_min_lon::Float64,
+                                                cell_max_lon::Float64,
+                                                is_wrapped_cell::Bool,
+                                                point_lat::Float64,
+                                                point_lon::Float64)
+  is_in_bounds::Bool = cell_max_lat >= point_lat &&
+                       cell_min_lat <= point_lat
+  if is_wrapped_cell
+    is_in_bounds = is_in_bounds &&
+                   (cell_max_lon >= point_lon ||
+                    cell_min_lon <= point_lon)
+  else
+    is_in_bounds = is_in_bounds &&
+                   cell_max_lon >= point_lon &&
+                   cell_min_lon <= point_lon
+  end
+  return is_in_bounds
+end
+
+function check_if_point_is_in_cell(point_lat::Float64,point_lon::Float64,
+                                   cell_vertices::Array{@NamedTuple{lat::Float64,
+                                                                    lon::Float64}})
+  norm_det_sum::Int64 = 0
+  abs_norm_det_sum::Int64 = 0
+  for i = 1:3
+    j = i + 1
+    if j > 3
+      j = 1
+    end
+    norm_det = point_line_determinant_sign(point_lat,
+                                           point_lon,
+                                           cell_vertices[i].lat,
+                                           cell_vertices[i].lon,
+                                           cell_vertices[j].lat,
+                                           cell_vertices[j].lon)
+    norm_det_sum += norm_det
+    abs_norm_det_sum += abs(norm_det)
+  end
+  if abs_norm_det_sum == 1
+    #On a corner
+    return true
+  elseif abs_norm_det_sum == 2
+    #On a line
+    if abs(norm_det_sum) == 2
+      return true
+    else
+      return false
+    end
+  elseif abs(norm_det_sum) == 3
+    return true
+  else
+    return false
+  end
+end
+
 function check_connection(cell_indices::CartesianIndex,
                           inland_cell_indices::CartesianIndex,
                           cells::Cells,
@@ -360,31 +562,26 @@ function check_connection(cell_indices::CartesianIndex,
   return connection_found
 end
 
-function find_inland_cell_indices(line::Vector{Line},cells::Cells)
-  cells_on_line_section_indices::Array{CartesianIndex} = CartesianIndex[]
-  i::Int64 = 1
-  while length(cells_on_line_section_indices) == 0
-    cells_on_line_section_indices = find_cells_on_line_section(line[i],cells)
-    i += 1
-  end
-  sort!(cells_on_line_section_indices,
-        by=x->calculate_separation_measure(x,cells,line[1].start_point))
-  return cells_on_line_section_indices[1]
-end
+
 
 function search_for_river_mouth_location_on_line_section(
                                 line_section::Line,
                                 cells::Cells,
                                 lsmask::Array{Bool},
                                 river_mouth_indices::Array{CartesianIndex},
+                                #river_mouth_indices::SharedArray{CartesianIndex},
+                                #line_index::Int64,
+                                previous_section_cells_on_line::Array{CartesianIndex},
                                 reverse_search::Bool=false,
                                 inland_cell_indices::CartesianIndexOrNothing=nothing)
-  cells_on_line_section_indices::Array{CartesianIndex} = find_cells_on_line_section(line_section,cells)
+  cells_on_line_section_indices::Array{CartesianIndex} =
+    find_cells_on_line_section(line_section,cells,previous_section_cells_on_line)
   if length(cells_on_line_section_indices) == 0
     return false
   end
   sort!(cells_on_line_section_indices,by=x->calculate_separation_measure(x,cells,line_section.start_point),
         rev=reverse_search)
+  previous_cells_on_lines_section = cells_on_line_section_indices
   passing_disconnected_land_cells::Bool = false
   #For a reverse search need to check if we are starting on a
   #disconnected land cell
@@ -410,6 +607,7 @@ function search_for_river_mouth_location_on_line_section(
           continue
         end
         push!(river_mouth_indices,cell_indices)
+        #river_mouth_indices[line_index] = cell_indices
         return true
       else
         is_secondary_coastal_cell::Bool = false
@@ -424,6 +622,7 @@ function search_for_river_mouth_location_on_line_section(
             continue
           end
           push!(river_mouth_indices,cell_indices)
+          #river_mouth_indices[line_index] = cell_indices
           return true
         elseif ! reverse_search
           error("Have reached the ocean without passing a coastal cell!")
@@ -443,17 +642,24 @@ function identify_bifurcated_river_mouths(river_deltas::Array{RiverDelta},
                                           lsmask::Array{Bool})
   river_mouth_indices_for_all_rivers::Dict{String,Array{CartesianIndex}} =
                                       Dict{String,Array{CartesianIndex}}()
+  # river_mouth_indices_for_all_rivers_array::Array{(String,Array{CartesianIndex})} =
+  #   pmap(river_deltas) do delta::RiverDelta
   for delta in river_deltas
     println("Processing $(delta.name)")
     river_mouth_indices::Array{CartesianIndex} = Array{CartesianIndex}[]
+    # river_mouth_indices::SharedArray{CartesianIndex} =
+    #   SharedArray{CartesianIndex}((length(delta.lines)))
     local inland_cell_indices::CartesianIndexOrNothing
     if delta.reverse_search
       #Arbitarily choose the first line for finding the inland cell indices
       inland_cell_indices =
-        find_inland_cell_indices(delta.lines[1],cells)
+        find_cell_containing_point(delta.lines[1][1].start_point.lat,
+                                   delta.lines[1][1].start_point.lon,
+                                   cells,CartesianIndex[])
     else
       inland_cell_indices = nothing
     end
+    #@sync @distributed for i,line in enumerate(delta.lines)
     for line in delta.lines
       local modified_line::Vector{Line}
       if delta.reverse_search
@@ -461,11 +667,14 @@ function identify_bifurcated_river_mouths(river_deltas::Array{RiverDelta},
       else
         modified_line = line
       end
+      previous_section_cells_on_line::Array{CartesianIndex} = CartesianIndex[]
       for line_section in modified_line
         if search_for_river_mouth_location_on_line_section(line_section,
                                                            cells,
                                                            lsmask,
                                                            river_mouth_indices,
+                                                           #i,
+                                                           previous_section_cells_on_line,
                                                            delta.reverse_search,
                                                            inland_cell_indices)
           break
@@ -473,7 +682,11 @@ function identify_bifurcated_river_mouths(river_deltas::Array{RiverDelta},
       end
     end
     river_mouth_indices_for_all_rivers[delta.name] = river_mouth_indices
+    #return (delta.name,river_mouth_indices)
   end
+  # for (name,indices) in river_mouth_indices_for_all_rivers_array
+  #   river_mouth_indices_for_all_rivers[name] = indices
+  # end
   return river_mouth_indices_for_all_rivers
 end
 
