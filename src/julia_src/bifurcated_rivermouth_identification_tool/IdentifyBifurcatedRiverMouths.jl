@@ -133,8 +133,9 @@ end
 
 function find_cells_on_line_section(line_section::Line,
                                     cells::Cells,
-                                    previous_section_cells_on_line::Array{CartesianIndex},
-                                    completed_cells::CompletedCells)
+                                    previous_section_end_point::CartesianIndex,
+                                    completed_cells::CompletedCells,
+                                    reverse_search::Bool=false)
   displacement::Float64 = 0.001
   displaced_line_section::Line = (start_point=(lat=line_section.start_point.lat+displacement,
                                                lon=line_section.start_point.lon+displacement),
@@ -152,13 +153,23 @@ function find_cells_on_line_section(line_section::Line,
   q::Vector{CartesianIndex} = CartesianIndex[]
   reset!(completed_cells)
   initial_cell::CartesianIndex =
-    find_cell_containing_point(line_section.start_point.lat,
-                               line_section.start_point.lon,cells,
-                               previous_section_cells_on_line)
+    find_cell_containing_point(reverse_search ?
+                               line_section.end_point.lat :
+                               line_section.start_point.lat,
+                               reverse_search ?
+                               line_section.end_point.lon :
+                               line_section.start_point.lon,
+                               cells,
+                               previous_section_end_point)
   displaced_initial_cell::CartesianIndex =
-    find_cell_containing_point(displaced_line_section.start_point.lat,
-                               displaced_line_section.start_point.lon,cells,
-                               previous_section_cells_on_line)
+    find_cell_containing_point(reverse_search ?
+                               displaced_line_section.end_point.lat :
+                               displaced_line_section.start_point.lat,
+                               reverse_search ?
+                               displaced_line_section.end_point.lon :
+                               displaced_line_section.start_point.lon,
+                               cells,
+                               previous_section_end_point)
   push!(cells_on_line_section,initial_cell)
   completed_cells[initial_cell] = true
   if displaced_initial_cell != initial_cell
@@ -463,32 +474,29 @@ function for_all_neighbors(function_on_neighbor::Function,
 end
 
 function find_cell_containing_point(point_lat::Float64,point_lon::Float64,cells::Cells,
-                                    previous_section_cells_on_line::Array{CartesianIndex})
+                                    previous_section_end_point::CartesianIndex)
   local cell_indices::Array{CartesianIndex}
-  if length(previous_section_cells_on_line) > 0
+  if previous_section_end_point != CartesianIndex(-1)
     cell_indices = CartesianIndex[]
-    append!(cell_indices,previous_section_cells_on_line)
-    for center_cell_indices in previous_section_cells_on_line
+    if check_if_point_is_within_cell_extremes(
+        cells.cell_extremes.min_lats[previous_section_end_point],
+        cells.cell_extremes.max_lats[previous_section_end_point],
+        cells.cell_extremes.min_lons[previous_section_end_point],
+        cells.cell_extremes.max_lons[previous_section_end_point],
+        cells.is_wrapped_cell[previous_section_end_point],
+        point_lat,point_lon)
+      push!(cell_indices,previous_section_end_point)
+    end
+    for_all_neighbors(previous_section_end_point,
+                      cells.cell_neighbors) do neighbor_indices::CartesianIndex
       if check_if_point_is_within_cell_extremes(
-          cells.cell_extremes.min_lats[center_cell_indices],
-          cells.cell_extremes.max_lats[center_cell_indices],
-          cells.cell_extremes.min_lons[center_cell_indices],
-          cells.cell_extremes.max_lons[center_cell_indices],
-          cells.is_wrapped_cell[center_cell_indices],
+          cells.cell_extremes.min_lats[neighbor_indices],
+          cells.cell_extremes.max_lats[neighbor_indices],
+          cells.cell_extremes.min_lons[neighbor_indices],
+          cells.cell_extremes.max_lons[neighbor_indices],
+          cells.is_wrapped_cell[neighbor_indices],
           point_lat,point_lon)
-        push!(cell_indices,center_cell_indices)
-      end
-      for_all_neighbors(center_cell_indices,
-                        cells.cell_neighbors) do neighbor_indices::CartesianIndex
-        if check_if_point_is_within_cell_extremes(
-            cells.cell_extremes.min_lats[neighbor_indices],
-            cells.cell_extremes.max_lats[neighbor_indices],
-            cells.cell_extremes.min_lons[neighbor_indices],
-            cells.cell_extremes.max_lons[neighbor_indices],
-            cells.is_wrapped_cell[neighbor_indices],
-            point_lat,point_lon)
-          push!(cell_indices,neighbor_indices)
-        end
+        push!(cell_indices,neighbor_indices)
       end
     end
   else
@@ -628,19 +636,28 @@ function search_for_river_mouth_location_on_line_section(
                                 river_mouth_indices::Array{CartesianIndex},
                                 #river_mouth_indices::SharedArray{CartesianIndex},
                                 #line_index::Int64,
-                                previous_section_cells_on_line::Array{CartesianIndex},
+                                previous_section_end_point::CartesianIndex,
                                 completed_cells::CompletedCells,
                                 reverse_search::Bool=false,
                                 inland_cell_indices::CartesianIndexOrNothing=nothing)
   cells_on_line_section_indices::Array{CartesianIndex} =
-    find_cells_on_line_section(line_section,cells,previous_section_cells_on_line,
-                               completed_cells)
+    find_cells_on_line_section(line_section,cells,previous_section_end_point,
+                               completed_cells,reverse_search)
   if length(cells_on_line_section_indices) == 0
-    return false
+    return false,previous_section_end_point
   end
   sort!(cells_on_line_section_indices,by=x->calculate_separation_measure(x,cells,line_section.start_point),
         rev=reverse_search)
-  previous_cells_on_lines_section = cells_on_line_section_indices
+  local section_end_point::CartesianIndex
+  if reverse_search
+    section_end_point = cells_on_line_section_indices[end]
+  else
+    reversed_cells_on_line_section_indices = reverse(cells_on_line_section_indices)
+    #Redo sort using end point to avoid issues with unusual geometry due to grid
+    sort!(reversed_cells_on_line_section_indices,
+          by=x->calculate_separation_measure(x,cells,line_section.end_point))
+    section_end_point = reversed_cells_on_line_section_indices[1]
+  end
   passing_disconnected_land_cells::Bool = false
   #For a reverse search need to check if we are starting on a
   #disconnected land cell
@@ -668,7 +685,7 @@ function search_for_river_mouth_location_on_line_section(
         end
         push!(river_mouth_indices,cell_indices)
         #river_mouth_indices[line_index] = cell_indices
-        return true
+        return true,section_end_point
       else
         is_secondary_coastal_cell::Bool = false
         for_all_secondary_neighbors(cell_indices,
@@ -683,18 +700,18 @@ function search_for_river_mouth_location_on_line_section(
           end
           push!(river_mouth_indices,cell_indices)
           #river_mouth_indices[line_index] = cell_indices
-          return true
+          return true,section_end_point
         elseif ! reverse_search
           error("Have reached the ocean without passing a coastal cell!")
-          return false
+          return false,section_end_point
         end
       end
     elseif reverse_search && ! passing_disconnected_land_cells
       error("Have reached the land without passing a coastal cell!")
-      return false
+      return false,section_end_point
     end 
   end
-  return false
+  return false,section_end_point
 end 
 
 function identify_bifurcated_river_mouths(river_deltas::Array{RiverDelta},
@@ -715,7 +732,7 @@ function identify_bifurcated_river_mouths(river_deltas::Array{RiverDelta},
       inland_cell_indices =
         find_cell_containing_point(delta.lines[1][1].start_point.lat,
                                    delta.lines[1][1].start_point.lon,
-                                   cells,CartesianIndex[])
+                                   cells,CartesianIndex(-1,))
     else
       inland_cell_indices = nothing
     end
@@ -727,18 +744,21 @@ function identify_bifurcated_river_mouths(river_deltas::Array{RiverDelta},
       else
         modified_line = line
       end
-      previous_section_cells_on_line::Array{CartesianIndex} = CartesianIndex[]
+      previous_section_end_point::CartesianIndex = CartesianIndex(-1)
       completed_cells::CompletedCells = CompletedCells(size(lsmask))
       for line_section in modified_line
-        if search_for_river_mouth_location_on_line_section(line_section,
-                                                           cells,
-                                                           lsmask,
-                                                           river_mouth_indices,
-                                                           #i,
-                                                           previous_section_cells_on_line,
-                                                           completed_cells,
-                                                           delta.reverse_search,
-                                                           inland_cell_indices)
+        river_mouth_found::Bool,
+        previous_section_end_point =
+          search_for_river_mouth_location_on_line_section(line_section,
+                                                          cells,
+                                                          lsmask,
+                                                          river_mouth_indices,
+                                                          #i,
+                                                          previous_section_end_point,
+                                                          completed_cells,
+                                                          delta.reverse_search,
+                                                          inland_cell_indices)
+        if river_mouth_found
           break
         end
       end
