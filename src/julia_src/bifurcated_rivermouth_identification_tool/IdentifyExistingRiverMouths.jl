@@ -35,17 +35,17 @@ end
 function identify_existing_river_mouth(cells::Cells,
                                        accumulated_flow::Array{Int64},
                                        area::Area)
-  filtered_cell_indices::Array{CartesianIndex} =
-    filter(i::CartesianIndex -> check_if_cell_is_inside_area(
-                                  cells.cell_extremes.min_lats[i],
-                                  cells.cell_extremes.max_lats[i],
-                                  cells.cell_extremes.min_lons[i],
-                                  cells.cell_extremes.max_lons[i],
-                                  cells.is_wrapped_cell[i],
+  filtered_cell_indices::Array{Tuple{Int64}} =
+    filter(i::Tuple{Int64} -> check_if_cell_is_inside_area(
+                                  cells.cell_extremes.min_lats[CartesianIndex(i)],
+                                  cells.cell_extremes.max_lats[CartesianIndex(i)],
+                                  cells.cell_extremes.min_lons[CartesianIndex(i)],
+                                  cells.cell_extremes.max_lons[CartesianIndex(i)],
+                                  cells.is_wrapped_cell[CartesianIndex(i)],
                                   area),
            cells.cell_indices)
   filtered_accumulated_flow::Array{Int64} =
-    map(i::CartesianIndex -> accumulated_flow[i],filtered_cell_indices)
+    map(i::Tuple{Int64} -> accumulated_flow[CartesianIndex(i)],filtered_cell_indices)
   return filtered_cell_indices[argmax(filtered_accumulated_flow)]
 end
 

@@ -7,6 +7,7 @@ using IdentifyBifurcatedRiverMouthsOutput: write_river_mouth_indices
 using IdentifyBifurcatedRiverMouths: identify_bifurcated_river_mouths,Cells
 using IdentifyBifurcatedRiverMouths: RiverDelta
 using IdentifyExistingRiverMouths: Area, identify_existing_river_mouths
+using SharedArrays
 
 function pass_arguments()
   settings = ArgParseSettings()
@@ -65,9 +66,9 @@ function bifurcated_river_mouth_identification_driver(args::Dict{String})
     existing_river_mouths = Dict{String,CartesianIndex}()
   end
   river_mouth_indices::Dict{String,Array{CartesianIndex}} =
-    identify_bifurcated_river_mouths(river_deltas::Array{RiverDelta},
-                                     cells::Cells,
-                                     lsmask::Array{Bool})
+    identify_bifurcated_river_mouths(river_deltas,
+                                     cells,
+                                     SharedArray(lsmask))
   write_river_mouth_indices(river_mouth_indices,existing_river_mouths,
                             args["output-river-mouths-filepath"])
 end

@@ -1,7 +1,7 @@
 module IdentifyBifurcatedRiverMouths
 
-using SharedArrays
 using Distributed: @distributed, pmap
+using SharedArrays
 import Base.getindex
 import Base.setindex!
 import Base.firstindex
@@ -10,21 +10,23 @@ import Base.lastindex
 CartesianIndexOrNothing = Union{CartesianIndex,Nothing}
 
 struct Cells
-  cell_indices::Array{CartesianIndex}
-  cell_neighbors::Array{CartesianIndex}
-  cell_coords::@NamedTuple{lats::Array{Float64},lons::Array{Float64}}
-  cell_vertices::Array{@NamedTuple{lats::Array{Float64},lons::Array{Float64}}}
-  is_wrapped_cell::Array{Bool}
-  cell_extremes::@NamedTuple{min_lats::Array{Float64},max_lats::Array{Float64},
-                             min_lons::Array{Float64},max_lons::Array{Float64}}
-  function Cells(cell_indices::Array{CartesianIndex},
-                 cell_neighbors::Array{CartesianIndex},
+  cell_indices::SharedArray{Tuple{Int64}}
+  cell_neighbors::SharedArray{Tuple{Int64}}
+  cell_coords::@NamedTuple{lats::SharedArray{Float64},lons::SharedArray{Float64}}
+  cell_vertices::Array{@NamedTuple{lats::SharedArray{Float64},lons::SharedArray{Float64}}}
+  is_wrapped_cell::SharedArray{Bool}
+  cell_extremes::@NamedTuple{min_lats::SharedArray{Float64},max_lats::SharedArray{Float64},
+                             min_lons::SharedArray{Float64},max_lons::SharedArray{Float64}}
+  function Cells(cell_indices::Array{Tuple{Int64}},
+                 cell_neighbors::Array{Tuple{Int64}},
                  cell_coords::@NamedTuple{lats::Array{Float64},lons::Array{Float64}},
                  cell_vertices::@NamedTuple{lats::Array{Float64},lons::Array{Float64}})
-    restructured_cell_vertices::Array{@NamedTuple{lats::Array{Float64},lons::Array{Float64}}} =
-      @NamedTuple{lats::Array{Float64},
-                  lons::Array{Float64}}[ (lats = cell_vertices.lats[:,i],
-                                          lons = cell_vertices.lons[:,i]) for i = 1:3 ]
+    restructured_cell_vertices::Array{@NamedTuple{lats::SharedArray{Float64},
+                                                  lons::SharedArray{Float64}}} =
+      @NamedTuple{lats::SharedArray{Float64},
+                  lons::SharedArray{Float64}}[ (lats = SharedArray(cell_vertices.lats[:,i]),
+                                                lons = SharedArray(cell_vertices.lons[:,i]))
+                                                for i = 1:3 ]
     cell_extremes::@NamedTuple{min_lats::Array{Float64},max_lats::Array{Float64},
                                min_lons::Array{Float64},max_lons::Array{Float64}} =
                     (min_lats = minimum(cell_vertices.lats,dims=2),
@@ -67,9 +69,15 @@ struct Cells
           end
       end
     end
-    return new(cell_indices,cell_neighbors,cell_coords,
-               restructured_cell_vertices,is_wrapped_cell,
-               cell_extremes)
+    return new(SharedArray(cell_indices),SharedArray(cell_neighbors),
+               (lats = SharedArray(cell_coords.lats),
+                lons = SharedArray(cell_coords.lons)),
+               restructured_cell_vertices,
+               SharedArray(is_wrapped_cell),
+               (min_lats = SharedArray(cell_extremes.min_lats),
+                max_lats = SharedArray(cell_extremes.max_lats),
+                min_lons = SharedArray(cell_extremes.min_lons),
+                max_lons = SharedArray(cell_extremes.max_lons)))
   end
 end
 
@@ -135,10 +143,10 @@ function lastindex(completed_cells::CompletedCells)
 end
 
 function find_cells_on_line_section(line_section::Line,
-                                    cells::Cells,
-                                    previous_section_end_point::CartesianIndex,
-                                    completed_cells::CompletedCells,
-                                    reverse_search::Bool=false)
+                                                cells::Cells,
+                                                previous_section_end_point::CartesianIndex,
+                                                completed_cells::CompletedCells,
+                                                reverse_search::Bool=false)
   displacement::Float64 = 0.001
   displaced_line_section::Line = (start_point=(lat=line_section.start_point.lat+displacement,
                                                lon=line_section.start_point.lon+displacement),
@@ -189,8 +197,8 @@ function find_cells_on_line_section(line_section::Line,
     if check_if_line_section_intersects_cell(line_section,
                                              is_wrapped_line,
                                              map(cell_vertex_coords::
-                                                 @NamedTuple{lats::Array{Float64},
-                                                             lons::Array{Float64}} ->
+                                                 @NamedTuple{lats::SharedArray{Float64},
+                                                             lons::SharedArray{Float64}} ->
                                                  (lat=cell_vertex_coords.lats[i],
                                                   lon=cell_vertex_coords.lons[i]),
                                                  cells.cell_vertices),
@@ -198,8 +206,8 @@ function find_cells_on_line_section(line_section::Line,
        check_if_line_section_intersects_cell(displaced_line_section,
                                              is_wrapped_line,
                                              map(cell_vertex_coords::
-                                                 @NamedTuple{lats::Array{Float64},
-                                                             lons::Array{Float64}} ->
+                                                 @NamedTuple{lats::SharedArray{Float64},
+                                                             lons::SharedArray{Float64}} ->
                                                  (lat=cell_vertex_coords.lats[i],
                                                   lon=cell_vertex_coords.lons[i]),
                                                  cells.cell_vertices),
@@ -416,8 +424,8 @@ end
 function calculate_separation_measure(cell_index::CartesianIndex,cells::Cells,
                                       point::@NamedTuple{lat::Float64,lon::Float64})
   #Calculate (D/R)^2 (D = distance, R = Earths Radius) instead of D to reduce computation
-  delta_lat::Float64 = cells.cell_coords.lats[cell_index] - point.lat 
-  delta_lon::Float64 = cells.cell_coords.lons[cell_index] - point.lon 
+  delta_lat::Float64 = cells.cell_coords.lats[cell_index] - point.lat
+  delta_lon::Float64 = cells.cell_coords.lons[cell_index] - point.lon
   if delta_lon > 180.0
     delta_lon = cells.cell_coords.lons[cell_index] - 360.0 - point.lon
   elseif delta_lon < -180.0
@@ -428,29 +436,31 @@ end
 
 function for_all_secondary_neighbors(function_on_neighbor::Function,
                                      cell_indices::CartesianIndex,
-                                     cell_neighbors::Array{CartesianIndex})
+                                     cell_neighbors::SharedArray{Tuple{Int64}})
   for i=1:3
-    neighbor::CartesianIndex = cell_neighbors[cell_indices,i]
+    neighbor::CartesianIndex = CartesianIndex(cell_neighbors[cell_indices,i])
     for j=1:3
-      secondary_neighbor::CartesianIndex = cell_neighbors[neighbor,j]
+      secondary_neighbor::CartesianIndex = CartesianIndex(cell_neighbors[neighbor,j])
       if secondary_neighbor == cell_indices
         continue
       end
       function_on_neighbor(secondary_neighbor)
       for k=1:3
-        tertiary_neighbor::CartesianIndex = cell_neighbors[secondary_neighbor,k]
+        tertiary_neighbor::CartesianIndex = CartesianIndex(cell_neighbors[secondary_neighbor,k])
         if tertiary_neighbor == neighbor
           continue
         end
         for l=1:3
-          other_neighbor::CartesianIndex = cell_neighbors[cell_indices,l]
+          other_neighbor::CartesianIndex = CartesianIndex(cell_neighbors[cell_indices,l])
           if i >= l
             continue
           end
           for m=1:3
-            other_secondary_neighbor::CartesianIndex = cell_neighbors[other_neighbor,m]
+            other_secondary_neighbor::CartesianIndex =
+              CartesianIndex(cell_neighbors[other_neighbor,m])
             for n=1:3
-              other_tertiary_neighbor::CartesianIndex = cell_neighbors[other_secondary_neighbor,n]
+              other_tertiary_neighbor::CartesianIndex =
+                CartesianIndex(cell_neighbors[other_secondary_neighbor,n])
               if other_tertiary_neighbor == other_neighbor
                 continue
               end
@@ -467,9 +477,9 @@ end
 
 function for_all_neighbors(function_on_neighbor::Function,
                            cell_indices::CartesianIndex,
-                           cell_neighbors::Array{CartesianIndex})
+                           cell_neighbors::SharedArray{Tuple{Int64}})
   for neighbor in [cell_neighbors[cell_indices,i] for i=1:3]
-    function_on_neighbor(neighbor)
+    function_on_neighbor(CartesianIndex(neighbor))
   end
   for_all_secondary_neighbors(function_on_neighbor,
                               cell_indices,
@@ -478,9 +488,9 @@ end
 
 function find_cell_containing_point(point_lat::Float64,point_lon::Float64,cells::Cells,
                                     previous_section_end_point::CartesianIndex)
-  local cell_indices::Array{CartesianIndex}
+  local cell_indices::Array{Tuple{Int64}}
   if previous_section_end_point != CartesianIndex(-1,)
-    cell_indices = CartesianIndex[]
+    cell_indices = Tuple{Int64}[]
     if check_if_point_is_within_cell_extremes(
         cells.cell_extremes.min_lats[previous_section_end_point],
         cells.cell_extremes.max_lats[previous_section_end_point],
@@ -488,7 +498,7 @@ function find_cell_containing_point(point_lat::Float64,point_lon::Float64,cells:
         cells.cell_extremes.max_lons[previous_section_end_point],
         cells.is_wrapped_cell[previous_section_end_point],
         point_lat,point_lon)
-      push!(cell_indices,previous_section_end_point)
+      push!(cell_indices,Tuple(previous_section_end_point))
     end
     for_all_neighbors(previous_section_end_point,
                       cells.cell_neighbors) do neighbor_indices::CartesianIndex
@@ -499,27 +509,28 @@ function find_cell_containing_point(point_lat::Float64,point_lon::Float64,cells:
           cells.cell_extremes.max_lons[neighbor_indices],
           cells.is_wrapped_cell[neighbor_indices],
           point_lat,point_lon)
-        push!(cell_indices,neighbor_indices)
+        push!(cell_indices,Tuple(neighbor_indices))
       end
     end
   else
     cell_indices =
-      filter(i::CartesianIndex ->
+      filter(i::Tuple{Int64} ->
              check_if_point_is_within_cell_extremes(
-                cells.cell_extremes.min_lats[i],
-                cells.cell_extremes.max_lats[i],
-                cells.cell_extremes.min_lons[i],
-                cells.cell_extremes.max_lons[i],
-                cells.is_wrapped_cell[i],
+                cells.cell_extremes.min_lats[CartesianIndex(i)],
+                cells.cell_extremes.max_lats[CartesianIndex(i)],
+                cells.cell_extremes.min_lons[CartesianIndex(i)],
+                cells.cell_extremes.max_lons[CartesianIndex(i)],
+                cells.is_wrapped_cell[CartesianIndex(i)],
                 point_lat,point_lon),
              cells.cell_indices)
   end
-  for i in cell_indices
+  for indices in cell_indices
+    i = CartesianIndex(indices)
     cell_vertices::Array{@NamedTuple{lat::Float64,
                                      lon::Float64}} =
       map(cell_vertex_coords::
-          @NamedTuple{lats::Array{Float64},
-          lons::Array{Float64}} ->
+          @NamedTuple{lats::SharedArray{Float64},
+          lons::SharedArray{Float64}} ->
           (lat=cell_vertex_coords.lats[i],
            lon=cell_vertex_coords.lons[i]),
           cells.cell_vertices)
@@ -569,7 +580,7 @@ end
 
 function check_if_point_is_in_cell(point_lat::Float64,point_lon::Float64,
                                    cell_vertices::Array{@NamedTuple{lat::Float64,
-                                                                    lon::Float64}})
+                                                                                lon::Float64}})
   norm_det_sum::Int64 = 0
   abs_norm_det_sum::Int64 = 0
   for i = 1:3
@@ -606,7 +617,7 @@ end
 function check_connection(cell_indices::CartesianIndex,
                           inland_cell_indices::CartesianIndex,
                           cells::Cells,
-                          lsmask::Array{Bool},
+                          lsmask::SharedArray{Bool},
                           completed_cells::CompletedCells)
   q::Vector{CartesianIndex} = CartesianIndex[cell_indices]
   reset!(completed_cells)
@@ -635,7 +646,7 @@ end
 function search_for_river_mouth_location_on_line_section(
                                 line_section::Line,
                                 cells::Cells,
-                                lsmask::Array{Bool},
+                                lsmask::SharedArray{Bool},
                                 river_mouth_indices::SharedArray{Tuple{Int64}},
                                 line_index::Int64,
                                 previous_section_end_point::CartesianIndex,
@@ -677,7 +688,7 @@ function search_for_river_mouth_location_on_line_section(
       is_coastal_cell::Bool = false
       passing_disconnected_land_cells = false
       for neighbor in [cells.cell_neighbors[cell_indices,i] for i=1:3]
-        is_coastal_cell = is_coastal_cell || ! lsmask[neighbor] 
+        is_coastal_cell = is_coastal_cell || ! lsmask[CartesianIndex(neighbor)]
       end
       if is_coastal_cell
         if reverse_search && ! check_connection(cell_indices,inland_cell_indices,
@@ -716,7 +727,7 @@ end
 
 function identify_bifurcated_river_mouths(river_deltas::Array{RiverDelta},
                                           cells::Cells,
-                                          lsmask::Array{Bool})
+                                          lsmask::SharedArray{Bool})
   river_mouth_indices_for_all_rivers::Dict{String,Array{CartesianIndex}} =
                                       Dict{String,Array{CartesianIndex}}()
   #Can't store CartesianIndex in a SharedArray so use tuple instead and convert
