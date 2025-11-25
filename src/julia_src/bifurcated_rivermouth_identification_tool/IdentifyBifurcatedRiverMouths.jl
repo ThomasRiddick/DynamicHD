@@ -1,4 +1,7 @@
 module IdentifyBifurcatedRiverMouths
+
+using SharedArrays
+using Distributed: @distributed, pmap
 import Base.getindex
 import Base.setindex!
 import Base.firstindex
@@ -476,7 +479,7 @@ end
 function find_cell_containing_point(point_lat::Float64,point_lon::Float64,cells::Cells,
                                     previous_section_end_point::CartesianIndex)
   local cell_indices::Array{CartesianIndex}
-  if previous_section_end_point != CartesianIndex(-1)
+  if previous_section_end_point != CartesianIndex(-1,)
     cell_indices = CartesianIndex[]
     if check_if_point_is_within_cell_extremes(
         cells.cell_extremes.min_lats[previous_section_end_point],
@@ -633,9 +636,8 @@ function search_for_river_mouth_location_on_line_section(
                                 line_section::Line,
                                 cells::Cells,
                                 lsmask::Array{Bool},
-                                river_mouth_indices::Array{CartesianIndex},
-                                #river_mouth_indices::SharedArray{CartesianIndex},
-                                #line_index::Int64,
+                                river_mouth_indices::SharedArray{Tuple{Int64}},
+                                line_index::Int64,
                                 previous_section_end_point::CartesianIndex,
                                 completed_cells::CompletedCells,
                                 reverse_search::Bool=false,
@@ -683,8 +685,7 @@ function search_for_river_mouth_location_on_line_section(
           passing_disconnected_land_cells = true
           continue
         end
-        push!(river_mouth_indices,cell_indices)
-        #river_mouth_indices[line_index] = cell_indices
+        river_mouth_indices[line_index] = Tuple(cell_indices)
         return true,section_end_point
       else
         is_secondary_coastal_cell::Bool = false
@@ -698,8 +699,7 @@ function search_for_river_mouth_location_on_line_section(
             passing_disconnected_land_cells = true
             continue
           end
-          push!(river_mouth_indices,cell_indices)
-          #river_mouth_indices[line_index] = cell_indices
+          river_mouth_indices[line_index] = Tuple(cell_indices)
           return true,section_end_point
         elseif ! reverse_search
           error("Have reached the ocean without passing a coastal cell!")
@@ -719,13 +719,13 @@ function identify_bifurcated_river_mouths(river_deltas::Array{RiverDelta},
                                           lsmask::Array{Bool})
   river_mouth_indices_for_all_rivers::Dict{String,Array{CartesianIndex}} =
                                       Dict{String,Array{CartesianIndex}}()
-  # river_mouth_indices_for_all_rivers_array::Array{(String,Array{CartesianIndex})} =
-  #   pmap(river_deltas) do delta::RiverDelta
-  for delta in river_deltas
+  #Can't store CartesianIndex in a SharedArray so use tuple instead and convert
+  #back to CartesianIndices at the end
+  river_mouth_indices_for_all_rivers_array::Array{Tuple{String,Array{Tuple{Int64}}}} =
+    pmap(river_deltas) do delta::RiverDelta
     println("Processing $(delta.name)")
-    river_mouth_indices::Array{CartesianIndex} = Array{CartesianIndex}[]
-    # river_mouth_indices::SharedArray{CartesianIndex} =
-    #   SharedArray{CartesianIndex}((length(delta.lines)))
+    river_mouth_indices::SharedArray{Tuple{Int64}} =
+      SharedArray{Tuple{Int64}}((length(delta.lines)))
     local inland_cell_indices::CartesianIndexOrNothing
     if delta.reverse_search
       #Arbitarily choose the first line for finding the inland cell indices
@@ -736,15 +736,14 @@ function identify_bifurcated_river_mouths(river_deltas::Array{RiverDelta},
     else
       inland_cell_indices = nothing
     end
-    #@sync @distributed for i,line in enumerate(delta.lines)
-    for line in delta.lines
+    for (i,line) in pairs(delta.lines)
       local modified_line::Vector{Line}
       if delta.reverse_search
         modified_line = reverse(line)
       else
         modified_line = line
       end
-      previous_section_end_point::CartesianIndex = CartesianIndex(-1)
+      previous_section_end_point::CartesianIndex = CartesianIndex(-1,)
       completed_cells::CompletedCells = CompletedCells(size(lsmask))
       for line_section in modified_line
         river_mouth_found::Bool,
@@ -753,7 +752,7 @@ function identify_bifurcated_river_mouths(river_deltas::Array{RiverDelta},
                                                           cells,
                                                           lsmask,
                                                           river_mouth_indices,
-                                                          #i,
+                                                          i,
                                                           previous_section_end_point,
                                                           completed_cells,
                                                           delta.reverse_search,
@@ -763,12 +762,12 @@ function identify_bifurcated_river_mouths(river_deltas::Array{RiverDelta},
         end
       end
     end
-    river_mouth_indices_for_all_rivers[delta.name] = river_mouth_indices
-    #return (delta.name,river_mouth_indices)
+    return (delta.name,sdata(river_mouth_indices))
   end
-  # for (name,indices) in river_mouth_indices_for_all_rivers_array
-  #   river_mouth_indices_for_all_rivers[name] = indices
-  # end
+  for (name,indices) in river_mouth_indices_for_all_rivers_array
+    river_mouth_indices_for_all_rivers[name] =
+      CartesianIndex[CartesianIndex(i,) for i=indices]
+  end
   return river_mouth_indices_for_all_rivers
 end
 
