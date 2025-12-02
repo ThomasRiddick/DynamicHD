@@ -1,14 +1,19 @@
 module TestIdentifyBifurcatedRiverMouths
 
+using SharedArrays
 using Test: @test, @testset
 using IdentifyBifurcatedRiverMouths: check_if_line_intersects_cell
 using IdentifyBifurcatedRiverMouths: check_if_line_section_intersects_cell 
+using IdentifyBifurcatedRiverMouths: check_if_point_is_in_cell
 using IdentifyBifurcatedRiverMouths: find_cells_on_line_section
 using IdentifyBifurcatedRiverMouths: search_for_river_mouth_location_on_line_section
 using IdentifyBifurcatedRiverMouths: identify_bifurcated_river_mouths
 using IdentifyBifurcatedRiverMouths: for_all_secondary_neighbors
 using IdentifyBifurcatedRiverMouths: Cells
 using IdentifyBifurcatedRiverMouths: RiverDelta
+using IdentifyBifurcatedRiverMouths: CompletedCells
+using IdentifyBifurcatedRiverMouths: find_cell_containing_point
+using IdentifyBifurcatedRiverMouths: check_connection
 using IdentifyBifurcatedRiverMouthsInput: load_river_deltas_from_string
 
 @testset "River mouth identification tests" begin
@@ -16,42 +21,52 @@ using IdentifyBifurcatedRiverMouthsInput: load_river_deltas_from_string
 					       											 end_point=(lat=2.0,lon=2.0)),
 					      											 [(lat=0.0,lon=0.0),
 					       												(lat=0.0,lon=1.0),
-					       												(lat=1.0,lon=0.5)]) == (false,-1)
+					       												(lat=1.0,lon=0.5)]) == (false,0,false)
 	@test check_if_line_intersects_cell((start_point=(lat=-2.0,lon=0.0),
 					       											 end_point=(lat=-2.0,lon=2.0)),
 					      											 [(lat=0.0,lon=0.0),
 					       											  (lat=0.0,lon=1.0),
-					       											  (lat=1.0,lon=0.5)]) == (false,-1)
+					       											  (lat=1.0,lon=0.5)]) == (false,0,false)
 	@test check_if_line_intersects_cell((start_point=(lat=0.0,lon=2.0),
 					       											 end_point=(lat=-2.0,lon=-2.0)),
 					      											 [(lat=0.0,lon=0.0),
 					       												(lat=0.0,lon=1.0),
-					       												(lat=1.0,lon=0.5)]) == (false,-1)
+					       												(lat=1.0,lon=0.5)]) == (false,0,false)
 	@test check_if_line_intersects_cell((start_point=(lat=0.0,lon=2.0),
 					       											 end_point=(lat=2.0,lon=2.0)),
 					      											 [(lat=0.0,lon=0.0),
 					       												(lat=0.0,lon=1.0),
-					       												(lat=1.0,lon=0.5)]) == (false,-1)
+					       												(lat=1.0,lon=0.5)]) == (false,0,false)
 	@test check_if_line_intersects_cell((start_point=(lat=0.5,lon=0.0),
 					       											 end_point=(lat=0.5,lon=2.0)),
 					      											 [(lat=0.0,lon=0.0),
 					       												(lat=0.0,lon=1.0),
-					       												(lat=1.0,lon=0.5)]) == (true,3)
+					       												(lat=1.0,lon=0.5)]) == (true,3,false)
 	@test check_if_line_intersects_cell((start_point=(lat=2.0,lon=0.25),
 					       											 end_point=(lat=-1.0,lon=0.25)),
 					      											 [(lat=0.0,lon=0.0),
 					       												(lat=0.0,lon=1.0),
-					       												(lat=1.0,lon=0.5)]) == (true,1)
+					       												(lat=1.0,lon=0.5)]) == (true,1,false)
 	@test check_if_line_intersects_cell((start_point=(lat=2.0,lon=0.75),
 					       											 end_point=(lat=-1.0,lon=0.75)),
 					      											 [(lat=0.0,lon=0.0),
 					       											  (lat=0.0,lon=1.0),
-					       											  (lat=1.0,lon=0.5)]) == (true,2)
+					       											  (lat=1.0,lon=0.5)]) == (true,2,false)
 	@test check_if_line_intersects_cell((start_point=(lat=-2.0,lon=0.75),
 					       											 end_point=(lat=-1.0,lon=0.75)),
 					      											 [(lat=0.0,lon=0.0),
 					       												(lat=0.0,lon=1.0),
-					        											(lat=1.0,lon=0.5)]) == (true,2)
+					        											(lat=1.0,lon=0.5)]) == (true,2,false)
+  @test check_if_line_intersects_cell((start_point=(lat=0.0,lon=-1.0),
+                                       end_point=(lat=0.0,lon=1.0)),
+                                       [(lat=0.0,lon=0.0),
+                                        (lat=0.0,lon=1.0),
+                                        (lat=1.0,lon=0.5)]) == (true,-3,true)
+  @test check_if_line_intersects_cell((start_point=(lat=1.0,lon=-1.0),
+                                       end_point=(lat=1.0,lon=1.0)),
+                                       [(lat=0.0,lon=0.0),
+                                        (lat=0.0,lon=1.0),
+                                        (lat=1.0,lon=0.5)]) == (true,3,true)
 	@test check_if_line_section_intersects_cell((start_point=(lat=2.0,lon=0.0),
 					       	       											 end_point=(lat=2.0,lon=2.0)),
 																			 			  false,
@@ -100,7 +115,61 @@ using IdentifyBifurcatedRiverMouthsInput: load_river_deltas_from_string
 					      	       											[(lat=0.0,lon=0.0),
 					       	        										 (lat=0.0,lon=1.0),
 					       	        										 (lat=1.0,lon=0.5)],false) == false
-	cell_indices = CartesianIndex[ CartesianIndex(i) for i=1:80 ]
+  @test check_if_line_section_intersects_cell((start_point = (lat=30.0,lon=0.0),
+                                               end_point = (lat=-30.0,lon=0.0)),
+                                              false,
+                                              [(lat=60.0,lon=-18.0),
+                                               (lat=90.0,lon=0.0),
+                                               (lat=60.0,lon=18.0)],false) == false
+  @test check_if_line_section_intersects_cell((start_point=(lat=1.0,lon=-1.0),
+                                               end_point=(lat=1.0,lon=1.0)),
+                                              false,
+                                              [(lat=0.0,lon=0.0),
+                                               (lat=0.0,lon=1.0),
+                                               (lat=1.0,lon=0.5)],false) == true
+  @test check_if_line_section_intersects_cell((start_point=(lat=1.0,lon=-1.0),
+                                               end_point=(lat=1.0,lon=-10.0)),
+                                              false,
+                                              [(lat=0.0,lon=0.0),
+                                               (lat=0.0,lon=1.0),
+                                               (lat=1.0,lon=0.5)],false) == false
+  @test check_if_line_section_intersects_cell((start_point=(lat=-10.0,lon=0.5),
+                                               end_point=(lat=0.1,lon=0.5)),
+                                              false,
+                                              [(lat=0.0,lon=0.0),
+                                               (lat=0.0,lon=1.0),
+                                               (lat=1.0,lon=0.5)],false) == true
+  @test check_if_line_section_intersects_cell((start_point=(lat=-10.0,lon=0.5),
+                                               end_point=(lat=-0.1,lon=0.5)),
+                                              false,
+                                              [(lat=0.0,lon=0.0),
+                                               (lat=0.0,lon=1.0),
+                                               (lat=1.0,lon=0.5)],false) == false
+  @test check_if_point_is_in_cell(0.5,0.5,
+                                  [(lat=0.0,lon=0.0),
+                                   (lat=0.0,lon=1.0),
+                                   (lat=1.0,lon=0.5)]) == true
+  @test check_if_point_is_in_cell(0.5,0.5,
+                                  [(lat=1.0,lon=0.0),
+                                   (lat=0.0,lon=0.5),
+                                   (lat=1.0,lon=1.0)]) == true
+  @test check_if_point_is_in_cell(0.0,1.0,
+                                  [(lat=1.0,lon=0.0),
+                                   (lat=0.0,lon=0.5),
+                                   (lat=1.0,lon=1.0)]) == false
+  @test check_if_point_is_in_cell(1.0,1.0,
+                                  [(lat=0.0,lon=0.0),
+                                   (lat=0.0,lon=1.0),
+                                   (lat=1.0,lon=0.5)]) == false
+  @test check_if_point_is_in_cell(-0.1,0.5,
+                                  [(lat=0.0,lon=0.0),
+                                   (lat=0.0,lon=1.0),
+                                   (lat=1.0,lon=0.5)]) == false
+  @test check_if_point_is_in_cell(0.1,0.5,
+                                  [(lat=0.0,lon=0.0),
+                                   (lat=0.0,lon=1.0),
+                                   (lat=1.0,lon=0.5)]) == true
+	cell_indices = Tuple{Int64}[ Tuple{Int64}(i,) for i=1:80 ]
 	cell_neighbors_int = Int64[ #=
 	      # 1-5
         =# 5 7 2; 1 10 3; 2 13 4; 3 16 5; 4 19 1
@@ -135,7 +204,7 @@ using IdentifyBifurcatedRiverMouthsInput: load_river_deltas_from_string
         #76-80
         62 80 77; 65 76 78; 68 77 79; 71 78 80; 74 79 76 ]
   cell_neighbors =
-  	CartesianIndex[ CartesianIndex(cell_neighbors_int[i,j]) for i=1:80,j=1:3 ]
+  	Tuple{Int64}[(cell_neighbors_int[i,j],) for i=1:80,j=1:3 ]
   expected_secondary_neighbors_int = Int64[
   		#1
       4 19 -1 6 8 20 10 3 9
@@ -239,7 +308,7 @@ using IdentifyBifurcatedRiverMouthsInput: load_river_deltas_from_string
   	secondary_neighbors::Array{CartesianIndex} = CartesianIndex[]
   	for_all_secondary_neighbors(x->push!(secondary_neighbors,x),
 																CartesianIndex(i),
-																cell_neighbors)
+																SharedArray(cell_neighbors))
   	if size(secondary_neighbors) == (8,)
   		push!(secondary_neighbors,CartesianIndex(-1))
   	end
@@ -270,7 +339,7 @@ using IdentifyBifurcatedRiverMouthsInput: load_river_deltas_from_string
 	      # 1-5
         =# 90.0 60.0 60.0; 90.0 60.0 60.0; 90.0 60.0 60.0; 90.0 60.0 60.0; 90.0 60.0 60.0
         # 6-10
-        60.0 30.0 30.0; 60.0 60.0 30.0; 60.0 60.0 30.0; 60.0 30.0 30.0; 60.0 60.0 30.0
+        60.0 30.0 30.0; 60.0 60.0 30.0; 60.0 30.0 30.0; 60.0 30.0 30.0; 60.0 60.0 30.0
         # 11-15
         60.0 30.0 30.0; 60.0 30.0 30.0; 60.0 60.0 30.0; 60.0 30.0 30.0; 60.0 30.0 30.0
         #16-20
@@ -296,7 +365,7 @@ using IdentifyBifurcatedRiverMouthsInput: load_river_deltas_from_string
 				#66-70
         -30.0 -30.0 -60.0; -30.0 -30.0 -60.0; -30.0 -60.0 -60.0; -30.0 -30.0 -60.0; -30.0 -30.0 -60.0
         #71-75
-        -30.0 -60.0 -60.0; -30.0 -60.0 -60.0; -30.0 -60.0 -60.0; -30.0 -60.0 -60.0; -30.0 -60.0 -60.0
+        -30.0 -60.0 -60.0; -30.0 -30.0 -60.0; -30.0 -30.0 -60.0; -30.0 -60.0 -60.0; -30.0 -30.0 -60.0
         #76-80
         -60.0 -60.0 -90.0; -60.0 -60.0 -90.0; -60.0 -60.0 -90.0; -60.0 -60.0 -90.0; -60.0 -60.0 -90.0 ]
 	cell_vertices_lons = Float64[ #=
@@ -332,186 +401,251 @@ using IdentifyBifurcatedRiverMouthsInput: load_river_deltas_from_string
         126.0 108.0 144.0; 126.0 162.0 144.0; 162.0 144.0 180.0; #=
         =#162.0 -162.0 180.0; -162.0 180.0 -144.0
 				#61-65
-        -144.0 -108.0 -126.0; -108.0 -126.0 -90.0; -108.0 -72.0 -90.0; #=
-        =#-72.0 -36.0 -54.0; -36.0 -54.0 -18.0
+        -144.0 -108.0 -144.0; -108.0 -72.0 -144.0; -108.0 -72.0 -72.0; #=
+        =#-72.0 -36.0 -72.0; -36.0 -0.0 -72.0
 				#66-70
-        -36.0 0.0 -18.0; 0.0 36.0 18.0; 36.0 18.0 54.0; 36.0 72.0 54.0; #=
-        =#72.0 108.0 90.0
+        -36.0 0.0 0.0; 0.0 36.0 0.0; 36.0 72.0 0.0; 36.0 72.0 72.0; #=
+        =#72.0 108.0 72.0
         #71-75
-        108.0 90.0 126.0; 108.0 144.0 126.0; 144.0 180.0 126.0; #=
-        =#180.0 162.0 -162.0; 180.0 -144.0 -162.0
+        108.0 144.0 72.0; 108.0 144.0 144.0; 144.0 180.0 144.0; #=
+        =#180.0 -144.0 144.0; 180.0 -144.0 -144.0
         #76-80
         -144.0 -72.0 -108.0; -72.0 0.0 -36.0; 0.0 72.0 36.0; 72.0 144.0 108.0; 144.0 -144.0 180.0 ]
 	cell_vertices::@NamedTuple{lats::Array{Float64},lons::Array{Float64}} =
 		(lats = cell_vertices_lats, lons = cell_vertices_lons)
 	cells::Cells = Cells(cell_indices,cell_neighbors,
 	             				 cell_coords,cell_vertices)
+  completed_cells::CompletedCells = CompletedCells((80,))
 	@test find_cells_on_line_section((start_point = (lat=30.0,lon=0.0),
 																		end_point = (lat=-30.0,lon=0.0)),
-																	 cells) == CartesianIndex[CartesianIndex(13,),CartesianIndex(14,),
-																														CartesianIndex(30,),CartesianIndex(31,),
-																														CartesianIndex(49,),CartesianIndex(50,)]
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(12,),
+                                                  CartesianIndex(13,),CartesianIndex(14,),
+                                                  CartesianIndex(31,),CartesianIndex(50,),
+                                                  CartesianIndex(66,),
+                                                  CartesianIndex(48,),CartesianIndex(67,),
+																									CartesianIndex(49,),
+                                                  CartesianIndex(30,),CartesianIndex(29,)]
 	@test find_cells_on_line_section((start_point = (lat=1.0,lon=-30.0),
 																		end_point = (lat=1.0,lon= 30.0)),
-																	 cells) == CartesianIndex[CartesianIndex(28,), CartesianIndex(29,),
-																														CartesianIndex(30,), CartesianIndex(31,),
-																														CartesianIndex(32,)]
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(28,),CartesianIndex(30,),
+																									CartesianIndex(32,),CartesianIndex(31,),
+                                                  CartesianIndex(29,)]
 	@test find_cells_on_line_section((start_point = (lat=-1.0,lon=-30.0),
 																		end_point = (lat=-1.0,lon=30.0)),
-																	 cells) == CartesianIndex[CartesianIndex(47,), CartesianIndex(48,),
-																														CartesianIndex(49,), CartesianIndex(50,),
-																														CartesianIndex(51,)]
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(47,),
+																									CartesianIndex(49,), CartesianIndex(51,),
+                                                  CartesianIndex(50,), CartesianIndex(48,)]
 	@test find_cells_on_line_section((start_point = (lat=-30.0,lon=-40.0),
 																		end_point = (lat=30.0,lon=40.0)),
-																	 cells) == CartesianIndex[CartesianIndex(15,),
-																														CartesianIndex(30,), CartesianIndex(31,),
-																														CartesianIndex(32,), CartesianIndex(33,),
-																														CartesianIndex(46,), CartesianIndex(47,),
-																														CartesianIndex(48,), CartesianIndex(49,)]
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(46,),CartesianIndex(48,),
+                                                  CartesianIndex(30,),CartesianIndex(32,),
+                                                  CartesianIndex(15,),CartesianIndex(33,),
+                                                  CartesianIndex(31,),CartesianIndex(49,),
+                                                  CartesianIndex(47,),CartesianIndex(64,)]
 	@test find_cells_on_line_section((start_point = (lat=30.0,lon=-40.0),
 																		end_point = (lat=-30.0,lon=40.0)),
-																	 cells) == CartesianIndex[CartesianIndex(11,),
-																														CartesianIndex(27,), CartesianIndex(28,),
-																														CartesianIndex(29,), CartesianIndex(30,),
-																														CartesianIndex(49,), CartesianIndex(50,),
-																														CartesianIndex(51,), CartesianIndex(52,)]
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(11,),CartesianIndex(29,),
+						                                      CartesianIndex(49,),CartesianIndex(51,),
+                                                  CartesianIndex(69,),CartesianIndex(52,),
+                                                  CartesianIndex(50,),CartesianIndex(30,),
+                                                  CartesianIndex(28,),CartesianIndex(27,)]
 	@test find_cells_on_line_section((start_point = (lat=45.0,lon=-90.0),
 																		end_point = (lat=45.0,lon=18.0)),
-																	 cells) == CartesianIndex[CartesianIndex(9,), CartesianIndex(10,),
-																														CartesianIndex(11,),CartesianIndex(12,),
-																														CartesianIndex(13,),CartesianIndex(14,)]
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(9,), CartesianIndex(10,),
+																									CartesianIndex(12,),CartesianIndex(14,),
+                                                  CartesianIndex(13,),CartesianIndex(11,)]
 	@test find_cells_on_line_section((start_point = (lat=15.0,lon=-107.0),
 																		end_point = (lat=-75.0,lon=-107.0)),
-																	 cells) == CartesianIndex[CartesianIndex(24,), CartesianIndex(43,),
-																														CartesianIndex(44,),CartesianIndex(62,),
-																														CartesianIndex(63,),CartesianIndex(76,)]
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(24,),CartesianIndex(44,),
+                                                  CartesianIndex(62,),CartesianIndex(76,),
+                                                  CartesianIndex(63,),CartesianIndex(43,),]
 	@test find_cells_on_line_section((start_point = (lat=15.0,lon=109.0),
 																		end_point = (lat=-75.0,lon=109.0)),
-																	 cells) == CartesianIndex[CartesianIndex(36,), CartesianIndex(55,),
-																														CartesianIndex(56,),CartesianIndex(71,),
-																														CartesianIndex(72,),CartesianIndex(79,)]
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(36,),CartesianIndex(56,),
+                                                  CartesianIndex(71,),CartesianIndex(79,),
+                                                  CartesianIndex(72,),CartesianIndex(55,)]
 	@test find_cells_on_line_section((start_point = (lat=75.0,lon=-73.0),
 																		end_point = (lat=-15.0,lon=-73.0)),
-																	 cells) == CartesianIndex[CartesianIndex(2,), CartesianIndex(9,),
-																														CartesianIndex(10,),CartesianIndex(25,),
-																														CartesianIndex(26,),CartesianIndex(45,)]
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(2,), CartesianIndex(9,),
+																									CartesianIndex(26,),CartesianIndex(45,),
+                                                  CartesianIndex(25,),CartesianIndex(10,)]
 	@test find_cells_on_line_section((start_point = (lat=75.0,lon=71.0),
 																		end_point = (lat=-15.0,lon=71.0)),
-																	 cells) == CartesianIndex[CartesianIndex(4,), CartesianIndex(15,),
-																														CartesianIndex(16,),CartesianIndex(33,),
-																														CartesianIndex(34,),CartesianIndex(53,)]
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(4,), CartesianIndex(15,),
+																									CartesianIndex(34,),CartesianIndex(53,),
+                                                  CartesianIndex(33,),CartesianIndex(16,)]
 	@test find_cells_on_line_section((start_point = (lat=15.0,lon=144.0),
 																		end_point = (lat=15.0,lon=-126.0)),
-																	 cells) == CartesianIndex[CartesianIndex(21,), CartesianIndex(22,),
-																														CartesianIndex(23,),CartesianIndex(38,),
-																														CartesianIndex(39,),CartesianIndex(40,)]
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(38,),CartesianIndex(40,),
+                                                  CartesianIndex(22,),CartesianIndex(23,),
+                                                  CartesianIndex(21,),CartesianIndex(39,)]
 	@test find_cells_on_line_section((start_point = (lat=-15.0,lon=144.0),
 																		end_point = (lat=-15.0,lon=-126.0)),
-																	 cells) == CartesianIndex[CartesianIndex(41,), CartesianIndex(42,),
-																														CartesianIndex(57,),CartesianIndex(58,),
-																														CartesianIndex(59,),CartesianIndex(60,)]
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(57,),CartesianIndex(59,),
+                                                  CartesianIndex(41,),CartesianIndex(42,),
+                                                  CartesianIndex(60,),CartesianIndex(58,)]
 	@test find_cells_on_line_section((start_point = (lat=-45.0,lon=162.0),
 																		end_point = (lat=-45.0,lon=-162.0)),
-																	 cells) == CartesianIndex[CartesianIndex(73,), CartesianIndex(74,),
-																														CartesianIndex(75,)]
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(73,), CartesianIndex(75,),
+                                                  CartesianIndex(74,)]
 	@test find_cells_on_line_section((start_point = (lat=-75.0,lon=-36.0),
 																		end_point = (lat=-45.0,lon=18.0)),
-																	 cells) == CartesianIndex[CartesianIndex(67,), CartesianIndex(77,)]
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(77,),CartesianIndex(68,),
+                                                  CartesianIndex(67,),CartesianIndex(66,),
+                                                  CartesianIndex(65,)]
 	@test find_cells_on_line_section((start_point = (lat=75.0,lon=0.0),
 																		end_point = (lat=45.0,lon=54.0)),
-																	 cells) == CartesianIndex[CartesianIndex(3,), CartesianIndex(13,),
-																														CartesianIndex(14,), CartesianIndex(15,),
-																														CartesianIndex(16,)]
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(3,), CartesianIndex(16,),
+                                                  CartesianIndex(15,),CartesianIndex(14,),
+                                                  CartesianIndex(13,)]
 	@test find_cells_on_line_section((start_point = (lat=-75.0,lon=180.0),
 																		end_point = (lat=-45.0,lon=-126.0)),
-																	 cells) == CartesianIndex[CartesianIndex(61,),  CartesianIndex(75,),
-																												    CartesianIndex(80,)]
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(80,), CartesianIndex(62),
+                                                  CartesianIndex(61,),  CartesianIndex(75,),
+																									CartesianIndex(74)]
 	@test find_cells_on_line_section((start_point = (lat=75.0,lon=-144.0),
 																		end_point = (lat=45.0,lon=162.0)),
-																	 cells) == CartesianIndex[CartesianIndex(1,), CartesianIndex(6,),
-																														CartesianIndex(7,), CartesianIndex(19,),
-																														CartesianIndex(20,)]
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(1,), CartesianIndex(6,),
+																									CartesianIndex(20,), CartesianIndex(19,),
+																									CartesianIndex(7,)]
 	@test find_cells_on_line_section((start_point = (lat=-75.0,lon=-108.0),
 																		end_point = (lat=-45.0,lon=180.0)),
-																	 cells) == CartesianIndex[CartesianIndex(74,), CartesianIndex(75,),
-																														CartesianIndex(76,), CartesianIndex(80,)]
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(76,),CartesianIndex(74,),
+                                                  CartesianIndex(75,),CartesianIndex(61,),
+																								  CartesianIndex(80,),CartesianIndex(62,)]
 	@test find_cells_on_line_section((start_point = (lat=75.0,lon=144.0),
 																		end_point = (lat=45.0,lon=-162.0)),
-																	 cells) == CartesianIndex[CartesianIndex(5,), CartesianIndex(6,),
-																														CartesianIndex(7,), CartesianIndex(19,),
-																														CartesianIndex(20,)]
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(5,), CartesianIndex(7,),
+                                                  CartesianIndex(6,),CartesianIndex(20,),
+																									CartesianIndex(19,)]
+  #Note: -45,162 is on border of 73 and 74
 	@test find_cells_on_line_section((start_point = (lat=-45.0,lon=162.0),
 																		end_point = (lat=75.0,lon=-144.0)),
-																	 cells) == CartesianIndex[CartesianIndex(1,), CartesianIndex(6,),
-																														CartesianIndex(7,), CartesianIndex(21,),
-																														CartesianIndex(40,), CartesianIndex(58,),
-																														CartesianIndex(59,), CartesianIndex(73,)]
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(73,),CartesianIndex(59,),
+																									CartesianIndex(21,),CartesianIndex(7,),
+                                                  CartesianIndex(1,),CartesianIndex(6,),
+                                                  CartesianIndex(40,),CartesianIndex(74,),
+																									CartesianIndex(58,)]
 	@test find_cells_on_line_section((start_point = (lat=75.0,lon=-144.0),
 																		end_point = (lat=75.0,lon=144.0)),
-																	 cells) == CartesianIndex[CartesianIndex(1,), CartesianIndex(5,)]
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(1,), CartesianIndex(5,)]
 	@test find_cells_on_line_section((start_point = (lat=75.0,lon=-72.0),
 																		end_point = (lat=75.0,lon=72.0)),
-																	 cells) == CartesianIndex[CartesianIndex(2,), CartesianIndex(3,),
-																														CartesianIndex(4,),]
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(2,), CartesianIndex(4,),
+                                                  CartesianIndex(3,)]
 	@test find_cells_on_line_section((start_point = (lat=-75.0,lon=-108.0),
 																		end_point = (lat=-75.0,lon=180.0)),
-																	 cells) == CartesianIndex[CartesianIndex(76,), CartesianIndex(80,)]
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(76,), CartesianIndex(80,)]
 	@test find_cells_on_line_section((start_point = (lat=-75.0,lon=-36.0),
 																		end_point = (lat=-75.0,lon=108.0)),
-																	 cells) == CartesianIndex[CartesianIndex(77,), CartesianIndex(78,),
-																														CartesianIndex(79,),]
-	lsmask::Array{Bool} = fill(false,80)
+																	 cells,CartesianIndex(-1,),completed_cells) ==
+                                   CartesianIndex[CartesianIndex(77,), CartesianIndex(79,),
+                                                  CartesianIndex(78,)]
+	lsmask::SharedArray{Bool} = fill(false,80)
 	lsmask[4] = true
 	lsmask[14:19] .= true
 	lsmask[31:39] .= true
 	lsmask[50:59] .= true
 	lsmask[62:74] .= true
 	lsmask[76:79] .= true
-	river_mouth_indices = CartesianIndex[CartesianIndex(99,), CartesianIndex(-99,)]
+	river_mouth_indices = SharedArray(Tuple{Int64}[Tuple(CartesianIndex(99,)),
+                                                 Tuple(CartesianIndex(-99,)),
+                                                 Tuple(CartesianIndex(-1,))])
 	@test search_for_river_mouth_location_on_line_section((start_point = (lat=15.0,lon=-72.0),
 																												 end_point = (lat=15.0,lon=72.0)),
 																	 											 cells,
 																												 lsmask,
-							 																					 river_mouth_indices)
-	@test river_mouth_indices == CartesianIndex[CartesianIndex(99,), CartesianIndex(-99,),
-																						  CartesianIndex(31,)]
-	river_mouth_indices = CartesianIndex[CartesianIndex(99,), CartesianIndex(-99,)]
+							 																					 river_mouth_indices,
+                                                         3,
+                                                         CartesianIndex(44,),
+                                                         completed_cells) == (true,CartesianIndex(34,))
+	@test sdata(river_mouth_indices) == Tuple{Int64}[Tuple(CartesianIndex(99,)),Tuple(CartesianIndex(-99,)),
+																						       Tuple(CartesianIndex(31,))]
+	river_mouth_indices = SharedArray(Tuple{Int64}[Tuple(CartesianIndex(99,)),
+                                                 Tuple(CartesianIndex(-99,)),
+                                                 Tuple(CartesianIndex(-1,))])
 	@test search_for_river_mouth_location_on_line_section((start_point = (lat=15.0,lon=-144.0),
 																												 end_point = (lat=15.0,lon=144.0)),
 																	 											 cells,
 																												 lsmask,
-							 																					 river_mouth_indices)
-	@test river_mouth_indices == CartesianIndex[CartesianIndex(99,), CartesianIndex(-99,),
-																						  CartesianIndex(39,)]
-	river_mouth_indices = CartesianIndex[CartesianIndex(99,), CartesianIndex(-99,)]
+							 																					 river_mouth_indices,
+                                                         3,
+                                                         CartesianIndex(8,),
+                                                         completed_cells) == (true,CartesianIndex(38,))
+	@test sdata(river_mouth_indices) == Tuple{Int64}[Tuple(CartesianIndex(99,)),
+                                                   Tuple(CartesianIndex(-99,)),
+																						       Tuple(CartesianIndex(39,))]
+	river_mouth_indices = SharedArray(Tuple{Int64}[Tuple(CartesianIndex(99,)),
+                                                 Tuple(CartesianIndex(-99,)),
+                                                 Tuple(CartesianIndex(-1,))])
 	@test search_for_river_mouth_location_on_line_section((start_point = (lat=15.0,lon=-90.0),
 																												 end_point = (lat=-75.0,lon=-36.0)),
 																	 											 cells,
 																												 lsmask,
-							 																					 river_mouth_indices)
-	@test river_mouth_indices == CartesianIndex[CartesianIndex(99,), CartesianIndex(-99,),
-																						  CartesianIndex(64,)]
-	river_mouth_indices = CartesianIndex[CartesianIndex(99,), CartesianIndex(-99,)]
-	@test ! search_for_river_mouth_location_on_line_section((start_point = (lat=45.0,lon=-90.0),
-																												   end_point = (lat=5.0,lon=-36.0)),
-																	 											   cells,
-																												   lsmask,
-							 																					   river_mouth_indices)
-	@test river_mouth_indices == CartesianIndex[CartesianIndex(99,), CartesianIndex(-99,)]
-  lsmask = .! lsmask
+							 																					 river_mouth_indices,
+                                                         3,
+                                                         CartesianIndex(23,),
+                                                         completed_cells) == (true,CartesianIndex(77,))
+	@test sdata(river_mouth_indices) == Tuple{Int64}[Tuple(CartesianIndex(99,)),
+                                                   Tuple(CartesianIndex(-99,)),
+																						       Tuple(CartesianIndex(64,))]
+	river_mouth_indices = SharedArray(Tuple{Int64}[Tuple(CartesianIndex(99,)),
+                                                 Tuple(CartesianIndex(-99,)),
+                                                 Tuple(CartesianIndex(-1))])
+	@test search_for_river_mouth_location_on_line_section((start_point = (lat=45.0,lon=-90.0),
+																												 end_point = (lat=5.0,lon=-36.0)),
+																	 											 cells,
+																												 lsmask,
+							 																					 river_mouth_indices,
+                                                         3,
+                                                         CartesianIndex(1,),
+                                                         completed_cells) == (false,CartesianIndex(28,))
+	@test sdata(river_mouth_indices) == Tuple{Int64}[Tuple(CartesianIndex(99,)),
+                                                   Tuple(CartesianIndex(-99,)),
+                                                   Tuple(CartesianIndex(-1))]
+  lsmask[:] = .! lsmask[:]
   lsmask[6]  = false
   lsmask[20] = false
   lsmask[21] = false
 	lsmask[40] = false
 	lsmask[60] = false
-	river_mouth_indices = CartesianIndex[CartesianIndex(99,), CartesianIndex(-99,)]
+	river_mouth_indices = SharedArray(Tuple{Int64}[Tuple(CartesianIndex(99,)),
+                                                 Tuple(CartesianIndex(-99,)),
+                                                 Tuple(CartesianIndex(-1))])
 	@test search_for_river_mouth_location_on_line_section((start_point = (lat=15.0,lon=144.0),
 																												 end_point = (lat=15.0,lon=-144.0)),
 																	 											 cells,
 																												 lsmask,
-							 																					 river_mouth_indices)
-	@test river_mouth_indices == CartesianIndex[CartesianIndex(99,), CartesianIndex(-99,),
-																						  CartesianIndex(22,)]
+							 																					 river_mouth_indices,
+                                                         3,
+                                                         CartesianIndex(55,),
+                                                         completed_cells) == (true,CartesianIndex(22))
+	@test sdata(river_mouth_indices) == Tuple{Int64}[Tuple(CartesianIndex(99,)),
+                                                   Tuple(CartesianIndex(-99,)),
+																						       Tuple(CartesianIndex(22,))]
 	lsmask = fill(false,80)
   lsmask[34:36]  .= true
   lsmask[46:57]  .= true
@@ -539,6 +673,148 @@ using IdentifyBifurcatedRiverMouthsInput: load_river_deltas_from_string
     	 																 "River_B"=>
     	 																 CartesianIndex[CartesianIndex(35,),CartesianIndex(36,),
     														 			 								CartesianIndex(57,)])
+  #Reverse search tests
+  @test find_cell_containing_point(-40.0,-108.0,
+                                   cells,CartesianIndex(-1)) == CartesianIndex(62)
+  @test find_cell_containing_point(85.0,144.0,
+                                   cells,CartesianIndex(-1)) == CartesianIndex(5)
+  lsmask = fill(true,80)
+  lsmask[12] = false
+  lsmask[14] = false
+  lsmask[18:19] .= false
+  lsmask[31] = false
+  lsmask[34] = false
+  lsmask[37:38] .= false
+  lsmask[50] = false
+  lsmask[58] = false
+  lsmask[67:69] .= false
+  lsmask[74] = false
+  lsmask[78] = false
+  @test check_connection(CartesianIndex(12),
+                         CartesianIndex(68),
+                         cells,
+                         lsmask,
+                         completed_cells) == true
+  @test check_connection(CartesianIndex(74),
+                         CartesianIndex(68),
+                         cells,
+                         lsmask,
+                         completed_cells) == false
+  lsmask = fill(true,80)
+  lsmask[15] = false
+  lsmask[18] = false
+  lsmask[32:33] .= false
+  lsmask[35:36] .= false
+  lsmask[50:52] .= false
+  lsmask[55] = false
+  lsmask[60] = false
+  lsmask[67:69] .= false
+  lsmask[75] = false
+  lsmask[78] = false
+  river_mouth_indices = SharedArray(Tuple{Int64}[Tuple(CartesianIndex(99,)),
+                                                 Tuple(CartesianIndex(-99,)),
+                                                 Tuple(CartesianIndex(-1,))])
+  @test search_for_river_mouth_location_on_line_section((start_point = (lat=-45.0,lon=18.0),
+                                                         end_point = (lat=45.0,lon=144.0)),
+                                                         cells,
+                                                         lsmask,
+                                                         river_mouth_indices,
+                                                         3,
+                                                         CartesianIndex(-1),
+                                                         completed_cells) == (true,CartesianIndex(19,))
+  @test sdata(river_mouth_indices) == Tuple{Int64}[Tuple(CartesianIndex(99,)),
+                                                   Tuple(CartesianIndex(-99,)),
+                                                   Tuple(CartesianIndex(53,))]
+  river_mouth_indices = SharedArray(Tuple{Int64}[Tuple(CartesianIndex(99,)),
+                                                 Tuple(CartesianIndex(-99,)),
+                                                 Tuple(CartesianIndex(-1,))])
+  @test search_for_river_mouth_location_on_line_section((start_point = (lat=-45.0,lon=18.0),
+                                                         end_point = (lat=45.0,lon=144.0)),
+                                                         cells,
+                                                         lsmask,
+                                                         river_mouth_indices,
+                                                         3,
+                                                         CartesianIndex(-1),
+                                                         completed_cells,
+                                                         true,
+                                                         CartesianIndex(78)) == (true,CartesianIndex(67,))
+  @test sdata(river_mouth_indices) == Tuple{Int64}[Tuple(CartesianIndex(99,)),
+                                                   Tuple(CartesianIndex(-99,)),
+                                                   Tuple(CartesianIndex(19,))]
+  river_mouth_indices = SharedArray(Tuple{Int64}[Tuple(CartesianIndex(99,)),
+                                                 Tuple(CartesianIndex(-99,)),
+                                                 Tuple(CartesianIndex(-1,))])
+  @test search_for_river_mouth_location_on_line_section((start_point = (lat=-15.0,lon=54.0),
+                                                         end_point = (lat=-15.0,lon=-144.0)),
+                                                         cells,
+                                                         lsmask,
+                                                         river_mouth_indices,
+                                                         3,
+                                                         CartesianIndex(32,),
+                                                         completed_cells) == (true,CartesianIndex(41,))
+  @test sdata(river_mouth_indices) == Tuple{Int64}[Tuple(CartesianIndex(99,)),
+                                                   Tuple(CartesianIndex(-99,)),
+                                                   Tuple(CartesianIndex(53,))]
+  river_mouth_indices = SharedArray(Tuple{Int64}[Tuple(CartesianIndex(99,)),
+                                                 Tuple(CartesianIndex(-99,)),
+                                                 Tuple(CartesianIndex(-1))])
+  @test search_for_river_mouth_location_on_line_section((start_point = (lat=-15.0,lon=54.0),
+                                                         end_point = (lat=-15.0,lon=-144.0)),
+                                                         cells,
+                                                         lsmask,
+                                                         river_mouth_indices,
+                                                         3,
+                                                         CartesianIndex(41,),
+                                                         completed_cells,
+                                                         true,
+                                                         CartesianIndex(78)) == (true,CartesianIndex(52,))
+  @test sdata(river_mouth_indices) == Tuple{Int64}[Tuple(CartesianIndex(99,)),
+                                                   Tuple(CartesianIndex(-99,)),
+                                                   Tuple(CartesianIndex(57,))]
+  lsmask[39:40] .= false
+  river_mouth_indices = SharedArray(Tuple{Int64}[Tuple(CartesianIndex(99,)),
+                                                 Tuple(CartesianIndex(-99,)),
+                                                 Tuple(CartesianIndex(-1))])
+  @test search_for_river_mouth_location_on_line_section((start_point = (lat=-15.0,lon=54.0),
+                                                         end_point = (lat=-15.0,lon=-144.0)),
+                                                         cells,
+                                                         lsmask,
+                                                         river_mouth_indices,
+                                                         3,
+                                                         CartesianIndex(-1,),
+                                                         completed_cells,
+                                                         true,
+                                                         CartesianIndex(78)) == (true,CartesianIndex(52,))
+  @test sdata(river_mouth_indices) == Tuple{Int64}[Tuple(CartesianIndex(99,)),
+                                                   Tuple(CartesianIndex(-99,)),
+                                                   Tuple(CartesianIndex(41,))]
+  lsmask = fill(true,80)
+  lsmask[1] = false
+  lsmask[6:8] .= false
+  lsmask[21:27] .= false
+  lsmask[29:30] .= false
+  lsmask[41:45] .= false
+  lsmask[51:52] .= false
+  lsmask[55] = false
+  lsmask[57] = false
+  lsmask[61:63] .= false
+  river_deltas = load_river_deltas_from_string("""
+  reverse_searches=['River_A']
+  River_A=[[[-15.0,-108.0],[15.0,-90.0],[15.0,0.0],[-45.0,54.0],[-15.0,126.0],[-15.0,162.0]],
+           [[-15.0,-108.0],[-15.0,0.0],[-15.0,72.0]],
+           [[-15.0,-108.0],[-45.0,-36.0],[-45.0,18.0],[-75.0,109.0],[15.0,109.0]]]
+  River_B=[[[-15.0,-108.0],[15.0,-90.0],[15.0,0.0],[-45.0,54.0],[-15.0,126.0],[-15.0,162.0]],
+           [[-15.0,-108.0],[-15.0,0.0],[-15.0,72.0]],
+           [[-15.0,-108.0],[-45.0,-36.0],[-45.0,18.0],[-75.0,109.0],[15.0,109.0]]]""")
+  @test identify_bifurcated_river_mouths(river_deltas,
+                                         cells,
+                                         lsmask) ==
+    Dict{String,Array{CartesianIndex}}("River_A"=>
+                                       CartesianIndex[CartesianIndex(54,),CartesianIndex(53,),
+                                                      CartesianIndex(68,)],
+                                       "River_B"=>
+                                       CartesianIndex[CartesianIndex(28,),CartesianIndex(46,),
+                                                      CartesianIndex(64,)])
 end
 
 end
