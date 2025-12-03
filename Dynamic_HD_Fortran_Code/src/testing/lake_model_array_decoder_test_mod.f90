@@ -14,13 +14,13 @@ subroutine testArrayDecoderOneLake
     allocate(expected_outflow_keys(1))
     expected_outflow_keys = (/-1/)
     !One lake
-    allocate(lake_parameters_as_array(68))
+    allocate(lake_parameters_as_array(70))
     lake_parameters_as_array = &
-      (/ 1.0,66.0,1.0,-1.0,0.0,4.0,3.0,11.0,4.0,3.0,1.0,0.0,5.0,4.0,4.0, &
-         1.0,0.0,5.0,3.0,4.0,1.0,0.0,5.0,3.0,3.0,1.0,0.0,5.0,2.0,5.0,1.0, &
-         5.0,6.0,4.0,5.0,1.0,5.0,6.0,3.0,5.0,1.0,12.0,7.0,3.0,2.0,1.0,12.0, &
-         7.0,4.0,2.0,1.0,21.0,8.0,2.0,3.0,1.0,21.0,8.0,2.0,4.0,1.0,43.0, &
-         10.0,1.0,-1.0,2.0,2.0,0.0 /)
+      (/  1.0,68.0,1.0,-1.0,0.0,4.0,3.0,11.0,4.0,3.0,1.0,0.0,5.0,4.0,4.0, &
+          1.0,0.0,5.0,3.0,4.0,1.0,0.0,5.0,3.0,3.0,1.0,0.0,5.0,2.0,5.0, &
+          1.0,5.0,6.0,4.0,5.0,1.0,5.0,6.0,3.0,5.0,1.0,12.0,7.0,3.0,2.0, &
+          1.0,12.0,7.0,4.0,2.0,1.0,21.0,8.0,2.0,3.0,1.0,21.0,8.0,2.0,4.0, &
+          1.0,43.0,10.0,1.0,-1.0,2.0,2.0,0.0,5.0,11.0 /)
     lake_parameters => &
         get_lake_parameters_from_array(lake_parameters_as_array, &
                                        6,6,3,3)
@@ -170,6 +170,9 @@ subroutine testArrayDecoderOneLake
                        &redirect_pointer%non_local_redirect_target_lat,2)
     call assert_equals(lake_parameters(1)%lake_parameters_pointer%outflow_points%values(1)%&
                        &redirect_pointer%non_local_redirect_target_lon,2)
+
+    call assert_equals(lake_parameters(1)%lake_parameters_pointer%lake_lower_boundary_height,5.0_dp)
+    call assert_equals(lake_parameters(1)%lake_parameters_pointer%filled_lake_area,11.0_dp)
     deallocate(expected_outflow_keys)
     deallocate(lake_parameters_as_array)
     call clean_lake_parameters(lake_parameters(1)%lake_parameters_pointer)
@@ -196,15 +199,15 @@ subroutine testArrayDecoderTwoLakes
     allocate(expected_secondary_lakes(2))
     expected_secondary_lakes = (/ 1, 2 /)
     !Two lakes that join
-    allocate(lake_parameters_as_array(94))
+    allocate(lake_parameters_as_array(100))
     lake_parameters_as_array = &
-      (/ 3.0, 21.0, 1.0, 3.0, 0.0, 4.0, 5.0, 2.0, 4.0, 5.0, 1.0, 0.0, 5.0, 3.0, &
-         5.0, 1.0, 6.0, 8.0, 1.0, 2.0, 2.0, 2.0, 0.0, 26.0, 2.0, 3.0, 0.0, 4.0, &
-         2.0, 3.0, 4.0, 2.0, 1.0, 0.0, 5.0, 3.0, 2.0, 1.0, 2.0, 6.0, 4.0, 3.0, &
-         1.0, 8.0, 8.0, 1.0, 1.0, -1.0, -1.0, 1.0, 43.0, 3.0, -1.0, 2.0, 1.0, &
-         2.0, 4.0, 5.0, 6.0, 4.0, 5.0, 1.0, 0.0, 8.0, 3.0, 5.0, 1.0, 0.0, 8.0, &
-         4.0, 4.0, 1.0, 0.0, 8.0, 4.0, 3.0, 1.0, 0.0, 8.0, 4.0, 2.0, 1.0, 0.0, &
-         8.0, 3.0, 2.0, 1.0, 12.0, 10.0, 1.0, -1.0, 3.0, 3.0, 0.0 /)
+      (/ 3.0, 23.0, 1.0, 3.0, 0.0, 4.0, 5.0, 2.0, 4.0, 5.0, 1.0, 0.0, 5.0, 3.0, 5.0, &
+         1.0, 6.0, 8.0, 1.0, 2.0, 2.0, 2.0, 0.0, 5.0, 2.0, 28.0, 2.0, 3.0, 0.0, 4.0, &
+         2.0, 3.0, 4.0, 2.0, 1.0, 0.0, 5.0, 3.0, 2.0, 1.0, 2.0, 6.0, 4.0, 3.0, 1.0, &
+         8.0, 8.0, 1.0, 1.0, -1.0, -1.0, 1.0, 5.0, 3.0, 45.0, 3.0, -1.0, 2.0, 1.0, 2.0, &
+         4.0, 5.0, 6.0, 4.0, 5.0, 1.0, 0.0, 8.0, 3.0, 5.0, 1.0, 0.0, 8.0, 4.0, 4.0, &
+         1.0, 0.0, 8.0, 4.0, 3.0, 1.0, 0.0, 8.0, 4.0, 2.0, 1.0, 0.0, 8.0, 3.0, 2.0, &
+         1.0, 12.0, 10.0, 1.0, -1.0, 3.0, 3.0, 0.0, 8.0, 6.0 /)
     lake_parameters => &
         get_lake_parameters_from_array(lake_parameters_as_array, &
                                        6,6,3,3)
@@ -255,6 +258,9 @@ subroutine testArrayDecoderTwoLakes
                        &redirect_pointer%non_local_redirect_target_lat,2)
     call assert_equals(lake_parameters(1)%lake_parameters_pointer%outflow_points%values(1)%&
                        &redirect_pointer%non_local_redirect_target_lon,2)
+
+    call assert_equals(lake_parameters(1)%lake_parameters_pointer%lake_lower_boundary_height,5.0_dp)
+    call assert_equals(lake_parameters(1)%lake_parameters_pointer%filled_lake_area,2.0_dp)
 
     call assert_equals(lake_parameters(2)%&
                       &lake_parameters_pointer%center_coords_lat,4)
@@ -313,6 +319,9 @@ subroutine testArrayDecoderTwoLakes
                        &redirect_pointer%non_local_redirect_target_lat,-1)
     call assert_equals(lake_parameters(2)%lake_parameters_pointer%outflow_points%values(1)%&
                        &redirect_pointer%non_local_redirect_target_lon,-1)
+
+    call assert_equals(lake_parameters(2)%lake_parameters_pointer%lake_lower_boundary_height,5.0_dp)
+    call assert_equals(lake_parameters(2)%lake_parameters_pointer%filled_lake_area,3.0_dp)
 
     call assert_equals(lake_parameters(3)%&
                       &lake_parameters_pointer%center_coords_lat,4)
@@ -407,6 +416,10 @@ subroutine testArrayDecoderTwoLakes
                        &redirect_pointer%non_local_redirect_target_lat,3)
     call assert_equals(lake_parameters(3)%lake_parameters_pointer%outflow_points%values(1)%&
                        &redirect_pointer%non_local_redirect_target_lon,3)
+
+    call assert_equals(lake_parameters(3)%lake_parameters_pointer%lake_lower_boundary_height,8.0_dp)
+    call assert_equals(lake_parameters(3)%lake_parameters_pointer%filled_lake_area,6.0_dp)
+
     deallocate(expected_outflow_keys_lake_one)
     deallocate(expected_outflow_keys_lake_two)
     deallocate(expected_outflow_keys_lake_three)
