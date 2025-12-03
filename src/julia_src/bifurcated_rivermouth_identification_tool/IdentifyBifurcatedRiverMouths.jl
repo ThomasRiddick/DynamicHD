@@ -431,7 +431,7 @@ function calculate_separation_measure(cell_index::CartesianIndex,cells::Cells,
   elseif delta_lon < -180.0
     delta_lon = cells.cell_coords.lons[cell_index] + 360.0 - point.lon
   end
-  return delta_lat^2 + (cos(0.5*(cells.cell_coords.lats[cell_index] + point.lat))*delta_lon)^2
+  return delta_lat^2 + (cos(deg2rad(0.5*(cells.cell_coords.lats[cell_index] + point.lat)))*delta_lon)^2
 end
 
 function for_all_secondary_neighbors(function_on_neighbor::Function,

@@ -814,7 +814,7 @@ using IdentifyBifurcatedRiverMouthsInput: load_river_deltas_from_string
                                                       CartesianIndex(68,)],
                                        "River_B"=>
                                        CartesianIndex[CartesianIndex(28,),CartesianIndex(46,),
-                                                      CartesianIndex(64,)])
+                                                      CartesianIndex(46,)])
 end
 
 end
