@@ -8,8 +8,7 @@ from Dynamic_HD_Scripts.base import grid
 from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.tools.determine_river_directions import determine_river_directions
 from Dynamic_HD_Scripts.tools.compute_catchments import compute_catchments_cpp
-from Dynamic_HD_Scripts.utilities.basin_evaluation_algorithm_prototype import LatLonEvaluateBasin
-import evaluate_basins_wrapper
+from Dynamic_HD_Scripts.tools import dynamic_lake_operators
 
 class L2LakeModelTestDataGenerator:
 
@@ -17,6 +16,7 @@ class L2LakeModelTestDataGenerator:
       working_directory_path = "/Users/thomasriddick/Documents/data/temp"
       output_lakeparas_filename = path.join(working_directory_path,"l2_lake_model_para.nc")
       output_lakeparas_with_mask_filename = path.join(working_directory_path,"l2_lake_model_para_with_mask.nc")
+      non_lake_mask_filename = path.join(working_directory_path,"non_lake_mask_temp.nc")
       mask_filename = path.join(working_directory_path,"mask_temp.nc")
       array_filename =  path.join(working_directory_path,"array_temp.nc")
       fields_filename =  path.join(working_directory_path,"fields_temp.nc")
@@ -202,16 +202,18 @@ class L2LakeModelTestDataGenerator:
         [False,False,False,False,False, False,False,False,False,False, False,False,False,False,False, False,False,False,False,False],
         [False,False,False,False,False, False,False,False,False,False, False,False,False,False,False, False,False,False,False,True]],
         dtype=np.int32)
+      fine_grid = grid.LatLongGrid(nlat=20,nlong=20)
+      coarse_grid = grid.LatLongGrid(nlat=4,nlong=4)
+      surface_model_grid=grid.LatLongGrid(nlat=3,nlong=3)
       output = \
-        LatLonEvaluateBasin.evaluate_basins(landsea_in,
-                                            minima_in,
-                                            raw_orography_in,
-                                            corrected_orography_in,
-                                            cell_areas_in,
-                                            prior_fine_rdirs_in,
-                                            prior_fine_catchments_in,
-                                            coarse_catchment_nums_in,
-                                            return_algorithm_object=False)
+        dynamic_lake_operators.evaluate_basins(Field(landsea_in,fine_grid),
+                                               Field(minima_in,fine_grid),
+                                               Field(raw_orography_in,fine_grid),
+                                               Field(corrected_orography_in,fine_grid),
+                                               Field(cell_areas_in,fine_grid),
+                                               Field(prior_fine_rdirs_in,fine_grid),
+                                               Field(prior_fine_catchments_in,fine_grid),
+                                               Field(coarse_catchment_nums_in,coarse_grid))
       corresponding_surface_cell_lat_index = np.array([[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
                                                        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
                                                        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
@@ -257,16 +259,25 @@ class L2LakeModelTestDataGenerator:
       binary_mask = np.array([[1,0,1],
                               [0,1,0],
                               [0,0,1]],dtype=np.int32)
-      lake_grid=grid.LatLongGrid(nlat=20,nlong=20)
-      fields_to_write = [Field(output["lake_mask"],grid=lake_grid),
-                         Field(corresponding_surface_cell_lat_index,grid=lake_grid),
-                         Field(corresponding_surface_cell_lon_index,grid=lake_grid)]
+      non_lake_mask = np.array([[0,1,0],
+                                [0,0,0],
+                                [0,0,0]],dtype=np.int32)
+
+      fields_to_write = [output["lake_mask"],
+                         Field(raw_orography_in,grid=fine_grid),
+                         Field(corresponding_surface_cell_lat_index,grid=fine_grid),
+                         Field(corresponding_surface_cell_lon_index,grid=fine_grid)]
       fieldnames_for_fields_to_write = ["lake_mask",
+                                        "raw_orography",
                                         "corresponding_surface_cell_lat_index",
-                                        "corresponding_surface_cell_lon_index", ]
+                                        "corresponding_surface_cell_lon_index"]
+
       iodriver.advanced_field_writer(fields_filename,
                                      fields_to_write,
                                      fieldname=fieldnames_for_fields_to_write)
+      iodriver.advanced_field_writer(non_lake_mask_filename,
+                                     Field(non_lake_mask,grid=surface_model_grid),
+                                     fieldname="non_lake_mask")
       with netCDF4.Dataset(array_filename,mode='w',format='NETCDF4') as dataset:
           dataset.createDimension("npoints",len(output["lakes_as_array"]))
           dataset.createDimension("scalar",1)
@@ -277,9 +288,9 @@ class L2LakeModelTestDataGenerator:
                                           ('scalar'))
           nlakes[0] =  output["number_of_lakes"]
       cdo_inst = cdo.Cdo()
-      cdo_inst.merge(input=" ".join([array_filename,fields_filename]),
+      cdo_inst.merge(input=" ".join([array_filename,fields_filename,
+                                     non_lake_mask_filename]),
                     output=output_lakeparas_filename)
-      surface_model_grid=grid.LatLongGrid(nlat=3,nlong=3)
       iodriver.advanced_field_writer(mask_filename,
                                      Field(binary_mask,grid=surface_model_grid),
                                      fieldname="binary_lake_mask")
