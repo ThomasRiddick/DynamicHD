@@ -34,16 +34,6 @@ relative_path=$1
 perl -MCwd -e 'print Cwd::abs_path($ARGV[0]),qq<\n>' $relative_path
 }
 
-rdirs_only=false
-case ${1} in
-  -r | --rdirs-only)
-    rdirs_only=true
-    shift
-    ;;
-  *)
-    ;;
-esac
-
 #Process command line arguments
 input_orography_filepath=${1}
 input_ls_mask_filepath=${2}
@@ -60,7 +50,10 @@ grid_file=${12}
 atmos_resolution=${13}
 compilation_required=${14}
 bifurcate_rivers=${15:-"false"}
-input_mouth_position_filepath=${16}
+river_deltas_filepath=${16}
+search_areas_filepath=${17}
+use_existing_river_mouth_position_file=${18:-"false"}
+input_river_mouth_position_filepath=${19}
 
 
 #Change first_timestep into a bash command for true or false
@@ -84,15 +77,9 @@ fi
 shopt -u nocasematch
 
 #Check number of arguments makes sense
-if [[ $# -ne 14 && $# -ne 16 ]]; then
-  echo "Wrong number of positional arguments ($# supplied), script only takes 14 or 16 arguments"  1>&2
+if [[ $# -ne 14 && $# -ne 17 && $# -ne 19 ]]; then
+  echo "Wrong number of positional arguments ($# supplied), script only takes 14, 17 or 19 arguments"  1>&2
   exit 1
-fi
-
-if [[ $# -eq 11 ]]; then
-  use_truesinks=true
-else
-  use_truesinks=false
 fi
 
 #Check the arguments have the correct file extensions
@@ -120,7 +107,13 @@ fi
 input_ls_mask_filepath=$(find_abs_path $input_ls_mask_filepath)
 input_orography_filepath=$(find_abs_path $input_orography_filepath)
 input_true_sinks_filepath=$(find_abs_path $input_true_sinks_filepath)
-input_mouth_position_filepath=$(find_abs_path $input_mouth_position_filepath)
+if ${bifurcate_rivers} ; then
+  river_deltas_filepath=$(find_abs_path $river_deltas_filepath)
+  search_areas_filepath=$(find_abs_path $search_areas_filepath)
+  if ${use_existing_river_mouth_position_file} ; then
+    input_river_mouth_position_filepath=$(find_abs_path $input_river_mouth_position_filepath)
+  fi
+fi
 config_filepath=$(find_abs_path $config_filepath)
 working_directory=$(find_abs_path $working_directory)
 output_hdpara_filepath=$(find_abs_path $output_hdpara_filepath)
@@ -312,27 +305,57 @@ rm -f mask_in_tmep.nc
 next_cell_index_filepath="next_cell_index.nc"
 next_cell_index_bifurcated_filepath="bifurcated_next_cell_index.nc"
 number_of_outflows_filepath="number_of_outflows.nc"
-${source_directory}/Dynamic_HD_bash_scripts/generate_fine_icon_rdirs.sh ${source_directory} ${grid_file} ${input_orography_filepath} orography_filled.nc ${input_ls_mask_filepath} ${input_true_sinks_filepath} ${next_cell_index_filepath} ${output_catchments_filepath} accumulated_flow.nc ${input_orography_fieldname} ${input_lsmask_fieldname} ${input_true_sinks_fieldname} ${bifurcate_rivers} ${input_mouth_position_filepath} ${next_cell_index_bifurcated_filepath} ${number_of_outflows_filepath}
+
+if $bifurcate_rivers ; then
+  next_cell_index_bifurcated_fieldname="bifurcated_next_cell_index"
+else
+  next_cell_index_bifurcated_filepath=""
+  next_cell_index_bifurcated_fieldname=""
+fi
+
+drivers_path=${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/command_line_drivers
+
+python ${drivers_path}/sink_filling_icon_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${input_true_sinks_filepath} orography_filled.nc ${grid_file} ${input_orography_fieldname} ${input_lsmask_fieldname} ${input_true_sinks_fieldname}
+
+python ${drivers_path}/determine_river_directions_icon_driver.py ${next_cell_index_filepath%%.nc}_temp.nc orography_filled.nc ${input_ls_mask_filepath}  ${input_true_sinks_filepath} ${grid_file} "cell_elevation" ${input_lsmask_fieldname} ${input_true_sinks_fieldname}
+
+if $bifurcate_rivers ; then
+  python ${drivers_path}/accumulate_flow_icon_driver.py ${grid_file} ${next_cell_index_filepath%%.nc}_temp.nc accumulated_flow_temp.nc "next_cell_index"
+  if ${use_existing_river_mouth_position_file} ; then
+    river_mouth_position_filepath=${input_river_mouth_position_filepath}
+  else
+    #Determine bifurcated river mouth positions
+    river_mouth_position_filepath=${working_directory}/rivermouths.txt
+    cmd="julia ${source_directory}/src/julia_src/bifurcated_rivermouth_identification_tool/BifurcatedRiverMouthIdentificationDriver.jl -g ${grid_file} -m ${input_ls_mask_filepath} -n cell_sea_land_mask -r ${river_deltas_filepath} -o ${river_mouth_position_filepath} -a accumulated_flow_temp.nc -f acc -s ${search_areas_filepath}"
+    echo "Running:"
+    echo ${cmd}
+    eval ${cmd}
+  fi
+  python ${drivers_path}/bifurcate_rivers_basic_icon_driver.py --remove-main-channel ${next_cell_index_filepath%%.nc}_temp.nc accumulated_flow_temp.nc ${input_ls_mask_filepath} ${number_of_outflows_filepath} ${next_cell_index_filepath} ${next_cell_index_bifurcated_filepath} ${grid_file} ${river_mouth_position_filepath} "next_cell_index" "acc" ${input_lsmask_fieldname} 10 11 0.1
+else
+   mv ${next_cell_index_filepath%%.nc}_temp.nc ${next_cell_index_filepath}
+fi
+
+python ${drivers_path}/compute_catchments_icon_driver.py --sort-catchments-by-size ${next_cell_index_filepath} ${output_catchments_filepath} ${grid_file} "next_cell_index" ${output_catchments_filepath%%.nc}_loops.log
+
+python ${drivers_path}/accumulate_flow_icon_driver.py ${grid_file} ${next_cell_index_filepath} accumulated_flow.nc "next_cell_index" ${next_cell_index_bifurcated_filepath} ${next_cell_index_bifurcated_fieldname}
+
 mv accumulated_flow.nc ${output_accumulated_flow_filepath}
 cp ${grid_file} grid_in_temp.nc
 cp ${input_ls_mask_filepath} mask_in_temp.nc
-if $rdirs_only ; then
-  cp ${next_cell_index_filepath} ${output_hdpara_filepath}
-else
-  rm -rf paragen
-  mkdir paragen
-  ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/generate_icon_hd_file_driver.sh ${working_directory}/paragen ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran ${working_directory} grid_in_temp.nc mask_in_temp.nc ${next_cell_index_filepath} orography_filled.nc ${bifurcate_rivers} ${next_cell_index_bifurcated_filepath} ${number_of_outflows_filepath}
-  ${source_directory}/Dynamic_HD_bash_scripts/adjust_icon_k_parameters.sh  ${working_directory}/paragen/hdpara_icon.nc ${output_hdpara_filepath} ${atmos_resolution}
+rm -rf paragen
+mkdir paragen
+${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/generate_icon_hd_file_driver.sh ${working_directory}/paragen ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran ${working_directory} grid_in_temp.nc mask_in_temp.nc ${next_cell_index_filepath} orography_filled.nc ${bifurcate_rivers} ${next_cell_index_bifurcated_filepath} ${number_of_outflows_filepath}
+${source_directory}/Dynamic_HD_bash_scripts/adjust_icon_k_parameters.sh  ${working_directory}/paragen/hdpara_icon.nc ${output_hdpara_filepath} ${atmos_resolution}
 
-  #Clean up temporary files
-  unlink paragen/bifurcated_next_cell_index_for_upstream_cell.nc || true
-  rm -rf paragen
-  rm -f orography_filled.nc
-  rm -f grid_in_temp.nc
-  rm -f mask_in_temp.nc
-  rm -f next_cell_index.nc
-  rm -f next_cell_index_temp.nc
-  rm -f number_of_outflows.nc
-  rm -f bifurcated_next_cell_index.nc
-  rm -f accumulated_flow_temp.nc
-fi
+#Clean up temporary files
+unlink paragen/bifurcated_next_cell_index_for_upstream_cell.nc || true
+rm -rf paragen
+rm -f orography_filled.nc
+rm -f grid_in_temp.nc
+rm -f mask_in_temp.nc
+rm -f next_cell_index.nc
+rm -f next_cell_index_temp.nc
+rm -f number_of_outflows.nc
+rm -f bifurcated_next_cell_index.nc
+rm -f accumulated_flow_temp.nc
