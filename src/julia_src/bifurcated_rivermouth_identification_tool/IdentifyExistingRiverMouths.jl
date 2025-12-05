@@ -46,7 +46,7 @@ function identify_existing_river_mouth(cells::Cells,
            cells.cell_indices)
   filtered_accumulated_flow::Array{Int64} =
     map(i::Tuple{Int64} -> accumulated_flow[CartesianIndex(i)],filtered_cell_indices)
-  return filtered_cell_indices[argmax(filtered_accumulated_flow)]
+  return CartesianIndex(filtered_cell_indices[argmax(filtered_accumulated_flow)])
 end
 
 function identify_existing_river_mouths(cells::Cells,

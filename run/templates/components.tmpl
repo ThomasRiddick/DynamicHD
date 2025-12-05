@@ -311,7 +311,7 @@ if ! ${use_existing_river_mouth_position_file} && ${use_river_bifurcation} ; the
   eval ${cmd}
   #Determine bifurcated river mouth positions
   river_mouth_position_filepath=${working_directory}/rivermouths.txt
-  cmd="julia ${repository_path}/src/julia_src/bifurcated_rivermouth_identification_tool/BifurcatedRiverMouthIdentificationDriver.jl -g ${icon_grid_filepath} -m ${binary_lsmask_filepath} -n cell_sea_land_mask -r ${river_deltas_filepath} -o ${river_mouth_position_filepath} -a ${output_accumulated_flow_filepath%%.nc}_non_bifurcated.nc -f acc -s ${search_areas_filepath}"
+  cmd="julia -p 128 ${repository_path}/src/julia_src/bifurcated_rivermouth_identification_tool/BifurcatedRiverMouthIdentificationDriver.jl -g ${icon_grid_filepath} -m ${binary_lsmask_filepath} -n cell_sea_land_mask -r ${river_deltas_filepath} -o ${river_mouth_position_filepath} -a ${output_accumulated_flow_filepath%%.nc}_non_bifurcated.nc -f acc -s ${search_areas_filepath}"
   echo "Running:"
   echo ${cmd}
   eval ${cmd}

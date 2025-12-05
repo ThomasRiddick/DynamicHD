@@ -78,10 +78,10 @@ function load_icosahedral_grid(grid_filepath::String)
   lons::Array{Float64} = rad2deg.(load_icosahedral_field(file_handle,"lon_cell_centre",1,Float64))
   lat_vertices::Array{Float64} = rad2deg.(load_icosahedral_field(file_handle,"clat_vertices",2,Float64))
   lon_vertices::Array{Float64} = rad2deg.(load_icosahedral_field(file_handle,"clon_vertices",2,Float64))
-  cell_indices::Array{CartesianIndex} =
-      CartesianIndex[CartesianIndex(cell_indices_int[i]) for i=1:length(cell_indices_int)]
-  cell_neighbors::Array{CartesianIndex} =
-      CartesianIndex[CartesianIndex(cell_neighbors_int[i,j]) for i=1:size(cell_neighbors_int,1),j=1:3]
+  cell_indices::Array{Tuple{Int64}} =
+      Tuple{Int64}[Tuple{Int64}(cell_indices_int[i],) for i=1:length(cell_indices_int)]
+  cell_neighbors::Array{Tuple{Int64}} =
+      Tuple{Int64}[Tuple{Int64}(cell_neighbors_int[i,j],) for i=1:size(cell_neighbors_int,1),j=1:3]
   cell_coords::@NamedTuple{lats::Array{Float64},lons::Array{Float64}} = (lats=lats,lons=lons)
   cell_vertices::@NamedTuple{lats::Array{Float64},lons::Array{Float64}} = 
 	(lats=permutedims(lat_vertices),lons=permutedims(lon_vertices))
