@@ -133,7 +133,8 @@ cd ${working_directory}
 {%- endmacro -%}
 
 {% macro set_variables_post_user_input() %}
-icon_atmo_grid_res=$(echo ${icon_atmo_grid_res} | tr [:upper] [:lower] | tr -d 0)
+icon_atmo_grid_res=$(echo ${icon_atmo_grid_res} | tr [:upper] [:lower] | \
+                     sed -E 's/0([[:digit:]])/\1/g')
 config_filepath=${working_directory}/bash_script.cfg
 python_config_filepath=${working_directory}/python_script.cfg
 binary_lsmask_filepath=${working_directory}/binary_lsmask.nc
