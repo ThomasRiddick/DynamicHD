@@ -258,9 +258,14 @@ fi
 {% else %}
 number_of_channels_label_string="sc"
 {% endif %}
-output_hdpara_filepath=${output_directory}/hdpara_${icon_atmo_grid_res}_${icon_atmo_grid_id}_${icon_ocean_grid_id}_${number_of_channels_label_string}_${binary_conversion_method}_${true_sinks_flag_string}v${version_num}.nc
-output_catchments_filepath=${output_directory}/catch_${icon_atmo_grid_res}_${icon_atmo_grid_id}_${icon_ocean_grid_id}_${number_of_channels_label_string}_${binary_conversion_method}_${true_sinks_flag_string}v${version_num}.nc
-output_accumulated_flow_filepath=${output_directory}/acc_${icon_atmo_grid_res}_${icon_atmo_grid_id}_${icon_ocean_grid_id}_${number_of_channels_label_string}_${binary_conversion_method}_${true_sinks_flag_string}v${version_num}.nc
+if ! [[ -z ${additional_label} ]]; then
+  additional_label_string="${additional_label}_"
+else
+  additional_label_string=""
+fi
+output_hdpara_filepath=${output_directory}/hdpara_${icon_atmo_grid_res}_${icon_atmo_grid_id}_${icon_ocean_grid_id}_${number_of_channels_label_string}_${binary_conversion_method}_${true_sinks_flag_string}${additional_label_string}v${version_num}.nc
+output_catchments_filepath=${output_directory}/catch_${icon_atmo_grid_res}_${icon_atmo_grid_id}_${icon_ocean_grid_id}_${number_of_channels_label_string}_${binary_conversion_method}_${true_sinks_flag_string}${additional_label_string}v${version_num}.nc
+output_accumulated_flow_filepath=${output_directory}/acc_${icon_atmo_grid_res}_${icon_atmo_grid_id}_${icon_ocean_grid_id}_${number_of_channels_label_string}_${binary_conversion_method}_${true_sinks_flag_string}${additional_label_string}v${version_num}.nc
 {%- endmacro -%}
 
 {% macro preprocessing() %}
@@ -319,6 +324,11 @@ fi
 #Run bifurcated hdpara file generation
 if ${use_river_bifurcation} ; then
   cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_on_icon_grid_filepath} elevation cell_sea_land_mask true_sinks ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} ${icon_atmo_grid_res} False True ${river_mouth_position_filepath}"
+  module load nco
+  river_deltas_version=$(basename $(readlink -f ${river_deltas_filepath}) | sed 's/river_channels_\(.*\)\.toml/\1/')
+  ncatted -a river_deltas_version,global,c,c,${river_deltas_version} ${output_hdpara_filepath}
+  search_areas_version=$(basename $(readlink -f ${search_areas_filepath}) | sed 's/search_areas_\(.*\)\.toml/\1/')
+  ncatted -a search_areas_version,global,c,c,${search_areas_version} ${output_hdpara_filepath}
 else
   cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_on_icon_grid_filepath} elevation cell_sea_land_mask true_sinks ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} ${icon_atmo_grid_res} False"
 fi
@@ -333,15 +343,17 @@ eval ${cmd}
 {%- macro postprocessing() -%}
 cp /home/m/m300468/hdpara_creation_plotter/hdpara_basic_output_plots.py \
   ${working_directory}/hdpara_basic_output_plots.py
-#source activate dyhdenv_mamba
+source activate dyhdenv_mamba
 #python ${working_directory}/hdpara_basic_output_plots.py ${icon_grid_filepath} \
        ${output_catchments_filepath} ${output_accumulated_flow_filepath} \
        ${fractional_lsmask_filepath} ${true_sinks_on_icon_grid_filepath}
 {% if input.high_res %}
 cp /home/m/m300468/hdpara_creation_plotter/hdpara_creation_plotter.py \
   ${working_directory}/hdpara_creation_plotter.py
-#python ${working_directory}/hdpara_creation_plotter.py ${icon_grid_filepath} \
-#       ${output_catchments_filepath} ${output_accumulated_flow_filepath} \
+python ${working_directory}/hdpara_creation_plotter.py ${icon_grid_filepath} \
+       ${binary_lsmask_filepath} ${output_accumulated_flow_filepath} \
+       ${river_mouth_position_filepath}
+mv ${working_directory}/*.png ${output_directory}
 {% endif %}
 {% endmacro -%}
 

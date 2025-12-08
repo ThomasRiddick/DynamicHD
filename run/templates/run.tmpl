@@ -82,7 +82,7 @@ icon_atmo_grid_res={{ input.icon_atmo_grid_res }}
 
 {%- block postprocessing -%}
 # Post Processing
-# (No post-processing required at present)
+{{ components.postprocessing() }}
 {%- endblock -%}
 
 {%- block user_commands_pre_clean -%}
