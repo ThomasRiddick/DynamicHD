@@ -353,6 +353,9 @@ source activate dyhdenv_mamba
 {% if input.high_res %}
 cp /home/m/m300468/hdpara_creation_plotter/hdpara_creation_plotter.py \
   ${working_directory}/hdpara_creation_plotter.py
+if ! ${use_existing_river_mouth_position_file}; then
+  river_mouth_position_filepath=${working_directory}/rivermouths.txt
+fi
 python ${working_directory}/hdpara_creation_plotter.py ${icon_grid_filepath} \
        ${binary_lsmask_filepath} ${output_accumulated_flow_filepath} \
        ${river_mouth_position_filepath}
