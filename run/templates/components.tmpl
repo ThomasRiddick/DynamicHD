@@ -308,32 +308,35 @@ cdo remapbil,${icon_grid_filepath} ${etop01_filepath} ${orography_filepath}
 {% macro run() %}
 #Run
 {% if input.high_res %}
-if ! ${use_existing_river_mouth_position_file} && ${use_river_bifurcation} ; then
-  #Determine non-bifurcated river direction and cumulative flow
-  cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh --rdirs-only ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_on_icon_grid_filepath} elevation cell_sea_land_mask true_sinks ${output_hdpara_filepath%%.nc}_non_bifurcated_rdirs_only.nc ${output_catchments_filepath%%.nc}_non_bifurcated.nc ${output_accumulated_flow_filepath%%.nc}_non_bifurcated.nc  ${config_filepath} ${working_directory} ${icon_grid_filepath} ${icon_atmo_grid_res} False"
-  echo "Running (for non-bifurcated river directions - initial step):"
-  echo ${cmd}
-  eval ${cmd}
-  #Determine bifurcated river mouth positions
-  river_mouth_position_filepath=${working_directory}/rivermouths.txt
-  cmd="julia -p 128 ${repository_path}/src/julia_src/bifurcated_rivermouth_identification_tool/BifurcatedRiverMouthIdentificationDriver.jl -g ${icon_grid_filepath} -m ${binary_lsmask_filepath} -n cell_sea_land_mask -r ${river_deltas_filepath} -o ${river_mouth_position_filepath} -a ${output_accumulated_flow_filepath%%.nc}_non_bifurcated.nc -f acc -s ${search_areas_filepath}"
-  echo "Running:"
-  echo ${cmd}
-  eval ${cmd}
-fi
 #Run bifurcated hdpara file generation
 if ${use_river_bifurcation} ; then
-  cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_on_icon_grid_filepath} elevation cell_sea_land_mask true_sinks ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} ${icon_atmo_grid_res} False True ${river_mouth_position_filepath}"
-  module load nco
-  river_deltas_version=$(basename $(readlink -f ${river_deltas_filepath}) | sed 's/river_channels_\(.*\)\.toml/\1/')
-  ncatted -a river_deltas_version,global,c,c,${river_deltas_version} ${output_hdpara_filepath}
-  search_areas_version=$(basename $(readlink -f ${search_areas_filepath}) | sed 's/search_areas_\(.*\)\.toml/\1/')
-  ncatted -a search_areas_version,global,c,c,${search_areas_version} ${output_hdpara_filepath}
+  if ${use_existing_river_mouth_position_file} ; then
+    cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh \
+    ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_on_icon_grid_filepath} elevation \
+    cell_sea_land_mask true_sinks ${output_hdpara_filepath} ${output_catchments_filepath} \
+    ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} \
+    ${icon_atmo_grid_res} False True ${river_deltas_filepath} ${search_areas_filepath} True \
+    ${river_mouth_position_filepath}"
+  else
+    cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh \
+    ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_on_icon_grid_filepath} elevation \
+    cell_sea_land_mask true_sinks ${output_hdpara_filepath} ${output_catchments_filepath} \
+    ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} \
+    ${icon_atmo_grid_res} False True ${river_deltas_filepath} ${search_areas_filepath}"
+  fi
 else
-  cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_on_icon_grid_filepath} elevation cell_sea_land_mask true_sinks ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} ${icon_atmo_grid_res} False"
+  cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh \
+  ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_on_icon_grid_filepath} elevation \
+  cell_sea_land_mask true_sinks ${output_hdpara_filepath} ${output_catchments_filepath} \
+  ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} \
+  ${icon_atmo_grid_res} False"
 fi
 {% else %}
-cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_icon_hdpara_top_level_driver.sh ${orography_filepath} ${binary_lsmask_filepath} ${output_hdpara_filepath} ${output_catchments_filepath} ${output_accumulated_flow_filepath} ${config_filepath} ${working_directory} ${icon_grid_filepath} ${repository_path}/Dynamic_HD_Resources/cotat_plus_standard_params.nl ${icon_atmo_grid_res} False ${use_hfrac} ${max_land_binary_lsmask_filepath} ${true_sinks_filepath}"
+cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_icon_hdpara_top_level_driver.sh \
+${orography_filepath} ${binary_lsmask_filepath} ${output_hdpara_filepath} ${output_catchments_filepath} \
+${output_accumulated_flow_filepath} ${config_filepath} ${working_directory} ${icon_grid_filepath} \
+${repository_path}/Dynamic_HD_Resources/cotat_plus_standard_params.nl ${icon_atmo_grid_res} False \
+${use_hfrac} ${max_land_binary_lsmask_filepath} ${true_sinks_filepath}"
 {% endif %}
 echo "Running:"
 echo ${cmd}
