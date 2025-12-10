@@ -75,10 +75,10 @@ void icon_single_index_flow_accumulation_algorithm::
   no_data_value = new generic_1d_coords(-4);
   no_flow_value = new generic_1d_coords(-5);
   if (bifurcated_next_cell_index_in) {
-    for (int i = 0; i < max_neighbors - 1; i++) {
+    for (long i = 0; i < max_neighbors - 1; i++) {
       int* bifurcated_next_cell_index_slice = new int[_grid->get_total_size()];
-      copy(bifurcated_next_cell_index_in+_grid->get_total_size()*i,
-           bifurcated_next_cell_index_in+_grid->get_total_size()*(i+1),
+      copy(bifurcated_next_cell_index_in+(long)_grid->get_total_size()*i,
+           bifurcated_next_cell_index_in+(long)_grid->get_total_size()*(i+1l),
            bifurcated_next_cell_index_slice);
       bifurcated_next_cell_index.push_back(
         new field<int>(bifurcated_next_cell_index_slice,grid_params_in));
