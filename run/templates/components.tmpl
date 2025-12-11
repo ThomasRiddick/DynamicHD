@@ -341,6 +341,15 @@ ${use_hfrac} ${max_land_binary_lsmask_filepath} ${true_sinks_filepath}"
 echo "Running:"
 echo ${cmd}
 eval ${cmd}
+{% if input.high_res %}
+if ${use_river_bifurcation} ; then
+  module load nco
+  river_deltas_version=$(basename $(readlink -f ${river_deltas_filepath}) | sed 's/river_channels_\(.*\)\.toml/\1/')
+  ncatted -a river_deltas_version,global,c,c,${river_deltas_version} ${output_hdpara_filepath}
+  search_areas_version=$(basename $(readlink -f ${search_areas_filepath}) | sed 's/search_areas_\(.*\)\.toml/\1/')
+  ncatted -a search_areas_version,global,c,c,${search_areas_version} ${output_hdpara_filepath}
+fi
+{% endif %}
 {%- endmacro -%}
 
 {%- macro postprocessing() -%}
