@@ -353,13 +353,8 @@ fi
 {%- endmacro -%}
 
 {%- macro postprocessing() -%}
-cp /home/m/m300468/hdpara_creation_plotter/hdpara_basic_output_plots.py \
-  ${working_directory}/hdpara_basic_output_plots.py
-source activate dyhdenv_mamba
-python ${working_directory}/hdpara_basic_output_plots.py ${icon_grid_filepath} \
-       ${output_catchments_filepath} ${output_accumulated_flow_filepath} \
-       ${fractional_lsmask_filepath} ${true_sinks_on_icon_grid_filepath}
 {% if input.high_res %}
+source activate dyhdenv_mamba
 cp /home/m/m300468/hdpara_creation_plotter/hdpara_creation_plotter.py \
   ${working_directory}/hdpara_creation_plotter.py
 if ! ${use_existing_river_mouth_position_file}; then
