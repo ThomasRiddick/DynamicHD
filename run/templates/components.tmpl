@@ -354,7 +354,11 @@ fi
 
 {%- macro postprocessing() -%}
 {% if input.high_res %}
-source activate dyhdenv_mamba
+#Reactivating mamba environment a second time can cause errors
+#Mamba uses conda environmental variables
+if ! [[ ${CONDA_DEFAULT_ENV} == "dyhdenv_mamba" ]]; then
+  source activate dyhdenv_mamba
+fi
 cp /home/m/m300468/hdpara_creation_plotter/hdpara_creation_plotter.py \
   ${working_directory}/hdpara_creation_plotter.py
 if ! ${use_existing_river_mouth_position_file}; then
