@@ -331,7 +331,11 @@ if ! $no_mamba && ! $no_env_gen ; then
   fi
 fi
 if ! $no_mamba ; then
-  source activate dyhdenv_mamba
+  #Reactivating mamba environment a second time can cause errors
+  #Mamba uses conda environmental variables
+  if ! [[ ${CONDA_DEFAULT_ENV} == "dyhdenv_mamba" ]]; then
+    source activate dyhdenv_mamba
+  fi
 fi
 
 #Load a new version of gcc that doesn't have the polymorphic variable bug
