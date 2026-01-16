@@ -315,7 +315,7 @@ if ${use_river_bifurcation} ; then
     ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_on_icon_grid_filepath} elevation \
     cell_sea_land_mask true_sinks ${output_hdpara_filepath} ${output_catchments_filepath} \
     ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} \
-    ${icon_atmo_grid_res} False True ${river_deltas_filepath} ${search_areas_filepath} True \
+    ${icon_atmo_grid_res} False True null null True \
     ${river_mouth_position_filepath}"
   else
     cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh \

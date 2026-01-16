@@ -74,6 +74,14 @@ else
   echo "Format of bifurcate_rivers flag is unknown, please use True/False or T/F" 1>&2
   exit 1
 fi
+if [[ $use_existing_river_mouth_position_file == "true" ]] || [[ $use_existing_river_mouth_position_file == "t" ]]; then
+  use_existing_river_mouth_position_file=true
+elif [[ $use_existing_river_mouth_position_file == "false" ]] || [[ $use_existing_river_mouth_position_file == "f" ]]; then
+  use_existing_river_mouth_position_file=false
+else
+  echo "Format of use_existing_river_mouth_position_file flag is unknown, please use True/False or T/F" 1>&2
+  exit 1
+fi
 shopt -u nocasematch
 
 #Check number of arguments makes sense
