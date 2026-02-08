@@ -15,6 +15,7 @@ from Dynamic_HD_Scripts.tools import create_connected_lsmask_driver
 from Dynamic_HD_Scripts.tools import create_orography_driver
 from Dynamic_HD_Scripts.tools import determine_river_directions
 from Dynamic_HD_Scripts.tools import flow_to_grid_cell
+from Dynamic_HD_Scripts.tools import river_mouth_marking_driver
 from Dynamic_HD_Scripts.utilities import utilities
 from Dynamic_HD_Scripts.utilities import setup_validator
 from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers import dynamic_hd_driver
@@ -468,6 +469,21 @@ class HDOperatorDrivers:
                                         paras_dir=path.join(working_dir,
                                                             'hd_flow_params'),
                                         production_run=True)
+
+    def river_mouth_marking_driver(self,config):
+        river_mouth_marking_driver.\
+            advanced_river_mouth_marking_driver(input_river_directions_filename=
+                                                config.get("input_filepaths","rdirs"),
+                                                output_river_directions_filename=
+                                                config.get("output_filepaths","rdirs_out"),
+                                                input_river_directions_fieldname=
+                                                config.get("input_fieldnames","rdirs"),
+                                                output_river_directions_fieldname=
+                                                config.get("output_fieldnames","rdirs_out"),
+                                                lsmask_filename=
+                                                config.get("input_filepaths","landsea"),
+                                                lsmask_fieldname=
+                                                config.get("input_fieldnames","landsea"))
 
 def setup_and_run_hd_operator_driver_from_command_line_arguments(args):
     driver_object = HDOperatorDrivers()
