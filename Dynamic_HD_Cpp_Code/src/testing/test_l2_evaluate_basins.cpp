@@ -92,15 +92,30 @@ TEST_F(BasinEvaluationTest,BasinEvaluationSingleLake) {
       false, false, false, false, false, false,
       false, false, false, false, false, false };
   vector<double>* expected_lakes_as_array = new vector<double> {
-    1.0, 66.0, 1.0, -1.0, 0.0, 4.0, 3.0, 11.0, 4.0, 3.0, 1.0, 0.0, 5.0, 4.0, 4.0,
+    1.0, 68.0, 1.0, -1.0, 0.0, 4.0, 3.0, 11.0, 4.0, 3.0, 1.0, 0.0, 5.0, 4.0, 4.0,
     1.0, 0.0, 5.0, 3.0, 4.0, 1.0, 0.0, 5.0, 3.0, 3.0, 1.0, 0.0, 5.0, 2.0, 5.0,
     1.0, 5.0, 6.0, 4.0, 5.0, 1.0, 5.0, 6.0, 3.0, 5.0, 1.0, 12.0, 7.0, 4.0, 2.0,
     1.0, 12.0, 7.0, 3.0, 2.0, 1.0, 21.0, 8.0, 2.0, 4.0, 1.0, 21.0, 8.0, 2.0, 3.0,
-    1.0, 43.0, 10.0, 1.0, -1.0, 3.0, 3.0, 0.0 };
+    1.0, 43.0, 10.0, 1.0, -1.0, 3.0, 3.0, 0.0, 5.0, 11.0 };
   EXPECT_TRUE(number_of_lakes == 1);
   EXPECT_TRUE(*lakes_as_array == *expected_lakes_as_array);
   EXPECT_TRUE(field<bool>(lake_mask,fine_grid_params) ==
               field<bool>(expected_lake_mask,fine_grid_params));
+  delete lakes_as_array;
+  delete expected_lakes_as_array;
+  delete fine_grid_params;
+  delete[] coarse_catchment_nums_in;
+  delete[] corrected_orography_in;
+  delete[] raw_orography_in;
+  delete[] minima_in;
+  delete[] prior_fine_rdirs_in;
+  delete[] prior_fine_catchments_in;
+  delete[] expected_lake_mask;
+  delete[] cell_areas_in;
+  delete[] landsea_in;
+  delete[] lake_mask;
+  delete[] lake_numbers;
+  delete[] sinkless_rdirs;
 }
 
 TEST_F(BasinEvaluationTest,BasinEvaluationTwoLakes) {
@@ -183,17 +198,32 @@ TEST_F(BasinEvaluationTest,BasinEvaluationTwoLakes) {
        false, false, false, false, false, false };
   //Minor ordering changes compared to python version
   vector<double>* expected_lakes_as_array = new vector<double> {
-    3.0, 21.0, 1.0, 3.0, 0.0, 4.0, 5.0, 2.0, 4.0, 5.0, 1.0, 0.0, 5.0, 3.0, 5.0,
-    1.0, 6.0, 8.0, 1.0, 2.0, 2.0, 2.0, 0.0, 26.0, 2.0, 3.0, 0.0, 4.0, 2.0, 3.0,
-    4.0, 2.0, 1.0, 0.0, 5.0, 3.0, 2.0, 1.0, 2.0, 6.0, 4.0, 3.0, 1.0, 8.0, 8.0,
-    1.0, 1.0, -1.0, -1.0, 1.0, 43.0, 3.0, -1.0, 2.0, 1.0, 2.0, 4.0, 5.0, 6.0, 4.0,
-    5.0, 1.0, 0.0, 8.0, 3.0, 5.0, 1.0, 0.0, 8.0, 4.0, 4.0, 1.0, 0.0, 8.0, 4.0,
-    3.0, 1.0, 0.0, 8.0, 4.0, 2.0, 1.0, 0.0, 8.0, 3.0, 2.0, 1.0, 12.0, 10.0, 1.0,
-    -1.0, 3.0, 3.0, 0.0 };
+    3.0, 23.0, 1.0, 3.0, 0.0, 4.0, 5.0, 2.0, 4.0, 5.0, 1.0, 0.0, 5.0, 3.0, 5.0,
+    1.0, 6.0, 8.0, 1.0, 2.0, 2.0, 2.0, 0.0, 5.0, 2.0, 28.0, 2.0, 3.0, 0.0, 4.0,
+    2.0, 3.0, 4.0, 2.0, 1.0, 0.0, 5.0, 3.0, 2.0, 1.0, 2.0, 6.0, 4.0, 3.0, 1.0,
+    8.0, 8.0, 1.0, 1.0, -1.0, -1.0, 1.0, 5.0, 3.0, 45.0, 3.0, -1.0, 2.0, 1.0, 2.0,
+    4.0, 5.0, 6.0, 4.0, 5.0, 1.0, 0.0, 8.0, 3.0, 5.0, 1.0, 0.0, 8.0, 4.0, 4.0,
+    1.0, 0.0, 8.0, 4.0, 3.0, 1.0, 0.0, 8.0, 4.0, 2.0, 1.0, 0.0, 8.0, 3.0, 2.0,
+    1.0, 12.0, 10.0, 1.0, -1.0, 3.0, 3.0, 0.0, 8.0, 6.0 };
   EXPECT_TRUE(number_of_lakes == 3);
   EXPECT_TRUE(*lakes_as_array == *expected_lakes_as_array);
   EXPECT_TRUE(field<bool>(lake_mask,fine_grid_params) ==
               field<bool>(expected_lake_mask,fine_grid_params));
+  delete lakes_as_array;
+  delete expected_lakes_as_array;
+  delete fine_grid_params;
+  delete[] coarse_catchment_nums_in;
+  delete[] corrected_orography_in;
+  delete[] raw_orography_in;
+  delete[] minima_in;
+  delete[] prior_fine_rdirs_in;
+  delete[] prior_fine_catchments_in;
+  delete[] expected_lake_mask;
+  delete[] cell_areas_in;
+  delete[] landsea_in;
+  delete[] lake_mask;
+  delete[] lake_numbers;
+  delete[] sinkless_rdirs;
 }
 
 TEST_F(BasinEvaluationTest,BasinEvaluationSingleLakeTwo) {
@@ -294,14 +324,29 @@ TEST_F(BasinEvaluationTest,BasinEvaluationSingleLakeTwo) {
        false, false, false, false, false, false, false, false, false };
   //Minor ordering changes compared to python version
   vector<double>* expected_lakes_as_array = new vector<double> {
-    1.0, 51.0, 1.0, -1.0, 0.0, 3.0, 3.0, 8.0, 3.0, 3.0, 1.0, 1.0, 2.0, 4.0, 4.0,
+    1.0, 53.0, 1.0, -1.0, 0.0, 3.0, 3.0, 8.0, 3.0, 3.0, 1.0, 1.0, 2.0, 4.0, 4.0,
     1.0, 1.0, 2.0, 4.0, 3.0, 1.0, 1.0, 2.0, 5.0, 4.0, 1.0, 1.0, 2.0, 5.0, 3.0,
     1.0, 6.0, 3.0, 3.0, 4.0, 1.0, 6.0, 3.0, 2.0, 4.0, 1.0, 6.0, 3.0, 1.0, 4.0,
-    1.0, 62.0, 10.0, 1.0, -1.0, 3.0, 3.0, 0.0 };
+    1.0, 62.0, 10.0, 1.0, -1.0, 3.0, 3.0, 0.0, 1.0, 8.0 };
   EXPECT_TRUE(number_of_lakes == 1);
   EXPECT_TRUE(*lakes_as_array == *expected_lakes_as_array);
   EXPECT_TRUE(field<bool>(lake_mask,fine_grid_params) ==
               field<bool>(expected_lake_mask,fine_grid_params));
+  delete lakes_as_array;
+  delete expected_lakes_as_array;
+  delete fine_grid_params;
+  delete[] coarse_catchment_nums_in;
+  delete[] corrected_orography_in;
+  delete[] raw_orography_in;
+  delete[] minima_in;
+  delete[] prior_fine_rdirs_in;
+  delete[] prior_fine_catchments_in;
+  delete[] expected_lake_mask;
+  delete[] cell_areas_in;
+  delete[] landsea_in;
+  delete[] lake_mask;
+  delete[] lake_numbers;
+  delete[] sinkless_rdirs;
 }
 
 TEST_F(BasinEvaluationTest,BasinEvaluationSingleLakeThree) {
@@ -402,14 +447,29 @@ TEST_F(BasinEvaluationTest,BasinEvaluationSingleLakeThree) {
        false, false, false, false, false, false, false, false, false };
   //Minor ordering changes compared to python version
   vector<double>* expected_lakes_as_array = new vector<double> {
-    1.0, 51.0, 1.0, -1.0, 0.0, 3.0, 3.0, 8.0, 3.0, 3.0, 1.0, 0.0, 2.0, 4.0, 4.0,
+    1.0, 53.0, 1.0, -1.0, 0.0, 3.0, 3.0, 8.0, 3.0, 3.0, 1.0, 0.0, 2.0, 4.0, 4.0,
     1.0, 0.0, 2.0, 3.0, 4.0, 1.0, 0.0, 2.0, 4.0, 3.0, 1.0, 0.0, 2.0, 5.0, 4.0,
     1.0, 0.0, 2.0, 5.0, 3.0, 1.0, 172800.0, 5.0, 2.0, 4.0, 1.0, 172800.0, 5.0, 1.0, 4.0,
-    1.0, 432000.0, 8.375, 1.0, -1.0, 1.0, 2.0, 0.0 };
+    1.0, 432000.0, 8.375, 1.0, -1.0, 1.0, 2.0, 0.0, 2.0, 76800.0 };
   EXPECT_TRUE(number_of_lakes == 1);
   EXPECT_TRUE(*lakes_as_array == *expected_lakes_as_array);
   EXPECT_TRUE(field<bool>(lake_mask,fine_grid_params) ==
               field<bool>(expected_lake_mask,fine_grid_params));
+  delete lakes_as_array;
+  delete expected_lakes_as_array;
+  delete fine_grid_params;
+  delete[] coarse_catchment_nums_in;
+  delete[] corrected_orography_in;
+  delete[] raw_orography_in;
+  delete[] minima_in;
+  delete[] prior_fine_rdirs_in;
+  delete[] prior_fine_catchments_in;
+  delete[] expected_lake_mask;
+  delete[] cell_areas_in;
+  delete[] landsea_in;
+  delete[] lake_mask;
+  delete[] lake_numbers;
+  delete[] sinkless_rdirs;
 }
 
 TEST_F(BasinEvaluationTest,BasinEvaluationSingleLakeFour) {
@@ -637,7 +697,7 @@ TEST_F(BasinEvaluationTest,BasinEvaluationSingleLakeFour) {
   //but thresholds and outflows are the same
   //Checked and cells in each lake are also the same
   vector<double>* expected_lakes_as_array = new vector<double> {
-    1.0, 1481.0, 1.0, -1.0, 0.0, 10.0, 11.0, 294.0, 10.0, 11.0, 1.0, 0.0, 1.0, 11.0, 12.0,
+    1.0, 1483.0, 1.0, -1.0, 0.0, 10.0, 11.0, 294.0, 10.0, 11.0, 1.0, 0.0, 1.0, 11.0, 12.0,
     1.0, 0.0, 1.0, 10.0, 12.0, 1.0, 0.0, 1.0, 9.0, 12.0, 1.0, 0.0, 1.0, 11.0, 11.0,
     1.0, 0.0, 1.0, 9.0, 11.0, 1.0, 0.0, 1.0, 11.0, 10.0, 1.0, 0.0, 1.0, 10.0, 10.0,
     1.0, 0.0, 1.0, 9.0, 10.0, 1.0, 0.0, 1.0, 12.0, 13.0, 1.0, 0.0, 1.0, 11.0, 13.0,
@@ -735,11 +795,26 @@ TEST_F(BasinEvaluationTest,BasinEvaluationSingleLakeFour) {
     1.0, 208.0, 2.0, 19.0, 11.0, 1.0, 208.0, 2.0, 19.0, 10.0, 1.0, 208.0, 2.0, 19.0, 9.0,
     1.0, 208.0, 2.0, 19.0, 8.0, 1.0, 208.0, 2.0, 19.0, 7.0, 1.0, 208.0, 2.0, 19.0, 6.0,
     1.0, 208.0, 2.0, 19.0, 5.0, 1.0, 208.0, 2.0, 19.0, 4.0, 1.0, 208.0, 2.0, 19.0, 3.0,
-    1.0, 208.0, 2.0, 2.0, 2.0, 1.0, 502.0, 3.0, 1.0, -1.0, 4.0, 4.0, 0.0 };
+    1.0, 208.0, 2.0, 2.0, 2.0, 1.0, 502.0, 3.0, 1.0, -1.0, 4.0, 4.0, 0.0, 1.0, 294.0 };
   EXPECT_TRUE(number_of_lakes == 1);
   EXPECT_TRUE(*lakes_as_array == *expected_lakes_as_array);
   EXPECT_TRUE(field<bool>(lake_mask,fine_grid_params) ==
               field<bool>(expected_lake_mask,fine_grid_params));
+  delete lakes_as_array;
+  delete expected_lakes_as_array;
+  delete fine_grid_params;
+  delete[] coarse_catchment_nums_in;
+  delete[] corrected_orography_in;
+  delete[] raw_orography_in;
+  delete[] minima_in;
+  delete[] prior_fine_rdirs_in;
+  delete[] prior_fine_catchments_in;
+  delete[] expected_lake_mask;
+  delete[] cell_areas_in;
+  delete[] landsea_in;
+  delete[] lake_mask;
+  delete[] lake_numbers;
+  delete[] sinkless_rdirs;
 }
 
 TEST_F(BasinEvaluationTest,EvaluateBasinsOne) {
