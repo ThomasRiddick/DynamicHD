@@ -112,11 +112,11 @@ class BasinEvaluationTests(unittest.TestCase):
       [False, False, False, False, False, False],
       [False, False, False, False, False, False]])
     expected_lakes_as_array = \
-      [1.0, 66.0, 1.0, -1.0, 0.0, 4.0, 3.0, 11.0, 4.0, 3.0, 1.0, 0.0, 5.0, 4.0, 4.0,
+      [1.0, 68.0, 1.0, -1.0, 0.0, 4.0, 3.0, 11.0, 4.0, 3.0, 1.0, 0.0, 5.0, 4.0, 4.0,
        1.0, 0.0, 5.0, 3.0, 4.0, 1.0, 0.0, 5.0, 3.0, 3.0, 1.0, 0.0, 5.0, 2.0, 5.0,
        1.0, 5.0, 6.0, 4.0, 5.0, 1.0, 5.0, 6.0, 3.0, 5.0, 1.0, 12.0, 7.0, 3.0, 2.0,
        1.0, 12.0, 7.0, 4.0, 2.0, 1.0, 21.0, 8.0, 2.0, 3.0, 1.0, 21.0, 8.0, 2.0, 4.0,
-       1.0, 43.0, 10.0, 1.0, -1.0, 3.0, 3.0, 0.0]
+       1.0, 43.0, 10.0, 1.0, -1.0, 3.0, 3.0, 0.0, 5.0, 11.0]
     self.assertEqual(output["number_of_lakes"],1)
     self.assertEqual(output["lakes_as_array"],expected_lakes_as_array)
     np.testing.assert_array_equal(output["lake_mask"],expected_lake_mask)
@@ -187,13 +187,13 @@ class BasinEvaluationTests(unittest.TestCase):
        [False, False, False, False, False, False],
        [False, False, False, False, False, False]])
     expected_lakes_as_array = \
-    [3.0, 21.0, 1.0, 3.0, 0.0, 4.0, 5.0, 2.0, 4.0, 5.0, 1.0, 0.0, 5.0, 3.0, 5.0,
-     1.0, 6.0, 8.0, 1.0, 2.0, 2.0, 2.0, 0.0, 26.0, 2.0, 3.0, 0.0, 4.0, 2.0, 3.0,
-     4.0, 2.0, 1.0, 0.0, 5.0, 3.0, 2.0, 1.0, 2.0, 6.0, 4.0, 3.0, 1.0, 8.0, 8.0,
-     1.0, 1.0, -1.0, -1.0, 1.0, 43.0, 3.0, -1.0, 2.0, 1.0, 2.0, 4.0, 5.0, 6.0, 4.0,
-     5.0, 1.0, 0.0, 8.0, 3.0, 5.0, 1.0, 0.0, 8.0, 4.0, 4.0, 1.0, 0.0, 8.0, 4.0,
-     3.0, 1.0, 0.0, 8.0, 4.0, 2.0, 1.0, 0.0, 8.0, 3.0, 2.0, 1.0, 12.0, 10.0, 1.0,
-     -1.0, 3.0, 3.0, 0.0]
+    [3.0, 23.0, 1.0, 3.0, 0.0, 4.0, 5.0, 2.0, 4.0, 5.0, 1.0, 0.0, 5.0, 3.0, 5.0,
+     1.0, 6.0, 8.0, 1.0, 2.0, 2.0, 2.0, 0.0, 5.0, 2.0, 28.0, 2.0, 3.0, 0.0, 4.0,
+     2.0, 3.0, 4.0, 2.0, 1.0, 0.0, 5.0, 3.0, 2.0, 1.0, 2.0, 6.0, 4.0, 3.0, 1.0,
+     8.0, 8.0, 1.0, 1.0, -1.0, -1.0, 1.0, 5.0, 3.0, 45.0, 3.0, -1.0, 2.0, 1.0, 2.0,
+     4.0, 5.0, 6.0, 4.0, 5.0, 1.0, 0.0, 8.0, 3.0, 5.0, 1.0, 0.0, 8.0, 4.0, 4.0,
+     1.0, 0.0, 8.0, 4.0, 3.0, 1.0, 0.0, 8.0, 4.0, 2.0, 1.0, 0.0, 8.0, 3.0, 2.0,
+     1.0, 12.0, 10.0, 1.0, -1.0, 3.0, 3.0, 0.0, 8.0, 6.0]
     self.assertEqual(output["number_of_lakes"],3)
     self.assertEqual(output["lakes_as_array"],expected_lakes_as_array)
     np.testing.assert_array_equal(output["lake_mask"],expected_lake_mask)
@@ -281,10 +281,10 @@ class BasinEvaluationTests(unittest.TestCase):
        [False, False, False, False, False, False, False, False, False],
        [False, False, False, False, False, False, False, False, False]])
     expected_lakes_as_array = \
-      [1.0, 51.0, 1.0, -1.0, 0.0, 3.0, 3.0, 8.0, 3.0, 3.0, 1.0, 1.0, 2.0, 4.0, 4.0,
+      [1.0, 53.0, 1.0, -1.0, 0.0, 3.0, 3.0, 8.0, 3.0, 3.0, 1.0, 1.0, 2.0, 4.0, 4.0,
        1.0, 1.0, 2.0, 4.0, 3.0, 1.0, 1.0, 2.0, 5.0, 3.0, 1.0, 1.0, 2.0, 5.0, 4.0,
        1.0, 6.0, 3.0, 2.0, 4.0, 1.0, 6.0, 3.0, 3.0, 4.0, 1.0, 6.0, 3.0, 1.0, 4.0,
-       1.0, 62.0, 10.0, 1.0, -1.0, 3.0, 3.0, 0.0]
+       1.0, 62.0, 10.0, 1.0, -1.0, 3.0, 3.0, 0.0, 1.0, 8.0]
     self.assertEqual(output["number_of_lakes"],1)
     self.assertEqual(output["lakes_as_array"],expected_lakes_as_array)
     np.testing.assert_array_equal(output["lake_mask"],expected_lake_mask)
@@ -372,12 +372,10 @@ class BasinEvaluationTests(unittest.TestCase):
        [False, False, False, False, False, False, False, False, False],
        [False, False, False, False, False, False, False, False, False]])
     expected_lakes_as_array = \
-      [1.0, 51.0, 1.0, -1.0, 0.0, 3.0, 3.0, 8.0, 3.0, 3.0, 1.0, 0.0, 2.0, 4.0, 4.0,
+      [1.0, 53.0, 1.0, -1.0, 0.0, 3.0, 3.0, 8.0, 3.0, 3.0, 1.0, 0.0, 2.0, 4.0, 4.0,
        1.0, 0.0, 2.0, 3.0, 4.0, 1.0, 0.0, 2.0, 5.0, 3.0, 1.0, 0.0, 2.0, 4.0, 3.0,
        1.0, 0.0, 2.0, 5.0, 4.0, 1.0, 172800.0, 5.0, 2.0, 4.0, 1.0, 172800.0, 5.0, 1.0, 4.0,
-       1.0, 432000.0, 8.375, 1.0, -1.0, 1.0, 2.0, 0.0]
-    self.assertEqual(output["number_of_lakes"],1)
-    self.assertEqual(output["lakes_as_array"],expected_lakes_as_array)
+       1.0, 432000.0, 8.375, 1.0, -1.0, 1.0, 2.0, 0.0, 2.0, 76800.0]
     np.testing.assert_array_equal(output["lake_mask"],expected_lake_mask)
 
   def testBasinEvaluationSingleLakeFour(self):
@@ -589,7 +587,7 @@ class BasinEvaluationTests(unittest.TestCase):
         False, False, False, False, False, False, False, False, False,
         False, False]])
     expected_lakes_as_array = \
-      [1.0, 1481.0, 1.0, -1.0, 0.0, 10.0, 11.0, 294.0, 10.0, 11.0, 1.0, 0.0, 1.0, 11.0, 12.0,
+      [1.0, 1483.0, 1.0, -1.0, 0.0, 10.0, 11.0, 294.0, 10.0, 11.0, 1.0, 0.0, 1.0, 11.0, 12.0,
        1.0, 0.0, 1.0, 9.0, 12.0, 1.0, 0.0, 1.0, 10.0, 10.0, 1.0, 0.0, 1.0, 12.0, 11.0,
        1.0, 0.0, 1.0, 11.0, 10.0, 1.0, 0.0, 1.0, 8.0, 12.0, 1.0, 0.0, 1.0, 11.0, 9.0,
        1.0, 0.0, 1.0, 9.0, 9.0, 1.0, 0.0, 1.0, 12.0, 10.0, 1.0, 0.0, 1.0, 12.0, 9.0,
@@ -687,7 +685,7 @@ class BasinEvaluationTests(unittest.TestCase):
        1.0, 208.0, 2.0, 2.0, 18.0, 1.0, 208.0, 2.0, 5.0, 19.0, 1.0, 208.0, 2.0, 18.0, 11.0,
        1.0, 208.0, 2.0, 6.0, 2.0, 1.0, 208.0, 2.0, 19.0, 8.0, 1.0, 208.0, 2.0, 2.0, 9.0,
        1.0, 208.0, 2.0, 18.0, 3.0, 1.0, 208.0, 2.0, 10.0, 2.0, 1.0, 208.0, 2.0, 2.0, 10.0,
-       1.0, 208.0, 2.0, 12.0, 2.0, 1.0, 502.0, 3.0, 1.0, -1.0, 4.0, 4.0, 0.0]
+       1.0, 208.0, 2.0, 12.0, 2.0, 1.0, 502.0, 3.0, 1.0, -1.0, 4.0, 4.0, 0.0, 1.0, 294.0]
     self.assertEqual(output["number_of_lakes"],1)
     self.assertEqual(output["lakes_as_array"],expected_lakes_as_array)
     np.testing.assert_array_equal(output["lake_mask"],expected_lake_mask)
