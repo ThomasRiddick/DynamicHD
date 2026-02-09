@@ -56,7 +56,10 @@ if [[ $# -ne 14 ]]; then
 fi
 
 #Check the arguments have the correct file extensions
-if ! [[ ${input_orography_filepath##*.} == "nc" ]] || ! [[ ${input_orography_filepath##*.} == "nc" ]] || ! [[ ${present_day_base_orography_filepath##*.} == "nc" ]] || ! [[ ${glacier_mask_filepath##*.} == "nc" ]] ; then
+if ! [[ ${input_orography_filepath##*.} == "nc" ]] || \
+   ! [[ ${input_ls_mask_filepath##*.} == "nc" ]] || \
+   ! [[ ${present_day_base_orography_filepath##*.} == "nc" ]] || \
+   ! [[ ${glacier_mask_filepath##*.} == "nc" ]] ; then
   echo "One or more input files has the wrong file extension" 1>&2
   exit 1
 fi
@@ -89,7 +92,7 @@ output_lakepara_filepath=$(find_abs_path $output_lakepara_filepath)
 output_hdstart_filepath=$(find_abs_path $output_hdstart_filepath)
 output_lakestart_filepath=$(find_abs_path $output_lakestart_filepath)
 output_binary_lake_mask_filepath=$(find_abs_path $output_binary_lake_mask_filepath)
-if [[ -z ${additional_corrections_list_filepath} ]]; then
+if [[ -n ${additional_corrections_list_filepath} ]]; then
   additional_corrections_list_filepath=$(find_abs_path $additional_corrections_list_filepath)
 fi
 
@@ -150,7 +153,7 @@ if ! [[ -d ${output_binary_lake_mask_filepath%/*} ]]; then
   exit 1
 fi
 
-if [[ -z ${additional_corrections_list_filepath} ]] &&
+if [[ -n ${additional_corrections_list_filepath} ]] &&
    ! [[ -e ${additional_corrections_list_filepath} ]]; then
     echo "Additional corrections file doesn't exist"
     exit 1
@@ -321,7 +324,7 @@ export LD_LIBRARY_PATH="${HOME}/sw-spack/netcdf-cxx4-4.3.1-d54zya/lib":"${HOME}/
 ${source_directory}/Dynamic_HD_bash_scripts/compile_dynamic_hd_code.sh ${compilation_required} false ${source_directory} ${working_directory} true
 
 output_hdstart_argument="-s ${output_hdstart_filepath}"
-if [[ -z ${additional_corrections_list_filepath} ]]; then
+if [[ -n ${additional_corrections_list_filepath} ]]; then
 additional_corrections_list_argument="-a ${additional_corrections_list_filepath}"
 else
 additional_corrections_list_argument=""
@@ -365,4 +368,4 @@ rm -f 30minute_ls_mask.dat 30minute_filled_orog.dat 30minute_river_dirs.dat || t
 
 #Delete other files
 rm -f catchments.log loops_10min.log loops_30min.log 30minute_filled_orog_temp.nc
-rm -f 30minute_river_dirs_temp.nc 30minute_ls_mask_temp.nc hdpara_out_temp.nc .nc
+rm -f 30minute_river_dirs_temp.nc 30minute_ls_mask_temp.nc hdpara_out_temp.nc
