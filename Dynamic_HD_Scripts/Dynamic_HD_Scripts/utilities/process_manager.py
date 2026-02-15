@@ -18,11 +18,11 @@ def using_mpi():
     else:
         return False
 
-class MPICommands(object):
+class MPICommands:
     EXIT = 0
     RUNCOTATPLUS = 1
 
-class ProcessManager(object):
+class ProcessManager:
 
     def __init__(self,comm):
         self.comm = comm

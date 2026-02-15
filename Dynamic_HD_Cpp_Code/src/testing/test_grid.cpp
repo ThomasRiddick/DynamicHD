@@ -281,7 +281,6 @@ TEST_F(GridParamsTest,TestSecondaryNeighborGeneration){
   };
   int* secondary_neighbors = nullptr;
   auto grid_pars_obj = icon_single_index_grid_params(80,cell_neighbors,true,secondary_neighbors);
-  grid_pars_obj.icon_single_index_grid_calculate_secondary_neighbors();
   secondary_neighbors = grid_pars_obj.get_secondary_neighboring_cell_indices();
   for (auto i =0; i < 80*9; i++){
     EXPECT_EQ(secondary_neighbors[i],secondary_neighbors_expected_out[i]);

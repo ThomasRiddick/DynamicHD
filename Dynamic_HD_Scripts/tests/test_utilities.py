@@ -8,6 +8,7 @@ Created on May 2, 2016
 import unittest
 import numpy as np
 import os
+import os.path as path
 from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.base import field
 from Dynamic_HD_Scripts.utilities import utilities
@@ -235,6 +236,137 @@ class TestOrogCorrectionFieldCreationAndApplication(unittest.TestCase):
         np.testing.assert_array_equal(corrs_in_file.get_data(), self.corrected_field_input,
                                       "Generating then applying an orography correction field doesn't produce"
                                       " expected result")
+
+class TestDateBasedSillHeightCorrections(unittest.TestCase):
+    """Test date based sill height corrections for a simple test grid"""
+
+    temporary_correction_file = path.join(data_dir,"temp",
+                                          "sillbasedcorrstest.txt")
+
+    def setUp(self):
+        """Unit test setup. Creates a temporary directory for results if necessary"""
+        #create files
+        if False:
+            self.directory = os.path.expanduser('~')+ '/temp'
+        else:
+            self.directory = data_dir + '/temp'
+        try:
+            os.stat(self.directory)
+        except:
+            os.mkdir(self.directory)
+
+
+    def testDateBasedSillHeightCorrections(self):
+        orography = np.array([[5.0,5.0,5.0,5.0,5.0],
+                              [5.0,5.0,5.0,5.0,5.0],
+                              [5.0,5.0,5.0,5.0,5.0],
+                              [5.0,5.0,5.0,5.0,5.0],
+                              [5.0,5.0,5.0,5.0,5.0]])
+        expected_results = [
+            #9000
+            np.array([[5.0,5.0,5.0,5.0,5.0],
+                      [5.0,5.0,5.0,5.0,5.0],
+                      [5.0,5.0,5.0,5.0,5.0],
+                      [5.0,5.0,5.0,5.0,5.0],
+                      [5.0,5.0,5.0,5.0,5.0]]),
+            #10000
+            np.array([[5.0,5.0,5.0,5.0,5.0],
+                      [5.0,5.0,5.0,5.0,5.0],
+                      [5.0,5.0,5.0,5.0,5.0],
+                      [5.0,5.0,5.0,5.0,5.0],
+                      [5.0,5.0,5.0,5.0,5.0]]),
+            #14000
+            np.array([[5.0, 5.0,5.0,5.0,5.0],
+                      [5.0,30.0,5.0,5.0,5.0],
+                      [5.0, 5.0,5.0,5.0,5.0],
+                      [5.0, 5.0,5.0,5.0,5.0],
+                      [5.0, 5.0,5.0,5.0,5.0]]),
+            #15000
+            np.array([[5.0, 5.0,5.0,5.0,5.0],
+                      [5.0,30.0,5.0,5.0,5.0],
+                      [5.0, 5.0,5.0,5.0,5.0],
+                      [5.0, 5.0,5.0,5.0,5.0],
+                      [5.0, 5.0,5.0,5.0,5.0]]),
+            #16000
+            np.array([[5.0, 5.0,  5.0,5.0,5.0],
+                      [5.0,30.0, 40.0,5.0,5.0],
+                      [5.0, 5.0,  5.0,5.0,5.0],
+                      [5.0, 5.0,242.0,5.0,5.0],
+                      [5.0, 5.0,  5.0,5.0,5.0]]),
+            #16500
+            np.array([[5.0, 5.0,  5.0,5.0,5.0],
+                      [5.0,30.0, 40.0,5.0,5.0],
+                      [5.0, 5.0,  5.0,5.0,5.0],
+                      [5.0, 5.0,242.0,5.0,5.0],
+                      [5.0, 5.0,  5.0,5.0,5.0]]),
+            #17000
+            np.array([[5.0, 5.0,  5.0,5.0,5.0],
+                      [5.0,30.0, 40.0,5.0,5.0],
+                      [5.0, 5.0,  5.0,5.0,5.0],
+                      [5.0, 5.0,242.0,5.0,5.0],
+                      [5.0, 5.0,  5.0,5.0,5.0]]),
+            #17500
+            np.array([[5.0, 5.0,  5.0,5.0,5.0],
+                      [5.0,30.0, 77.0,5.0,5.0],
+                      [5.0, 5.0,  5.0,5.0,5.0],
+                      [5.0, 5.0,480.0,5.0,5.0],
+                      [5.0, 5.0,  5.0,5.0,5.0]]),
+            #18000
+            np.array([[5.0, 5.0,  5.0,5.0,5.0],
+                      [5.0,30.0, 77.0,5.0,5.0],
+                      [5.0, 5.0,  5.0,5.0,5.0],
+                      [5.0, 5.0,480.0,5.0,5.0],
+                      [5.0, 5.0,  5.0,5.0,5.0]]),
+            #18500
+            np.array([[5.0, 5.0,  5.0,5.0,5.0],
+                      [5.0,30.0,116.0,5.0,5.0],
+                      [5.0, 5.0,  5.0,5.0,5.0],
+                      [5.0, 5.0,480.0,5.0,5.0],
+                      [5.0, 5.0,  5.0,5.0,5.0]]),
+            #19000
+            np.array([[5.0, 5.0,  5.0,5.0,5.0],
+                      [5.0,30.0,116.0,5.0,5.0],
+                      [5.0, 5.0,  5.0,5.0,5.0],
+                      [5.0, 5.0,480.0,5.0,5.0],
+                      [5.0, 5.0,  5.0,5.0,5.0]]),
+            #20000
+            np.array([[5.0, 5.0,  5.0,5.0,5.0],
+                      [5.0,30.0,116.0,5.0,5.0],
+                      [5.0, 5.0,  5.0,5.0,5.0],
+                      [5.0, 5.0,481.0,5.0,5.0],
+                      [5.0, 5.0,  5.0,5.0,5.0]]),]
+        try:
+            corrections = """# additive_condensed
+                             1,1,10000,25.0
+                             1,2,15000,35.0
+                             1,2,17000,37.0
+                             1,2,18000,39.0
+                             3,2,15000,237.0
+                             3,2,17000,238.0
+                             3,2,19000,1.0
+                             """
+            with open(self.temporary_correction_file,"w") as f:
+                f.writelines(corrections)
+            for date,expected_result in \
+                zip([9000,10000,14000,15000,16000,16500,17000,17500,18000,18500,19000,
+                     20000],expected_results):
+                orography_field = field.makeField(np.copy(orography),
+                                                  field_type='Orography',
+                                                  grid_type='LatLong',
+                                                  nlat=5,nlong=5)
+                utilities.\
+                apply_date_based_sill_height_corrections(orography_field=
+                                                         orography_field,
+                                                         date_based_sill_height_corrections_list_filename=
+                                                         self.temporary_correction_file,
+                                                         current_date=date)
+                np.testing.assert_array_equal(orography_field.get_data(),
+                                              expected_result,
+                                              f'Results for date based sill height '
+                                              f'correction for {date} not as expected')
+        finally:
+            os.remove(self.temporary_correction_file)
+
 
 class TestIntelligentBurning(unittest.TestCase):
     """Object containing a set of unit tests for the intelligent burning utility function"""

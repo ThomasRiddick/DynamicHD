@@ -20,7 +20,7 @@ from Dynamic_HD_Scripts.utilities.process_manager import using_mpi
 from Dynamic_HD_Scripts.context import shared_object_path, bin_path,build_path
 from sys import platform
 
-class f2py_manager(object):
+class f2py_manager:
     """Manages a f2py fortran module.
 
     Public methods:
@@ -71,7 +71,7 @@ class f2py_manager(object):
             raise RuntimeError("Fortran file {0} does not exist".format(self.fortran_file_name))
         self.fortran_module_name = os.path.basename(self.fortran_file_name).split('.')[0]
         if sys.platform == "darwin":
-            cython_extension = '.cpython-39-darwin.so'
+            cython_extension = '.cpython-311-darwin.so'
         else:
             cython_extension = ".cpython-{0}{1}-x86_64-linux-gnu.so".format(sys.version_info.major,
                                                                             sys.version_info.minor)

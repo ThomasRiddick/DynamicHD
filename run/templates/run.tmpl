@@ -1,0 +1,99 @@
+{%- extends "base.tmpl" -%}
+{%- import "components.tmpl" as components with context -%}
+
+{%- block slurm_headers -%}
+{{ components.slurm_headers() }}
+{%- endblock -%}
+
+{%- block user_commands_start -%}
+{{ input.user_commands_start }}
+{%- endblock %}
+
+{% block set_variables_pre_user_input -%}
+{{ components.set_variables_pre_user_input() }}
+{%- endblock -%}
+
+{%- block user_commands_pre_user_input -%}
+{{ input.user_commands_pre_user_input }}
+{%- endblock -%}
+
+{%- block icon_atmo_grid_res -%}
+#Can't be changed here - regenerate runscript to change this
+#icon_atmo_grid_res={{ input.icon_atmo_grid_res }}
+{%- endblock -%}
+
+{% block method_to_use %}
+#Can't be changed here - regenerate runscript to change this
+#method_to_use={{ input.method_to_use }}
+{%- endblock -%}
+
+{% block set_fixed_inputs %}
+#Do not change this here - this variable was already used
+#to determine the structure of the script - instead regenerate
+#this run script from the config file to change this variable
+icon_atmo_grid_res={{ input.icon_atmo_grid_res }}
+{%- endblock %}
+
+{%- block validate_inputs -%}
+{{ components.validate_inputs() }}
+{%- endblock -%}
+
+{%- block user_commands_pre_create_project -%}
+{%- if input.create_project_at_runtime -%}
+{{ input.user_commands_pre_create_project }}
+{%- endif -%}
+{%- endblock -%}
+
+{%- block create_project -%}
+{%- if input.create_project_at_runtime -%}
+{{ components.create_project_dirs() }}
+{%- endif -%}
+{%- endblock -%}
+
+{%- block user_commands_post_create_project -%}
+{%- if input.create_project_at_runtime -%}
+{{ input.user_commands_post_create_project }}
+{%- endif -%}
+{%- endblock -%}
+
+{%- block set_variables_post_user_input -%}
+{{ components.set_variables_post_user_input() }}
+{%- endblock -%}
+
+{%- block user_commands_pre_preproc -%}
+{{ input.user_commands_pre_preproc }}
+{%- endblock -%}
+
+{%- block preprocessing %}
+{{ components.preprocessing() }}
+{% endblock -%}
+
+{%- block user_commands_pre_run -%}
+{{ input.user_commands_pre_run }}
+{%- endblock -%}
+
+{% block run -%}
+{{ components.run() }}
+{%- endblock -%}
+
+{% block user_commands_post_run %}
+{{ input.user_commands_post_run }}
+{%- endblock -%}
+
+{%- block postprocessing -%}
+# Post Processing
+{{ components.postprocessing() }}
+{%- endblock -%}
+
+{%- block user_commands_pre_clean -%}
+{{ input.user_commands_pre_clean }}
+{%- endblock %}
+
+{% block clean_up %}
+# Clean-up
+echo "Post run clean-up not yet implemented!"
+{%- endblock -%}
+
+{%- block user_commands_end -%}
+{{ input.user_commands_end }}
+{%- endblock -%}

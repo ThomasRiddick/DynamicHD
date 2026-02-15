@@ -1,13 +1,16 @@
 #!/bin/bash
 set -e
-
-echo "Running Version 1.3 of the ICON HD Parameters Generation Code"
+cd $(dirname ${0})
+version=$(git describe --match 'icon_hd_tools_version_*')
+export VS=${version}
+cd -
+echo "Running Version ${version} of the ICON HD Parameters Generation Code"
 
 #Define module loading function
 function load_module
 {
 module_name=$1
-if [[ $(hostname -d) == "atos.local" ]]; then
+if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
 	module load ${module_name}
 else
 	eval "eval `/usr/bin/tclsh /sw/share/Modules-4.2.1/libexec/modulecmd.tcl bash load ${module_name}`"
@@ -40,9 +43,11 @@ config_filepath=${6}
 working_directory=${7}
 grid_file=${8}
 cotat_params_file=${9}
-compilation_required=${10:-true}
-true_sinks_filepath=${11}
-
+atmos_resolution=${10}
+compilation_required=${11:-true}
+use_hfrac=${12:-false}
+maxl_ls_mask_filepath=${13}
+true_sinks_filepath=${14}
 
 #Change first_timestep into a bash command for true or false
 shopt -s nocasematch
@@ -57,12 +62,12 @@ fi
 shopt -u nocasematch
 
 #Check number of arguments makes sense
-if [[ $# -ne 9 ]] && [[ $# -ne 10 ]] && [[ $# -ne 11 ]]; then
-	echo "Wrong number of positional arguments ($# supplied), script only takes 9, 10 or 11 arguments"	1>&2
+if [[ $# -ne 10 ]] && [[ $# -ne 11 ]] && [[ $# -ne 12 ]] && [[ $# -ne 13 ]] && [[ $# -ne 14 ]] ; then
+	echo "Wrong number of positional arguments ($# supplied), script only takes between 10 and 14 arguments"	1>&2
 	exit 1
 fi
 
-if [[ $# -eq 11 ]]; then
+if [[ $# -eq 14 ]]; then
 	use_truesinks=true
 else
 	use_truesinks=false
@@ -70,6 +75,11 @@ fi
 
 #Check the arguments have the correct file extensions
 if ! [[ ${input_orography_filepath##*.} == "nc" ]] || ! [[ ${input_ls_mask_filepath##*.} == "nc" ]] || ! [[ ${grid_file##*.} == "nc" ]] || ! [[ ${cotat_params_file##*.} == "nl" ]]; then
+	echo "One or more input files has the wrong file extension" 1>&2
+	exit 1
+fi
+
+if ${use_hfrac} && ! [[ ${maxl_ls_mask_filepath##*.} == "nc" ]]; then
 	echo "One or more input files has the wrong file extension" 1>&2
 	exit 1
 fi
@@ -99,10 +109,18 @@ output_catchments_filepath=$(find_abs_path $output_catchments_filepath)
 output_accumulated_flow_filepath=$(find_abs_path $output_accumulated_flow_filepath)
 grid_file=$(find_abs_path $grid_file)
 cotat_params_file=$(find_abs_path $cotat_params_file)
+if ${use_hfrac}; then
+	maxl_ls_mask_filepath=$(find_abs_path $maxl_ls_mask_filepath)
+fi
 
 #Check input files, ancillary data directory and diagnostic output directory exist
 
 if ! [[ -e $input_ls_mask_filepath ]] || ! [[ -e $input_orography_filepath ]] || ! [ -e $grid_file ] || ! [ -e $cotat_params_file ]; then
+	echo "One or more input files does not exist" 1>&2
+	exit 1
+fi
+
+if ${use_hfrac} && ! [[ -e $maxl_ls_mask_filepath ]]; then
 	echo "One or more input files does not exist" 1>&2
 	exit 1
 fi
@@ -191,13 +209,23 @@ if ! [[ -e $python_config_filepath ]]; then
 fi
 
 shopt -s nocasematch
-no_conda=${no_conda:-"false"}
-if [[ ${no_conda} == "true" ]] || [[ $no_conda == "t" ]]; then
-	no_conda=true
-elif [[ $no_conda == "false" ]] || [[ $no_conda == "f" ]]; then
-	no_conda=false
+no_env_gen=${no_env_gen:-"false"}
+if [[ $no_env_gen == "true" ]] || [[ $no_env_gen == "t" ]]; then
+        no_env_gen=true
+elif [[ $no_env_gen == "false" ]] || [[ $no_env_gen == "f" ]]; then
+        no_env_gen=false
 else
-	echo "Format of no_conda flag (${no_conda}) is unknown, please use True/False or T/F" 1>&2
+        echo "Format of no_env_gen flag (${no_env_gen}) is unknown, please use True/False or T/F" 1>&2
+        exit 1
+fi
+
+no_mamba=${no_mamba:-"false"}
+if [[ ${no_mamba} == "true" ]] || [[ $no_mamba == "t" ]]; then
+	no_mamba=true
+elif [[ $no_mamba == "false" ]] || [[ $no_mamba == "f" ]]; then
+	no_mamba=false
+else
+	echo "Format of no_mamba flag (${no_mamba}) is unknown, please use True/False or T/F" 1>&2
 	exit 1
 fi
 
@@ -224,10 +252,10 @@ cd ${working_directory}
 # 	compilation_required=false
 # fi
 
-#Setup conda environment
+#Setup mamba environment
 echo "Setting up environment"
 if ! $no_modules ; then
-  if [[ $(hostname -d) == "atos.local" ]]; then
+  if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
     		source /etc/profile
     		unload_module netcdf_c
       	unload_module imagemagick
@@ -238,33 +266,33 @@ if ! $no_modules ; then
 	fi
 fi
 
-export LD_LIBRARY_PATH="/sw/stretch-x64/netcdf/netcdf_fortran-4.4.4-gcc63/lib:/sw/stretch-x64/netcdf/netcdf_c-4.6.1/lib:/sw/stretch-x64/netcdf/netcdf_cxx-4.3.0-gccsys/lib:${LD_LIBRARY_PATH}"
-export LD_LIBRARY_PATH="/sw/spack-levante/netcdf-fortran-4.5.3-l2ulgp/lib":${LD_LIBRARY_PATH}
-export LD_LIBRARY_PATH=/Users/thomasriddick/anaconda3/pkgs/netcdf-cxx4-4.3.0-h703b707_9/lib:/Users/thomasriddick/anaconda3/lib:${LD_LIBRARY_PATH}
-export LD_LIBRARY_PATH="${HOME}/sw-spack/netcdf-cxx4-4.3.1-d54zya/lib":"${HOME}/sw-spack/netcdf-c-4.8.1-khy3ru/lib":${LD_LIBRARY_PATH}
 export DYLD_LIBRARY_PATH=$LD_LIBRARY_PATH:$DYLD_LIBRARY_PATH
 
-if ! $no_modules && ! $no_conda ; then
-	if [[ $(hostname -d) == "atos.local" ]]; then
+if ! $no_modules && ! $no_mamba ; then
+	if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
     load_module python3
-	else
-		load_module anaconda3
 	fi
 fi
 
-if ! $no_conda ; then
-	if $compilation_required && conda info -e | grep -q "dyhdenv3"; then
-		conda env remove --yes --name dyhdenv3
-	fi
-	if ! conda info -e | grep -q "dyhdenv3"; then
-		${source_directory}/Dynamic_HD_bash_scripts/regenerate_conda_environment.sh $no_modules
-	fi
-	source activate dyhdenv3
+if ! $no_mamba && ! $no_env_gen ; then
+  if $compilation_required && mamba info -e | grep -q "dyhdenv_mamba"; then
+    mamba env remove --yes --name dyhdenv_mamba
+  fi
+  if ! mamba info -e | grep -q "dyhdenv_mamba"; then
+    ${source_directory}/Dynamic_HD_bash_scripts/regenerate_mamba_environment.sh $no_modules
+  fi
+fi
+if ! $no_mamba ; then
+	#Reactivating mamba environment a second time can cause errors
+	#Mamba uses conda environmental variables
+	if ! [[ ${CONDA_DEFAULT_ENV} == "dyhdenv_mamba" ]]; then
+  	source activate dyhdenv_mamba
+  fi
 fi
 
 #Load a new version of gcc that doesn't have the polymorphic variable bug
 if ! $no_modules ; then
-  if [[ $(hostname -d) == "atos.local" ]]; then
+  if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
     load_module gcc/11.2.0-gcc-11.2.0
 	else
 		load_module gcc/6.3.0
@@ -276,7 +304,7 @@ if ! $no_modules ; then
 fi
 
 #Setup correct python path
-export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${PYTHONPATH}
+export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${source_directory}/lib:${PYTHONPATH}
 
 #Call compilation script
 ${source_directory}/Dynamic_HD_bash_scripts/compile_dynamic_hd_code.sh ${compilation_required} false ${source_directory} ${working_directory} false "tools_only"
@@ -296,6 +324,7 @@ rm -f ten_minute_accumulated_flow_temp.nc
 rm -f icon_intermediate_catchments.nc
 rm -f icon_intermediate_rdirs.nc
 rm -f icon_intermediate_catchments_loops_log.log
+rm -f icon_intermediate_accumulated_flow.nc
 rm -f zeros_temp.nc
 rm -f icon_final_rdirs.nc
 rm -f orography_filled.nc
@@ -310,9 +339,10 @@ ten_minute_orography_file_and_fieldname=$(python ${source_directory}/Dynamic_HD_
 ten_minute_orography_filepath=$(cut -d ' ' -f 1 <<< ${ten_minute_orography_file_and_fieldname})
 ten_minute_orography_fieldname=$(cut -d ' ' -f 2 <<< ${ten_minute_orography_file_and_fieldname})
 cell_numbers_filepath="cell_numbers_temp.nc"
-${source_directory}/Dynamic_HD_Fortran_Code/Release/LatLon_To_Icon_Cross_Grid_Mapper_Simple_Interface ${grid_file} ${ten_minute_orography_filepath} ${ten_minute_orography_fieldname} ${cell_numbers_filepath} "cell_index"
+drivers_path=${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/command_line_drivers
+python ${drivers_path}/cross_grid_mapper_latlon_to_icon_driver.py ${grid_file} ${ten_minute_orography_filepath} ${cell_numbers_filepath}
 echo "Downscaling Landsea Mask" 1>&2
-${source_directory}/Dynamic_HD_Fortran_Code/Release/Icon_To_LatLon_Landsea_Downscaler_Simple_Interface ${cell_numbers_filepath} ${input_ls_mask_filepath} downscaled_ls_mask_temp.nc "cell_index" "cell_sea_land_mask" "lsm"
+python ${drivers_path}/icon_to_latlon_landsea_downscaler_driver.py ${cell_numbers_filepath} ${input_ls_mask_filepath} downscaled_ls_mask_temp.nc "cell_numbers" "cell_sea_land_mask"
 cdo expr,'lsm=(!lsm)' downscaled_ls_mask_temp.nc downscaled_ls_mask_temp_inverted.nc
 echo "Generating Combined Hydrosheds and Corrected Data River Directions" 1>&2
 ten_minute_river_direction_filepath="ten_minute_river_direction_temp.nc"
@@ -320,6 +350,7 @@ ten_minute_catchments_filepath="ten_minute_catchments_temp.nc"
 ten_minute_accumulated_flow_filepath="ten_minute_accumulated_flow_temp.nc"
 icon_intermediate_catchments_filepath="icon_intermediate_catchments.nc"
 icon_intermediate_rdirs_filepath="icon_intermediate_rdirs.nc"
+icon_intermediate_accumulated_flow_filepath="icon_intermediate_accumulated_flow.nc"
 icon_final_filepath="icon_final_rdirs.nc"
 python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/command_line_drivers/create_icon_coarse_river_directions_driver.py ${true_sinks_argument} downscaled_ls_mask_temp_inverted.nc ${ten_minute_river_direction_filepath} ${ten_minute_catchments_filepath} ${ten_minute_accumulated_flow_filepath} ${python_config_filepath} ${working_directory}
 while [[ $(grep -c "[0-9]" "${ten_minute_catchments_filepath%%.nc}_loops.log") -ne 0 ]]; do
@@ -336,39 +367,28 @@ while [[ $(grep -c "[0-9]" "${ten_minute_catchments_filepath%%.nc}_loops.log") -
 	rm -f ten_minute_catchments_temp_loops.log
 	python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/command_line_drivers/create_icon_coarse_river_directions_driver.py -r ${ten_minute_river_direction_filepath} downscaled_ls_mask_temp_inverted.nc dummy.nc ${ten_minute_catchments_filepath} ${ten_minute_accumulated_flow_filepath} ${python_config_filepath} ${working_directory}
 done
- ${source_directory}/Dynamic_HD_Fortran_Code/Release/COTAT_Plus_LatLon_To_Icon_Fortran_Exec ${ten_minute_river_direction_filepath}  ${ten_minute_accumulated_flow_filepath} ${grid_file} ${icon_intermediate_rdirs_filepath} "rdirs" "acc" "rdirs" ${cotat_params_file}
-  ${source_directory}/Dynamic_HD_Cpp_Code/Release/Compute_Catchments_SI_Exec ${icon_intermediate_rdirs_filepath} ${icon_intermediate_catchments_filepath} ${grid_file} "rdirs" 1 ${icon_intermediate_catchments_filepath%%.nc}_loops_log.log 1
- 	cdo expr,"acc=(rdirs == -9999999)" ${icon_intermediate_rdirs_filepath} zeros_temp.nc
-  ${source_directory}/Dynamic_HD_Fortran_Code/Release/LatLon_To_Icon_Loop_Breaker_Fortran_Exec ${ten_minute_river_direction_filepath}  ${ten_minute_accumulated_flow_filepath} ${cell_numbers_filepath}  ${grid_file} ${icon_final_filepath} ${icon_intermediate_catchments_filepath} zeros_temp.nc ${icon_intermediate_rdirs_filepath}  "rdirs" "acc" "cell_index" "next_cell_index" "catchment" "acc" "rdirs"  ${icon_intermediate_catchments_filepath%%.nc}_loops_log.log
-  ${source_directory}/Dynamic_HD_Cpp_Code/Release/Compute_Catchments_SI_Exec ${icon_final_filepath} ${output_catchments_filepath} ${grid_file} "next_cell_index" 1 ${output_catchments_filepath%%.nc}_loops_log.log 1
-  ${source_directory}/Dynamic_HD_Fortran_Code/Release/Accumulate_Flow_Icon_Simple_Interface_Exec ${grid_file} ${icon_final_filepath} ${output_accumulated_flow_filepath} "next_cell_index" "acc"
-  rm -f paragen/area_dlat_dlon.txt
-  rm -f paragen/ddir.inp
-  rm -f paragen/hd_partab.txt
-  rm -f paragen/hd_up
-  rm -f paragen/hdpara_icon.nc
-  rm -f paragen/mo_read_icon_trafo.mod
-  rm -f paragen/paragen.inp
-  rm -f paragen/paragen_icon.mod
-  rm -f paragen/paragen_icon_driver
-  rmdir paragen || true
+python ${drivers_path}/cotat_plus_latlon_to_icon_driver.py ${ten_minute_river_direction_filepath}  ${ten_minute_accumulated_flow_filepath} ${grid_file} ${icon_intermediate_rdirs_filepath} "rdirs" "acc" ${cotat_params_file}
+python ${drivers_path}/compute_catchments_icon_driver.py --sort-catchments-by-size ${icon_intermediate_rdirs_filepath} ${icon_intermediate_catchments_filepath} ${grid_file} "next_cell_index" ${icon_intermediate_catchments_filepath%%.nc}_loops_log.log
+python ${drivers_path}/accumulate_flow_icon_driver.py ${grid_file} ${icon_intermediate_rdirs_filepath} ${icon_intermediate_accumulated_flow_filepath} "next_cell_index"
+python ${drivers_path}/latlon_to_icon_loop_breaker_driver.py ${ten_minute_accumulated_flow_filepath}  ${ten_minute_river_direction_filepath}  ${cell_numbers_filepath}  ${grid_file} ${icon_final_filepath} ${icon_intermediate_catchments_filepath} ${icon_intermediate_accumulated_flow_filepath} ${icon_intermediate_rdirs_filepath}  "rdirs" "acc" "cell_numbers" "catchment" "acc" "next_cell_index"  ${icon_intermediate_catchments_filepath%%.nc}_loops_log.log
+python ${drivers_path}/compute_catchments_icon_driver.py --sort-catchments-by-size ${icon_final_filepath} ${output_catchments_filepath} ${grid_file} "next_cell_index" ${output_catchments_filepath%%.nc}_loops_log.log
+python ${drivers_path}/accumulate_flow_icon_driver.py ${grid_file} ${icon_final_filepath} ${output_accumulated_flow_filepath} "next_cell_index"
+  rm -rf paragen
   mkdir paragen
   cp ${grid_file} grid_in_temp.nc
   cp ${input_ls_mask_filepath} mask_in_temp.nc
-  ${source_directory}/Dynamic_HD_Cpp_Code/Release/Fill_Sinks_Icon_SI_Exec ${input_orography_filepath} ${input_ls_mask_filepath} zeros_temp.nc orography_filled.nc ${grid_file} "z" "cell_sea_land_mask" "acc" 0 0 0.0 1 0
+  cdo expr,"acc=(next_cell_index == -9999999)" ${icon_intermediate_rdirs_filepath} zeros_temp.nc
+  python ${drivers_path}/sink_filling_icon_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} zeros_temp.nc orography_filled.nc ${grid_file} "z" "cell_sea_land_mask" "acc"
   ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/generate_icon_hd_file_driver.sh ${working_directory}/paragen ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran ${working_directory} grid_in_temp.nc mask_in_temp.nc ${icon_final_filepath}  orography_filled.nc
-${source_directory}/Dynamic_HD_bash_scripts/adjust_icon_k_parameters.sh  ${working_directory}/paragen/hdpara_icon.nc ${output_hdpara_filepath} "r2b4"
+${source_directory}/Dynamic_HD_bash_scripts/adjust_icon_k_parameters.sh  ${working_directory}/paragen/hdpara_icon.nc ${working_directory}/hdpara_adjusted_temp.nc ${atmos_resolution}
+if ! ${use_hfrac}; then
+	mv ${working_directory}/hdpara_adjusted_temp.nc ${output_hdpara_filepath}
+else
+ ${source_directory}/Dynamic_HD_bash_scripts/adjust_icon_hdpara_for_partial_ls.sh ${maxl_ls_mask_filepath}  ${input_ls_mask_filepath} ${working_directory}/hdpara_adjusted_temp.nc  ${output_hdpara_filepath} ${atmos_resolution}
+  rm -f hdpara_adjusted_temp.nc
+fi
   #Clean up temporary files
-  rm -f paragen/area_dlat_dlon.txt
-  rm -f paragen/ddir.inp
-  rm -f paragen/hd_partab.txt
-  rm -f paragen/hd_up
-  rm -f paragen/hdpara_icon.nc
-  rm -f paragen/mo_read_icon_trafo.mod
-  rm -f paragen/paragen.inp
-  rm -f paragen/paragen_icon.mod
-  rm -f paragen/paragen_icon_driver
-  rmdir paragen
+  rm -rf paragen
   rm -f downscaled_ls_mask_temp.nc
   rm -f downscaled_ls_mask_temp_inverted.nc
   rm -f grid_in_temp.nc
@@ -377,6 +397,7 @@ ${source_directory}/Dynamic_HD_bash_scripts/adjust_icon_k_parameters.sh  ${worki
   rm -f icon_intermediate_rdirs.nc
   rm -f icon_intermediate_catchments_loops_log.log
   rm -f icon_intermediate_catchments.nc
+  rm -f icon_intermediate_accumulated_flow.nc
   rm -f zeros_temp.nc
   rm -f icon_final_rdirs.nc
   rm -f cell_numbers_temp.nc

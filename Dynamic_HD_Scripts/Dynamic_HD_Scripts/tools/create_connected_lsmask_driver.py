@@ -10,8 +10,7 @@ Created on May 28, 2016
 import numpy as np
 import re
 from Dynamic_HD_Scripts.base import field
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import create_connected_lsmask_wrapper as cc_lsmask_wrapper #@UnresolvedImport
+import create_connected_lsmask_wrapper as cc_lsmask_wrapper #@UnresolvedImport
 from Dynamic_HD_Scripts.base import iodriver
 
 def advanced_connected_lsmask_creation_driver(input_lsmask_filename,

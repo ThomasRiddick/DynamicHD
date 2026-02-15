@@ -5,7 +5,26 @@ maxland_mask=${1}
 minland_mask=${2}
 input_hdpara=${3}
 output_hdpara=${4}
-average_alfk=${5}
+resolution=${5}
+
+if [[ ${resolution} == 'r2b8' ]]; then
+  average_alfk=4.82
+elif [[ ${resolution} == 'r2b3' ]]; then
+  average_alfk=98.0
+elif [[ ${resolution} == 'r2b4' ]]; then
+  average_alfk=45.3
+elif [[ ${resolution} == 'r2b5' ]]; then
+  average_alfk=25.0
+elif [[ ${resolution} == 'r2b6' ]]; then
+  average_alfk=19.0
+elif [[ ${resolution} == 'r2b7' ]]; then
+  average_alfk=10.12
+elif [[ ${resolution} == 'r2b10' ]]; then
+  average_alfk=1.1
+else
+  echo "Unrecognised resolution"
+  exit 1
+fi
 
 cdo sub ${maxland_mask} ${minland_mask} difference_in_masks.nc
 cdo merge difference_in_masks.nc ${input_hdpara} hdpara_temp.nc
@@ -16,7 +35,7 @@ cdo merge hdpara_temp_altered_int.nc hdpara_temp_altered_float.nc  hdpara_temp_a
 cdo chcode,-1,701,-2,702,-3,703,-4,706,-5,714 hdpara_temp_altered.nc hdpara_temp_altered_fixed_codes.nc
 cdo merge  hdpara_temp_unaltered.nc  hdpara_temp_altered_fixed_codes.nc hdpara_orig_order.nc
 cdo splitcode hdpara_orig_order.nc hdpara_split 
-cdo merge hdpara_split701.nc hdpara_split702.nc hdpara_split703.nc hdpara_split704.nc hdpara_split705.nc hdpara_split706.nc hdpara_split707.nc hdpara_split708.nc hdpara_split709.nc hdpara_split710.nc hdpara_split711.nc hdpara_split712.nc hdpara_split713.nc hdpara_split720.nc hdpara_split721.nc hdpara_split722.nc hdpara_split714.nc hdpara_split715.nc ${output_hdpara}
+cdo merge hdpara_split701.nc hdpara_split702.nc hdpara_split703.nc hdpara_split704.nc hdpara_split705.nc hdpara_split706.nc hdpara_split708.nc hdpara_split709.nc hdpara_split714.nc hdpara_split715.nc ${output_hdpara}
 rm difference_in_masks.nc
 rm hdpara_temp.nc
 rm hdpara_temp_altered_int.nc
@@ -25,4 +44,4 @@ rm hdpara_temp_altered_fixed_codes.nc
 rm hdpara_temp_altered.nc
 rm hdpara_temp_unaltered.nc
 rm hdpara_orig_order.nc
-rm hdpara_split701.nc hdpara_split702.nc hdpara_split703.nc hdpara_split704.nc hdpara_split705.nc hdpara_split706.nc hdpara_split707.nc hdpara_split708.nc hdpara_split709.nc hdpara_split710.nc hdpara_split711.nc hdpara_split712.nc hdpara_split713.nc hdpara_split720.nc hdpara_split721.nc hdpara_split722.nc hdpara_split714.nc hdpara_split715.nc
+rm hdpara_split701.nc hdpara_split702.nc hdpara_split703.nc hdpara_split704.nc hdpara_split705.nc hdpara_split706.nc hdpara_split708.nc hdpara_split709.nc hdpara_split714.nc hdpara_split715.nc

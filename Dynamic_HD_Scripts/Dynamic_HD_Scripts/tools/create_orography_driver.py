@@ -6,7 +6,7 @@ Created on May 23, 2020
 '''
 
 import numpy as np
-from Dynamic_HD_Scripts.interface.cpp_interface.libs import create_orography_wrapper
+import create_orography_wrapper
 from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.base import field
 

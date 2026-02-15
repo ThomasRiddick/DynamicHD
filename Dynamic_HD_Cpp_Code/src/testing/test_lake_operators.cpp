@@ -5438,25 +5438,25 @@ TEST_F(WaterRedistributionTest, WaterRedistributionTestOne){
   int coarse_nlat = 4;
   int coarse_nlon = 4;
   int* lake_numbers_in = new int[nlat*nlon] {
-    0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-    0,0,0,0, 0,0,0,9, 9,9,9,9, 9,9,9,0,
-    0,0,0,0, 3,3,0,0, 0,9,9,0, 0,0,9,0,
-    0,0,0,0, 3,0,3,0, 0,9,9,0, 0,0,0,0,
+    -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
+    -1,-1,-1,-1, -1,-1,-1,9, 9,9,9,9, 9,9,9,-1,
+    -1,-1,-1,-1, 3,3,-1,-1, -1,9,9,-1, -1,-1,9,-1,
+    -1,-1,-1,-1, 3,-1,3,-1, -1,9,9,-1, -1,-1,-1,-1,
 //
-    0,0,0,3, 1,0,0,0, 0,0,0,0, 0,0,0,1,
-    0,0,15,0, 0,0,0,0, 0,0,4,0, 0,0,1,0,
-    15,15,0,0, 0,0,0,0, 0,4,0,0, 0,0,0,0,
-    15,15,0,0, 0,0,0,0, 0,4,4,0, 0,0,0,0,
+    -1,-1,-1,3, 1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,1,
+    -1,-1,15,-1, -1,-1,-1,-1, -1,-1,4,-1, -1,-1,1,-1,
+    15,15,-1,-1, -1,-1,-1,-1, -1,4,-1,-1, -1,-1,-1,-1,
+    15,15,-1,-1, -1,-1,-1,-1, -1,4,4,-1, -1,-1,-1,-1,
 //
-    0,0,2,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-    2,2,2,0, 0,0,0,0, 0,0,0,0, 0,0,0,2,
-    0,0,2,2, 2,0,0,0, 0,0,0,0, 0,2,2,2,
-    0,0,0,0, 0,0,0,0, 0,0,7,0, 0,0,0,0,
+    -1,-1,2,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
+    2,2,2,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,2,
+    -1,-1,2,2, 2,-1,-1,-1, -1,-1,-1,-1, -1,2,2,2,
+    -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,7,-1, -1,-1,-1,-1,
 //
-    0,0,0,0, 0,0,0,0, 0,0,7,0, 0,0,0,1,
-    0,0,0,12, 0,0,0,0, 0,0,7,0, 0,1,1,0,
-    0,0,0,12, 12,0,0,0, 0,0,0,0, 0,0,0,0,
-    0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
+    -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,7,-1, -1,-1,-1,1,
+    -1,-1,-1,12, -1,-1,-1,-1, -1,-1,7,-1, -1,1,1,-1,
+    -1,-1,-1,12, 12,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
+    -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1
   };
   bool* lake_centers_in = new bool[nlat*nlon] {
     false,false,false,false, false,false,false,false, false,false,false,false, false,false,false,false,
@@ -5652,6 +5652,9 @@ TEST_F(FilterOutShallowLakeTest, FilterOutShallowLakeTestOne){
   for (auto i =0; i < nlat*nlon; i++){
     EXPECT_EQ(unfilled_orography_in[i],unfilled_orography_expected_out[i]);
   }
+  delete[] unfilled_orography_expected_out;
+  delete[] unfilled_orography_in;
+  delete[] filled_orography_in;
 };
 
 TEST_F(FilterOutShallowLakeTest, FilterOutShallowLakeTestTwo){
@@ -5739,6 +5742,9 @@ TEST_F(FilterOutShallowLakeTest, FilterOutShallowLakeTestTwo){
   for (auto i =0; i < nlat*nlon; i++){
     EXPECT_EQ(unfilled_orography_in[i],unfilled_orography_expected_out[i]);
   }
+  delete[] unfilled_orography_expected_out;
+  delete[] unfilled_orography_in;
+  delete[] filled_orography_in;
 };
 
 TEST_F(FilterOutShallowLakeTest, FilterOutShallowLakeTestThree){
@@ -5826,6 +5832,9 @@ TEST_F(FilterOutShallowLakeTest, FilterOutShallowLakeTestThree){
   for (auto i =0; i < nlat*nlon; i++){
     EXPECT_EQ(unfilled_orography_in[i],unfilled_orography_expected_out[i]);
   }
+  delete[] unfilled_orography_expected_out;
+  delete[] unfilled_orography_in;
+  delete[] filled_orography_in;
 };
 
 }  // namespace

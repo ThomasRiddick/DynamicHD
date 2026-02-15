@@ -1,0 +1,373 @@
+{% macro slurm_headers() %}
+{% if input.slurm_headers -%}
+###SLURM HEADERS
+#SBATCH --job-name=create_icon_hdpara
+#SBATCH --partition=shared
+#SBATCH --account=YOUR_ACCOUNT
+#SBATCH --ntasks=1
+#SBATCH --time=02:00:00
+#SBATCH --mem=0
+#SBATCH --output=create_icon_hdpara.o%j    # File name for standard output
+#SBATCH --error=create_icon_hdpara.e%j     # File name for standard error output
+#SBATCH --mail-type=FAIL                   # Notify user by email in case of job failure
+#SBATCH --mail-user=YOUR_EMAIL
+{%- endif -%}
+{% endmacro %}
+
+{% macro set_variables_pre_user_input(is_create_project_script=false) %}
+
+{% if is_create_project_script %}
+script_path={{ input.script_path }}
+{% else -%}
+function find_abs_path {
+  rel_path=${1}
+  cd ${rel_path}
+  pwd -P
+  cd - > /dev/null
+}
+script_path=$(dirname ${0})
+script_path=$(find_abs_path ${script_path})
+{%- endif %}
+project_name={{ input.project_name }}
+
+{%- if input.create_project_at_runtime or is_create_project_script %}
+repository_path=${script_path%/run}
+{%- else %}
+repository_path=${script_path%/projects/*/scripts}
+{%- endif %}
+input_directory=${repository_path}/projects/${project_name}/input
+output_directory=${repository_path}/projects/${project_name}/output
+working_directory=${repository_path}/projects/${project_name}/workdir
+{%- endmacro -%}
+
+{% macro validate_inputs() %}
+if ! [[ -f ${icon_grid_filepath} ]]; then
+  cat << EOF
+  Error - input grid file:
+          ${icon_grid_filepath}
+          does not exist!
+EOF
+  exit 1
+fi
+if ! [[ ${icon_grid_filepath##*.}  == "nc" ]]; then
+  cat << EOF
+  Error - input grid file:
+          ${icon_grid_filepath}
+          has the wrong extension
+EOF
+  exit 1
+fi
+if ! [[ -f ${fractional_lsmask_filepath} ]]; then
+  cat << EOF
+  Error - input fractional lsmask file:
+          ${fractional_lsmask_filepath}
+          does not exist!
+EOF
+  exit 1
+fi
+if ! [[ ${fractional_lsmask_filepath##*.}  == "nc" ]]; then
+  cat << EOF
+  Error - input fractional lsmask file:
+          ${fractional_lsmask_filepath}
+          has the wrong extension
+EOF
+  exit 1
+fi
+cell_sea_land_mask_count=$(cdo showname ${fractional_lsmask_filepath} |
+                           grep -c -E "\scell_sea_land_mask(\s|$)")
+if [[ ${cell_sea_land_mask_count} -ne 1 ]]; then
+  cat << EOF
+  Error - input fractional lsmask file:
+          ${fractional_lsmask_filepath}
+          has no field cell_sea_land_mask
+EOF
+  exit 1
+fi
+{% if input.high_res %}
+if ! [[ -f ${orography_filepath} ]]; then
+  cat << EOF
+  Error - input orography file:
+          ${orography_filepath}
+          does not exist!
+EOF
+  exit 1
+fi
+if ! [[ ${orography_filepath##*.}  == "nc" ]]; then
+  cat << EOF
+  Error - input orography file:
+          ${orography_filepath}
+          has the wrong extension
+EOF
+  exit 1
+fi
+elevation_count=$(cdo showname ${orography_filepath} |
+                  grep -c -E "\selevation(\s|$)")
+if [[ ${elevation_count} -ne 1 ]]; then
+  cat << EOF
+  Error - orography file:
+          ${orography_filepath}
+          has no field elevation
+EOF
+  exit 1
+fi
+{%- endif -%}
+{%- endmacro -%}
+
+{% macro create_project_dirs(is_create_project_script=false) %}
+#Prepare folders
+{% if not is_create_project_script %}
+if [[ -e ${repository_path}/projects/${project_name} ]]; then
+  echo "Error - project directory already exists" 1>&2
+  exit 1
+fi
+{% endif %}
+mkdir -p ${repository_path}/projects
+mkdir -p ${repository_path}/projects/${project_name}
+mkdir -p ${input_directory}
+mkdir -p ${output_directory}
+mkdir -p ${working_directory}
+{% if is_create_project_script %}
+mkdir -p ${repository_path}/projects/${project_name}/scripts/
+{%- endif -%}
+cd ${working_directory}
+{%- endmacro -%}
+
+{% macro set_variables_post_user_input() %}
+icon_atmo_grid_res=$(echo ${icon_atmo_grid_res} | tr [:upper] [:lower] | \
+                     sed -E 's/0([[:digit:]])/\1/g')
+config_filepath=${working_directory}/bash_script.cfg
+python_config_filepath=${working_directory}/python_script.cfg
+binary_lsmask_filepath=${working_directory}/binary_lsmask.nc
+{% if not input.high_res %}
+etop01_filepath=${input_data_directory}/ETOPO1_Ice_g_gmt4_grid_registered.nc
+orography_filepath=${working_directory}/orography.nc
+{% endif %}
+max_land_binary_lsmask_filepath=${working_directory}/maxl_binary_lsmask.nc
+if [[ ${icon_atmo_grid_res} == "r2b3" ]] || [[ ${icon_atmo_grid_res} == "r2b4" ]] ||
+   [[ ${icon_atmo_grid_res} == "r2b5" ]] || [[ ${icon_atmo_grid_res} == "r2b6" ]]; then
+   binary_conversion_method_default=hfrac
+else
+   binary_conversion_method_default=maxl
+fi
+binary_conversion_method=${binary_conversion_method:-${binary_conversion_method_default}}
+if [[ ${binary_conversion_method} == "maxl" ]]; then
+  use_hfrac=false
+  max_land_binary_lsmask_filepath=null
+elif [[ ${binary_conversion_method} != "minl" ]] &&
+     [[ ${binary_conversion_method} != "maxl" ]]; then
+  use_hfrac=true
+else
+  echo "Unknown binary conversion method" 1>&2
+  exit 1
+fi
+if [[ -z ${use_true_sinks} ]]; then
+  use_true_sinks=false
+fi
+true_sinks_filepath_default=${input_data_directory}/true_sinks_field_version_41.nc
+if ${use_true_sinks}; then
+  true_sinks_filepath=${true_sinks_filepath:-${true_sinks_filepath_default}}
+{% if input.high_res %}
+  true_sinks_on_icon_grid_filepath=${working_directory}/true_sinks_on_icon_grid.nc
+{% endif %}
+else
+  true_sinks_filepath=
+{% if input.high_res %}
+  true_sinks_on_icon_grid_filepath=
+{% endif %}
+fi
+
+{% if input.high_res %}
+if [[ -z ${use_existing_river_mouth_position_file} ]]; then
+  use_existing_river_mouth_position_file=false
+fi
+
+if [[ -z ${use_river_bifurcation} ]]; then
+  use_river_bifurcation=true
+fi
+
+if ! ${use_existing_river_mouth_position_file} ; then
+  if [[ -n ${river_mouth_position_filepath} ]]; then
+    echo "Warning - file ${river_mouth_position_filepath} not used" 1>&2
+    echo "as use_existing_river_mouth_position_file is set to False" 1>&2
+  fi
+  search_areas_filepath=${input_data_directory}/search_areas.toml
+  river_deltas_filepath=${input_data_directory}/river_channels_${icon_atmo_grid_res}.toml
+  if [[ ${icon_atmo_grid_res} == "r2b8" ]] || [[ ${icon_atmo_grid_res} == "r2b9" ]] ||
+   [[ ${icon_atmo_grid_res} == "r2b10" ]] || [[ ${icon_atmo_grid_res} == "r2b11" ]]; then
+    river_deltas_filepath=${input_data_directory}/river_channels_${icon_atmo_grid_res}.toml
+  else
+    river_deltas_filepath=${input_data_directory}/river_channels_default.toml
+  fi
+else
+  if [[ -z ${river_mouth_position_filepath} ]]; then
+    echo "Error - river_mouth_position_filepath not set" 1>&2
+    echo "but is required when use_existing_river_mouth_position_file" 1>&2
+    echo "is set to True" 1>&2
+    exit 1
+  fi
+fi
+{% endif %}
+
+
+cat > ${config_filepath} << EOF
+source_directory=${repository_path}
+no_mamba=false
+no_modules=false
+no_env_gen=true
+python_config_filepath=${python_config_filepath}
+EOF
+
+if ${use_true_sinks}; then
+  keep_all_internal_basins="True"
+else
+  keep_all_internal_basins="False"
+fi
+cat > ${python_config_filepath} << EOF
+#Output option for test run of dynamic hd production code
+[input_options]
+ten_minute_corrected_orography_filename=${input_data_directory}/corrected_orog_intermediary_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_20170517_003802_with_grid.nc
+ten_minute_hydrosheds_au_auf_sa_river_directions_filename=${input_data_directory}/rdirs_hydrosheds_au_af_sa_upscaled_10min_20200203_163646_corrg.nc
+[input_fieldname_options]
+ten_minute_hydrosheds_au_auf_sa_river_directions_fieldname=rdirs
+ten_minute_corrected_orography_fieldname=field_value
+input_landsea_mask_fieldname=lsm
+input_truesinks_fieldname=true_sinks
+[output_fieldname_options]
+output_river_directions_fieldname=rdirs
+output_catchments_fieldname=catchments
+output_cumulative_flow_fieldname=acc
+[general_options]
+keep_all_internal_basins=${keep_all_internal_basins}
+replace_internal_basins_with_rdirs_with_truesinks=False
+replace_only_catchments=
+exclude_catchments=
+EOF
+
+#Set output filenames
+if ${use_true_sinks}; then
+  true_sinks_flag_string="s_"
+else
+  true_sinks_flag_string=""
+fi
+{% if input.high_res %}
+if ${use_river_bifurcation}; then
+  number_of_channels_label_string="mc"
+else
+  number_of_channels_label_string="sc"
+fi
+{% else %}
+number_of_channels_label_string="sc"
+{% endif %}
+if ! [[ -z ${additional_label} ]]; then
+  additional_label_string="${additional_label}_"
+else
+  additional_label_string=""
+fi
+output_hdpara_filepath=${output_directory}/hdpara_${icon_atmo_grid_res}_${icon_atmo_grid_id}_${icon_ocean_grid_id}_${number_of_channels_label_string}_${binary_conversion_method}_${true_sinks_flag_string}${additional_label_string}v${version_num}.nc
+output_catchments_filepath=${output_directory}/catch_${icon_atmo_grid_res}_${icon_atmo_grid_id}_${icon_ocean_grid_id}_${number_of_channels_label_string}_${binary_conversion_method}_${true_sinks_flag_string}${additional_label_string}v${version_num}.nc
+output_accumulated_flow_filepath=${output_directory}/acc_${icon_atmo_grid_res}_${icon_atmo_grid_id}_${icon_ocean_grid_id}_${number_of_channels_label_string}_${binary_conversion_method}_${true_sinks_flag_string}${additional_label_string}v${version_num}.nc
+{%- endmacro -%}
+
+{% macro preprocessing() %}
+# Create links to input files
+ln -s ${fractional_lsmask_filepath} $(basename ${fractional_lsmask_filepath})
+fractional_lsmask_filepath=$(basename ${fractional_lsmask_filepath})
+ln -s ${icon_grid_filepath} $(basename ${icon_grid_filepath})
+icon_grid_filepath=$(basename ${icon_grid_filepath})
+# Pre-processing
+if [[ ${binary_conversion_method} == "hfrac" ]]; then
+  cdo expr,cell_sea_land_mask='(cell_sea_land_mask > 0.5)' ${fractional_lsmask_filepath} ${binary_lsmask_filepath}
+  cdo expr,cell_sea_land_mask='(cell_sea_land_mask > 0.0)' ${fractional_lsmask_filepath} ${max_land_binary_lsmask_filepath}
+elif [[ ${binary_conversion_method} == "minl" ]]; then
+  cdo expr,cell_sea_land_mask='(cell_sea_land_mask >= 1.0)' ${fractional_lsmask_filepath} ${binary_lsmask_filepath}
+  cdo expr,cell_sea_land_mask='(cell_sea_land_mask >  0.0)' ${fractional_lsmask_filepath} ${max_land_binary_lsmask_filepath}
+elif [[ ${binary_conversion_method} == "maxl" ]]; then
+  cdo expr,cell_sea_land_mask='(cell_sea_land_mask >  0.0)' ${fractional_lsmask_filepath} ${binary_lsmask_filepath}
+else
+  echo "Unknown binary conversion method" 1>&2
+  exit 1
+fi
+
+{% if input.high_res %}
+#Setup julia environment
+module load julia
+export JULIA_LOAD_PATH=${repository_path}/src/julia_src/bifurcated_rivermouth_identification_tool:${repository_path}/src/julia_src/cross_grid_true_sink_transfer_tool:${JULIA_LOAD_PATH}
+#Transfer true sinks to atmospheric icon grid
+if ${use_true_sinks}; then
+cmd="julia ${repository_path}/src/julia_src/cross_grid_true_sink_transfer_tool/TransferTrueSinksToIconGridDriver.jl -g ${icon_grid_filepath} -i ${true_sinks_filepath} -f true_sinks -o ${true_sinks_on_icon_grid_filepath}"
+echo "Running"
+echo ${cmd}
+eval ${cmd}
+fi
+{% else %}
+#Remap orography to icon grid
+cdo remapbil,${icon_grid_filepath} ${etop01_filepath} ${orography_filepath}
+{% endif %}
+{%- endmacro -%}
+
+{% macro run() %}
+#Run
+{% if input.high_res %}
+#Run bifurcated hdpara file generation
+if ${use_river_bifurcation} ; then
+  if ${use_existing_river_mouth_position_file} ; then
+    cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh \
+    ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_on_icon_grid_filepath} elevation \
+    cell_sea_land_mask true_sinks ${output_hdpara_filepath} ${output_catchments_filepath} \
+    ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} \
+    ${icon_atmo_grid_res} False True null null True \
+    ${river_mouth_position_filepath}"
+  else
+    cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh \
+    ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_on_icon_grid_filepath} elevation \
+    cell_sea_land_mask true_sinks ${output_hdpara_filepath} ${output_catchments_filepath} \
+    ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} \
+    ${icon_atmo_grid_res} False True ${river_deltas_filepath} ${search_areas_filepath}"
+  fi
+else
+  cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_high_res_icon_hdpara_top_level_driver.sh \
+  ${orography_filepath} ${binary_lsmask_filepath} ${true_sinks_on_icon_grid_filepath} elevation \
+  cell_sea_land_mask true_sinks ${output_hdpara_filepath} ${output_catchments_filepath} \
+  ${output_accumulated_flow_filepath}  ${config_filepath} ${working_directory} ${icon_grid_filepath} \
+  ${icon_atmo_grid_res} False"
+fi
+{% else %}
+cmd="${repository_path}/Dynamic_HD_bash_scripts/generate_icon_hdpara_top_level_driver.sh \
+${orography_filepath} ${binary_lsmask_filepath} ${output_hdpara_filepath} ${output_catchments_filepath} \
+${output_accumulated_flow_filepath} ${config_filepath} ${working_directory} ${icon_grid_filepath} \
+${repository_path}/Dynamic_HD_Resources/cotat_plus_standard_params.nl ${icon_atmo_grid_res} False \
+${use_hfrac} ${max_land_binary_lsmask_filepath} ${true_sinks_filepath}"
+{% endif %}
+echo "Running:"
+echo ${cmd}
+eval ${cmd}
+{% if input.high_res %}
+if ${use_river_bifurcation} ; then
+  module load nco
+  river_deltas_version=$(basename $(readlink -f ${river_deltas_filepath}) | sed 's/river_channels_\(.*\)\.toml/\1/')
+  ncatted -a river_deltas_version,global,c,c,${river_deltas_version} ${output_hdpara_filepath}
+  search_areas_version=$(basename $(readlink -f ${search_areas_filepath}) | sed 's/search_areas_\(.*\)\.toml/\1/')
+  ncatted -a search_areas_version,global,c,c,${search_areas_version} ${output_hdpara_filepath}
+fi
+{% endif %}
+{%- endmacro -%}
+
+{%- macro postprocessing() -%}
+{% if input.high_res %}
+#Reactivating mamba environment a second time can cause errors
+#Mamba uses conda environmental variables
+if ! [[ ${CONDA_DEFAULT_ENV} == "dyhdenv_mamba" ]]; then
+  source activate dyhdenv_mamba
+fi
+cp /home/m/m300468/hdpara_creation_plotter/hdpara_creation_plotter.py \
+  ${working_directory}/hdpara_creation_plotter.py
+if ! ${use_existing_river_mouth_position_file}; then
+  river_mouth_position_filepath=${working_directory}/rivermouths.txt
+fi
+python ${working_directory}/hdpara_creation_plotter.py ${icon_grid_filepath} \
+       ${binary_lsmask_filepath} ${output_accumulated_flow_filepath} \
+       ${river_mouth_position_filepath}
+mv ${working_directory}/*.png ${output_directory}
+{% endif %}
+{% endmacro -%}
+

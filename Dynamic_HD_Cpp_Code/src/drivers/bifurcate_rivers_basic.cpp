@@ -18,7 +18,9 @@ void latlon_bifurcate_rivers_basic(map<pair<int,int>,
                                    double cumulative_flow_threshold_fraction_in,
                                    int minimum_cells_from_split_to_main_mouth_in,
                                    int maximum_cells_from_split_to_main_mouth_in,
-                                   int nlat_in,int nlon_in){
+                                   int nlat_in,int nlon_in,
+                                   bool remove_main_channel_in){
+
   cout << "Entering River Bifurcation C++ Code" << endl;
   auto alg = basic_bifurcation_algorithm_latlon();
   auto grid_params_in = new latlon_grid_params(nlat_in,nlon_in);
@@ -29,7 +31,8 @@ void latlon_bifurcate_rivers_basic(map<pair<int,int>,
                    grid_params_in);
   alg.setup_flags(cumulative_flow_threshold_fraction_in,
                   minimum_cells_from_split_to_main_mouth_in,
-                  maximum_cells_from_split_to_main_mouth_in);
+                  maximum_cells_from_split_to_main_mouth_in,
+                  remove_main_channel_in);
   alg.bifurcate_rivers();
   double* bifurcations_rdirs_out = alg.get_bifurcation_rdirs();
   copy(bifurcations_rdirs_out,
@@ -49,10 +52,11 @@ void icon_single_index_bifurcate_rivers_basic(map<int,vector<int>> river_mouths_
                                               int minimum_cells_from_split_to_main_mouth_in,
                                               int maximum_cells_from_split_to_main_mouth_in,
                                               int ncells_in,
-                                              int* neighboring_cell_indices_in){
+                                              int* neighboring_cell_indices_in,
+                                              bool remove_main_channel_in){
   cout << "Entering River Bifurcation C++ Code" << endl;
   auto alg = basic_bifurcation_algorithm_icon_single_index();
-  int* secondary_neighboring_cell_indices_in = new int[ncells_in*9];
+  int* secondary_neighboring_cell_indices_in = new int[(long)ncells_in*9l];
   auto grid_params_in = new icon_single_index_grid_params(ncells_in,
                                                           neighboring_cell_indices_in,true,
                                                           secondary_neighboring_cell_indices_in);
@@ -65,11 +69,12 @@ void icon_single_index_bifurcate_rivers_basic(map<int,vector<int>> river_mouths_
                    grid_params_in);
   alg.setup_flags(cumulative_flow_threshold_fraction_in,
                   minimum_cells_from_split_to_main_mouth_in,
-                  maximum_cells_from_split_to_main_mouth_in);
+                  maximum_cells_from_split_to_main_mouth_in,
+                  remove_main_channel_in);
   alg.bifurcate_rivers();
   int* bifurcations_next_cell_index_out = alg.get_bifurcation_next_cell_index();
   copy(bifurcations_next_cell_index_out,
-       bifurcations_next_cell_index_out+(ncells_in*alg.get_maximum_bifurcations()),
+       bifurcations_next_cell_index_out+((long)ncells_in*(long)alg.get_maximum_bifurcations()),
        bifurcations_next_cell_index_in);
   delete[] secondary_neighboring_cell_indices_in;
   delete[] bifurcations_next_cell_index_out;

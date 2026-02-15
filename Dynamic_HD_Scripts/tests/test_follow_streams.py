@@ -6,8 +6,7 @@ Created on February 10, 2020
 '''
 import unittest
 import numpy as np
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import follow_streams_wrapper
+import follow_streams_wrapper
 
 class TestFollowStreamsDriver(unittest.TestCase):
 

@@ -6,8 +6,7 @@ Created on Feb 12, 2020
 
 import numpy as np
 from Dynamic_HD_Scripts.base import field
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import follow_streams_wrapper
+import follow_streams_wrapper
 
 def follow_streams(rdirs_in,cumulative_flow):
     downstream_cells_out = np.zeros(rdirs_in.get_data().shape,dtype=np.int32)

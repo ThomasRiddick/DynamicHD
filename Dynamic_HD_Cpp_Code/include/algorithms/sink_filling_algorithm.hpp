@@ -79,7 +79,7 @@ public:
 	///Setup the necessary flags and parameters
 	void setup_flags(bool, bool = false, int = 1, double = 1.1, bool = false);
 	///Setup the necessary field given an input set of grid_params and 1D fields
-	void setup_fields(double*,bool*,bool*,grid_params*);
+	void setup_fields(double*,bool*,bool*,grid_params*,bool* = nullptr);
 	///Run the sink filling algorithm
 	void fill_sinks();
 	///Public wrapper for testing the protected add_edge_cell_to_q function
@@ -255,6 +255,8 @@ protected:
 	//Used to assist in the acceleration of algorithm 1 (to denote a suspected sill point)
 	//has been added to the main priority queue from the plain slope queue
 	bool requeued = false;
+	//Used to prevent no data cells being processed needlessly
+	bool nbr_orog_is_no_data = false;
 };
 
 /**
@@ -378,6 +380,10 @@ public:
 	void setup_minima_q(field<bool>*);
 	// Return q of minima for basin filling code
 	stack<coords*>* get_minima_q();
+	// Return catchments for basin filling code
+	field<int>* get_catchments() {return catchment_nums; };
+	// Set catchments default value (for basin filling code)
+	void set_catchments(int default_value) { catchment_nums->set_all(default_value); }
 protected:
 	///Label which method is being used
 	const int method = 4;
@@ -396,7 +402,7 @@ protected:
 	///value of the prefer non diagonal initial dirs flag
 	void find_initial_cell_flow_direction();
 	///Setup required fields and grid
-	void setup_fields(double*, bool*, bool*, grid_params*, int*);
+	void setup_fields(double*, bool*, bool*, grid_params*, int*, bool* = nullptr);
 	///Implement virtual function of base class only used by Tarasov code
 	void tarasov_set_area_height();
 	///Set the flow direction of a cell to no data
@@ -440,7 +446,7 @@ public:
 	sink_filling_algorithm_1_latlon(field<double>*, grid_params*, field<bool>*, bool*, bool,
 					         	 	bool = false, double = 0.1, bool* = nullptr);
 	///Setup the necessary fields and grid
-	void setup_fields(double*, bool*,bool*,grid_params*);
+	void setup_fields(double*, bool*,bool*,grid_params*,bool* = nullptr);
 	///Destructor
 	virtual ~sink_filling_algorithm_1_latlon() {};
 };
@@ -460,7 +466,7 @@ public:
 	sink_filling_algorithm_1_icon_single_index(field<double>*, grid_params*, field<bool>*, bool*, bool,
 					         	 	bool = false, double = 0.1, bool* = nullptr);
 	///Setup the necessary fields and grid
-	void setup_fields(double*, bool*,bool*,grid_params*);
+	void setup_fields(double*, bool*,bool*,grid_params*,bool* = nullptr);
 	///Destructor
 	virtual ~sink_filling_algorithm_1_icon_single_index() {};
 };
@@ -499,7 +505,7 @@ public:
 	void setup_flags(bool, bool = false, bool = false, bool = false, int = 1,
 				     double = 1.1, bool = false);
 	///Setup fields and grid
-	void setup_fields(double*, bool*, bool*, int*, int*, grid_params*, short*, int*);
+	void setup_fields(double*, bool*, bool*, int*, int*, grid_params*, short*, int*,bool* = nullptr);
 	///Calculate the direction from neighbor to cell; only need when uses direction based
 	///river directions on a latitude-longitude grid. (Could potentially make direction based
 	///river direction more abstract and more widely applicable.)
@@ -540,7 +546,7 @@ public:
 							 	 	bool, field<int>*, bool, bool, field<int>*,field<int>*,
 									bool* = nullptr, field<short>* = nullptr);
 	///Setup fields and grid
-	void setup_fields(double*,bool*,bool*, int*,grid_params* ,int*);
+	void setup_fields(double*,bool*,bool*, int*,grid_params* ,int*,bool* = nullptr);
 	///Destructor
 	virtual ~sink_filling_algorithm_4_icon_single_index() {delete next_cell_index; };
 	///Setup and test find_initial_cell_flow_direction function on a latitude-longitude grid

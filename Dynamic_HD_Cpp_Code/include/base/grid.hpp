@@ -61,6 +61,8 @@ public:
 	// and thus will likely differ from the offset free number recorded for
 	// use with Fortran
 	int get_index(coords*);
+	//Getter
+	grid_types get_grid_type() {return grid_type;};
 	///Getter
 	virtual int get_edge_number(coords*) = 0;
 	///Getter
@@ -81,6 +83,13 @@ public:
 	///Run the supplied function over all the neighbors of the supplied
 	///coordinates dealing with wrapping and out of grid cells
 	virtual void for_all_nbrs_wrapped(coords* coords_in,function<void(coords*)> func) = 0;
+	///Run the supplied function over all the neighbors of the supplied
+	///coordinates
+	virtual void for_all_nbrs_reversed(coords*,function<void(coords*)>) = 0;
+	///Run the supplied function over all the neighbors of the supplied
+	///coordinates dealing with wrapping and out of grid cells
+	virtual void for_all_nbrs_wrapped_reversed(coords* coords_in,function<void(coords*)> func) = 0;
+	void for_all_nbrs_general(coords* coords_in,function<void(coords*)> func);
 	virtual void for_non_diagonal_nbrs_wrapped(coords* coords_in,function<void(coords*)> func) = 0;
 	///Run the supplied function over the entire field
 	virtual void for_all(function<void(coords*)> func) = 0;
@@ -88,6 +97,8 @@ public:
 	///at each point that flag whether the point is the end of a row (and
 	///thus requires a line break) or not
 	virtual void for_all_with_line_breaks(function<void(coords*,bool)>) = 0;
+	//Run the supplied function over all the edges of the field
+	virtual void for_all_edge_cells(function<void(coords*)> func) = 0;
 	///Return the specified coords wrapped if required (e.g. wrapped east-west
 	///for a lat-lon grid
 	coords* wrapped_coords(coords*);
@@ -178,9 +189,12 @@ public:
 	void for_non_diagonal_nbrs(coords*,function<void(coords*)>);
 	void for_all_nbrs(coords*,function<void(coords*)>);
 	void for_all_nbrs_wrapped(coords* coords_in,function<void(coords*)> func);
+	void for_all_nbrs_reversed(coords*,function<void(coords*)>);
+	void for_all_nbrs_wrapped_reversed(coords* coords_in,function<void(coords*)> func);
 	void for_non_diagonal_nbrs_wrapped(coords* coords_in,function<void(coords*)> func);
 	void for_all(function<void(coords*)>);
 	void for_all_with_line_breaks(function<void(coords*,bool)>);
+	void for_all_edge_cells(function<void(coords*)> func);
 	//These next two functions are endemic to this subclass and are
 	//called from the base class via a switch-case statement and
 	//static casting
@@ -240,9 +254,12 @@ public:
 	void for_non_diagonal_nbrs(coords*,function<void(coords*)>);
 	void for_all_nbrs(coords*,function<void(coords*)>);
 	void for_all_nbrs_wrapped(coords* coords_in,function<void(coords*)> func);
+	void for_all_nbrs_reversed(coords*,function<void(coords*)>);
+	void for_all_nbrs_wrapped_reversed(coords* coords_in,function<void(coords*)> func);
 	void for_non_diagonal_nbrs_wrapped(coords* coords_in,function<void(coords*)> func);
 	void for_all(function<void(coords*)>);
 	void for_all_with_line_breaks(function<void(coords*,bool)>);
+	void for_all_edge_cells(function<void(coords*)> func);
 	//These next two functions are endemic to this subclass and are
 	//called from the base class via a switch-case statement and
 	//static casting
@@ -297,6 +314,8 @@ class icon_single_index_grid : public grid {
 	const int top_corner             = 4;
 	const int bottom_right_corner    = 5;
 	const int bottom_left_corner     = 6;
+	//Precalculated list of edge cells; only for ICON grids
+	vector<coords*> edge_cells;
 	//Precalculated edge seperation values (will be 3 entries per cell so size is ncells*3)
 	double* edge_separations = nullptr;
 	//Array offset
@@ -333,9 +352,12 @@ public:
 	//As wrapping doesn't exist for the icon grid this is just a wrapper to the
 	//above function
 	void for_all_nbrs_wrapped(coords* coords_in,function<void(coords*)> func);
+	void for_all_nbrs_reversed(coords*,function<void(coords*)>);
+	void for_all_nbrs_wrapped_reversed(coords* coords_in,function<void(coords*)> func);
 	void for_non_diagonal_nbrs_wrapped(coords* coords_in,function<void(coords*)> func);
 	void for_all(function<void(coords*)>);
 	void for_all_with_line_breaks(function<void(coords*,bool)>);
+	void for_all_edge_cells(function<void(coords*)> func);
 	//These next two functions are endemic to this subclass and are
 	//called from the base class via a switch-case statement and
 	//static casting
@@ -357,7 +379,8 @@ public:
 		{ return neighboring_cell_indices[icon_single_index_get_index(cell_coords)*3 + neighbor_num]; }
 	//Get the cell indices of the center cells nine secondary neighbors
 	int get_cell_secondary_neighbors_index(generic_1d_coords* cell_coords,int neighbor_num)
-		{ return secondary_neighboring_cell_indices[icon_single_index_get_index(cell_coords)*9 + neighbor_num]; }
+		{ return secondary_neighboring_cell_indices[(long)icon_single_index_get_index(cell_coords)*9l +
+		                                            (long)neighbor_num]; }
 	coords* convert_fine_coords(coords* fine_coords,grid_params* fine_grid_params);
 	//Not implemeted for icon grid; return a runtime error
 	coords* calculate_downstream_coords_from_dir_based_rdir(coords* initial_coords,double rdir);
@@ -369,6 +392,20 @@ public:
 	                                        grid_params* coarse_grid_params,
 	                                        function<void(coords*)> func)
 		{ throw runtime_error("function not yet implemented for icon grid"); }
+	vector<int>* generate_subfield_edge_cells(int num_points_subarray,
+                                     			  int* cell_neighbors_in,
+                                     			  int* cell_secondary_neighbors_in);
+	int* generate_full_field_indices(int num_points_subarray,
+                                   bool* mask,
+                                   int* subfield_indices);
+	int* generate_subfield_indices(bool* mask);
+	int* generate_subfield_neighbors(int num_points_subarray,
+                                   bool* mask,
+                                   int* subfield_indices,
+                                   int* full_field_indices);
+	int* generate_subfield_secondary_neighbors(int num_points_subarray,
+                                             int* subfield_indices,
+                                             int* full_field_indices);
 };
 
 /**
@@ -439,7 +476,10 @@ public:
 	 	: grid_params(false),ncells(ncells_in),
 		  neighboring_cell_indices(neighboring_cell_indices_in),
 		  use_secondary_neighbors(use_secondary_neighbors_in),
-		  secondary_neighboring_cell_indices(secondary_neighboring_cell_indices_in){};
+		  secondary_neighboring_cell_indices(secondary_neighboring_cell_indices_in)
+		  { if(use_secondary_neighbors &&
+		       ! secondary_neighboring_cell_indices)
+					icon_single_index_grid_calculate_secondary_neighbors(); }
 	///Class constructor
 	icon_single_index_grid_params(int ncells_in, int* neighboring_cell_indices_in,
 			bool use_secondary_neighbors_in, int* secondary_neighboring_cell_indices_in,
@@ -448,7 +488,10 @@ public:
 		  neighboring_cell_indices(neighboring_cell_indices_in),
 		  use_secondary_neighbors(use_secondary_neighbors_in),
 		  secondary_neighboring_cell_indices(secondary_neighboring_cell_indices_in),
-		  subgrid_mask(subgrid_mask_in){};
+		  subgrid_mask(subgrid_mask_in)
+		 { if(use_secondary_neighbors &&
+		      ! secondary_neighboring_cell_indices)
+					icon_single_index_grid_calculate_secondary_neighbors(); }
 	#if USE_NETCDFCPP
 	icon_single_index_grid_params(string icon_grid_params_filepath_in,
 	                              bool use_secondary_neighbors_in = true,

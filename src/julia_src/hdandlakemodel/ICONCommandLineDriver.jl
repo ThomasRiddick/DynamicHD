@@ -3,10 +3,12 @@ using Profile
 using ArgParse
 using HDDriverModule: drive_hd_model,drive_hd_and_lake_model
 using FieldModule: UnstructuredField,Field,repeat
-using IOModule: load_river_parameters, load_river_initial_values,get_ncells
-using IOModule: load_lake_initial_values,load_lake_parameters
-using IOModule: get_additional_grid_information
+using InputModule: load_river_parameters, load_river_initial_values,get_ncells
+using InputModule: load_lake_initial_values,load_lake_parameters
+using InputModule: get_additional_grid_information
 using GridModule: UnstructuredGrid
+@everywhere using HDModule: cascade_kernel
+@everywhere using CoordsModule: is_ocean, is_outflow, is_truesink, is_lake
 
 function pass_arguments()
   settings = ArgParseSettings()
@@ -52,7 +54,8 @@ function main()
   lake_grid = UnstructuredGrid(ncells,clat,clon,clat_bounds,clon_bounds)
   surface_model_grid = UnstructuredGrid(ncells,clat,clon,clat_bounds,clon_bounds)
   river_parameters = load_river_parameters(args["hd-para-file"],grid;
-                                           day_length=86400.0,step_length=step_length)
+                                           day_length=86400.0,step_length=step_length,
+                                           use_bifurcated_rivers=true)
   local drainages::Array{Field{Float64},1}
   local runoffs::Array{Field{Float64},1}
   local lake_evaporations::Array{Field{Float64},1}
@@ -82,8 +85,8 @@ function main()
     lake_evaporation_high ::Field{Float64} =
       UnstructuredField{Float64}(river_parameters.grid,
                                  100000*0.0000000227*step_length*2.6*10000000000)
-    lake_evaporations_none = repeat(lake_evaporation_none,Int(round(timesteps/60)+1))
-    lake_evaporations_high = repeat(lake_evaporation_high,Int(round(timesteps/60)+1))
+    lake_evaporations_none = repeat(lake_evaporation_none,Int(round(timesteps/60)+1),false)
+    lake_evaporations_high = repeat(lake_evaporation_high,Int(round(timesteps/60)+1),false)
     lake_evaporations = vcat(lake_evaporations_none,lake_evaporations_high)
   end
   if args["lake-para-file"] != nothing
@@ -126,10 +129,12 @@ function main()
   else
     if args["hd-init-file"] != nothing
       river_fields = load_river_initial_values(args["hd-init-file"],grid,river_parameters)
-      drive_hd_model(river_parameters,river_fields,
-                     drainages,runoffs,timesteps;
+      @profile drive_hd_model(river_parameters,river_fields,
+                     drainages,runoffs,
+                     lake_evaporations,timesteps;
                      print_timestep_results=false,
                      output_timestep=160)
+      Profile.print()
       # @time drive_hd_model(river_parameters,river_fields,
       #                      drainages_copy,runoffs_copy,timesteps;
       #                      print_timestep_results=false)
@@ -137,7 +142,8 @@ function main()
       # drainages_copy = deepcopy(drainages)
       # runoffs_copy = deepcopy(runoffs)
       drive_hd_model(river_parameters,drainages,
-                     runoffs,timesteps;print_timestep_results=false)
+                     runoffs,lake_evaporations,
+                     timesteps;print_timestep_results=false)
       # Profile.clear()
       # Profile.init(delay=0.0001)
       # @time drive_hd_model(river_parameters,drainages_copy,
@@ -156,10 +162,14 @@ empty!(ARGS)
 # push!(ARGS,"-i/Users/thomasriddick/Documents/data/ICONHDdata/hdstartfiles/hdrestart_R02B09_015_G_241019_1337_v2.nc")
 # push!(ARGS,"-t1920")
 # push!(ARGS,"-s45")
-push!(ARGS,"-p/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/hdpara_icon.nc")
-push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/hdrestart_R02B04_013_G_231019_1242_v2.nc")
-push!(ARGS,"-l/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/lakeparams.nc")
-push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/lakestart.nc")
-push!(ARGS,"-t3600")
-push!(ARGS,"-s86400")
+push!(ARGS,"-p/Users/thomasriddick/Documents/data/temp/hdpara_r2b8_with_bifurcation_v2.nc")
+push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/hdstart_from_jsbachstandalone_GSWP3_forcing_ts40s_r2b8.nc")
+push!(ARGS,"-s45")
+push!(ARGS,"-t50")
+#push!(ARGS,"-p/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/hdpara_icon.nc")
+#push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/hdrestart_R02B04_013_G_231019_1242_v2.nc")
+#push!(ARGS,"-l/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/lakeparams.nc")
+#push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/lakestart.nc")
+#push!(ARGS,"-t3600")
+#push!(ARGS,"-s86400")
 main()

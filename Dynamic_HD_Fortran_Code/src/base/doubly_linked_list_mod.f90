@@ -81,7 +81,17 @@ type, public :: doubly_linked_list
         procedure :: get_iterator_position
 end type doubly_linked_list
 
+interface doubly_linked_list
+    procedure :: doubly_linked_list_constructor
+end interface doubly_linked_list
+
 contains
+
+    function doubly_linked_list_constructor() result(constructor)
+        type(doubly_linked_list), pointer :: constructor
+            allocate(constructor)
+            constructor%length = 0
+    end function doubly_linked_list_constructor
 
     subroutine destructor(this)
         class(doubly_linked_list), intent(inout) :: this

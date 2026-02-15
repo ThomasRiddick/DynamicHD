@@ -567,6 +567,7 @@ contains
         call assert_true(all(output_cumulative_flow .eq. &
                              expected_output_cumulative_flow))
         deallocate(input_river_directions)
+        deallocate(input_bifurcated_river_directions)
         deallocate(output_cumulative_flow)
         deallocate(cell_neighbors)
         deallocate(expected_output_cumulative_flow)
@@ -771,6 +772,7 @@ contains
         call assert_true(all(output_cumulative_flow .eq. &
                              expected_output_cumulative_flow))
         deallocate(input_river_directions)
+        deallocate(input_bifurcated_river_directions)
         deallocate(output_cumulative_flow)
         deallocate(cell_neighbors)
         deallocate(expected_output_cumulative_flow)

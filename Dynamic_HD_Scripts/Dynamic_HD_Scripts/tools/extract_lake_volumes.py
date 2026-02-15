@@ -7,17 +7,19 @@ Created on July 29, 2020
 import numpy as np
 import tempfile
 import os
+from netCDF4 import Dataset
 from Dynamic_HD_Scripts.base import field
 from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.tools import compute_catchments as cc
 from Dynamic_HD_Scripts.tools import determine_river_directions
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import create_connected_lsmask_wrapper
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import lake_operators_wrapper
+from Dynamic_HD_Scripts.tools import connect_coarse_lake_catchments as cclc
+import create_connected_lsmask_wrapper
+import lake_operators_wrapper
 
 def extract_lake_volumes(flood_volume_thresholds,
-                         basin_catchment_numbers,merge_types):
+                         basin_catchment_numbers,
+                         flood_merge_and_redirect_indices_index,
+                         merges_and_redirects):
     lake_mask = basin_catchment_numbers.greater_than_value(0)
     lake_volumes =  field.makeEmptyField("Generic",np.float64,
                                          grid_type=lake_mask.get_grid())
@@ -49,6 +51,16 @@ def extract_lake_volumes(flood_volume_thresholds,
                                                   grid=lake_mask.get_grid())
     finally:
         os.remove(temporary_file.name)
+    secondary_merges = field.Field(np.full(lake_mask.get_data().shape,False,
+                                           dtype=bool),
+                                   grid=lake_mask.get_grid())
+    iterator = np.nditer(flood_merge_and_redirect_indices_index.get_data(),
+                         flags=["multi_index"])
+    for i in iterator:
+        if i != -1:
+            secondary_merges.get_data()[iterator.multi_index[0],
+                                        iterator.multi_index[1]] = \
+                merges_and_redirects[i].secondary_merge
     for i in range(1,simplified_basin_catchment_numbers.find_maximum()+1):
         if i in simplified_basin_catchment_numbers.get_data():
             single_lake_mask = lake_mask.copy()
@@ -58,8 +70,7 @@ def extract_lake_volumes(flood_volume_thresholds,
             single_lake_flood_volume_thresholds.\
                 get_data()[np.logical_not(single_lake_mask.get_data())] = 0.0
             single_lake_flood_volume_thresholds.\
-                get_data()[np.logical_and(merge_types.get_data() != 10,
-                                          merge_types.get_data() != 11)] = 0.0
+                get_data()[np.logical_not(secondary_merges.get_data())] = 0.0
             lake_volumes.get_data()[single_lake_mask.get_data()] = np.sum(single_lake_flood_volume_thresholds.get_data())
     return lake_volumes
 
@@ -69,14 +80,23 @@ def lake_volume_extraction_driver(lake_parameters_filepath,
     flood_volume_thresholds = iodriver.advanced_field_loader(lake_parameters_filepath,
                                                              field_type='Generic',
                                                              fieldname="flood_volume_thresholds")
-    merge_types = iodriver.advanced_field_loader(lake_parameters_filepath,
-                                                 field_type='Generic',
-                                                 fieldname="merge_points")
+    flood_merge_and_redirect_indices_index = \
+        iodriver.advanced_field_loader(lake_parameters_filepath,
+                                       field_type='Generic',
+                                       fieldname=
+                                       "flood_merge_and_redirect_indices_index")
+    with Dataset(lake_parameters_filepath,mode='r',format='NETCDF4') as dataset:
+        merges_and_redirects_array = \
+            np.array(dataset.variables["flood_merges_and_redirects"][:,:,:])
+    merges_and_redirects = \
+        cclc.create_merge_indices_collections_from_array(merges_and_redirects_array)
     basin_catchment_numbers = iodriver.advanced_field_loader(basin_catchment_numbers_filepath,
                                                              field_type="Generic",
                                                              fieldname="basin_catchment_numbers")
     lake_volumes = extract_lake_volumes(flood_volume_thresholds,
-                                        basin_catchment_numbers,merge_types)
+                                        basin_catchment_numbers,
+                                        flood_merge_and_redirect_indices_index,
+                                        merges_and_redirects)
     iodriver.advanced_field_writer(lake_volumes_out_filepath,lake_volumes,
                                    fieldname="lake_volume")
 

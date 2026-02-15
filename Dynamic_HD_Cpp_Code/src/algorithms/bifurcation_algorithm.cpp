@@ -6,6 +6,7 @@
  */
 
 #include <math.h>
+#include <stdexcept>
 #include "algorithms/bifurcation_algorithm.hpp"
 using namespace std;
 
@@ -38,9 +39,9 @@ bifurcation_algorithm_icon_single_index::
 }
 
 void bifurcation_algorithm::setup_fields(int* cumulative_flow_in,
-                                               int* number_of_outflows_in,
-                                               bool* landsea_mask_in,
-                                               grid_params* grid_params_in) {
+                                         int* number_of_outflows_in,
+                                         bool* landsea_mask_in,
+                                         grid_params* grid_params_in) {
   _grid_params = grid_params_in;
   _grid = grid_factory(_grid_params);
   cumulative_flow = new field<int>(cumulative_flow_in,_grid_params);
@@ -56,11 +57,13 @@ void bifurcation_algorithm::setup_fields(int* cumulative_flow_in,
 }
 
 void bifurcation_algorithm::setup_flags(double cumulative_flow_threshold_fraction_in,
-                                              int minimum_cells_from_split_to_main_mouth_in,
-                                              int maximum_cells_from_split_to_main_mouth_in) {
+                                        int minimum_cells_from_split_to_main_mouth_in,
+                                        int maximum_cells_from_split_to_main_mouth_in,
+                                        bool remove_main_channel_in) {
   cumulative_flow_threshold_fraction = cumulative_flow_threshold_fraction_in;
   minimum_cells_from_split_to_main_mouth = minimum_cells_from_split_to_main_mouth_in;
   maximum_cells_from_split_to_main_mouth = maximum_cells_from_split_to_main_mouth_in;
+  remove_main_channel = remove_main_channel_in;
 }
 
 void bifurcation_algorithm::bifurcate_rivers(){
@@ -79,13 +82,16 @@ void bifurcation_algorithm::bifurcate_river(pair<coords*,vector<coords*>> river)
   // separation_from_primary_mouth_comparison comparison_object =
   //   separation_from_primary_mouth_comparison(river->first);
   // sort(river_mouths.begin(),river_mouths.end(),comparison_object)
+  if (remove_main_channel) is_first_distributory = true;
   for(vector<coords*>::iterator i = secondary_river_mouths.begin();
                                 i != secondary_river_mouths.end(); ++i){
     find_shortest_path_to_main_channel(*i);
   }
+  if (remove_main_channel) delete valid_main_channel_start_coords;
 }
 
 void bifurcation_algorithm::find_shortest_path_to_main_channel(coords* mouth_coords){
+  bool river_mouth_relocated = false;
   completed_cells->set_all(false);
   connection_found = false;
   push_cell(mouth_coords->clone());
@@ -93,9 +99,24 @@ void bifurcation_algorithm::find_shortest_path_to_main_channel(coords* mouth_coo
     cell* center_cell = q.top();
     q.pop();
     center_coords = center_cell->get_cell_coords();
-    process_neighbors();
+    process_neighbors(false);
     delete center_cell;
   }
+  //Allow movement along coastal ocean cells till a path
+  //is possible
+  if (! connection_found){
+    completed_cells->set_all(false);
+    push_cell(mouth_coords->clone());
+    while (!q.empty()){
+      cell* center_cell = q.top();
+      q.pop();
+      center_coords = center_cell->get_cell_coords();
+      process_neighbors(true);
+      delete center_cell;
+    }
+    if (connection_found) river_mouth_relocated = true;
+  }
+  if (! connection_found) throw runtime_error("Unable to route distributary");
   coords* working_coords = connection_location;
   bool sea_reached = false;
   while(! sea_reached){
@@ -106,20 +127,27 @@ void bifurcation_algorithm::find_shortest_path_to_main_channel(coords* mouth_coo
     delete working_coords;
     working_coords = new_working_coords;
   }
+  if (river_mouth_relocated) {
+    cout << "River mouth relocated" << endl;
+    cout << "Old position: " << *mouth_coords << endl;
+    cout << "New position: " << *working_coords << endl;
+  }
+  //Allow single sea point to recieve multiple distributory
+  (*major_side_channel_mask)(working_coords) = false;
   delete working_coords;
 }
 
 //No longer providing option for non-diagonal neighbors only as it never gets used
-void bifurcation_algorithm::process_neighbors()
+void bifurcation_algorithm::process_neighbors(bool allow_coastal_cells)
 {
   neighbors_coords = completed_cells->get_neighbors_coords(center_coords,1);
   while( ! neighbors_coords->empty() ) {
-    process_neighbor();
+    process_neighbor(allow_coastal_cells);
   }
   delete neighbors_coords;
 }
 
-inline void bifurcation_algorithm::process_neighbor()
+inline void bifurcation_algorithm::process_neighbor(bool allow_coastal_cells)
 {
   coords* nbr_coords = neighbors_coords->back();
   neighbors_coords->pop_back();
@@ -128,9 +156,22 @@ inline void bifurcation_algorithm::process_neighbor()
          (*landsea_mask)(nbr_coords) ||
          ((*main_channel_mask)(nbr_coords) == main_channel_invalid) ||
          connection_found ) ) {
-    if ((*main_channel_mask)(nbr_coords) == main_channel_valid) {
-      (*number_of_outflows)(nbr_coords) += 1;
-      mark_bifurcated_river_direction(nbr_coords,center_coords);
+    bool is_connection = false;
+    if (remove_main_channel && is_first_distributory) {
+      is_connection = ((*nbr_coords) == (*valid_main_channel_start_coords));
+    } else {
+      is_connection = ((*main_channel_mask)(nbr_coords) ==
+                           main_channel_valid);
+    }
+    if (is_connection) {
+      if (remove_main_channel && is_first_distributory) {
+        mark_river_direction(nbr_coords,center_coords);
+        transcribe_river_direction(nbr_coords);
+        is_first_distributory = false;
+      } else {
+        (*number_of_outflows)(nbr_coords) += 1;
+        mark_bifurcated_river_direction(nbr_coords,center_coords);
+      }
       connection_found = true;
       connection_location = center_coords->clone();
       while (!q.empty()) {
@@ -144,13 +185,28 @@ inline void bifurcation_algorithm::process_neighbor()
       (*completed_cells)(nbr_coords) = true;
       mark_river_direction(nbr_coords,center_coords);
     }
+  } else if ((! (*completed_cells)(nbr_coords)) &&
+             (*landsea_mask)(nbr_coords) &&
+             allow_coastal_cells) {
+      bool is_coastal_cell = false;
+      _grid->for_all_nbrs_wrapped(nbr_coords,
+                                  [&](coords* second_nbr_coords){
+        if (! (*landsea_mask)(second_nbr_coords)) is_coastal_cell = true;
+        delete second_nbr_coords;
+      });
+      if (is_coastal_cell) {
+        push_coastal_cell(nbr_coords);
+        (*completed_cells)(nbr_coords) = true;
+      } else delete nbr_coords;
   } else delete nbr_coords;
 }
 
 void bifurcation_algorithm::track_main_channel(coords* mouth_coords){
+  vector<coords*> cells_to_remove_from_main_channel;
   cells_from_mouth = 0;
   push_cell(mouth_coords->clone());
   (*main_channel_mask)(mouth_coords) = main_channel_invalid;
+  cells_to_remove_from_main_channel.push_back(mouth_coords->clone());
   while (!q.empty()){
     cell* center_cell = q.top();
     q.pop();
@@ -169,8 +225,21 @@ void bifurcation_algorithm::track_main_channel(coords* mouth_coords){
         (cells_from_mouth >  minimum_cells_from_split_to_main_mouth &&
          cells_from_mouth <=  maximum_cells_from_split_to_main_mouth) ?
                             main_channel_valid : main_channel_invalid;
+      if (remove_main_channel) {
+        if (cells_from_mouth <= minimum_cells_from_split_to_main_mouth) {
+          cells_to_remove_from_main_channel.push_back(next_upstream_cell_coords->clone());
+        } else if ( cells_from_mouth ==
+                    minimum_cells_from_split_to_main_mouth + 1) {
+          valid_main_channel_start_coords = next_upstream_cell_coords->clone();
+        }
+      }
     }
     delete center_cell;
+  }
+  for(vector<coords*>::iterator i = cells_to_remove_from_main_channel.begin();
+                                    i != cells_to_remove_from_main_channel.end(); ++i){
+    (*main_channel_mask)(*i) = not_main_channel;
+    delete *i;
   }
 }
 
@@ -195,7 +264,7 @@ inline void bifurcation_algorithm::process_neighbor_track_main_channel() {
   if ( cumulative_flow_at_nbr_coords > cumulative_flow_threshold &&
        cell_flows_into_cell(nbr_coords,center_coords) ){
       push_cell(nbr_coords);
-      (*major_side_channel_mask)(nbr_coords) = true;
+      if ( ! remove_main_channel) (*major_side_channel_mask)(nbr_coords) = true;
       if( cumulative_flow_at_nbr_coords  > highest_cumulative_flow_nbrs  ) {
         highest_cumulative_flow_nbrs = cumulative_flow_at_nbr_coords;
         next_upstream_cell_coords = nbr_coords;
@@ -223,13 +292,16 @@ inline void bifurcation_algorithm_icon_single_index::transcribe_river_direction(
 
 void bifurcation_algorithm_latlon::mark_bifurcated_river_direction(coords* initial_coords,
                                                                          coords* destination_coords){
+  bool successful = false;
   for (int i = 0;i<maximum_bifurcations;i++){
     if ((*bifurcation_rdirs[i])(initial_coords) == no_bifurcation_code) {
       (*bifurcation_rdirs[i])(initial_coords) =
         _grid->calculate_dir_based_rdir(initial_coords,destination_coords);
+      successful = true;
       break;
     }
   }
+  if (! successful) throw runtime_error("Too many bifurcations at a single point");
 }
 
 void bifurcation_algorithm_icon_single_index::mark_bifurcated_river_direction(coords* initial_coords,
@@ -374,11 +446,11 @@ double* bifurcation_algorithm_latlon::get_bifurcation_rdirs(){
 }
 
 int* bifurcation_algorithm_icon_single_index::get_bifurcation_next_cell_index(){
-  int array_size = _grid->get_total_size();
-  int* bifurcation_next_cell_index_out = new int[maximum_bifurcations*array_size];
-  for (int i = 0; i< maximum_bifurcations;i++){
+  long array_size = (long)_grid->get_total_size();
+  int* bifurcation_next_cell_index_out = new int[(long)maximum_bifurcations*array_size];
+  for (long i = 0; i< (long)maximum_bifurcations;i++){
     int* bifurcation_next_cell_index_slice = bifurcations_next_cell_index[i]->get_array();
-    for (int j = 0; j < array_size;j++){
+    for (long j = 0; j < array_size;j++){
       bifurcation_next_cell_index_out[j+i*array_size] = bifurcation_next_cell_index_slice[j];
     }
   }

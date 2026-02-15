@@ -17,7 +17,7 @@ import os.path as path
 import warnings
 import configparser
 from Dynamic_HD_Scripts.tools.flow_to_grid_cell import create_hypothetical_river_paths_map
-from Dynamic_HD_Scripts.interface.cpp_interface.libs import fill_sinks_wrapper
+import fill_sinks_wrapper
 from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers \
     import dynamic_hd_driver as dyn_hd_dr
 from Dynamic_HD_Scripts.tools import compute_catchments as comp_catchs
@@ -303,7 +303,7 @@ def setup_and_run_icon_para_gen_from_command_line_arguments(args):
     driver_object = Icon_Coarse_River_Directions_Creation_Drivers(**vars(args))
     driver_object.no_intermediaries_combine_hydrosheds_plus_rdirs_from_corrected_orog_driver()
 
-class Arguments(object):
+class Arguments:
     """An empty class used to pass namelist arguments into the main routine as keyword arguments."""
 
     pass

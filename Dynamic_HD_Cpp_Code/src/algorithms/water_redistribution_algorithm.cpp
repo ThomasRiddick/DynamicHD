@@ -43,18 +43,18 @@ void water_redistribution_algorithm::run_water_redistribution(){
   cout << "Entering Water Redistribution C++ Code" << endl;
   prepare_lake_center_list();
   redistribute_water();
-  for (int i = 0; i < lake_center_list.size(); i++){
+  for (int i = 0; i < (int)lake_center_list.size(); i++){
     if(lake_center_list[i]) delete lake_center_list[i];
   };
 }
 
 void water_redistribution_algorithm::prepare_lake_center_list(){
-  int number_of_lakes = lake_numbers->get_max_element();
+  int number_of_lakes = lake_numbers->get_max_element()+1;
   lake_center_list.assign(number_of_lakes,nullptr);
   _grid->for_all([&](coords* coords_in){
     int lake_number = (*lake_numbers)(coords_in);
-    if ( lake_number != 0 && (*lake_centers)(coords_in)) {
-      lake_center_list[(*lake_numbers)(coords_in)-1] = coords_in;
+    if ( lake_number != null_lake_number && (*lake_centers)(coords_in)) {
+      lake_center_list[(*lake_numbers)(coords_in)] = coords_in;
     } else delete coords_in;
   });
 }
@@ -65,8 +65,8 @@ void water_redistribution_algorithm::redistribute_water(){
       (*water_to_redistribute)(coords_in);
     if(water_to_redistribute_in_this_cell> 0.0){
       int lake_number = (*lake_numbers)(coords_in);
-      if(lake_number != 0){
-        coords* new_lake_center_coords = lake_center_list[lake_number-1];
+      if(lake_number != null_lake_number){
+        coords* new_lake_center_coords = lake_center_list[lake_number];
         (*water_redistributed_to_lakes)(new_lake_center_coords) +=
           water_to_redistribute_in_this_cell;
       } else {

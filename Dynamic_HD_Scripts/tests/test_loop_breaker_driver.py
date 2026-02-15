@@ -20,8 +20,8 @@ class Test(unittest.TestCase):
 
     show_output = False
 
-    coarse_rdirs = np.array([[6,1,6,6,1],
-                             [8,4,4,8,7],
+    coarse_rdirs = np.array([[6,1,7,6,1],
+                             [8,-1,4,8,7],
                              [1,-1,5,0,6],
                              [2,4,9,8,8],
                              [9,6,8,7,6]],dtype=np.float64)
@@ -66,8 +66,8 @@ class Test(unittest.TestCase):
                                      [1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1],
                                      [1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1],
                                      [1,1,1, 1,1,1, 1,1,11, 1,1,1, 1,1,1]],dtype=np.float64)
-    expected_results = np.array([[6,6,6,4,1],
-                                 [8,4,4,8,7],
+    expected_results = np.array([[6,6,7,4,1],
+                                 [8,-1,4,8,7],
                                  [1,-1,5,0,7],
                                  [2,6,5,8,8],
                                  [9,6,8,7,6 ]],dtype=np.float64)

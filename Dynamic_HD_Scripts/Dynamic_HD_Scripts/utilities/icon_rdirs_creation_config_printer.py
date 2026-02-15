@@ -18,7 +18,7 @@ def print_filenames_from_config(python_config_filename_in):
            config.get("input_fieldname_options",
                       "ten_minute_corrected_orography_fieldname"))
 
-class Arguments(object):
+class Arguments:
     """An empty class used to pass namelist arguments into the main routine as keyword arguments."""
 
     pass

@@ -12,6 +12,7 @@ import os.path as path
 import numpy as np
 import configparser
 import shutil
+import contextlib
 from mpi4py import MPI
 from timeit import default_timer as timer
 from Dynamic_HD_Scripts.base import field
@@ -25,7 +26,7 @@ from Dynamic_HD_Scripts.utilities import utilities
 from Dynamic_HD_Scripts.utilities.process_manager import ProcessManager
 from Dynamic_HD_Scripts.utilities.process_manager import using_mpi
 from Dynamic_HD_Scripts.utilities.process_manager import MPICommands
-from Dynamic_HD_Scripts.interface.cpp_interface.libs import fill_sinks_wrapper
+import fill_sinks_wrapper
 from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers import dynamic_hd_driver as dyn_hd_dr
 
 
@@ -97,40 +98,41 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                     path.join(dest,"30min_catchments.nc"))
 
     def clean_work_dir(self):
-        os.remove(path.join(self.working_directory_path,"30minute_river_dirs_temp.nc"))
-        os.remove(path.join(self.working_directory_path,"30minute_filled_orog_temp.nc"))
-        os.remove(path.join(self.working_directory_path,"30minute_river_dirs_temp.dat"))
-        os.remove(path.join(self.working_directory_path,"30minute_ls_mask_temp.nc"))
-        os.remove(path.join(self.working_directory_path,"30minute_ls_mask_temp.dat"))
-        os.remove(path.join(self.working_directory_path,"30minute_filled_orog_temp.dat"))
-        os.remove(path.join(self.working_directory_path,"loops.log"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "soil_partab.txt"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "slope.dat"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "riv_vel.dat"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "riv_n.dat"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "riv_k.dat"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "paragen.inp"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "over_vel.dat"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "over_n.dat"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "over_k.dat"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "hdpara.srv"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "global.inp"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "ddir.inp"))
-        os.remove(path.join(self.working_directory_path,"paragen",
-                            "bas_k.dat"))
-        os.rmdir(path.join(self.working_directory_path,"paragen"))
+        with contextlib.suppress(FileNotFoundError):
+            os.remove(path.join(self.working_directory_path,"30minute_river_dirs_temp.nc"))
+            os.remove(path.join(self.working_directory_path,"30minute_filled_orog_temp.nc"))
+            os.remove(path.join(self.working_directory_path,"30minute_river_dirs_temp.dat"))
+            os.remove(path.join(self.working_directory_path,"30minute_ls_mask_temp.nc"))
+            os.remove(path.join(self.working_directory_path,"30minute_ls_mask_temp.dat"))
+            os.remove(path.join(self.working_directory_path,"30minute_filled_orog_temp.dat"))
+            os.remove(path.join(self.working_directory_path,"loops.log"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "soil_partab.txt"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "slope.dat"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "riv_vel.dat"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "riv_n.dat"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "riv_k.dat"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "paragen.inp"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "over_vel.dat"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "over_n.dat"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "over_k.dat"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "hdpara.srv"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "global.inp"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "ddir.inp"))
+            os.remove(path.join(self.working_directory_path,"paragen",
+                                "bas_k.dat"))
+            os.rmdir(path.join(self.working_directory_path,"paragen"))
 
     def trial_run_using_data_from_new_data_from_virna_2016_version(self):
         """Run a full trial using the 2016 version of the new data from Virna"""
@@ -1092,7 +1094,7 @@ def setup_and_run_dynamic_hd_para_gen_from_command_line_arguments(args):
     driver_object = Dynamic_HD_Production_Run_Drivers(**vars(args))
     driver_object.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
 
-class Arguments(object):
+class Arguments:
     """An empty class used to pass namelist arguments into the main routine as keyword arguments."""
 
     pass

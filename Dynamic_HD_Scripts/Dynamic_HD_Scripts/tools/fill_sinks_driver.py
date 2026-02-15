@@ -11,10 +11,8 @@ import numpy as np
 from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.base.field import Field
 from Dynamic_HD_Scripts.base import field
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import fill_sinks_wrapper
-from Dynamic_HD_Scripts.interface.cpp_interface.libs \
-    import fill_sinks_wrapper_low_mem
+import fill_sinks_wrapper
+import fill_sinks_wrapper_low_mem
 
 def generate_orography_with_sinks_filled(input_orography_filename,output_orography_filename,
                                          ls_mask_filename=None,truesinks_filename=None,

@@ -6,7 +6,6 @@ Created on Feb 2, 2018
 
 import argparse
 import os.path as path
-from Dynamic_HD_Scripts.command_line_drivers import setup_validator
 from Dynamic_HD_Scripts.tools import cotat_plus_driver
 from Dynamic_HD_Scripts.tools import loop_breaker_driver
 from Dynamic_HD_Scripts.tools import upscale_orography_driver
@@ -16,7 +15,9 @@ from Dynamic_HD_Scripts.tools import create_connected_lsmask_driver
 from Dynamic_HD_Scripts.tools import create_orography_driver
 from Dynamic_HD_Scripts.tools import determine_river_directions
 from Dynamic_HD_Scripts.tools import flow_to_grid_cell
+from Dynamic_HD_Scripts.tools import river_mouth_marking_driver
 from Dynamic_HD_Scripts.utilities import utilities
+from Dynamic_HD_Scripts.utilities import setup_validator
 from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers import dynamic_hd_driver
 
 def get_option_if_defined(config,section,option):
@@ -27,7 +28,7 @@ def get_boolean_option_if_defined(config,section,option,default):
     return (config.getboolean(section,option)
             if config.has_option(section,option) else default)
 
-class HDOperatorDrivers(object):
+class HDOperatorDrivers:
     '''
     classdocs
     '''
@@ -469,6 +470,21 @@ class HDOperatorDrivers(object):
                                                             'hd_flow_params'),
                                         production_run=True)
 
+    def river_mouth_marking_driver(self,config):
+        river_mouth_marking_driver.\
+            advanced_river_mouth_marking_driver(input_river_directions_filename=
+                                                config.get("input_filepaths","rdirs"),
+                                                output_river_directions_filename=
+                                                config.get("output_filepaths","rdirs_out"),
+                                                input_river_directions_fieldname=
+                                                config.get("input_fieldnames","rdirs"),
+                                                output_river_directions_fieldname=
+                                                config.get("output_fieldnames","rdirs_out"),
+                                                lsmask_filename=
+                                                config.get("input_filepaths","landsea"),
+                                                lsmask_fieldname=
+                                                config.get("input_fieldnames","landsea"))
+
 def setup_and_run_hd_operator_driver_from_command_line_arguments(args):
     driver_object = HDOperatorDrivers()
     if args.print_hd_driver_options:
@@ -476,7 +492,7 @@ def setup_and_run_hd_operator_driver_from_command_line_arguments(args):
     else:
         driver_object.primary_driver(args.run_hd_driver_script)
 
-class Arguments(object):
+class Arguments:
     pass
 
 def parse_arguments():

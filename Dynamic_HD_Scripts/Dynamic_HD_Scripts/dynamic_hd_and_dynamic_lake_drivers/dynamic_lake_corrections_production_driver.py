@@ -45,14 +45,14 @@ class Dynamic_Lake_Correction_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Driver
             file_label = self._generate_file_label()
         else:
             file_label = "{}_{}".format(version,datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
-        ls_mask_filename = join(self.ls_masks_path,"generated",
-                                "ls_mask_make_1000m_depth_contour_mask_from_"
-                                "ICE6G_20200721_144332_with_casp.nc")
+        ls_mask_filename = ("/Users/thomasriddick/Documents/data/analysis_data/"
+                            "ls_mask_make_1000m_depth_contour_mask_from_"
+                            "ICE6G_20200721_144332_with_casp.nc")
         ls_mask_fieldname = "lsm"
         original_orography_filename = join(self.orography_path,
                                            "ice5g_v1_2_00_0k_10min.nc")
         if true_sinks_filename is None:
-            true_sinks_filename = join(self.truesinks_path,
+            true_sinks_filename = join("/Users/thomasriddick/Documents/data/analysis_data/"
                                        "truesinks_ICE5G_and_tarasov_upscaled_srtm30plus_"
                                        "north_america_only_data_ALG4_sinkless_glcc_olson"
                                        "_lsmask_0k_20191014_173825_with_grid.nc")
@@ -352,8 +352,8 @@ def main():
     """
     lake_correction_drivers = Dynamic_Lake_Correction_Production_Run_Drivers()
     lake_correction_drivers.no_intermediaries_lake_corrections_driver(
-        original_orog_corrections_filename=join(lake_correction_drivers.orography_corrections_fields_path,
-                                                "orog_corrs_field_generate_corrections_for_upscaled_MeritHydro_0k_20220326_121152.nc"),
+        original_orog_corrections_filename=("/Users/thomasriddick/Documents/data/analysis_data/"
+                                            "orog_corrs_field_generate_corrections_for_upscaled_MeritHydro_0k_20220326_121152.nc"),
         original_orog_corrections_fieldname="orog_corrections")
 
 if __name__ == '__main__':

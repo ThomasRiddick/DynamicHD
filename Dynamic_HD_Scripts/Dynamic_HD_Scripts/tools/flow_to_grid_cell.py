@@ -17,6 +17,26 @@ from Dynamic_HD_Scripts.context import fortran_source_path
 from Dynamic_HD_Scripts.context import fortran_project_object_path
 from Dynamic_HD_Scripts.context import fortran_project_source_path
 from Dynamic_HD_Scripts.context import fortran_project_include_path
+from accumulate_flow_icon_wrapper import accumulate_flow_icon_cpp
+
+def accumulate_flow_icon_single_index(cell_neighbors,
+                                      input_river_directions,
+                                      input_bifurcated_river_directions=None):
+    paths_map = np.empty(shape=input_river_directions.shape,dtype=np.int32)
+    if input_bifurcated_river_directions is not None:
+        accumulate_flow_icon_cpp(cell_neighbors.flatten(),
+                                 input_river_directions,
+                                 paths_map,
+                                 np.swapaxes(input_bifurcated_river_directions,0,1).flatten())
+    else:
+        accumulate_flow_icon_cpp(cell_neighbors.flatten(),
+                                 input_river_directions,
+                                 paths_map)
+    #Make a minor postprocessing correction
+    paths_map[np.logical_and(np.logical_or(input_river_directions == 5,
+                                           input_river_directions == 0),
+                             paths_map == 0)] = 1
+    return paths_map
 
 def create_hypothetical_river_paths_map(riv_dirs,lsmask=None,use_f2py_func=True,
                                         use_f2py_sparse_iterator=False,nlat=360,nlong=720,
@@ -62,15 +82,16 @@ def create_hypothetical_river_paths_map(riv_dirs,lsmask=None,use_f2py_func=True,
         riv_dirs = np.array(riv_dirs,copy=True,dtype=int)
     paths_map = np.zeros((nlat+2,nlong),dtype=np.int32,order='F')
     if use_f2py_func and use_new_method:
-        additional_fortran_filenames = ["algorithms/accumulate_flow_mod.o",
-                                        "base/coords_mod.o",
-                                        "algorithms/flow_accumulation_algorithm_mod.o",
-                                        "base/convert_rdirs_to_indices.o",
-                                        "base/doubly_linked_list_mod.o",
-                                        "base/doubly_linked_list_link_mod.o",
-                                        "base/subfield_mod.o",
-                                        "base/unstructured_grid_mod.o",
-                                        "base/precision_mod.o"]
+        additional_fortran_filenames = \
+            ["Dynamic_HD_Fortran_Code_src_algorithms_accumulate_flow_mod.f90.o",
+             "Dynamic_HD_Fortran_Code_src_base_coords_mod.f90.o",
+             "Dynamic_HD_Fortran_Code_src_algorithms_flow_accumulation_algorithm_mod.f90.o",
+             "Dynamic_HD_Fortran_Code_src_base_convert_rdirs_to_indices.f90.o",
+             "Dynamic_HD_Fortran_Code_src_base_doubly_linked_list_mod.f90.o",
+             "Dynamic_HD_Fortran_Code_src_base_doubly_linked_list_link_mod.f90.o",
+             "Dynamic_HD_Fortran_Code_src_base_subfield_mod.f90.o",
+             "Dynamic_HD_Fortran_Code_src_base_unstructured_grid_mod.f90.o",
+             "Dynamic_HD_Fortran_Code_src_base_precision_mod.f90.o"]
         additional_fortran_filepaths = [path.join(fortran_project_object_path,filename) for filename in\
                                         additional_fortran_filenames]
         f2py_mngr = f2py_mg.f2py_manager(path.join(fortran_project_source_path,

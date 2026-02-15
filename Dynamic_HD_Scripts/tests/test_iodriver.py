@@ -68,13 +68,9 @@ class Test(unittest.TestCase):
 
     def testLoadingFieldWithGlobalGridDesc(self):
         """Test loading from a file using a global_DXY grid description"""
-        loaded_field = iodriver.advanced_field_loader(filename=join(data_dir,
-                                                                    "HDdata",
-                                                                    "catchmentmaps",
-                                                                    "upscaled",
-                                                                    "catchmentmap_unsorted_ICE5G_"
-                                                                    "data_ALG4_sinkless_0k_"
-                                                                    "20160714_121938.nc"),
+        loaded_field = iodriver.advanced_field_loader(filename="/Users/thomasriddick/"
+                                                      "Documents/data/unit_test_data/"
+                                                      "catchmentmap_unsorted_ICE5G_data_ALG4_sinkless_0k_20160714_121938.nc",
                                                       grid_desc="global_0.5",
                                                       adjust_orientation=True)
         self.assertEqual(loaded_field.data[62][157],14149.0,"Field data has not been loaded and"
@@ -88,13 +84,11 @@ class Test(unittest.TestCase):
 
     def testLoadingFieldWithRXGridDesc(self):
         """Test loading from a file using a rDXxDY grid description"""
-        loaded_field = iodriver.advanced_field_loader(filename=join(data_dir,
-                                                                    "HDdata",
-                                                                    "catchmentmaps",
-                                                                    "upscaled",
-                                                                    "catchmentmap_unsorted_ICE5G_"
-                                                                    "data_ALG4_sinkless_0k_"
-                                                                    "20160714_121938.nc"),
+        loaded_field = iodriver.advanced_field_loader("/Users/thomasriddick/"
+                                                      "Documents/data/unit_test_data/"
+                                                      "catchmentmap_unsorted_ICE5G_"
+                                                      "data_ALG4_sinkless_0k_"
+                                                      "20160714_121938.nc",
                                                       grid_desc="r0.5x0.5",
                                                       adjust_orientation=True)
         self.assertEqual(loaded_field.data[62][517],14149.0,"Field data has not been loaded and"
@@ -108,10 +102,8 @@ class Test(unittest.TestCase):
 
     def testLoadingFieldWithRXGridDescWithoutReorientation(self):
         """Test loading from a file using a rDXxDY grid description without reorienting"""
-        loaded_field = iodriver.advanced_field_loader(filename=join(data_dir,
-                                                                    "HDdata",
-                                                                    "catchmentmaps",
-                                                                    "upscaled",
+        loaded_field = iodriver.advanced_field_loader(filename=join("/Users/thomasriddick/"
+                                                                    "Documents/data/unit_test_data/"
                                                                     "catchmentmap_unsorted_ICE5G_"
                                                                     "data_ALG4_sinkless_0k_"
                                                                     "20160714_121938.nc"),
@@ -141,13 +133,11 @@ class Test(unittest.TestCase):
             """
         with open(self.half_degree_grid_desc,'w') as f:
             f.write(textwrap.dedent(half_degree_grid_desc_text))
-        loaded_field = iodriver.advanced_field_loader(filename=join(data_dir,
-                                                                    "HDdata",
-                                                                    "catchmentmaps",
-                                                                    "upscaled",
-                                                                    "catchmentmap_unsorted_ICE5G_"
-                                                                    "data_ALG4_sinkless_0k_"
-                                                                    "20160714_121938.nc"),
+        loaded_field = iodriver.advanced_field_loader(filename="/Users/thomasriddick/"
+                                                               "Documents/data/unit_test_data/"
+                                                               "catchmentmap_unsorted_ICE5G_"
+                                                               "data_ALG4_sinkless_0k_"
+                                                               "20160714_121938.nc",
                                                       grid_desc_file=self.half_degree_grid_desc,
                                                       adjust_orientation=True)
         self.assertEqual(loaded_field.data[62][157],14149.0,"Field data has not been loaded and"
@@ -174,14 +164,13 @@ class Test(unittest.TestCase):
             """
         with open(self.ten_minute_grid_desc,'w') as f:
             f.write(textwrap.dedent(ten_minute_grid_desc_text))
-        loaded_field = iodriver.advanced_field_loader(filename=join(data_dir,
-                                                                    "HDdata",
-                                                                    "catchmentmaps",
-                                                                    "catchmentmap_unsorted_ICE6g"
-                                                                    "_lgm_ALG4_sinkless_no_true_"
-                                                                    "sinks_oceans_lsmask_plus_"
-                                                                    "upscale_rdirs_tarasov_orog"
-                                                                    "_corrs_20171015_031541.nc"),
+        loaded_field = iodriver.advanced_field_loader(filename="/Users/thomasriddick/"
+                                                               "Documents/data/unit_test_data/"
+                                                               "catchmentmap_unsorted_ICE6g"
+                                                               "_lgm_ALG4_sinkless_no_true_"
+                                                               "sinks_oceans_lsmask_plus_"
+                                                               "upscale_rdirs_tarasov_orog"
+                                                               "_corrs_20171015_031541.nc",
                                                       grid_desc_file=self.ten_minute_grid_desc,
                                                       adjust_orientation=True)
         self.assertEqual(loaded_field.data[45][713],399,"Field data has not been loaded and"
@@ -208,14 +197,13 @@ class Test(unittest.TestCase):
             """
         with open(self.ten_minute_grid_desc,'w') as f:
             f.write(textwrap.dedent(ten_minute_grid_desc_text))
-        loaded_field = iodriver.advanced_field_loader(filename=join(data_dir,
-                                                                    "HDdata",
-                                                                    "catchmentmaps",
-                                                                    "catchmentmap_unsorted_ICE6g"
-                                                                    "_lgm_ALG4_sinkless_no_true_"
-                                                                    "sinks_oceans_lsmask_plus_"
-                                                                    "upscale_rdirs_tarasov_orog"
-                                                                    "_corrs_20171015_031541.nc"),
+        loaded_field = iodriver.advanced_field_loader(filename="/Users/thomasriddick/"
+                                                               "Documents/data/unit_test_data/"
+                                                               "catchmentmap_unsorted_ICE6g"
+                                                               "_lgm_ALG4_sinkless_no_true_"
+                                                               "sinks_oceans_lsmask_plus_"
+                                                               "upscale_rdirs_tarasov_orog"
+                                                               "_corrs_20171015_031541.nc",
                                                       grid_desc_file=self.ten_minute_grid_desc,
                                                       adjust_orientation=False)
         self.assertEqual(loaded_field.data[45][1793],399,"Field data has not been loaded and"

@@ -26,6 +26,11 @@ function are_valid(coords::Coords)
   throw(UserError())
 end
 
+function get_linear_index(coords::Coords,
+                          linear_indices::LinearIndices)
+  throw(UserError())
+end
+
 function ==(lcoords::Coords,rcoords::Coords)
   throw(UserError())
 end
@@ -64,6 +69,11 @@ function ==(lcoords::LatLonCoords,rcoords::LatLonCoords)
           lcoords.lon == rcoords.lon)::Bool
 end
 
+function get_linear_index(coords::LatLonCoords,
+                          linear_indices::LinearIndices)
+  return linear_indices[coords.lat,coords.lon]
+end
+
 function is_ocean(coords::Generic1DCoords)
   return coords.index == coord_base_indicator_ocean
 end
@@ -82,6 +92,11 @@ end
 
 function ==(lcoords::Generic1DCoords,rcoords::Generic1DCoords)
   return lcoords.index == rcoords.index
+end
+
+function get_linear_index(coords::Generic1DCoords,
+                          linear_indices::LinearIndices)
+  return coords.index
 end
 
 struct DirectionIndicator

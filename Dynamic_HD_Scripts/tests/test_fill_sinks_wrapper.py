@@ -7,9 +7,10 @@ Created on Mar 31, 2016
 @author: thomasriddick
 '''
 
+import sys
 import unittest
 import numpy as np
-from Dynamic_HD_Scripts.interface.cpp_interface.libs import fill_sinks_wrapper
+import fill_sinks_wrapper
 
 
 class TestAlgorithmOne(unittest.TestCase):
@@ -416,6 +417,19 @@ class TestAlgorithmFour(unittest.TestCase):
                                                          [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]],
                                                         dtype=np.float64, order='C')
 
+        self.expected_wrapped_array_output_with_no_data_points = \
+            np.asarray([[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
+                        [1.1,1.1,-sys.float_info.max,1.1,0.0,0.0,1.1,1.1,1.1,1.1],
+                        [2.0,2.0,2.0,1.1,0.0,0.0,1.1,2.0,2.0,1.2],
+                        [1.3,3.0,2.0,1.1,0.0,0.0,1.1,2.0,3.0,3.0],
+                        [0.1,3.0,2.0,1.1,0.0,0.0,1.1,2.0,3.0,0.1],
+                        [0.1,3.0,2.0,1.1,0.0,0.0,1.1,2.0,3.0,0.1],
+                        [3.0,3.0,2.0,1.1,0.0,0.0,1.1,2.0,3.0,-sys.float_info.max],
+                        [2.0,2.0,2.0,1.1,0.0,0.0,1.1,2.0,2.0,2.0],
+                        [1.1,1.1,1.1,1.1,0.0,0.0,1.1,1.1,1.1,1.1],
+                        [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]],
+                       dtype=np.float64, order='C')
+
         self.rdirs = np.zeros((10,10),dtype=np.float64,order='C')
 
         self.ls_mask = np.asarray([[False,False,False,False,True,True,False,False,False,False],
@@ -594,7 +608,31 @@ class TestAlgorithmFour(unittest.TestCase):
                         [19,19,19,19,0,0,20,20,20,20]],
                        dtype=np.int32, order='C')
 
+        self.expected_wrapped_rdirs_output_with_no_data_points = \
+            np.asarray([[6.0,6.0,6.0,6.0,0.0,0.0,4.0,4.0,4.0,4.0],
+                        [9.0,9.0,0.0,9.0,0.0,0.0,7.0,7.0,7.0,7.0],
+                        [9.0,8.0,9.0,9.0,0.0,0.0,7.0,7.0,7.0,7.0],
+                        [7.0,4.0,9.0,9.0,0.0,0.0,7.0,7.0,9.0,8.0],
+                        [8.0,7.0,9.0,9.0,0.0,0.0,7.0,7.0,6.0,9.0],
+                        [8.0,7.0,9.0,9.0,0.0,0.0,7.0,7.0,9.0,9.0],
+                        [8.0,7.0,9.0,9.0,0.0,0.0,7.0,7.0,9.0,0.0],
+                        [3.0,3.0,9.0,9.0,0.0,0.0,7.0,7.0,1.0,1.0],
+                        [3.0,3.0,3.0,9.0,0.0,0.0,7.0,1.0,1.0,1.0],
+                        [6.0,6.0,6.0,9.0,0.0,0.0,7.0,4.0,4.0,4.0]],
+                       dtype=np.float64, order='C')
         self.catchment_nums_in = np.zeros((10,10),dtype=np.int32)
+
+        self.no_data_mask_array =\
+            np.asarray([[False,False,False,False,False,False,False,False,False,False],
+                        [False,False, True,False,False,False,False,False,False,False],
+                        [False,False,False,False,False,False,False,False,False,False],
+                        [False,False,False,False,False,False,False,False,False,False],
+                        [False,False,False,False,False,False,False,False,False,False],
+                        [False,False,False,False,False,False,False,False,False,False],
+                        [False,False,False,False,False,False,False,False,False,True],
+                        [False,False,False,False,False,False,False,False,False,False],
+                        [False,False,False,False,False,False,False,False,False,False],
+                        [False,False,False,False,False,False,False,False,False,False]])
 
     def testBasicCall(self):
         """Test a basic call to fill_sinks using algorithm 4"""
@@ -704,6 +742,23 @@ class TestAlgorithmFour(unittest.TestCase):
                                       "Fill sinks algorithm 4 with land sea mask and prefering non-diagonal flow"
                                       " directions in the initial setup with both true sinks on slopes and former"
                                       " true sinks unexpectedly changes orography")
+
+    def testCallWithLSMaskAndNoDataPoints(self):
+        """Test a call to fill_sinks using algorithm 4 and a land sea mask"""
+        dummy_ts = np.empty((1,1),dtype=np.int32)
+        next_lat_indices = np.empty((10,10),dtype=np.int32)
+        next_lon_indices = np.empty((10,10),dtype=np.int32)
+        fill_sinks_wrapper.fill_sinks_cpp_func(self.wrapped_input_array,4,True,self.ls_mask,False,False,dummy_ts,
+                                               False,0.0,next_lat_indices,next_lon_indices,self.rdirs,
+                                               self.catchment_nums_in,prefer_non_diagonal_initial_dirs = False,
+                                               no_data_in=self.no_data_mask_array.astype(np.int32))
+        np.testing.assert_array_equal(self.catchment_nums_in,self.expected_catchment_num_wrapped_output,
+                                      "Fill sinks algorithm 4 with land sea mask doesn't produce expected river catchments")
+        np.testing.assert_array_equal(self.rdirs,self.expected_wrapped_rdirs_output_with_no_data_points,
+                                      "Fill sinks algorithm 4 with land sea mask doesn't produce expected river direction results")
+        np.testing.assert_array_equal(self.wrapped_input_array,
+                                      self.expected_wrapped_array_output_with_no_data_points,
+                                      "Fill sinks algorithm 4 with land sea mask unexpected changes orography")
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

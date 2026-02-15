@@ -1,14 +1,17 @@
 #!/bin/bash
 set -e
 
-echo "Running Version 3.11 of the Dynamic HD Parameters Generation Code"
+cd $(dirname ${0})
+version=$(git describe --match 'release_version_*')
+cd -
+echo "Running Version ${version} of the Dynamic HD Parameters Generation Code"
 start_time=$(date +%s%N)
 
 #Define module loading function
 function load_module
 {
 module_name=$1
-if [[ $(hostname -d) == "atos.local" ]]; then
+if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
 	module load ${module_name}
 else
 	eval "eval `/usr/bin/tclsh /sw/share/Modules-4.2.1/libexec/modulecmd.tcl bash load ${module_name}`"
@@ -200,13 +203,13 @@ if ! [[ -d $source_directory ]]; then
 fi
 
 shopt -s nocasematch
-no_conda=${no_conda:-"false"}
-if [[ $no_conda == "true" ]] || [[ $no_conda == "t" ]]; then
-	no_conda=true
-elif [[ $no_conda == "false" ]] || [[ $no_conda == "f" ]]; then
-	no_conda=false
+no_mamba=${no_mamba:-"false"}
+if [[ $no_mamba == "true" ]] || [[ $no_mamba == "t" ]]; then
+	no_mamba=true
+elif [[ $no_mamba == "false" ]] || [[ $no_mamba == "f" ]]; then
+	no_mamba=false
 else
-	echo "Format of no_conda flag (${no_conda}) is unknown, please use True/False or T/F" 1>&2
+	echo "Format of no_mamba flag (${no_mamba}) is unknown, please use True/False or T/F" 1>&2
 	exit 1
 fi
 
@@ -230,7 +233,7 @@ else
         exit 1
 fi
 
-if ${no_conda} ; then
+if ${no_mamba} ; then
 no_env_gen=false
 fi
 
@@ -249,7 +252,7 @@ if ! ${compile_only} ; then
 fi
 
 #Check for locks if necesssary and set the compilation_required flag accordingly
-if  [[ $(hostname -d) == "atos.local" ]] ; then
+if  [[ $(hostname -d) == "lvt.dkrz.de" ]] ; then
 	exec 200>"${source_directory}/compilation.lock"
 	if $first_timestep ; then
 		if flock -x -n 200 ; then
@@ -281,10 +284,10 @@ if $no_compile ; then
 	compilation_required=false
 fi
 
-#Setup conda environment
+#Setup mamba environment
 echo "Setting up environment"
 if ! $no_modules ; then
-  	if [[ $(hostname -d) == "atos.local" ]]; then
+  	if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
     		source /etc/profile
     		unload_module netcdf_c
       		unload_module imagemagick
@@ -295,29 +298,31 @@ if ! $no_modules ; then
 	fi
 fi
 
-if ! $no_modules && ! $no_conda ; then
-	if [[ $(hostname -d) == "atos.local" ]]; then
+if ! $no_modules && ! $no_mamba ; then
+	if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
                 load_module python3
-	else
-		load_module anaconda3
 	fi
 fi
 
-if ! $no_conda && ! $no_env_gen ; then
-	if $compilation_required && conda info -e | grep -q "dyhdenv3"; then
-		conda env remove --yes --name dyhdenv3
+if ! $no_mamba && ! $no_env_gen ; then
+	if $compilation_required && mamba info -e | grep -q "dyhdenv_mamba"; then
+		mamba env remove --yes --name dyhdenv_mamba
 	fi
-	if ! conda info -e | grep -q "dyhdenv3"; then
-		${source_directory}/Dynamic_HD_bash_scripts/regenerate_conda_environment.sh $no_modules
+	if ! mamba info -e | grep -q "dyhdenv_mamba"; then
+		${source_directory}/Dynamic_HD_bash_scripts/regenerate_mamba_environment.sh $no_modules
 	fi
 fi
-if ! $no_conda ; then
-	source activate dyhdenv3
+if ! $no_mamba ; then
+	#Reactivating mamba environment a second time can cause errors
+	#Mamba uses conda environmental variables
+	if ! [[ ${CONDA_DEFAULT_ENV} == "dyhdenv_mamba" ]]; then
+		source activate dyhdenv_mamba
+	fi
 fi
 
 #Load a new version of gcc that doesn't have the polymorphic variable bug
 if ! $no_modules ; then
-        if [[ $(hostname -d) == "atos.local" ]]; then
+        if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
                 load_module gcc/11.2.0-gcc-11.2.0
 	else
 		load_module gcc/6.3.0
@@ -325,13 +330,16 @@ if ! $no_modules ; then
 fi
 
 #Setup correct python path
-export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${PYTHONPATH}
+export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${source_directory}/lib:${PYTHONPATH}
+
+#Set library path
+export LD_LIBRARY_PATH="${HOME}/sw-spack/netcdf-cxx4-4.3.1-d54zya/lib":"${HOME}/sw-spack/netcdf-c-4.8.1-khy3ru/lib":${LD_LIBRARY_PATH}
 
 #Set Open MPI Fortran compiler
 export OMPI_FC=/sw/rhel6-x64/gcc/gcc-6.2.0/bin/gfortran
 
 #Call compilation script
-${source_directory}/Dynamic_HD_bash_scripts/compile_dynamic_hd_code.sh ${compilation_required} ${compile_only} ${source_directory} ${working_directory} true "compile_only"
+${source_directory}/Dynamic_HD_bash_scripts/compile_dynamic_hd_code.sh ${compilation_required} ${compile_only} ${source_directory} ${working_directory} true
 
 if ! ${compile_only} ; then
 	#Set enviromental variable
@@ -343,13 +351,7 @@ if ! ${compile_only} ; then
     computation_end_time=$(date +%s%N)
 
 	#Delete paragen directory if it exists
-	if [[ -d "${working_directory}/paragen" ]]; then
-		cd ${working_directory}/paragen
-		rm -f paragen.inp soil_partab.txt slope.dat riv_vel.dat riv_n.dat riv_k.dat over_vel.dat over_n.dat over_k.dat
-		rm -f hdpara.srv global.inp ddir.inp bas_k.dat
-		cd - 2>&1 > /dev/null
-		rmdir ${working_directory}/paragen
-	fi
+	rm -rf ${working_directory}/paragen
 
 	#Delete other files if they exist
 	rm -f 30minute_filled_orog_temp.dat 30minute_ls_mask_temp.dat 30minute_river_dirs_temp.dat || true

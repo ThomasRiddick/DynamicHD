@@ -12,6 +12,7 @@ import shutil
 import cdo
 import netCDF4
 import enum
+import warnings
 from enum import Enum
 from Dynamic_HD_Scripts.base import field
 from Dynamic_HD_Scripts.base import grid
@@ -1210,7 +1211,7 @@ def advanced_downscale_ls_mask_driver(input_coarse_ls_mask_filename,
     #fine_nlat = scale_factor*input_coarse_ls_mask_field.get_grid().nlat
     #fine_nlong = scale_factor*input_coarse_ls_mask_field.get_grid().nlong
     #output_fine_ls_mask.get_grid().set_coordinates()
-    raise UserWarning("Coordinates not set for fine grid!")
+    warnings.warn("Coordinates not set for fine grid!")
     iodriver.advanced_field_writer(output_fine_ls_mask_filename,output_fine_ls_mask_field,
                                    fieldname=output_fine_ls_mask_fieldname)
 
@@ -1734,77 +1735,107 @@ class LineTypes(Enum):
     DATEANDHEIGHTVALUES = enum.auto()
     NOTSET = enum.auto()
 
-def apply_dated_based_sill_height_corrections(input_orography,
-                                              dated_based_sill_height_corrections_list_filename,
-                                              current_date,
-                                              output_orography):
+def apply_date_based_sill_height_corrections(orography_field,
+                                             date_based_sill_height_corrections_list_filename,
+                                             current_date):
     """
     """
-    new_entry_line_pattern = re.compile(r"-*new *entry-*")
+    version_number_pattern = re.compile(r"# Version")
+    most_recent_only_full_pattern = re.compile(r"# *most_recent_only_full")
+    additive_condensed_pattern = re.compile(r"# *additive_condensed")
+    new_entry_line_pattern = re.compile(r"-*new *entry*-")
     latlon_line_pattern = re.compile(r"^ *lat *, *lon")
     latlon_line_values_pattern = re.compile(r"^ *[0-9]+ *, *[0-9]+")
     date_and_height_line_pattern= re.compile(r"^ *end *date, *height")
     date_and_height_line_values_pattern = re.compile(r"^ *-?[0-9]+ *, *[0-9]+\.[0-9]*")
     comment_line_pattern = re.compile(r"^ *#.*$")
+    blank_line_pattern = re.compile(r"^ *$")
     correction_list = []
     dates_and_heights= None
     coords = None
-    with open(dated_based_sill_height_corrections_list_filename) as f:
-        previous_line_type = LineTypes.NOTSET
-        for line in f:
-            if comment_line_pattern.match(line):
-                continue
-            elif new_entry_line_pattern.match(line):
-                if (previous_line_type == LineTypes.NOTSET or
-                    previous_line_type == LineTypes.DATEANDHEIGHTVALUES):
-                    previous_line_type = LineTypes.NEWENTRY
-                    if previous_line_type == LineTypes.DATEANDHEIGHTVALUES:
-                        correction_list.append([coords,dates_and_heights])
-                    coords = None
-                    dates_and_heights= {}
-                else:
-                    raise RunTimeError("Invalid sill correction file format")
-            elif previous_line_type == LineTypes.NEWENTRY:
-                if latlon_line_pattern.match(line):
-                    previous_line_type == LineTypes.LATLONDEF
-                else:
-                    raise RunTimeError("Invalid sill correction file format")
-            elif previous_line_type == LineTypes.LATLONDEF:
-                if latlon_line_values_pattern.match(line):
-                    coords = tuple(int(coord) for coord in line.strip().split(","))
-                    previous_line_type == LineTypes.LATLONVALUES
+    with open(date_based_sill_height_corrections_list_filename) as f:
+        first_line = f.readline().strip('\n')
+        if version_number_pattern.match(first_line):
+            first_line = f.readline().strip('\n')
+        if most_recent_only_full_pattern.match(first_line):
+            most_recent_only = True
+            previous_line_type = LineTypes.NOTSET
+            for line in f:
+                if comment_line_pattern.match(line):
+                    continue
+                elif new_entry_line_pattern.match(line):
+                    if (previous_line_type == LineTypes.NOTSET or
+                        previous_line_type == LineTypes.DATEANDHEIGHTVALUES):
+                        previous_line_type = LineTypes.NEWENTRY
+                        if previous_line_type == LineTypes.DATEANDHEIGHTVALUES:
+                            correction_list.append([coords,dates_and_heights])
+                        coords = None
+                        dates_and_heights= {}
+                    else:
+                        raise RunTimeError("Invalid sill correction file format")
+                elif previous_line_type == LineTypes.NEWENTRY:
+                    if latlon_line_pattern.match(line):
+                        previous_line_type == LineTypes.LATLONDEF
+                    else:
+                        raise RunTimeError("Invalid sill correction file format")
+                elif previous_line_type == LineTypes.LATLONDEF:
+                    if latlon_line_values_pattern.match(line):
+                        coords = tuple(int(coord) for coord in line.strip().split(","))
+                        previous_line_type == LineTypes.LATLONVALUES
+                    else:
+                        raise RuntimeError("Invalid sill correction file format")
+                elif previous_line_type == LineTypes.LATLONVALUES:
+                    if date_and_height_line_pattern.match(line):
+                        previous_line_type == LineTypes.DATEANDHEIGHTDEF
+                    else:
+                        raise RuntimeError("Invalid sill correction file format")
+                elif (previous_line_type == LineTypes.DATEANDHEIGHTDEF or
+                         previous_line_type == LineTypes.DATEANDHEIGHTVALUES):
+                    if date_and_height_line_values_pattern.match(line):
+                        date_str,height_str = line.strip().split(",")
+                        date = int(date_str)
+                        height_str = float(height_str)
+                        dates_and_heights[date] = height
+                        previous_line_type == LineTypes.DATEANDHEIGHTVALUES
+                    else:
+                        raise RuntimeError("Invalid sill correction file format")
                 else:
                     raise RuntimeError("Invalid sill correction file format")
-            elif previous_line_type == LineTypes.LATLONVALUES:
-                if date_and_height_line_pattern.match(line):
-                    previous_line_type == LineTypes.DATEANDHEIGHTDEF
-                else:
-                    raise RuntimeError("Invalid sill correction file format")
-            elif (previous_line_type == LineTypes.DATEANDHEIGHTDEF or
-                     previous_line_type == LineTypes.DATEANDHEIGHTVALUES):
-                if date_and_height_line_values_pattern.match(line):
-                    date_str,height_str = line.strip().split(",")
-                    date = int(date_str)
-                    height_str = float(height_str)
-                    dates_and_heights[date] = height
-                    previous_line_type == LineTypes.DATEANDHEIGHTVALUES
-                else:
-                    raise RuntimeError("Invalid sill correction file format")
-            else:
+            if (previous_line_type != LineTypes.NOTSET and
+                previous_line_type != LineTypes.DATEANDHEIGHTVALUES):
                 raise RuntimeError("Invalid sill correction file format")
-        if (previous_line_type != LineTypes.NOTSET and
-            previous_line_type != LineTypes.DATEANDHEIGHTVALUES):
-            raise RuntimeError("Invalid sill correction file format")
-        if previous_line_type == LineTypes.DATEANDHEIGHTVALUES:
-            correction_list.append([coords,dates_and_heights])
-
-    for coords,heights_and_dates in correction_list:
-        oldest_date_less_than_current_date = \
-            min([date for date in list(heights_and_dates.keys()) if date >= current_date])
-        height = heights_and_dates[oldest_date_less_than_current_date]
-        print("Correcting height of lat={0},lon={1} to {2} m at date {3}".format(*coords,height,
-                                                                                 current_date))
-        orography_field.get_data()[coords] += height
+            if previous_line_type == LineTypes.DATEANDHEIGHTVALUES:
+                correction_list.append([coords,dates_and_heights])
+        elif additive_condensed_pattern.match(first_line):
+            most_recent_only = False
+            corrections = []
+            for line in f:
+                if (comment_line_pattern.match(line) or
+                    blank_line_pattern.match(line)):
+                    continue
+                data = line.strip().split(",")
+                correction_list.append({"lat":int(data[0]),
+                                        "lon":int(data[1]),
+                                        "date":int(data[2]),
+                                        "height_change":float(data[3])})
+        else:
+            raise RuntimeError("Corrections file format not recognised")
+    if most_recent_only:
+        for coords,heights_and_dates in correction_list:
+            oldest_date_less_than_current_date = \
+                min([date for date in list(heights_and_dates.keys()) if date >= current_date])
+            height = heights_and_dates[oldest_date_less_than_current_date]
+            print("Correcting height of lat={0},lon={1} to {2} m at date {3}".format(*coords,height,
+                                                                                     current_date))
+            orography_field.get_data()[coords] += height
+    else:
+        for correction in correction_list:
+            if current_date > correction["date"]:
+                print("Correcting height of lat={0},lon={1}"
+                      " by {2} m at date {3}".format(correction["lat"],correction["lon"],
+                                                     correction["height_change"],
+                                                     current_date))
+                orography_field.get_data()[correction["lat"],correction["lon"]] += correction["height_change"]
 
 def expand_catchment_to_include_rivermouths(rdirs,catchments,mouth_coords):
     dir_to_centre = [[3,2,1],
@@ -1822,3 +1853,10 @@ def expand_catchment_to_include_rivermouths(rdirs,catchments,mouth_coords):
         else:
             assigned_catchment_number = catchments_slice[tuple(nbr_coords)]
             catchments[tuple(mouth_coords)] = assigned_catchment_number
+
+def write_fields_for_debug(fields,workdir):
+    for fieldname,field in fields.items():
+        iodriver.advanced_field_writer(path.join(workdir,f"{fieldname}_temp.nc"),
+                                       field,
+                                       fieldname=fieldname)
+

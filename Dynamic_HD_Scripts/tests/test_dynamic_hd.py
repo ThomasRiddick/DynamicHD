@@ -353,7 +353,7 @@ class RiverDirectionsOperationsTestCase(unittest.TestCase):
         """Test the river mouth marking routine correctly warns when no river mouths are present"""
         rdirs_field = fld.makeField(self.river_mouth_rdirs_input_array_no_sea_points,
                                     'RiverDirections','HD')
-        self.assertRaises(UserWarning,rdirs_field.mark_river_mouths)
+        self.assertWarns(UserWarning,rdirs_field.mark_river_mouths)
 
     def testMarkingRiverMouthsWithLSMask(self):
         """Test the river mouth marking routine with a land sea mask"""
