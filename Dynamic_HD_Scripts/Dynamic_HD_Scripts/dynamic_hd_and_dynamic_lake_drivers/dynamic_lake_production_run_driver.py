@@ -32,7 +32,7 @@ from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers \
 from tests.context import data_dir
 import fill_sinks_wrapper
 import lake_operators_wrapper
-import evaluate_basins_wrapper
+#import evaluate_basins_wrapper
 
 class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
     """A class with methods used for running a production run of the dynamic HD and Lake generation code"""
