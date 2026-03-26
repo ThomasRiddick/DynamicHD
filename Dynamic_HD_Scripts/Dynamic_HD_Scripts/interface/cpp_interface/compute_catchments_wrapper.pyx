@@ -8,6 +8,9 @@ cdef extern from 'drivers/compute_catchments.cpp':
     void latlon_compute_catchments(int* catchment_numbers_in, double* rdirs_in,
                                    string loop_log_filepath,
                                    int nlat_in,int nlon_in)
+    void latlon_relabel_catchments(int* catchment_numbers_in,
+                                   int* old_to_new_label_map_in,
+                                   int nlat_in,int nlon_in)
 
 def compute_catchments_cpp(np.ndarray[int,ndim=2,mode='c'] catchment_numbers_in,
                            np.ndarray[double,ndim=2,mode='c'] rdirs_in,
@@ -23,4 +26,12 @@ def compute_catchments_cpp(np.ndarray[int,ndim=2,mode='c'] catchment_numbers_in,
     latlon_compute_catchments(&catchment_numbers_in[0,0],
                               &rdirs_in[0,0],
                               loop_log_filepath_c,
+                              nlat_in,nlon_in)
+
+def relabel_catchments_cpp(np.ndarray[int,ndim=2,mode='c'] catchment_numbers_in,
+                           np.ndarray[int,ndim=1,mode='c'] old_to_new_label_map_in):
+    cdef int nlat_in,nlon_in
+    nlat_in, nlon_in = catchment_numbers_in.shape[0],catchment_numbers_in.shape[1]
+    latlon_relabel_catchments(&catchment_numbers_in[0,0],
+                              &old_to_new_label_map_in[0],
                               nlat_in,nlon_in)
