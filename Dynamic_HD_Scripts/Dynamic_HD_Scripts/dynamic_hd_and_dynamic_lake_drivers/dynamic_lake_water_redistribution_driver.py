@@ -34,7 +34,8 @@ def redistribute_water(input_lake_numbers_filepath,
                                          "water_redistributed_to_lakes",
                                          output_water_redistributed_to_rivers_file=
                                          output_water_redistributed_to_rivers_file,
-                                         output_water_redistributed_to_rivers_fieldname="water_redistributed_to_rivers",
+                                         output_water_redistributed_to_rivers_fieldname=
+                                         "water_redistributed_to_rivers",
                                          coarse_grid_type="HD")
     cdo_inst = cdo.Cdo()
     cdo_inst.merge(input=" ".join([output_water_redistributed_to_lakes_file,
@@ -54,7 +55,7 @@ def parse_arguments():
     """
 
     args = Arguments()
-    parser = argparse.ArgumentParser("Update river flow directions")
+    parser = argparse.ArgumentParser("Redistribute lake water")
     parser.add_argument('input_lake_numbers_filepath',
                         metavar='input-lake-numbers-filepath',
                         help='Full path to lake numbers file to use',
