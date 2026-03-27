@@ -95,6 +95,8 @@ class DynamicLakeAnalysisDriverInterfaceGUI:
     self.setup_var_widgets.append(self.setup_filepath_field("ancillary_data_directory"))
     self.setup_var_widgets.append(self.setup_filepath_field("present_day_base_orography_filepath"))
     self.setup_var_widgets.append(self.setup_filepath_field("base_corrections_filepath"))
+    self.setup_var_widgets.append(
+      self.setup_filepath_field("base_minimal_corrections_filepath"))
     self.setup_var_widgets.append(self.setup_filepath_field("base_date_based_corrections_filepath"))
     self.setup_var_widgets.append(self.setup_filepath_field("base_additional_corrections_filepath"))
     self.setup_var_widgets.append(self.setup_filepath_field("base_true_sinks_filepath"))

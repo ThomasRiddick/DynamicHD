@@ -390,6 +390,14 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         else:
             orography_corrections_filename = path.join(self.ancillary_data_path,
                                                        "lake_analysis_two_26_Mar_2022_correction_field_version_34.nc")
+        if self.non_standard_minimal_orog_correction_filename is not None:
+            orography_minimal_corrections_filename = \
+                self.non_standard_minimal_orog_correction_filename
+        else:
+            #For now just use the same a main orography correction
+            orography_minimal_corrections_filename = \
+                path.join(self.ancillary_data_path,
+                          "lake_analysis_two_26_Mar_2022_correction_field_version_34.nc")
         if self.date_based_sill_height_corrections_list_filename is None:
             if config.has_option("general_options",
                                  "date_based_sill_height_corrections_list_filename"):
@@ -432,8 +440,14 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                       fieldname=config.get("input_fieldname_options",
                                                                                            "input_orography_corrections_fieldname"),
                                                                       field_type='Orography')
+        minima_orography_corrections_10min =  iodriver.advanced_field_loader(orography_minimal_corrections_filename,
+                                                                      fieldname=config.get("input_fieldname_options",
+                                                                                           "input_orography_corrections_fieldname"),
+                                                                      field_type='Orography')
         orography_uncorrected_10min = orography_10min.copy()
+        orography_minimal_corrections_10min = orography_10min.copy()
         orography_10min.add(orography_corrections_10min)
+        orography_minimal_corrections_10min.add(minima_orography_corrections_10min)
         print("Applying sill height corrections from {}"\
               .format(self.date_based_sill_height_corrections_list_filename))
         if self.date_based_sill_height_corrections_list_filename is not None:
@@ -466,6 +480,13 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                     input_base_orography=present_day_base_orography,
                     input_glacier_mask=glacier_mask_as_bool_10min,
                     blend_to_threshold=75.0,blend_from_threshold=25.0)
+                orography_minimal_corrections_10min = utilities.\
+                    replace_corrected_orography_with_original_for_glaciated_points_with_gradual_transition(
+                    input_corrected_orography=orography_minimal_corrections_10min,
+                    input_original_orography=orography_uncorrected_10min,
+                    input_base_orography=present_day_base_orography,
+                    input_glacier_mask=glacier_mask_as_bool_10min,
+                    blend_to_threshold=75.0,blend_from_threshold=25.0)
             else:
                 orography_10min = utilities.\
                 replace_corrected_orography_with_original_for_glaciated_grid_points(input_corrected_orography=\
@@ -474,9 +495,17 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                                     orography_uncorrected_10min,
                                                                                     input_glacier_mask=
                                                                                     glacier_mask_10min)
-
+                orography_minimal_corrections_10min = utilities.\
+                replace_corrected_orography_with_original_for_glaciated_grid_points(input_corrected_orography=\
+                                                                                    orography_minimal_corrections_10min,
+                                                                                    input_original_orography=\
+                                                                                    orography_uncorrected_10min,
+                                                                                    input_glacier_mask=
+                                                                                    glacier_mask_10min)
             orography_10min.change_dtype(np.float64)
             orography_10min.make_contiguous()
+            orography_minimal_corrections_10min.change_dtype(np.float64)
+            orography_minimal_corrections_10min.make_contiguous()
             inverted_glacier_mask_10min = glacier_mask_10min.copy()
             inverted_glacier_mask_10min.invert_data()
             fill_sinks_wrapper.fill_sinks_cpp_func(orography_array=
@@ -491,12 +520,31 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                    true_sinks_in = np.ascontiguousarray(truesinks.get_data(),
                                                                                         dtype=np.int32),
                                                    add_slope = False,epsilon = 0.0)
+            fill_sinks_wrapper.fill_sinks_cpp_func(orography_array=
+                                                   orography_minimal_corrections_10min.get_data(),
+                                                   method = 1,
+                                                   use_ls_mask = True,
+                                                   landsea_in =
+                                                   np.ascontiguousarray(inverted_glacier_mask_10min.get_data(),
+                                                                        dtype=np.int32),
+                                                   set_ls_as_no_data_flag = False,
+                                                   use_true_sinks = False,
+                                                   true_sinks_in = np.ascontiguousarray(truesinks.get_data(),
+                                                                                        dtype=np.int32),
+                                                   add_slope = False,epsilon = 0.0)
         orography_10min.mask_field_with_external_mask(ls_mask_10min.get_data())
         orography_10min.fill_mask(self.ocean_floor_depth)
+        orography_minimal_corrections_10min.mask_field_with_external_mask(ls_mask_10min.get_data())
+        orography_minimal_corrections_10min.fill_mask(self.ocean_floor_depth)
         if config.getboolean("output_options","output_corrected_orog"):
             iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                        "10min_corrected_orog.nc"),
                                            orography_10min,
+                                           fieldname=config.get("output_fieldname_options",
+                                                                "output_10min_corrected_orog_fieldname"))
+            iodriver.advanced_field_writer(path.join(self.working_directory_path,
+                                                       "10min_minimally_corrected_orog.nc"),
+                                           orography_minimal_corrections_10min,
                                            fieldname=config.get("output_fieldname_options",
                                                                 "output_10min_corrected_orog_fieldname"))
         #Generate orography with filled sinks
@@ -522,6 +570,26 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                            orography_10min_filled,
                                            fieldname=config.get("output_fieldname_options",
                                                                 "output_10min_filled_orog_fieldname"))
+        orography_minimal_corrections_10min_filled = orography_minimal_corrections_10min.copy()
+        fill_sinks_wrapper.fill_sinks_cpp_func(orography_array=
+                                               np.ascontiguousarray(
+                                                orography_minimal_corrections_10min_filled.get_data(),
+                                                dtype=np.float64),
+                                               method = 1,
+                                               use_ls_mask = True,
+                                               landsea_in = np.ascontiguousarray(ls_mask_10min.get_data(),
+                                                                                 dtype=np.int32),
+                                               set_ls_as_no_data_flag = False,
+                                               use_true_sinks = False,
+                                               true_sinks_in = np.ascontiguousarray(truesinks.get_data(),
+                                                                                    dtype=np.int32),
+                                               add_slope = False,epsilon = 0.0)
+        if config.getboolean("output_options","output_fine_filled_orog"):
+            iodriver.advanced_field_writer(path.join(self.working_directory_path,
+                                                     "10min_minimally_corrected_filled_orog.nc"),
+                                           orography_minimal_corrections_10min_filled,
+                                           fieldname=config.get("output_fieldname_options",
+                                                                "output_10min_filled_orog_fieldname"))
         #Filter unfilled orography
         if print_timing_info:
             time_before_filtering = timer()
@@ -537,6 +605,26 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         orography_10min = dynamic_lake_operators.\
             filter_narrow_lakes(input_unfilled_orography=orography_10min,
                                 input_filled_orography=orography_10min_filled,
+                                interior_cell_min_masked_neighbors=5,
+                                edge_cell_max_masked_neighbors=4,
+                                max_range=5,
+                                iterations=5)
+        orography_minimal_corrections_10min = \
+            field.Field(np.ascontiguousarray(
+                        orography_minimal_corrections_10min.get_data(),
+                        dtype=np.float64),
+                        grid=orography_minimal_corrections_10min.get_grid())
+        lake_operators_wrapper.filter_out_shallow_lakes(
+            orography_minimal_corrections_10min.get_data(),
+            np.ascontiguousarray(orography_minimal_corrections_10min_filled.\
+                                 get_data(),
+                                 dtype=np.float64),
+                                 minimum_depth_threshold=5.0)
+        orography_minimal_corrections_10min = dynamic_lake_operators.\
+            filter_narrow_lakes(input_unfilled_orography=
+                                orography_minimal_corrections_10min,
+                                input_filled_orography=
+                                orography_minimal_corrections_10min_filled,
                                 interior_cell_min_masked_neighbors=5,
                                 edge_cell_max_masked_neighbors=4,
                                 max_range=5,
@@ -956,7 +1044,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             dynamic_lake_operators.\
                 evaluate_basins(landsea_in=ls_mask_10min,
                                 minima_in=minima,
-                                raw_orography_in=orography_10min,
+                                raw_orography_in=orography_minimal_corrections_10min,
                                 corrected_orography_in=orography_10min,
                                 cell_areas_in=input_cell_areas,
                                 prior_fine_rdirs_in=rdirs_10min,
