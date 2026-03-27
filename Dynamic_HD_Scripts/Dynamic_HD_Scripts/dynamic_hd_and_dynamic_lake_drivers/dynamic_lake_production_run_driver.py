@@ -1117,35 +1117,35 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                         "30min_rdirs_jump_next_cell_indices.nc")
         rdirs_jump_next_cell_indices_fieldname="rdirs_jump_"
         coarse_lake_outflows_fieldname="outflow_points"
-        # cclc.connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
-        #                                            self.output_lakeparas_filepath,
-        #                                            basin_catchment_numbers_filename,
-        #                                            river_directions_filepath,
-        #                                            connected_coarse_catchments_out_filename,
-        #                                            coarse_catchments_fieldname,
-        #                                            connected_coarse_catchments_out_fieldname,
-        #                                            "basin_catchment_numbers",
-        #                                            river_directions_fieldname,
-        #                                            cumulative_flow_filename,
-        #                                            cumulative_flow_out_filename,
-        #                                            cumulative_flow_fieldname,
-        #                                            cumulative_flow_out_fieldname,
-        #                                            rdirs_jump_next_cell_indices_filepath,
-        #                                            rdirs_jump_next_cell_indices_fieldname,
-        #                                            coarse_lake_outflows_fieldname)
-        # river_mouth_marking_driver.\
-        # advanced_flow_to_rivermouth_calculation_driver(input_river_directions_filename=
-        #                                                river_directions_filepath,
-        #                                                input_flow_to_cell_filename=
-        #                                                cumulative_flow_out_filename,
-        #                                                output_flow_to_river_mouths_filename=
-        #                                                cumulative_river_mouth_flow_out_filename,
-        #                                                input_river_directions_fieldname=
-        #                                                river_directions_fieldname,
-        #                                                input_flow_to_cell_fieldname=
-        #                                                cumulative_flow_out_fieldname,
-        #                                                output_flow_to_river_mouths_fieldname=
-        #                                                cumulative_river_mouth_flow_out_fieldname)
+        cclc.connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
+                                                   self.output_lakeparas_filepath,
+                                                   basin_catchment_numbers_filename,
+                                                   river_directions_filepath,
+                                                   connected_coarse_catchments_out_filename,
+                                                   coarse_catchments_fieldname,
+                                                   connected_coarse_catchments_out_fieldname,
+                                                   "basin_catchment_numbers",
+                                                   river_directions_fieldname,
+                                                   cumulative_flow_filename,
+                                                   cumulative_flow_out_filename,
+                                                   cumulative_flow_fieldname,
+                                                   cumulative_flow_out_fieldname,
+                                                   rdirs_jump_next_cell_indices_filepath,
+                                                   rdirs_jump_next_cell_indices_fieldname,
+                                                   coarse_lake_outflows_fieldname)
+        river_mouth_marking_driver.\
+        advanced_flow_to_rivermouth_calculation_driver(input_river_directions_filename=
+                                                       river_directions_filepath,
+                                                       input_flow_to_cell_filename=
+                                                       cumulative_flow_out_filename,
+                                                       output_flow_to_river_mouths_filename=
+                                                       cumulative_river_mouth_flow_out_filename,
+                                                       input_river_directions_fieldname=
+                                                       river_directions_fieldname,
+                                                       input_flow_to_cell_fieldname=
+                                                       cumulative_flow_out_fieldname,
+                                                       output_flow_to_river_mouths_fieldname=
+                                                       cumulative_river_mouth_flow_out_fieldname)
         #Redistribute water
         if print_timing_info:
             time_before_water_redistribution = timer()
