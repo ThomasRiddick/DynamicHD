@@ -30,9 +30,10 @@ class Dynamic_Lake_Correction_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Driver
     comment_line_match = re.compile(r"\s*#")
     remove_sink_line_match = re.compile(r"\s*R\s*,\s*[0-9]*\s*,\s*[0-9]*\s*")
 
-    def __init__(self,working_directory=None):
+    def __init__(self,working_directory=None,correction_generation_ancillary_data_directory=None):
         super(Dynamic_Lake_Correction_Production_Run_Drivers,self).__init__()
         self.working_directory = working_directory
+        self.correction_generation_ancillary_data_directory = correction_generation_ancillary_data_directory
 
     def no_intermediaries_lake_corrections_driver(self,
                                                   version=None,
@@ -50,8 +51,12 @@ class Dynamic_Lake_Correction_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Driver
                             "ls_mask_make_1000m_depth_contour_mask_from_"
                             "ICE6G_20200721_144332_with_casp.nc")
         ls_mask_fieldname = "lsm"
-        original_orography_filename = join(self.orography_path,
-                                           "ice5g_v1_2_00_0k_10min.nc")
+        if self.correction_generation_ancillary_data_directory is None:
+            original_orography_filename = join(self.orography_path,
+                                               "ice5g_v1_2_00_0k_10min.nc")
+        else:
+            original_orography_filename = join(self.correction_generation_ancillary_data_directory,
+                                               "ice5g_v1_2_00_0k_10min.nc")
         if true_sinks_filename is None:
             true_sinks_filename = join("/Users/thomasriddick/Documents/data/analysis_data/"
                                        "truesinks_ICE5G_and_tarasov_upscaled_srtm30plus_"
@@ -62,14 +67,27 @@ class Dynamic_Lake_Correction_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Driver
                                                       "orog_corrs_field_ICE5G_and_tarasov_upscaled_"
                                                       "srtm30plus_north_america_only_data_ALG4_sinkless"
                                                       "_glcc_olson_lsmask_0k_20170517_003802_g.nc")
-        input_bathymetry_file=join(self.lake_bathymetry_filepath,"NOAA_great_lakes_bathymetry.nc")
+        if self.correction_generation_ancillary_data_directory is None:
+            input_bathymetry_file=join(self.lake_bathymetry_filepath,"NOAA_great_lakes_bathymetry.nc")
+        else:
+            input_bathymetry_file=join(self.correction_generation_ancillary_data_directory,"NOAA_great_lakes_bathymetry.nc")
         input_bathymetry_fieldname="Band1"
-        lake_mask_file=join(self.lakemask_filepath,"NOAA_great_lakes_mask.nc")
+        if self.correction_generation_ancillary_data_directory is None:
+            lake_mask_file=join(self.lakemask_filepath,"NOAA_great_lakes_mask.nc")
+        else:
+            lake_mask_file=join(self.correction_generation_ancillary_data_directory,"NOAA_great_lakes_mask.nc")
         lake_mask_fieldname="lakemask"
-        dummy_lake_mask_filename= self.lakemask_filepath+"/empty_lakemask.nc"
+        if self.correction_generation_ancillary_data_directory is None:
+            dummy_lake_mask_filename= self.lakemask_filepath+"/empty_lakemask.nc"
+        else:
+            dummy_lake_mask_filename= self.correction_generation_ancillary_data_directory+"/empty_lakemask.nc"
         dummy_lake_mask_fieldname="lakemask"
         minima_fieldname = "minima"
-        glacier_mask_filename = join(self.orography_path,"ice5g_v1_2_00_0k_10min.nc")
+        if self.correction_generation_ancillary_data_directory is None:
+            glacier_mask_filename = join(self.orography_path,"ice5g_v1_2_00_0k_10min.nc")
+        else:
+            glacier_mask_filename = join(self.correction_generation_ancillary_data_directory,
+                                         "ice5g_v1_2_00_0k_10min.nc")
         if self.working_directory is None:
             intermediary_orography_filename = self.generated_orography_filepath +\
                                                     "intermediary_" + file_label + '.nc'
@@ -228,8 +246,12 @@ class Dynamic_Lake_Correction_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Driver
             raise RuntimeError("Applying tweaks requires a working directory to be specified")
         print("Note - All adjustments must be relative to a 180 degree W to 180 degree E,"
               "90 degree N to 90 degree S grid")
-        original_orography_filename = join(self.orography_path,
-                                           "ice5g_v1_2_00_0k_10min.nc")
+        if self.correction_generation_ancillary_data_directory is None:
+            original_orography_filename = join(self.orography_path,
+                                               "ice5g_v1_2_00_0k_10min.nc")
+        else:
+            original_orography_filename = join(self.correction_generation_ancillary_data_directory,
+                                               "ice5g_v1_2_00_0k_10min.nc")
         intermediary_orography_filename = join(self.working_directory,
                                                "pre_{}_tweak_orography.nc".\
                                                format("final" if

@@ -26,7 +26,7 @@ class Dynamic_Lake_Analysis_Run_Framework:
     ancillary_data_directory_match = re.compile(r"ancillary data directory:\s*(\S*)")
     present_day_base_orography_filepath_match = re.compile(r"present day base orography file:\s*(\S*)")
     base_corrections_filepath_match = re.compile(r"base corrections file:\s*(\S*)")
-    base_minimal_corrections_filepath = re.compile(r"base minimal corrections file:\s*(\S*)")
+    base_minimal_corrections_filepath_match = re.compile(r"base minimal corrections file:\s*(\S*)")
     base_date_based_corrections_filepath_match = re.compile(r"base date-based corrections file:\s*(\S*)")
     base_additional_corrections_filepath_match = re.compile(r"base additional corrections file:\s*(\S*)")
     base_true_sinks_filepath_match = re.compile(r"base true sinks file:\s*(\S*)")
@@ -224,7 +224,8 @@ class Dynamic_Lake_Analysis_Run_Framework:
                                                                non_standard_orog_correction_filename=None)
         self.dyn_lake_correction_driver = \
             Dynamic_Lake_Correction_Production_Run_Drivers(working_directory=join(self.base_directory,
-                                                                                  "corrections","work"))
+                                                                                  "corrections","work"),
+                                                           correction_generation_ancillary_data_directory=None)
         if self.setup_directory_structure:
             self.corrections_version = 0
             if base_date_based_corrections_filepath is not None:
