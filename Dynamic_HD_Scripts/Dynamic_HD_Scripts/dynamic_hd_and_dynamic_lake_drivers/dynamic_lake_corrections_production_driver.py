@@ -47,9 +47,15 @@ class Dynamic_Lake_Correction_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Driver
             file_label = self._generate_file_label()
         else:
             file_label = "{}_{}".format(version,datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
-        ls_mask_filename = ("/Users/thomasriddick/Documents/data/analysis_data/"
-                            "ls_mask_make_1000m_depth_contour_mask_from_"
-                            "ICE6G_20200721_144332_with_casp.nc")
+        if self.correction_generation_ancillary_data_directory is None:
+            ls_mask_filename = ("/Users/thomasriddick/Documents/data/analysis_data/"
+                                "ls_mask_make_1000m_depth_contour_mask_from_"
+                                "ICE6G_20200721_144332_with_casp.nc")
+        else:
+            ls_mask_filename = \
+                join(self.correction_generation_ancillary_data_directory,
+                     "ls_mask_make_1000m_depth_contour_mask_from_"
+                     "ICE6G_20200721_144332_with_casp.nc")
         ls_mask_fieldname = "lsm"
         if self.correction_generation_ancillary_data_directory is None:
             original_orography_filename = join(self.orography_path,

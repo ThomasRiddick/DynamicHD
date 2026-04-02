@@ -12,7 +12,7 @@ from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.base import field
 import follow_streams_wrapper
 from Dynamic_HD_Scripts.tools import compute_catchments as cc
-from netCDF4 import Dataset
+import xarray as xr
 
 class Redirect:
 
@@ -338,7 +338,9 @@ def connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
                                                         'Generic',grid_type=cumulative_flow.get_grid()))
     else:
         rdirs_jump_next_cell_indices = None
-    lakes = None
+    with xr.open_dataset(lake_parameters_filepath) as ds:
+        lakes_as_array = ds["lakes_as_array"].data
+    lakes = get_lake_parameters_from_array(lakes_as_array,scale_factor=3)
     results = \
         connect_coarse_lake_catchments(lakes,
                                        coarse_catchments,
