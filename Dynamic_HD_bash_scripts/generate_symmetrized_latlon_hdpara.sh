@@ -80,7 +80,7 @@ if ${global_north}; then
   cdo -setcindexbox,8000.0,1,2048,513,513 -setcindexbox,-8000.0,1,2048,514,1024 \
     ${original_ref_orography} ${symmetrized_ref_orography}
   cdo symmetrize ${symmetrized_ref_orography} ${symmetrized_ref_orography_reflection}
-  cdo -setclatlonbox,0.0,-180,180,0,-90 \
+  cdo -setclonlatbox,0.0,-180,180,0,-90 \
     ${original_orography_corrections} ${symmetrized_orography_corrections}
   cdo symmetrize ${symmetrized_orography_corrections} ${symmetrized_orography_corrections_reflection}
 else
@@ -150,7 +150,7 @@ ${source_directory}/Dynamic_HD_bash_scripts/dynamic_hd_top_level_driver.sh \
   ${output_hdstart_filepath}
 
 #Combine results
-cdo setclonlatbox,1,-180,180,0,-90 - const,0,${original_ref_orography} ${workdir}/is_south.nc
+cdo setclonlatbox,1,-180,180,0,-90 -const,0,${original_ref_orography} ${workdir}/is_south.nc
 cdo cond2 ${workdir}/is_south.nc ${symmetrized_hdpara_southern_hemisphere} ${symmetrized_hdpara_northern_hemisphere} ${workdir}/symmetrized_hdpara_temp.nc
 
 #Redo outflow points
