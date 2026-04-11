@@ -506,8 +506,28 @@ void basin_evaluation_algorithm::evaluate_basins(){
                                 search(function<bool(coords*)>([this,sublake,other_sublake](coords* coords_in) {
                                        return (*lake_numbers)(coords_in) == *other_sublake; }),
                                        function<bool(coords*)>([this,sublake](coords* coords_in) {
-                                       return (*corrected_orography)(coords_in) !=
-                                       (*corrected_orography)(lakes[*sublake]->center_coords); }),
+                                        double corrected_center_coords_height =
+                                            (*corrected_orography)(
+                                                lakes[*sublake]->center_coords);
+                                        double raw_center_coords_height =
+                                            (*raw_orography)(
+                                                lakes[*sublake]->center_coords);
+                                        double center_coords_height =
+                                            corrected_center_coords_height <=
+                                                raw_center_coords_height ?
+                                                corrected_center_coords_height :
+                                                raw_center_coords_height;
+                                        double corrected_coords_in_height =
+                                            (*corrected_orography)(coords_in);
+                                        double raw_coords_in_height =
+                                            (*raw_orography)(coords_in);
+                                        double coords_in_height =
+                                            corrected_coords_in_height <=
+                                                raw_coords_in_height ?
+                                                corrected_coords_in_height :
+                                                raw_coords_in_height;
+                                       return coords_in_height !=
+                                              center_coords_height; }),
                                        lakes[*sublake]->center_coords);
                         }
                     }
