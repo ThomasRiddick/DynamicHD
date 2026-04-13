@@ -368,7 +368,7 @@ def advanced_find_outlet_for_excess_evaporation_driver(
       coarse_rdirs_file,
       coarse_rdirs_fieldname,
       coarse_catchment_file,
-      coarse_catchements_fieldname,
+      coarse_catchments_fieldname,
       coarse_connected_catchment_file,
       coarse_connected_catchment_fieldname,
       coarse_grid_to_jsbach_grid_map_file,
@@ -391,7 +391,7 @@ def advanced_find_outlet_for_excess_evaporation_driver(
   coarse_catchments =  \
     iodriver.advanced_field_loader(coarse_catchment_file,
                                    field_type='Generic',
-                                   fieldname=coarse_catchements_fieldname)
+                                   fieldname=coarse_catchments_fieldname)
   coarse_connected_catchments =  \
     iodriver.advanced_field_loader(coarse_connected_catchment_file,
                                    field_type='Generic',
