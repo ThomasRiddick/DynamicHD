@@ -382,6 +382,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                       "hdparas_ref.nc")
         surface_to_10min_map_filename = path.join(self.ancillary_data_path,
                                                   "t31_to_ten_min_map.nc")
+        surface_to_30min_map_filename = path.join(self.ancillary_data_path,
+                                                  "t31_to_HD_map.nc")
         if self.present_day_base_orography_filename:
             present_day_reference_orography_filename = path.join(self.ancillary_data_path,
                                                                  "ice5g_v1_2_00_0k_10min.nc")
@@ -1146,6 +1148,43 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                        cumulative_flow_out_fieldname,
                                                        output_flow_to_river_mouths_fieldname=
                                                        cumulative_river_mouth_flow_out_fieldname)
+        #Generate outflow points for excess evaporation
+        excess_evaporation_outlet_file =
+            path.join(self.working_directory_path,"excess_evap_outlet_temp.nc")
+        temp_lakepara_file =
+            path.join(self.working_directory_path,"lakepara_temp.nc")
+        dynamic_lake_operators.\
+        advanced_find_outlet_for_excess_evaporation_driver(
+          fine_lake_mask_file=self.output_lakeparas_filepath,
+          fine_lake_mask_fieldname="lake_mask",
+          coarse_rdirs_file=river_directions_filepath,
+          coarse_rdirs_fieldname=river_directions_fieldname,
+          coarse_catchment_file=coarse_catchments_filepath,
+          coarse_catchments_fieldname=coarse_catchments_fieldname,
+          coarse_connected_catchment_file=
+          connected_coarse_catchments_out_filename,
+          coarse_connected_catchment_fieldname=
+          connected_coarse_catchments_out_fieldname,,
+          coarse_grid_to_jsbach_grid_map_file=
+          surface_to_30min_map_filename,
+          coarse_grid_to_jsbach_grid_lat_map_fieldname=
+          "corresponding_surface_cell_lat_index",
+          coarse_grid_to_jsbach_grid_lon_map_fieldname=
+          "corresponding_surface_cell_lon_index",
+          excess_evaporation_outlet_file=,
+          excess_evaporation_outlet_file,
+          excess_evaporation_outlet_lat_fieldname=,
+          "excess_evaporation_outlet_lat"
+          excess_evaporation_outlet_lon_fieldname=,
+          "excess_evaporation_outlet_lon"
+          nlat_jsbach=48,nlon_jsbach=96)
+        cdo_inst.merge(input=" ".join([excess_evaporation_outlet_file,
+                                       self.output_lakeparas_filepath]),
+                       output=temp_lakepara_file)
+        os.remove(excess_evaporation_outlet_file)
+        os.remove(self.output_lakeparas_filepath)
+        shutil.move(temp_lakepara_file,
+                    self.output_lakeparas_filepath)
         #Redistribute water
         if print_timing_info:
             time_before_water_redistribution = timer()
