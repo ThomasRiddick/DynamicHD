@@ -573,11 +573,11 @@ subroutine calculate_lake_fractions(lakes, &
       end do
       allocate(cell_list_temp(size(lake%cell_list)))
       do l = 1,size(lake%cell_list)
-        max_lake_fraction_found = -1.0_dp
+        max_lake_fraction_found = -2.0_dp
         do m = 1,size(lake%cell_list)
           if (associated(lake%cell_list(m)%lake_cell_pointer)) then
             if (lake%cell_list(m)%lake_cell_pointer%in_non_lake_mask) then
-              lake_fraction = 0.0_dp
+              lake_fraction = -1.0_dp
             else
               lake_fraction = real(lake%cell_list(m)%lake_cell_pointer%lake_pixel_count,dp)/ &
                               real(lake%cell_list(m)%lake_cell_pointer%pixel_count,dp)
@@ -618,6 +618,9 @@ subroutine calculate_lake_fractions(lakes, &
           exit
         end if
         working_cell => lake%cell_list(i)%lake_cell_pointer
+        if (working_cell%in_non_lake_mask) then
+          exit
+        end if
         unprocessed_cells_total_pixel_count = unprocessed_cells_total_pixel_count - &
                                               working_cell%lake_pixel_count
         if (unprocessed_cells_total_pixel_count + &
