@@ -281,7 +281,7 @@ function calculate_lake_fractions(lakes::Vector{LakeInput},
     end
     sort!(lake.cell_list,by=x-> ! x.in_non_lake_mask ?
                                 x.lake_pixel_count/x.pixel_count :
-                                0.0 ,rev=true)
+                                -1.0 ,rev=true)
     j = length(lake.cell_list)
     unprocessed_cells_total_pixel_count = 0
     for cell in lake.cell_list
@@ -300,6 +300,9 @@ function calculate_lake_fractions(lakes::Vector{LakeInput},
         break
       end
       cell = lake.cell_list[i]
+      if cell.in_non_lake_mask
+        break
+      end
       unprocessed_cells_total_pixel_count -= cell.lake_pixel_count
       if unprocessed_cells_total_pixel_count + cell.lake_pixel_count < 0.5*cell.pixel_count
         break
