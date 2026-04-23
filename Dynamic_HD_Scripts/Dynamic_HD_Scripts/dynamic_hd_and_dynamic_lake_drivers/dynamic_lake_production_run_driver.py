@@ -48,6 +48,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                  working_directory=None,output_hdstart_filepath=None,
                  present_day_base_orography_filepath=None,glacier_mask_filepath=None,
                  non_standard_orog_correction_filename=None,
+                 non_standard_minimal_orog_correction_filename=None,
                  date_based_sill_height_corrections_list_filename=None,
                  current_date=None,
                  additional_orography_corrections_list_filename=None):
@@ -70,6 +71,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.glacier_mask_filename=glacier_mask_filepath
         self.tarasov_based_orog_correction=True
         self.non_standard_orog_correction_filename=non_standard_orog_correction_filename
+        self.non_standard_minimal_orog_correction_filename=non_standard_minimal_orog_correction_filename
         self.date_based_sill_height_corrections_list_filename = \
              date_based_sill_height_corrections_list_filename
         self.current_date = current_date
