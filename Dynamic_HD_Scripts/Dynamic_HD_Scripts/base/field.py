@@ -275,6 +275,10 @@ class Field:
 
         self.grid.set_coordinates(coordinates)
 
+    def replace_where_less_than(self,other_field):
+        self.data[self.data < other_field.get_data()] = \
+            other_field.get_data()[self.data < other_field.get_data()]
+
     def get_grid_coordinates(self):
         return self.grid.get_coordinates()
 

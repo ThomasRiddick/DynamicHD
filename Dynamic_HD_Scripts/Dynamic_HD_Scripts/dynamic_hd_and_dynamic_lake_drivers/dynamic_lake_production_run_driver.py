@@ -240,6 +240,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         output_options = \
             { "output_10min_corrected_orog_fieldname":"corrected_orog",
               "output_10min_filled_orog_fieldname":"filled_orog",
+              "output_10min_filtered_orog_fieldname":"filtered_orog",
+              "output_10min_bounded_orog_fieldname":"bounded_orog",
               "output_10min_rdirs_fieldname":"rdirs",
               "output_10min_flow_to_cell":"cumulative_flow",
               "output_10min_flow_to_river_mouths":"cumulative_flow_to_ocean",
@@ -444,14 +446,14 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                       fieldname=config.get("input_fieldname_options",
                                                                                            "input_orography_corrections_fieldname"),
                                                                       field_type='Orography')
-        minima_orography_corrections_10min =  iodriver.advanced_field_loader(orography_minimal_corrections_filename,
+        minimal_orography_corrections_10min =  iodriver.advanced_field_loader(orography_minimal_corrections_filename,
                                                                       fieldname=config.get("input_fieldname_options",
                                                                                            "input_orography_corrections_fieldname"),
                                                                       field_type='Orography')
         orography_uncorrected_10min = orography_10min.copy()
         orography_minimal_corrections_10min = orography_10min.copy()
         orography_10min.add(orography_corrections_10min)
-        orography_minimal_corrections_10min.add(minima_orography_corrections_10min)
+        orography_minimal_corrections_10min.add(minimal_orography_corrections_10min)
         print("Applying sill height corrections from {}"\
               .format(self.date_based_sill_height_corrections_list_filename))
         if self.date_based_sill_height_corrections_list_filename is not None:
@@ -613,6 +615,12 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                 edge_cell_max_masked_neighbors=4,
                                 max_range=5,
                                 iterations=5)
+        if config.getboolean("output_options","output_fine_filtered_orog"):
+            iodriver.advanced_field_writer(path.join(self.working_directory_path,
+                                                     "10min_filtered_orog.nc"),
+                                           orography_10min,
+                                           fieldname=config.get("output_fieldname_options",
+                                                                "output_10min_filtered_orog_fieldname"))
         orography_minimal_corrections_10min = \
             field.Field(np.ascontiguousarray(
                         orography_minimal_corrections_10min.get_data(),
@@ -633,6 +641,20 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                 edge_cell_max_masked_neighbors=4,
                                 max_range=5,
                                 iterations=5)
+        if config.getboolean("output_options","output_fine_filtered_orog"):
+            iodriver.advanced_field_writer(path.join(self.working_directory_path,
+                                                     "10min_minimally_corrected_filtered_orog.nc"),
+                                           orography_minimal_corrections_10min,
+                                           fieldname=config.get("output_fieldname_options",
+                                                                "output_10min_filtered_orog_fieldname"))
+        #Restrict Minimally Corrected Orography to be higher than Corrected Orography
+        orography_minimal_corrections_10min.replace_where_less_than(orography_10min)
+        if config.getboolean("output_options","output_fine_bounded_orog"):
+            iodriver.advanced_field_writer(path.join(self.working_directory_path,
+                                                     "10min_minimally_corrected_bounded_orog.nc"),
+                                           orography_minimal_corrections_10min,
+                                           fieldname=config.get("output_fieldname_options",
+                                                                "output_10min_bounded_orog_fieldname"))
         #Generate River Directions
         if print_timing_info:
             time_before_rdir_generation = timer()
