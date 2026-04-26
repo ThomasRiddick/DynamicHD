@@ -359,7 +359,8 @@ function handle_event(lake::FillingLake,remove_water::RemoveWater)
       outflow = minimum_new_lake_volume - new_lake_volume
       lake.lake_volume = minimum_new_lake_volume
       if lake.current_height_type == flood_height &&
-         lake_model_prognostics.lake_numbers(lake.current_cell_to_fill) == lake.parameters.lake_number
+         lake_model_prognostics.lake_numbers(lake.current_cell_to_fill) == lake.parameters.lake_number &&
+         lake_parameters.center_coords != lake.current_cell_to_fill
         surface_model_coords =
           get_corresponding_surface_model_grid_cell(lake.current_cell_to_fill,
                                                     lake_model_parameters.

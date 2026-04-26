@@ -160,8 +160,7 @@ function create_lakes(lake_model_parameters::LakeModelParameters,
                                         lake_model_parameters.surface_model_grid)
   for lake::Lake in lake_model_prognostics.lakes
     set!(lake_model_parameters.lake_centers,lake.parameters.center_coords,true)
-    if lake.parameters.is_leaf && (lake.current_height_type == flood_height
-                                   || length(lake.parameters.filling_order) == 1)
+    if lake.parameters.is_leaf
       surface_model_coords =
         get_corresponding_surface_model_grid_cell(lake.current_cell_to_fill,
                                                   lake_model_parameters.grid_specific_lake_model_parameters)
