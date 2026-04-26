@@ -47,13 +47,13 @@ def generate_scripts(input_config_file,
         config_dict["high_res"] = high_res
         if high_res:
             config_dict["slurm_headers"] = True
+        config_dict["project_name"] = project_name
         run_template  = templates_env.get_template("run.tmpl")
         if store_scripts_in_project:
             cp_template  = templates_env.get_template("createproject.tmpl")
             cp_config_dict = config_dict.copy()
             cp_config_dict["script_path"] = rundir
-            cp_config_dict["project_name"] = project_name
-            create_project = cp_template.render(input=config_dict)
+            create_project = cp_template.render(input=cp_config_dict)
             print(subprocess.check_output(create_project,shell=True))
             run_script_path = ("/".join(rundir.rstrip("/").split("/")[0:-1]) +
                                "/projects/" + project_name +

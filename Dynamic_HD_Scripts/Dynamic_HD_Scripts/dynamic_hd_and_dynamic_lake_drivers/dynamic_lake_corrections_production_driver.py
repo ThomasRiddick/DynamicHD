@@ -30,27 +30,39 @@ class Dynamic_Lake_Correction_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Driver
     comment_line_match = re.compile(r"\s*#")
     remove_sink_line_match = re.compile(r"\s*R\s*,\s*[0-9]*\s*,\s*[0-9]*\s*")
 
-    def __init__(self,working_directory=None):
+    def __init__(self,working_directory=None,correction_generation_ancillary_data_directory=None):
         super(Dynamic_Lake_Correction_Production_Run_Drivers,self).__init__()
         self.working_directory = working_directory
+        self.correction_generation_ancillary_data_directory = correction_generation_ancillary_data_directory
 
     def no_intermediaries_lake_corrections_driver(self,
                                                   version=None,
                                                   original_orog_corrections_filename=None,
                                                   new_orography_corrections_filename=None,
                                                   true_sinks_filename=None,
-                                                  original_orog_corrections_fieldname=None):
+                                                  original_orog_corrections_fieldname=None,
+                                                  add_lakes_only=False):
         tstart = time.time()
         if version is None:
             file_label = self._generate_file_label()
         else:
             file_label = "{}_{}".format(version,datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
-        ls_mask_filename = ("/Users/thomasriddick/Documents/data/analysis_data/"
-                            "ls_mask_make_1000m_depth_contour_mask_from_"
-                            "ICE6G_20200721_144332_with_casp.nc")
+        if self.correction_generation_ancillary_data_directory is None:
+            ls_mask_filename = ("/Users/thomasriddick/Documents/data/analysis_data/"
+                                "ls_mask_make_1000m_depth_contour_mask_from_"
+                                "ICE6G_20200721_144332_with_casp.nc")
+        else:
+            ls_mask_filename = \
+                join(self.correction_generation_ancillary_data_directory,
+                     "ls_mask_make_1000m_depth_contour_mask_from_"
+                     "ICE6G_20200721_144332_with_casp.nc")
         ls_mask_fieldname = "lsm"
-        original_orography_filename = join(self.orography_path,
-                                           "ice5g_v1_2_00_0k_10min.nc")
+        if self.correction_generation_ancillary_data_directory is None:
+            original_orography_filename = join(self.orography_path,
+                                               "ice5g_v1_2_00_0k_10min.nc")
+        else:
+            original_orography_filename = join(self.correction_generation_ancillary_data_directory,
+                                               "ice5g_v1_2_00_0k_10min.nc")
         if true_sinks_filename is None:
             true_sinks_filename = join("/Users/thomasriddick/Documents/data/analysis_data/"
                                        "truesinks_ICE5G_and_tarasov_upscaled_srtm30plus_"
@@ -61,14 +73,27 @@ class Dynamic_Lake_Correction_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Driver
                                                       "orog_corrs_field_ICE5G_and_tarasov_upscaled_"
                                                       "srtm30plus_north_america_only_data_ALG4_sinkless"
                                                       "_glcc_olson_lsmask_0k_20170517_003802_g.nc")
-        input_bathymetry_file=join(self.lake_bathymetry_filepath,"NOAA_great_lakes_bathymetry.nc")
+        if self.correction_generation_ancillary_data_directory is None:
+            input_bathymetry_file=join(self.lake_bathymetry_filepath,"NOAA_great_lakes_bathymetry.nc")
+        else:
+            input_bathymetry_file=join(self.correction_generation_ancillary_data_directory,"NOAA_great_lakes_bathymetry.nc")
         input_bathymetry_fieldname="Band1"
-        lake_mask_file=join(self.lakemask_filepath,"NOAA_great_lakes_mask.nc")
+        if self.correction_generation_ancillary_data_directory is None:
+            lake_mask_file=join(self.lakemask_filepath,"NOAA_great_lakes_mask.nc")
+        else:
+            lake_mask_file=join(self.correction_generation_ancillary_data_directory,"NOAA_great_lakes_mask.nc")
         lake_mask_fieldname="lakemask"
-        dummy_lake_mask_filename= self.lakemask_filepath+"/empty_lakemask.nc"
+        if self.correction_generation_ancillary_data_directory is None:
+            dummy_lake_mask_filename= self.lakemask_filepath+"/empty_lakemask.nc"
+        else:
+            dummy_lake_mask_filename= self.correction_generation_ancillary_data_directory+"/empty_lakemask.nc"
         dummy_lake_mask_fieldname="lakemask"
         minima_fieldname = "minima"
-        glacier_mask_filename = join(self.orography_path,"ice5g_v1_2_00_0k_10min.nc")
+        if self.correction_generation_ancillary_data_directory is None:
+            glacier_mask_filename = join(self.orography_path,"ice5g_v1_2_00_0k_10min.nc")
+        else:
+            glacier_mask_filename = join(self.correction_generation_ancillary_data_directory,
+                                         "ice5g_v1_2_00_0k_10min.nc")
         if self.working_directory is None:
             intermediary_orography_filename = self.generated_orography_filepath +\
                                                     "intermediary_" + file_label + '.nc'
@@ -142,52 +167,55 @@ class Dynamic_Lake_Correction_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Driver
                                                original_fieldname="lsmask",
                                                flip_ud_raw=False,rotate180lr_raw=False,
                                                grid_desc_file=self.ten_minute_grid_filepath)
-        dynamic_lake_operators.advanced_local_minima_finding_driver(second_intermediary_orography_filename,
-                                                                    "field_value",
-                                                                    minima_filename,
+        if add_lakes_only:
+            third_intermediary_orography_filename = second_intermediary_orography_filename
+        else:
+            dynamic_lake_operators.advanced_local_minima_finding_driver(second_intermediary_orography_filename,
+                                                                        "field_value",
+                                                                        minima_filename,
+                                                                        minima_fieldname)
+            dynamic_lake_operators.reduce_connected_areas_to_points(minima_filename,
+                                                                    minima_fieldname,
+                                                                    minima_reduced_filename,
                                                                     minima_fieldname)
-        dynamic_lake_operators.reduce_connected_areas_to_points(minima_filename,
-                                                                minima_fieldname,
-                                                                minima_reduced_filename,
-                                                                minima_fieldname)
-        fill_sinks_driver.advanced_sinkless_flow_directions_generator(filename=second_intermediary_orography_filename,
-                                                                      output_filename=rdirs_filename,
-                                                                      ls_mask_filename=
-                                                                      original_ls_mask_with_grid_filename,
-                                                                      truesinks_filename=
-                                                                      true_sinks_filename,
-                                                                      fieldname="field_value",
-                                                                      output_fieldname=
+            fill_sinks_driver.advanced_sinkless_flow_directions_generator(filename=second_intermediary_orography_filename,
+                                                                          output_filename=rdirs_filename,
+                                                                          ls_mask_filename=
+                                                                          original_ls_mask_with_grid_filename,
+                                                                          truesinks_filename=
+                                                                          true_sinks_filename,
+                                                                          fieldname="field_value",
+                                                                          output_fieldname=
+                                                                          "rdir",
+                                                                          ls_mask_fieldname=
+                                                                          "lsmask",
+                                                                          truesinks_fieldname=
+                                                                          "true_sinks")
+            dynamic_lake_operators.advanced_burn_carved_rivers_driver(input_orography_file=
+                                                                      second_intermediary_orography_filename,
+                                                                      input_orography_fieldname=
+                                                                      "field_value",
+                                                                      input_rdirs_file=
+                                                                      rdirs_filename,
+                                                                      input_rdirs_fieldname=
                                                                       "rdir",
-                                                                      ls_mask_fieldname=
-                                                                      "lsmask",
-                                                                      truesinks_fieldname=
-                                                                      "true_sinks")
-        dynamic_lake_operators.advanced_burn_carved_rivers_driver(input_orography_file=
-                                                                  second_intermediary_orography_filename,
-                                                                  input_orography_fieldname=
-                                                                  "field_value",
-                                                                  input_rdirs_file=
-                                                                  rdirs_filename,
-                                                                  input_rdirs_fieldname=
-                                                                  "rdir",
-                                                                  input_minima_file=
-                                                                  minima_filename,
-                                                                  input_minima_fieldname=
-                                                                  minima_fieldname,
-                                                                  input_lakemask_file=
-                                                                  dummy_lake_mask_filename,
-                                                                  input_lakemask_fieldname=
-                                                                  dummy_lake_mask_fieldname,
-                                                                  output_orography_file=
-                                                                  third_intermediary_orography_filename,
-                                                                  output_orography_fieldname=
-                                                                  "Topo",
-                                                                  add_slope = True,
-                                                                  max_exploration_range = 10,
-                                                                  minimum_height_change_threshold = 5.0,
-                                                                  short_path_threshold = 6,
-                                                                  short_minimum_height_change_threshold = 0.25)
+                                                                      input_minima_file=
+                                                                      minima_filename,
+                                                                      input_minima_fieldname=
+                                                                      minima_fieldname,
+                                                                      input_lakemask_file=
+                                                                      dummy_lake_mask_filename,
+                                                                      input_lakemask_fieldname=
+                                                                      dummy_lake_mask_fieldname,
+                                                                      output_orography_file=
+                                                                      third_intermediary_orography_filename,
+                                                                      output_orography_fieldname=
+                                                                      "Topo",
+                                                                      add_slope = True,
+                                                                      max_exploration_range = 10,
+                                                                      minimum_height_change_threshold = 5.0,
+                                                                      short_path_threshold = 6,
+                                                                      short_minimum_height_change_threshold = 0.25)
         dynamic_lake_operators.add_lake_bathymetry_driver(input_orography_file=
                                                           third_intermediary_orography_filename,
                                                           input_orography_fieldname="Topo",
@@ -224,8 +252,12 @@ class Dynamic_Lake_Correction_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Driver
             raise RuntimeError("Applying tweaks requires a working directory to be specified")
         print("Note - All adjustments must be relative to a 180 degree W to 180 degree E,"
               "90 degree N to 90 degree S grid")
-        original_orography_filename = join(self.orography_path,
-                                           "ice5g_v1_2_00_0k_10min.nc")
+        if self.correction_generation_ancillary_data_directory is None:
+            original_orography_filename = join(self.orography_path,
+                                               "ice5g_v1_2_00_0k_10min.nc")
+        else:
+            original_orography_filename = join(self.correction_generation_ancillary_data_directory,
+                                               "ice5g_v1_2_00_0k_10min.nc")
         intermediary_orography_filename = join(self.working_directory,
                                                "pre_{}_tweak_orography.nc".\
                                                format("final" if

@@ -34,6 +34,10 @@
 icon_atmo_grid_res={{ input.icon_atmo_grid_res }}
 {%- endblock %}
 
+{%- block validate_inputs -%}
+{{ components.validate_inputs() }}
+{%- endblock -%}
+
 {%- block user_commands_pre_create_project -%}
 {%- if input.create_project_at_runtime -%}
 {{ input.user_commands_pre_create_project }}
@@ -78,7 +82,7 @@ icon_atmo_grid_res={{ input.icon_atmo_grid_res }}
 
 {%- block postprocessing -%}
 # Post Processing
-# (No post-processing required at present)
+{{ components.postprocessing() }}
 {%- endblock -%}
 
 {%- block user_commands_pre_clean -%}

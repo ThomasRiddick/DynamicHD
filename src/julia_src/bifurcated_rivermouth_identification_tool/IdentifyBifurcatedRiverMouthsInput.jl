@@ -9,8 +9,23 @@ using IdentifyExistingRiverMouths: Area
 function load_river_deltas_from_file(filename::String)
   river_deltas_raw::Dict{String,Any} = TOML.parsefile(filename)
   river_deltas::Array{RiverDelta} = RiverDelta[]
+  local reverse_searches::Array{String}
+  if haskey(river_deltas_raw,"reverse_searches")
+    reverse_searches =
+      river_deltas_raw["reverse_searches"]
+  else
+    reverse_searches = String[]
+  end
   for (name,river_delta_raw) in river_deltas_raw
-    push!(river_deltas,RiverDelta(name,river_delta_raw))
+    if name == "reverse_searches"
+      continue
+    end
+    reverse_search::Bool = name in reverse_searches
+    if reverse_search
+      println("Using reverse search for river $(name)")
+    end
+    push!(river_deltas,RiverDelta(name,reverse_search,
+                                  river_delta_raw))
   end
   return river_deltas
 end
@@ -18,8 +33,23 @@ end
 function load_river_deltas_from_string(river_deltas_input_string::String)
   river_deltas_raw::Dict{String,Any} = TOML.parse(river_deltas_input_string)
   river_deltas::Array{RiverDelta} = RiverDelta[]
+  local reverse_searches::Array{String}
+  if haskey(river_deltas_raw,"reverse_searches")
+    reverse_searches =
+      river_deltas_raw["reverse_searches"]
+  else
+    reverse_searches = String[]
+  end
   for (name,river_delta_raw) in river_deltas_raw
-    push!(river_deltas,RiverDelta(name,river_delta_raw))
+    if name == "reverse_searches"
+      continue
+    end
+    reverse_search::Bool = name in reverse_searches
+    if reverse_search
+      println("Using reverse search for river $(name)")
+    end
+    push!(river_deltas,RiverDelta(name,reverse_search,
+                                  river_delta_raw))
   end
   return river_deltas
 end
@@ -48,10 +78,10 @@ function load_icosahedral_grid(grid_filepath::String)
   lons::Array{Float64} = rad2deg.(load_icosahedral_field(file_handle,"lon_cell_centre",1,Float64))
   lat_vertices::Array{Float64} = rad2deg.(load_icosahedral_field(file_handle,"clat_vertices",2,Float64))
   lon_vertices::Array{Float64} = rad2deg.(load_icosahedral_field(file_handle,"clon_vertices",2,Float64))
-  cell_indices::Array{CartesianIndex} =
-      CartesianIndex[CartesianIndex(cell_indices_int[i]) for i=1:length(cell_indices_int)]
-  cell_neighbors::Array{CartesianIndex} =
-      CartesianIndex[CartesianIndex(cell_neighbors_int[i,j]) for i=1:size(cell_neighbors_int,1),j=1:3]
+  cell_indices::Array{Tuple{Int64}} =
+      Tuple{Int64}[Tuple{Int64}(cell_indices_int[i],) for i=1:length(cell_indices_int)]
+  cell_neighbors::Array{Tuple{Int64}} =
+      Tuple{Int64}[Tuple{Int64}(cell_neighbors_int[i,j],) for i=1:size(cell_neighbors_int,1),j=1:3]
   cell_coords::@NamedTuple{lats::Array{Float64},lons::Array{Float64}} = (lats=lats,lons=lons)
   cell_vertices::@NamedTuple{lats::Array{Float64},lons::Array{Float64}} = 
 	(lats=permutedims(lat_vertices),lons=permutedims(lon_vertices))

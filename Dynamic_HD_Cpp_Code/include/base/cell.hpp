@@ -41,8 +41,8 @@ protected:
 
 public:
 	///Class Constructor
-	cell(double orography_in,coords* cell_coords_in,int catchment_num, double rim_height_in)
-	: orography(orography_in), cell_coords(cell_coords_in), k(0), catchment_num(catchment_num),
+	cell(double orography_in,coords* cell_coords_in,int catchment_num_in, double rim_height_in)
+	: orography(orography_in), cell_coords(cell_coords_in), k(0), catchment_num(catchment_num_in),
 	  rim_height(rim_height_in) {}
 	///Class Constructor
 	cell(double orography_in,coords* cell_coords_in) : orography(orography_in),

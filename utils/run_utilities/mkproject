@@ -1,0 +1,10 @@
+#!/bin/bash
+function find_abs_path {
+  rel_path=${1}
+  cd ${rel_path}
+  pwd -P
+  cd - > /dev/null
+}
+script_path=$(dirname ${0})
+script_path=$(find_abs_path ${script_path})
+python ${script_path}/mkproject.py ${1}

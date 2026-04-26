@@ -29,3 +29,25 @@ void latlon_compute_catchments(int* catchment_numbers_in, double* rdirs_in,
   delete loop_numbers;
 	delete grid_params_in;
 }
+
+void latlon_relabel_catchments(int* catchment_numbers_in,
+                               int* old_to_new_label_map_in,
+                               int nlat_in,int nlon_in){
+
+  //Relabel catchments according to size. Take a 1D array filled of new catchment
+  //label numbers index by old label number and loop over a field of catchment
+  //replacing the old label number with the new ones
+
+  //old_to_new_label_map_in - An array with the new labels sorted so the
+  //index is the old label
+
+  //Iterate overall all cells and look up value in old_to_new_label_map
+  //(which index by old label number) and replace the label with the
+  //value found; which is the new label number
+  for (int i = 0; i < nlat_in*nlon_in; i++){
+    if (catchment_numbers_in[i] != 0) {
+        catchment_numbers_in[i] =
+          old_to_new_label_map_in[catchment_numbers_in[i]];
+    }
+  }
+}

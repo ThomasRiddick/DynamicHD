@@ -19,13 +19,7 @@ fi
 
 if ${prep_paragen_code} && ! ${compile_only} ; then
   # Clean up paragen working directory if any
-  if [[ -d "${working_directory}/paragen" ]]; then
-    cd ${working_directory}/paragen
-    rm -f paragen.inp soil_partab.txt slope.dat riv_vel.dat riv_n.dat riv_k.dat over_vel.dat over_n.dat over_k.dat || true
-    rm -f hdpara.srv global.inp ddir.inp bas_k.dat || true
-    cd - 2>&1 > /dev/null
-    rmdir ${working_directory}/paragen
-  fi
+  rm -rf ${working_directory}/paragen
 fi
 
 #Prepare bin directory for python code and bash code

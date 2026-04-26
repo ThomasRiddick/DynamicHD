@@ -109,15 +109,12 @@ def renumber_catchments_by_size(catchments,loop_logfile=None):
     loop_logfile: string; the full path to the existing loop_logfile (optional)
     Returns: Relabelled catchements
 
-    Label catchments in order of desceding size using a fortran function
+    Label catchments in order of desceding size using a c++ function
     to assist a time critical part of the procedure that can't be done in
     numpy effectively. Also opens the existing loop logfile and changes the
     catchment numbers with loops to reflect the new catchment labelling.
     """
 
-    f2py_mngr = f2py_manager.f2py_manager(path.join(fortran_source_path,
-                                                    "mod_compute_catchments.f90"),
-                                          func_name="relabel_catchments")
     catch_nums = np.arange(np.amax(catchments)+1)
     counts = np.bincount(catchments.flatten())
     catchments_sizes = np.empty(len(catch_nums),
@@ -129,11 +126,11 @@ def renumber_catchments_by_size(catchments,loop_logfile=None):
     catchments_sizes.sort(order='counts')
     catchments_sizes['new_catch_nums'] = np.arange(len(catchments_sizes['catch_nums']),
                                                        0,-1)
-    catchments = np.asfortranarray(catchments,np.int32)
-    old_to_new_label_map = np.asfortranarray(np.copy(np.sort(catchments_sizes,
-                                             order='catch_nums'))['new_catch_nums'],np.int32)
-    f2py_mngr.run_current_function_or_subroutine(catchments,
-                                                 old_to_new_label_map)
+    old_to_new_label_map = \
+        np.ascontiguousarray(np.copy(np.sort(catchments_sizes,
+                             order='catch_nums'))['new_catch_nums'],np.int32)
+    catchments = np.ascontiguousarray(catchments,np.int32)
+    cc_ccp_wrap.relabel_catchments_cpp(catchments,old_to_new_label_map)
     if loop_logfile is not None:
         with open(loop_logfile,'r') as f:
             next(f)

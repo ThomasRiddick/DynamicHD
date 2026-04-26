@@ -331,7 +331,11 @@ if ! $no_mamba && ! $no_env_gen ; then
   fi
 fi
 if ! $no_mamba ; then
-  source activate dyhdenv_mamba
+  #Reactivating mamba environment a second time can cause errors
+  #Mamba uses conda environmental variables
+  if ! [[ ${CONDA_DEFAULT_ENV} == "dyhdenv_mamba" ]]; then
+    source activate dyhdenv_mamba
+  fi
 fi
 
 #Load a new version of gcc that doesn't have the polymorphic variable bug
@@ -391,13 +395,7 @@ if ! ${first_timestep}; then
 fi
 
 #Delete paragen directory if it exists
-if [[ -d "${working_directory}/paragen" ]]; then
-  cd ${working_directory}/paragen
-  rm -f paragen.inp soil_partab.txt slope.dat riv_vel.dat riv_n.dat riv_k.dat over_vel.dat over_n.dat over_k.dat
-  rm -f hdpara.srv global.inp ddir.inp bas_k.dat
-  cd - 2>&1 > /dev/null
-  rmdir ${working_directory}/paragen
-fi
+rm -rf ${working_directory}/paragen
 
 #Delete other files if they exist
 rm -f 30minute_filled_orog_temp.dat 30minute_ls_mask_temp.dat 30minute_river_dirs_temp.dat || true

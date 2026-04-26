@@ -97,6 +97,8 @@ public:
 	///at each point that flag whether the point is the end of a row (and
 	///thus requires a line break) or not
 	virtual void for_all_with_line_breaks(function<void(coords*,bool)>) = 0;
+	//Run the supplied function over all the edges of the field
+	virtual void for_all_edge_cells(function<void(coords*)> func) = 0;
 	///Return the specified coords wrapped if required (e.g. wrapped east-west
 	///for a lat-lon grid
 	coords* wrapped_coords(coords*);
@@ -192,6 +194,7 @@ public:
 	void for_non_diagonal_nbrs_wrapped(coords* coords_in,function<void(coords*)> func);
 	void for_all(function<void(coords*)>);
 	void for_all_with_line_breaks(function<void(coords*,bool)>);
+	void for_all_edge_cells(function<void(coords*)> func);
 	//These next two functions are endemic to this subclass and are
 	//called from the base class via a switch-case statement and
 	//static casting
@@ -256,6 +259,7 @@ public:
 	void for_non_diagonal_nbrs_wrapped(coords* coords_in,function<void(coords*)> func);
 	void for_all(function<void(coords*)>);
 	void for_all_with_line_breaks(function<void(coords*,bool)>);
+	void for_all_edge_cells(function<void(coords*)> func);
 	//These next two functions are endemic to this subclass and are
 	//called from the base class via a switch-case statement and
 	//static casting
@@ -310,6 +314,8 @@ class icon_single_index_grid : public grid {
 	const int top_corner             = 4;
 	const int bottom_right_corner    = 5;
 	const int bottom_left_corner     = 6;
+	//Precalculated list of edge cells; only for ICON grids
+	vector<coords*> edge_cells;
 	//Precalculated edge seperation values (will be 3 entries per cell so size is ncells*3)
 	double* edge_separations = nullptr;
 	//Array offset
@@ -351,6 +357,7 @@ public:
 	void for_non_diagonal_nbrs_wrapped(coords* coords_in,function<void(coords*)> func);
 	void for_all(function<void(coords*)>);
 	void for_all_with_line_breaks(function<void(coords*,bool)>);
+	void for_all_edge_cells(function<void(coords*)> func);
 	//These next two functions are endemic to this subclass and are
 	//called from the base class via a switch-case statement and
 	//static casting
@@ -385,6 +392,20 @@ public:
 	                                        grid_params* coarse_grid_params,
 	                                        function<void(coords*)> func)
 		{ throw runtime_error("function not yet implemented for icon grid"); }
+	vector<int>* generate_subfield_edge_cells(int num_points_subarray,
+                                     			  int* cell_neighbors_in,
+                                     			  int* cell_secondary_neighbors_in);
+	int* generate_full_field_indices(int num_points_subarray,
+                                   bool* mask,
+                                   int* subfield_indices);
+	int* generate_subfield_indices(bool* mask);
+	int* generate_subfield_neighbors(int num_points_subarray,
+                                   bool* mask,
+                                   int* subfield_indices,
+                                   int* full_field_indices);
+	int* generate_subfield_secondary_neighbors(int num_points_subarray,
+                                             int* subfield_indices,
+                                             int* full_field_indices);
 };
 
 /**

@@ -1,14 +1,12 @@
 .PHONY: clean clean_examples default test compile install examples
 
-include config/set_config
-
 default: install examples
 
 compile: | build
 		meson compile -C build
 
 build: | meson_options.txt Dynamic_HD_Scripts/Dynamic_HD_Scripts/bin
-		meson setup --native-file $(SYSTEM_CONFIG_FILE) build
+		meson setup build
 
 install: compile
 		meson install -C build

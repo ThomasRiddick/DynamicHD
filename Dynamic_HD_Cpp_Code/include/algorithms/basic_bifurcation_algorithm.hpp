@@ -8,6 +8,7 @@ class basic_bifurcation_algorithm : virtual public bifurcation_algorithm {
     virtual ~basic_bifurcation_algorithm() {};
   protected:
     void push_cell(coords* nbr_coords);
+    void push_coastal_cell(coords* cell_coords);
 };
 
 class basic_bifurcation_algorithm_latlon : public basic_bifurcation_algorithm,

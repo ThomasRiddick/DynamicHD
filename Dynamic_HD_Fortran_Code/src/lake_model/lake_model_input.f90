@@ -11,6 +11,8 @@ character(len = max_name_length) :: lake_params_filename
 character(len = max_name_length) :: lake_start_filename
 real(dp) :: lake_retention_coefficient
 real(dp) :: minimum_lake_volume_threshold
+real(dp) :: minimum_flow
+real(dp) :: maximum_lake_outflow_fraction
 logical :: run_water_budget_check
 logical :: use_binary_lake_mask
 
@@ -203,7 +205,9 @@ subroutine load_lake_model_parameters(cell_areas_on_surface_model_grid, &
                           _NPOINTS_LAKE_, &
                           _NPOINTS_SURFACE_, &
                           lake_retention_coefficient, &
-                          minimum_lake_volume_threshold)
+                          minimum_lake_volume_threshold, &
+                          minimum_flow, &
+                          maximum_lake_outflow_fraction)
     deallocate(is_lake)
 end subroutine load_lake_model_parameters
 

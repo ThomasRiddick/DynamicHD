@@ -178,7 +178,9 @@ class GenericConfig(Config):
                                                "determine_river_directions":
                                                "RiverDirectionDeterminationConfig",
                                                "parameter_generation":
-                                               "ParameterGeneration"}
+                                               "ParameterGenerationConfig",
+                                               "river_mouth_marking_driver":
+                                               "RiverMouthMarkingConfig"}
     common_additional_fields_objects = [ExtendedInputField("rdirs","input_filepaths",
                                                            True,[check_extension_is_nc()]),
                                         ExtendedInputField("fine_rdirs","input_filepaths",
@@ -594,12 +596,12 @@ class RiverDirectionDeterminationConfig(GenericConfig):
         self.add_additional_existing_optional_fields(["truesinks"])
         self.driver_to_use = "river_direction_determination_driver"
 
-class ParameterGeneration(GenericConfig):
+class ParameterGenerationConfig(GenericConfig):
 
     terminal_node = True
 
     def __init__(self):
-        super(ParameterGeneration,self).__init__()
+        super(ParameterGenerationConfig,self).__init__()
         add_new_fields(self.required_input_fields,
                        {"parameter_generation":
                         [InputField("ancillary_data_path",[]),
@@ -607,3 +609,13 @@ class ParameterGeneration(GenericConfig):
         self.add_additional_existing_required_fields(["rdirs","landsea","orography",
                                                       "hdpara_out"])
         self.driver_to_use = "parameter_generation_driver"
+
+class RiverMouthMarkingConfig(GenericConfig):
+
+    terminal_node = True
+
+    def __init__(self):
+        super(RiverMouthMarkingConfig,self).__init__()
+        self.add_additional_existing_required_fields(["rdirs","landsea",
+                                                      "rdirs_out"])
+        self.driver_to_use = "river_mouth_marking_driver"

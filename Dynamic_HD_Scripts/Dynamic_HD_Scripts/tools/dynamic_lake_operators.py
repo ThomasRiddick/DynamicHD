@@ -297,3 +297,135 @@ def advanced_narrow_lake_filtering_driver(input_unfilled_orography_file,
   iodriver.advanced_field_writer(output_unfilled_orography_file,
                                  output_unfilled_orography,
                                  fieldname=output_unfilled_orography_fieldname)
+
+def find_outlet_for_excess_evaporation(coarse_lake_mask,
+                                       coarse_rdirs,
+                                       coarse_catchments,
+                                       coarse_connected_catchments,
+                                       coarse_grid_to_jsbach_grid_lat_map,
+                                       coarse_grid_to_jsbach_grid_lon_map,
+                                       nlat_jsbach,nlon_jsbach):
+  lake_cell_numbers = np.full((nlat_jsbach,nlon_jsbach),-1,dtype=np.int32)
+  counter = 0
+  lake_cell_pixel_list = []
+  total_coarse_catchments = np.max(coarse_catchments)
+  catchment_center_lats = np.full(total_coarse_catchments+1,-1,dtype=np.int32)
+  catchment_center_lons = np.full(total_coarse_catchments+1,-1,dtype=np.int32)
+  total_connected_coarse_catchments = np.max(coarse_connected_catchments)
+  connected_catchment_outlet_lats = \
+    np.full(total_connected_coarse_catchments+1,-1,dtype=np.int32)
+  connected_catchment_outlet_lons = \
+    np.full(total_connected_coarse_catchments+1,-1,dtype=np.int32)
+  for i in range(coarse_rdirs.shape[0]):
+    for j in range(coarse_rdirs.shape[1]):
+      coarse_rdir = coarse_rdirs[i,j]
+      if coarse_rdir == 0:
+        coarse_connected_catchment = coarse_connected_catchments[i,j]
+        connected_catchment_outlet_lats[coarse_connected_catchment] = i
+        connected_catchment_outlet_lons[coarse_connected_catchment] = j
+      if coarse_lake_mask[i,j]:
+        if coarse_rdir == -2:
+          coarse_catchment = coarse_catchments[i,j]
+          catchment_center_lats[coarse_catchment] = i
+          catchment_center_lons[coarse_catchment] = j
+        lat_jsbach = coarse_grid_to_jsbach_grid_lat_map[i,j]
+        lon_jsbach = coarse_grid_to_jsbach_grid_lon_map[i,j]
+        lake_cell_number = lake_cell_numbers[lat_jsbach,lon_jsbach]
+        if lake_cell_number == -1:
+          lake_cell_numbers[lat_jsbach,lon_jsbach] = counter
+          lake_cell_pixel_list.append([(i,j)])
+          counter += 1
+        else:
+          lake_cell_pixel_list[lake_cell_number].append((i,j))
+  catchment_counts = np.zeros(total_coarse_catchments+1,dtype=np.int32)
+  excess_evaporation_outlet_lat = \
+    np.full((nlat_jsbach,nlon_jsbach),-1,dtype=np.int32)
+  excess_evaporation_outlet_lon = \
+    np.full((nlat_jsbach,nlon_jsbach),-1,dtype=np.int32)
+  for i in range(lake_cell_numbers.shape[0]):
+    for j in range(lake_cell_numbers.shape[1]):
+      lake_cell_number = lake_cell_numbers[i,j]
+      if lake_cell_number >= 0:
+        pixels = lake_cell_pixel_list[lake_cell_number]
+        catchment_counts[:] = 0
+        for pixel in pixels:
+          catchment_counts[coarse_catchments[pixel]] += 1
+        max_catchment = np.argmax(catchment_counts)
+        max_catchment_center_lat = catchment_center_lats[max_catchment]
+        max_catchment_center_lon = catchment_center_lons[max_catchment]
+        max_connected_catchment = \
+          coarse_connected_catchments[max_catchment_center_lat,
+                                      max_catchment_center_lon]
+        excess_evaporation_outlet_lat[i,j] = \
+          connected_catchment_outlet_lats[max_connected_catchment]
+        excess_evaporation_outlet_lon[i,j] = \
+          connected_catchment_outlet_lons[max_connected_catchment]
+  return excess_evaporation_outlet_lat,excess_evaporation_outlet_lon
+
+def advanced_find_outlet_for_excess_evaporation_driver(
+      fine_lake_mask_file,
+      fine_lake_mask_fieldname,
+      coarse_rdirs_file,
+      coarse_rdirs_fieldname,
+      coarse_catchment_file,
+      coarse_catchments_fieldname,
+      coarse_connected_catchment_file,
+      coarse_connected_catchment_fieldname,
+      coarse_grid_to_jsbach_grid_map_file,
+      coarse_grid_to_jsbach_grid_lat_map_fieldname
+      coarse_grid_to_jsbach_grid_lon_map_fieldname
+      excess_evaporation_outlet_file,
+      excess_evaporation_outlet_lat_fieldname,
+      excess_evaporation_outlet_lon_fieldname,
+      nlat_jsbach,nlon_jsbach):
+  fine_lake_mask =  \
+    iodriver.advanced_field_loader(fine_lake_mask_file,
+                                   field_type='Generic',
+                                   fieldname=fine_lake_mask_fieldname)
+  coarse_lake_mask = utilties.upscale_field(fine_lake_mask,"HD",
+                                            "Max",scalenumbers=False)
+  coarse_rdirs =  \
+    iodriver.advanced_field_loader(coarse_rdirs_file,
+                                   field_type='Generic',
+                                   fieldname=coarse_rdirs_fieldname)
+  coarse_catchments =  \
+    iodriver.advanced_field_loader(coarse_catchment_file,
+                                   field_type='Generic',
+                                   fieldname=coarse_catchments_fieldname)
+  coarse_connected_catchments =  \
+    iodriver.advanced_field_loader(coarse_connected_catchment_file,
+                                   field_type='Generic',
+                                   fieldname=coarse_connected_catchment_fieldname)
+  coarse_grid_to_jsbach_grid_lat_map =  \
+    iodriver.advanced_field_loader(coarse_grid_to_jsbach_grid_map_file,
+                                   field_type='Generic',
+                                   fieldname=
+                                   coarse_grid_to_jsbach_grid_lat_map_fieldname)
+  coarse_grid_to_jsbach_grid_lon_map =  \
+    iodriver.advanced_field_loader(coarse_grid_to_jsbach_grid_map_file,
+                                   field_type='Generic',
+                                   fieldname=
+                                   coarse_grid_to_jsbach_grid_lon_map_fieldname)
+  excess_evaporation_outlet_lat,excess_evaporation_outlet_lon = \
+    find_outlet_for_excess_evaporation(coarse_lake_mask,
+                                       coarse_rdirs,
+                                       coarse_catchments,
+                                       coarse_connected_catchments,
+                                       coarse_grid_to_jsbach_grid_lat_map,
+                                       coarse_grid_to_jsbach_grid_lon_map,
+                                       nlat_jsbach,nlon_jsbach)
+  excess_evaporation_outlet_lat =  \
+    iodriver.advanced_field_loader(excess_evaporation_outlet_file,
+                                   field_type='Generic',
+                                   fieldname=
+                                   excess_evaporation_outlet_lat_fieldname)
+  excess_evaporation_outlet_lon =  \
+    iodriver.advanced_field_loader(excess_evaporation_outlet_file,
+                                   field_type='Generic',
+                                   fieldname=
+                                   excess_evaporation_outlet_lon_fieldname)
+
+
+
+
+

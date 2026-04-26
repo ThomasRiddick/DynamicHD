@@ -8,6 +8,7 @@
                        'follow_streams_wrapper',
                        'lake_operators_wrapper',
                        'upscale_orography_wrapper',
+                       'accumulate_flow_icon_wrapper',
                        'bifurcate_rivers_basic_icon_wrapper',
                        'compute_catchments_icon_wrapper',
                        'determine_river_directions_icon_wrapper',

@@ -16,4 +16,9 @@ void latlon_compute_catchments(int* catchment_numbers_in, double* rdirs_in,
                                string loop_log_filepath,
 							                 int nlat_in,int nlon_in);
 
+void latlon_relabel_catchments(int* catchment_numbers_in,
+                               int* old_to_new_label_map_in,
+                               int nlat_in,int *nlon_in);
+
+
 #endif /* INCLUDE_COMPUTE_CATCHMENTS_HPP_ */

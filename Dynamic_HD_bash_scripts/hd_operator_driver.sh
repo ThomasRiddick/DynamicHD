@@ -182,7 +182,11 @@ if ! $no_mamba ; then
 	if ! mamba info -e | grep -q "dyhdenv_mamba"; then
 		${source_directory}/Dynamic_HD_bash_scripts/regenerate_mamba_environment.sh $no_modules
 	fi
-	source activate dyhdenv_mamba
+	#Reactivating mamba environment a second time can cause errors
+	#Mamba uses conda environmental variables
+	if ! [[ ${CONDA_DEFAULT_ENV} == "dyhdenv_mamba" ]]; then
+		source activate dyhdenv_mamba
+	fi
 fi
 
 #Load a new version of gcc that doesn't have the polymorphic variable bug
