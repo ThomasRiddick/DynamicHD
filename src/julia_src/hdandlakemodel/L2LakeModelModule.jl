@@ -118,10 +118,9 @@ function create_lakes(lake_model_parameters::LakeModelParameters,
   end
   primary_lake_numbers::Field{Int64} = Field{Int64}(lake_model_parameters.lake_model_grid,0)
   for lake::Lake in lake_model_prognostics.lakes
-    for cell in lake.parameters.filling_order
+    for (i,cell) in enumerate(lake.parameters.filling_order)
       if cell.height_type == flood_height ||
-         (length(lake.parameters.filling_order) == 1 &&
-          lake.parameters.is_leaf)
+         (i == 1 && lake.parameters.is_leaf)
         top_level_primary_lake_number::Int64 = find_top_level_primary_lake_number(lake)
         set!(primary_lake_numbers,cell.coords,top_level_primary_lake_number)
       end
@@ -628,10 +627,9 @@ function calculate_binary_lake_mask(lake_model_parameters::LakeModelParameters,
                                     lake_model_prognostics::LakeModelPrognostics)
   primary_lake_numbers::Field{Int64} = Field{Int64}(lake_model_parameters.lake_model_grid,0)
   for lake::Lake in lake_model_prognostics.lakes
-    for cell in lake.parameters.filling_order
+    for (i,cell) in enumerate(lake.parameters.filling_order)
       if cell.height_type == flood_height ||
-         (length(lake.parameters.filling_order) == 1 &&
-          lake.parameters.is_leaf)
+         (i == 1 && lake.parameters.is_leaf)
         top_level_primary_lake_number::Int64 = find_top_level_primary_lake_number(lake)
         set!(primary_lake_numbers,cell.coords,top_level_primary_lake_number)
       end

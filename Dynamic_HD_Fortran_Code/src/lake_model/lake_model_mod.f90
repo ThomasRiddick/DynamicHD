@@ -1586,8 +1586,7 @@ subroutine create_lakes(lake_model_parameters, &
       do i = 1,size(lake%parameters%filling_order)
         working_cell => lake%parameters%filling_order(i)%cell_pointer
         if (working_cell%height_type == flood_height .or. &
-            (size(lake%parameters%filling_order) == 1 .and. &
-             lake%parameters%is_leaf)) then
+            (i == 1 .and. lake%parameters%is_leaf)) then
           top_level_primary_lake_number = find_top_level_primary_lake_number(lake)
           primary_lake_numbers(working_cell%_COORDS_ARG_coords_) = top_level_primary_lake_number
         end if
@@ -2284,8 +2283,7 @@ subroutine calculate_binary_lake_mask(lake_model_parameters,lake_model_prognosti
       do i = 1,size(lake%parameters%filling_order)
         working_cell => lake%parameters%filling_order(i)%cell_pointer
         if (working_cell%height_type == flood_height .or. &
-            (size(lake%parameters%filling_order) == 1 .and. &
-             lake%parameters%is_leaf)) then
+            (i == 1 .and. lake%parameters%is_leaf)) then
           top_level_primary_lake_number = find_top_level_primary_lake_number(lake)
           primary_lake_numbers(working_cell%_COORDS_ARG_coords_) = top_level_primary_lake_number
         end if
