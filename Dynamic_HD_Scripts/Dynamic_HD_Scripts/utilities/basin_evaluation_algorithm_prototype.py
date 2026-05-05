@@ -1,4 +1,5 @@
 import numpy as np
+import math
 from copy import copy
 from heapq import heappush,heappop
 from enum import auto, Enum
@@ -386,9 +387,9 @@ class BasinEvaluationAlgorithm:
         self.null_lake_number = -1
         self.lake_numbers = np.full(self.raw_orography.shape,self.null_lake_number,
                                     dtype=np.int32)
-        self.completed_cells = np.full(self.raw_orography.shape,False,dtype=np.bool)
-        self.cells_in_lake = np.full(self.raw_orography.shape,False,dtype=np.bool)
-        self.level_completed_cells = np.full(self.raw_orography.shape,False,dtype=np.bool)
+        self.completed_cells = np.full(self.raw_orography.shape,False,dtype=bool)
+        self.cells_in_lake = np.full(self.raw_orography.shape,False,dtype=bool)
+        self.level_completed_cells = np.full(self.raw_orography.shape,False,dtype=bool)
         self.search_alg = SimpleSearch(self.grid)
         self.coarse_search_alg = SimpleSearch(self.coarse_grid)
 
@@ -502,7 +503,7 @@ class BasinEvaluationAlgorithm:
 
     def initialize_basin(self,lake):
         self.q = []
-        self.searched_level_height = 0.0
+        self.searched_level_height = -math.inf
         self.completed_cells[:,:] = False
         self.cells_in_lake[:,:] = False
         lake.center_cell_volume_threshold = 0.0
@@ -551,8 +552,7 @@ class BasinEvaluationAlgorithm:
         if len(self.q) > 0:
             while (len(self.q) > 0 and
                    self.q[0].get_height() <= self.center_cell_height):
-                if (self.lake_numbers[self.q[0].get_cell_coords()] == -1 and
-                    self.q[0].get_height() == self.center_cell_height):
+                if self.q[0].get_height() == self.center_cell_height:
                     self.level_q.append(heappop(self.q))
                 else:
                     additional_cells_to_return_to_q.append(heappop(self.q))

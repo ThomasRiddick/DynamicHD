@@ -552,7 +552,7 @@ void basin_evaluation_algorithm::evaluate_basins(){
 
 void basin_evaluation_algorithm::initialize_basin(lake_variables* lake) {
     if ( ! q.empty()) throw runtime_error("Queue not empty at initilisation");
-    searched_level_height = 0.0;
+    searched_level_height = numeric_limits<double>::lowest();
     completed_cells->set_all(false);
     cells_in_lake->set_all(false);
     lake->center_cell_volume_threshold = 0.0;
@@ -612,8 +612,7 @@ void basin_evaluation_algorithm::search_for_outflows_on_level(int lake_number) {
         while ( ! q.empty()){
             double next_cell_height = static_cast<basin_cell*>(q.top())->get_orography();
             if (next_cell_height > center_cell_height) break;
-            if (next_cell_height == center_cell_height &&
-                (*lake_numbers)(q.top()->get_cell_coords()) == -1) {
+            if (next_cell_height == center_cell_height) {
                 level_q.push_back(static_cast<basin_cell*>(q.top()));
             } else {
                 additional_cells_to_return_to_q.push_back(static_cast<basin_cell*>(q.top()));
