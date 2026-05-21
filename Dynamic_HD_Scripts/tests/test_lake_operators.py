@@ -5691,7 +5691,94 @@ class TestWaterRedistributionDriver(unittest.TestCase):
                                          water_redistributed_to_rivers_out)
 
 
+class TestOutletFinder(unittest.TestCase):
+
+  def testFindOutletForExcessEvaporation(self):
+    coarse_lake_mask = \
+      np.array([[False,False,False,False,False,False,False, True,False, True],
+                [False,False,False,False,False,False,False, True, True, True],
+                [False,False,False,False,False,False,False, True, True, True],
+                [False,False,False,False,False,False,False,False, True,False],
+                [False,False,False,False,False,False,False,False,False,False],
+                [False,False,False,False,False,False,False,False,False,False],
+                [False,False,False,False,False,False,False,False, True, True],
+                [False,False,False,False,False,False,False,False, True,False],
+                [False,False,False,False,False,False,False,False, True,False],
+                [False,False,False,False,False,False,False,False,False,False]],
+               dtype=np.bool)
+    coarse_rdirs = \
+      np.array([[-1,-1, 0, 1, 1, 1, 1, 1, 1, 1],
+                [-1, 0, 1, 1, 1, 1, 1,-2, 1,-2],
+                [-1, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+                [-1, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+                [-1, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+                [-1, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+                [-1, 0, 0, 0, 1, 1, 1, 1, 1, 1],
+                [-1,-1,-1,-1, 0, 1, 1, 1,-2, 1],
+                [-1,-1,-1,-1, 0, 0, 0, 1, 1, 1],
+                [-1,-1,-1,-1,-1,-1,-1, 0, 1, 1]],
+               dtype=np.int32)
+    coarse_catchments = \
+      np.array([[-1,-1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [-1,-1, 1, 1, 1, 1, 0, 0, 1, 2],
+                [-1,-1, 5, 1, 1, 1, 0, 0, 1, 2],
+                [-1, 5, 5, 5, 1, 1, 1, 0, 1, 2],
+                [-1,-1, 5, 5, 1, 1, 1, 0, 2, 2],
+                [-1,-1, 5, 5, 5, 4, 4, 4, 3, 3],
+                [-1,-1,-1,-1, 4, 4, 4, 4, 3, 3],
+                [-1,-1,-1,-1, 4, 4, 4, 4, 3, 3],
+                [-1,-1,-1,-1,-1,-1,-1, 4, 3, 1],
+                [-1,-1,-1,-1,-1,-1,-1, 3, 1, 1]],
+               dtype=np.int32)
+    coarse_connected_catchments = \
+      np.array([[-1,-1, 1, 1, 1, 1, 1, 1, 1, 3],
+                [-1,-1, 1, 1, 1, 1, 1, 1, 1, 3],
+                [-1,-1, 5, 1, 1, 1, 1, 1, 1, 3],
+                [-1, 5, 5, 5, 1, 1, 1, 1, 1, 3],
+                [-1,-1, 5, 5, 1, 1, 1, 1, 3, 3],
+                [-1,-1, 5, 5, 5, 4, 4, 4, 3, 3],
+                [-1,-1,-1,-1, 4, 4, 4, 4, 3, 3],
+                [-1,-1,-1,-1, 4, 4, 4, 4, 3, 3],
+                [-1,-1,-1,-1,-1,-1,-1, 4, 3, 1],
+                [-1,-1,-1,-1,-1,-1,-1, 3, 1, 1]],
+               dtype=np.int32)
+    coarse_grid_to_jsbach_grid_lat_map = \
+      np.array([[0,0,0,0,0, 0,0,0,0,0],
+                [0,0,0,0,0, 0,0,0,0,0],
+                [0,0,0,0,0, 0,0,0,0,0],
+                [1,1,1,1,1, 1,1,1,1,1],
+                [1,1,1,1,1, 1,1,1,1,1],
+                [1,1,1,1,1, 1,1,1,1,1],
+                [1,1,1,1,1, 1,1,1,1,1],
+                [2,2,2,2,2, 2,2,2,2,2],
+                [2,2,2,2,2, 2,2,2,2,2],
+                [2,2,2,2,2, 2,2,2,2,2]],
+               dtype=np.int32)
+    coarse_grid_to_jsbach_grid_lon_map = \
+      np.array([[0,0,1,1,2,2,3,3,4,4],
+                [0,0,1,1,2,2,3,3,4,4],
+                [0,0,1,1,2,2,3,3,4,4],
+                [0,0,1,1,2,2,3,3,4,4],
+                [0,0,1,1,2,2,3,3,4,4],
+                [0,0,1,1,2,2,3,3,4,4],
+                [0,0,1,1,2,2,3,3,4,4],
+                [0,0,1,1,2,2,3,3,4,4],
+                [0,0,1,1,2,2,3,3,4,4],
+                [0,0,1,1,2,2,3,3,4,4]],
+               dtype=np.int32)
+    nlat_jsbach = 3
+    nlon_jsbach = 5
+    outlet_lats,outlet_lons = dynamic_lake_operators.\
+          find_outlet_for_excess_evaporation(coarse_lake_mask,
+                                             coarse_rdirs,
+                                             coarse_catchments,
+                                             coarse_connected_catchments,
+                                             coarse_grid_to_jsbach_grid_lat_map,
+                                             coarse_grid_to_jsbach_grid_lon_map,
+                                             nlat_jsbach,nlon_jsbach)
+    print(outlet_lats)
+    print(outlet_lons)
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
-    unittest.main()
+    unittest.main(TestOutletFinder())

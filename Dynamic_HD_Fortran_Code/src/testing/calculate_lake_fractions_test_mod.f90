@@ -6976,5 +6976,230 @@ end subroutine testLakeFractionCalculationTest21
 !     PROCESS BY HAND=>?call assert_equals(( lake_pixel_counts_field == expected_lake_pixel_counts_field_after_third_cycle)
 ! end subroutine testLakeFractionCalculationTest23
 
+subroutine testLakeFractionCalculationTest24
+  use calculate_lake_fractions_mod
+  type(lakeinputpointer), dimension(:), pointer :: lakes
+  type(lakefractioncalculationprognostics), pointer :: prognostics
+  integer :: lake_number
+  integer,dimension(:,:), pointer :: potential_lake_pixel_mask
+  integer,dimension(:,:), pointer :: lake_pixel_mask
+  integer,dimension(:,:), pointer :: cell_pixel_counts
+  integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+  integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+  integer,dimension(:,:), pointer :: lake_pixel_counts_field
+  real(dp),dimension(:,:), pointer :: lake_fractions_field
+  integer,dimension(:), pointer :: lake_pixel_coords_list_lat
+  integer,dimension(:), pointer :: lake_pixel_coords_list_lon
+  integer,dimension(:), pointer :: potential_lake_pixel_coords_list_lat
+  integer,dimension(:), pointer :: potential_lake_pixel_coords_list_lon
+  integer,dimension(:), pointer :: cell_coords_list_lat
+  integer,dimension(:), pointer :: cell_coords_list_lon
+  logical,dimension(:,:), pointer :: non_lake_mask
+  logical,dimension(:,:), pointer :: binary_lake_mask
+  integer,dimension(:,:), pointer :: expected_lake_pixel_counts_field
+  real(dp),dimension(:,:), pointer :: expected_lake_fractions_field
+  logical,dimension(:,:), pointer :: expected_binary_lake_mask
+  logical,dimension(:,:), pointer :: cell_mask
+  logical, dimension(:,:), pointer :: mask
+  integer :: nlat_lake, nlon_lake
+  integer :: nlat_surface, nlon_surface
+  integer :: npixels, counter
+  integer :: lat,lon
+  integer :: i,j
+    !Two lake example taken from lake tests 22
+    !Multiple non-lake points blocking binary mask
+    nlat_lake = 12
+    nlon_lake = 12
+    nlat_surface = 3
+    nlon_surface = 3
+    allocate(potential_lake_pixel_mask(nlat_lake,nlon_lake))
+    potential_lake_pixel_mask = transpose(reshape((/   &
+          0,0,0,0, 0,0,0,0, 0,0,0,0, &
+          0,0,0,0, 0,1,1,0, 0,0,0,0, &
+          0,0,0,0, 0,1,1,0, 0,0,0,0, &
+          0,0,0,0, 0,1,1,0, 0,0,0,0, &
+          0,0,0,0, 0,1,0,0, 0,0,0,0, &
+          0,1,1,1, 1,1,1,1, 1,1,1,0, &
+          0,1,1,1, 0,1,0,0, 1,1,1,0, &
+          0,0,0,0, 0,1,0,0, 0,0,0,0, &
+          0,0,0,0, 0,1,1,0, 0,0,0,0, &
+          0,0,0,0, 0,1,1,0, 0,0,0,0, &
+          0,0,0,0, 0,1,1,0, 0,0,0,0, &
+          0,0,0,0, 0,0,0,0, 0,0,0,0 /), &
+       (/nlon_lake,nlat_lake/)))
+    allocate(lake_pixel_mask(nlat_lake,nlon_lake))
+    lake_pixel_mask = transpose(reshape((/   &
+          0,0,0,0, 0,0,0,0, 0,0,0,0, &
+          0,0,0,0, 0,1,1,0, 0,0,0,0, &
+          0,0,0,0, 0,1,1,0, 0,0,0,0, &
+          0,0,0,0, 0,1,1,0, 0,0,0,0, &
+          0,0,0,0, 0,1,0,0, 0,0,0,0, &
+          0,1,1,1, 1,1,1,1, 1,1,1,0, &
+          0,1,1,1, 0,1,0,0, 1,1,1,0, &
+          0,0,0,0, 0,1,0,0, 0,0,0,0, &
+          0,0,0,0, 0,1,1,0, 0,0,0,0, &
+          0,0,0,0, 0,1,1,0, 0,0,0,0, &
+          0,0,0,0, 0,1,1,0, 0,0,0,0, &
+          0,0,0,0, 0,0,0,0, 0,0,0,0 /), &
+       (/nlon_lake,nlat_lake/)))
+    allocate(cell_pixel_counts(nlat_surface,nlon_surface))
+    cell_pixel_counts = transpose(reshape((/   &
+       16, 16, 16, &
+       16, 16, 16, &
+       16, 16, 16 /), &
+       (/nlon_surface,nlat_surface/)))
+    allocate(corresponding_surface_cell_lat_index(nlat_lake,nlon_lake))
+    corresponding_surface_cell_lat_index = transpose(reshape((/   &
+          1,1,1,1, 1,1,1,1, 1,1,1,1, &
+          1,1,1,1, 1,1,1,1, 1,1,1,1, &
+          1,1,1,1, 1,1,1,1, 1,1,1,1, &
+          1,1,1,1, 1,1,1,1, 1,1,1,1, &
+          2,2,2,2, 2,2,2,2, 2,2,2,2, &
+          2,2,2,2, 2,2,2,2, 2,2,2,2, &
+          2,2,2,2, 2,2,2,2, 2,2,2,2, &
+          2,2,2,2, 2,2,2,2, 2,2,2,2, &
+          3,3,3,3, 3,3,3,3, 3,3,3,3, &
+          3,3,3,3, 3,3,3,3, 3,3,3,3, &
+          3,3,3,3, 3,3,3,3, 3,3,3,3, &
+          3,3,3,3, 3,3,3,3, 3,3,3,3 /), &
+       (/nlon_lake,nlat_lake/)))
+    allocate(corresponding_surface_cell_lon_index(nlat_lake,nlon_lake))
+    corresponding_surface_cell_lon_index = transpose(reshape((/   &
+          1,1,1,1, 2,2,2,2, 3,3,3,3, &
+          1,1,1,1, 2,2,2,2, 3,3,3,3, &
+          1,1,1,1, 2,2,2,2, 3,3,3,3, &
+          1,1,1,1, 2,2,2,2, 3,3,3,3, &
+          1,1,1,1, 2,2,2,2, 3,3,3,3, &
+          1,1,1,1, 2,2,2,2, 3,3,3,3, &
+          1,1,1,1, 2,2,2,2, 3,3,3,3, &
+          1,1,1,1, 2,2,2,2, 3,3,3,3, &
+          1,1,1,1, 2,2,2,2, 3,3,3,3, &
+          1,1,1,1, 2,2,2,2, 3,3,3,3, &
+          1,1,1,1, 2,2,2,2, 3,3,3,3, &
+          1,1,1,1, 2,2,2,2, 3,3,3,3 /), &
+       (/nlon_lake,nlat_lake/)))
+    allocate(expected_lake_pixel_counts_field(nlat_surface,nlon_surface))
+    expected_lake_pixel_counts_field = transpose(reshape((/   &
+          0,6,0, &
+          6,7,6, &
+          0,6,0 /), &
+       (/nlon_surface,nlat_surface/)))
+    allocate(non_lake_mask(nlat_surface,nlon_surface))
+    non_lake_mask = transpose(reshape((/   &
+      .False.,.True.,.False., &
+      .True., .True.,.True., &
+      .False.,.True.,.False. /), &
+       (/nlon_surface,nlat_surface/)))
+    allocate(expected_lake_fractions_field(nlat_surface,nlon_surface))
+    expected_lake_fractions_field = transpose(reshape((/   &
+        0.0,6.0/16.0,0.0, &
+        6.0/16.0,7.0/16.0,6.0/16.0, &
+        0.0,6.0/16.0,0.0 /), &
+       (/nlon_surface,nlat_surface/)))
+    allocate(expected_binary_lake_mask(nlat_surface,nlon_surface))
+    expected_binary_lake_mask = transpose(reshape((/   &
+    .False.,.False.,.False., &
+    .False.,.False.,.False., &
+    .False.,.False.,.False. /), &
+       (/nlon_surface,nlat_surface/)))
+    allocate(mask(nlat_lake,nlon_lake))
+    allocate(cell_mask(nlat_surface,nlon_surface))
+    allocate(lakes(1))
+    do lake_number = 1,1
+      mask = (potential_lake_pixel_mask == lake_number)
+      npixels = count(mask)
+      allocate(potential_lake_pixel_coords_list_lat(npixels))
+      allocate(potential_lake_pixel_coords_list_lon(npixels))
+      counter = 1
+      do i = 1,nlat_lake
+        do j = 1,nlon_lake
+          if (mask(i,j)) then
+            potential_lake_pixel_coords_list_lat(counter) = i
+            potential_lake_pixel_coords_list_lon(counter) = j
+            counter = counter + 1
+          end if
+        end do
+      end do
+      mask = (lake_pixel_mask == lake_number)
+      npixels = count(mask)
+      allocate(lake_pixel_coords_list_lat(npixels))
+      allocate(lake_pixel_coords_list_lon(npixels))
+      counter = 1
+      do i = 1,nlat_lake
+        do j = 1,nlon_lake
+          if (mask(i,j)) then
+            lake_pixel_coords_list_lat(counter) = i
+            lake_pixel_coords_list_lon(counter) = j
+            counter = counter + 1
+          end if
+        end do
+      end do
+      cell_mask(:,:) = .false.
+      do i=1,size(potential_lake_pixel_coords_list_lat)
+          lat = corresponding_surface_cell_lat_index( &
+            potential_lake_pixel_coords_list_lat(i), &
+            potential_lake_pixel_coords_list_lon(i))
+          lon = corresponding_surface_cell_lon_index( &
+            potential_lake_pixel_coords_list_lat(i), &
+            potential_lake_pixel_coords_list_lon(i))
+          cell_mask(lat,lon) = .true.
+      end do
+      allocate(cell_coords_list_lat(count(cell_mask)))
+      allocate(cell_coords_list_lon(count(cell_mask)))
+      counter = 1
+      do i = 1,nlat_surface
+        do j = 1,nlon_surface
+          if (cell_mask(i,j)) then
+            cell_coords_list_lat(counter) = i
+            cell_coords_list_lon(counter) = j
+            counter = counter + 1
+          end if
+        end do
+      end do
+      lakes(lake_number)%lake_input_pointer => &
+        lakeinput(lake_number, &
+                  lake_pixel_coords_list_lat, &
+                  lake_pixel_coords_list_lon, &
+                  potential_lake_pixel_coords_list_lat, &
+                  potential_lake_pixel_coords_list_lon, &
+                  cell_coords_list_lat, &
+                  cell_coords_list_lon)
+    end do
+    call calculate_lake_fractions(lakes, &
+                                  cell_pixel_counts, &
+                                  non_lake_mask, &
+                                  lake_pixel_counts_field, &
+                                  lake_fractions_field, &
+                                  binary_lake_mask, &
+                                  corresponding_surface_cell_lat_index, &
+                                  corresponding_surface_cell_lon_index, &
+                                  nlat_lake,nlon_lake, &
+                                  nlat_surface,nlon_surface)
+    call assert_equals(lake_pixel_counts_field, &
+                       expected_lake_pixel_counts_field,nlat_surface,nlon_surface)
+    call assert_equals(lake_fractions_field, expected_lake_fractions_field, &
+                                          nlat_surface,nlon_surface)
+    call assert_equals(binary_lake_mask, expected_binary_lake_mask, &
+                                          nlat_surface,nlon_surface)
+    do i = 1,size(lakes)
+      call clean_lake_input(lakes(i)%lake_input_pointer)
+      deallocate(lakes(i)%lake_input_pointer)
+    end do
+    deallocate(lakes)
+    deallocate(lake_pixel_mask)
+    deallocate(potential_lake_pixel_mask)
+    deallocate(cell_pixel_counts)
+    deallocate(corresponding_surface_cell_lat_index)
+    deallocate(corresponding_surface_cell_lon_index)
+    deallocate(lake_pixel_counts_field)
+    deallocate(lake_fractions_field)
+    deallocate(binary_lake_mask)
+    deallocate(non_lake_mask)
+    deallocate(expected_lake_pixel_counts_field)
+    deallocate(expected_lake_fractions_field)
+    deallocate(expected_binary_lake_mask)
+    deallocate(cell_mask)
+    deallocate(mask)
+end subroutine testLakeFractionCalculationTest24
 
 end module calculate_lake_fractions_test_mod

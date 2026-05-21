@@ -208,6 +208,22 @@ class fieldOperationTestCase(unittest.TestCase):
         np.testing.assert_array_equal(self.field_instance.get_data(),
                                       self.old_field_updated_by_partially_masked_data)
 
+    def testFieldReplaceWhereLessThan(self):
+        test_array_one = np.array([[2.0,3.0,4.0],
+                                   [5.0,6.0,7.0],
+                                   [8.0,9.0,10.0]])
+        test_array_two = np.array([[1.0,4.0,5.0],
+                                   [4.0,7.0,6.0],
+                                   [9.0,8.0,11.0]])
+        expected_results = np.array([[2.0,4.0,5.0],
+                                     [5.0,7.0,7.0],
+                                     [9.0,9.0,11.0]])
+        field_one = fld.Field(test_array_one)
+        field_two = fld.Field(test_array_two)
+        field_one.replace_where_less_than(field_two)
+        np.testing.assert_array_equal(field_one.get_data(),
+                                      expected_results)
+
     def testMakeField(self):
         """Test creating a new field"""
         created_field_instance = fld.makeField(self.old_field,'Generic','HD')
