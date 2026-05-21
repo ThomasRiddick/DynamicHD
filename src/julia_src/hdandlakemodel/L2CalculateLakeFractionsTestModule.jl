@@ -4132,21 +4132,21 @@ end
   expected_intermediate_lake_pixel_counts_field_three::Field{Int64} = LatLonField{Int64}(surface_grid,
     Int64[ 0 0  16  0  0
            0 0  0  16 16
-           0 14 16 16 0
+           0 15 16 16 0
            16 0  0  16 0
-           0 16 0 0  0 ])
+           0 15 0 0  0 ])
   expected_lake_pixel_counts_field_after_second_cycle::Field{Int64} = LatLonField{Int64}(surface_grid,
-    Int64[ 0 5  16  4  4
+    Int64[ 1 5  16  4  4
            0 3  3  16 16
            3 16 16 16 0
            16 1  7  16 1
-           2 16  3 2  4  ])
+           0 16  3 3  4  ])
   expected_lake_pixel_counts_field_after_third_cycle::Field{Int64} = LatLonField{Int64}(surface_grid,
-    Int64[ 1 5  16  5  4
+    Int64[ 0 5  16  5  4
            0 3  3  16 16
            3 16 16 16 0
-           16 2  7  16 1
-           0 16  4 0  4  ])
+           16 3  7  16 1
+           0 16  3 2  3  ])
   expected_lake_fractions_field::Field{Float64} = LatLonField{Float64}(surface_grid,
     Float64[ 0.0 1.0 1.0 0.0 0.0
              0.0 0.0 0.0 1.0 1.0
@@ -4472,5 +4472,251 @@ end
   add_pixel_by_coords(CartesianIndex(6,12),lake_pixel_counts_field,prognostics)
   @test lake_pixel_counts_field == expected_lake_pixel_counts_field_after_third_cycle
 end
+
+@testset "Lake Fraction Calculation Test 24" begin
+  #Multiple non-lake points blocking binary mask
+  lake_grid::Grid = LatLonGrid(12,12,true)
+  surface_grid::Grid = LatLonGrid(3,3,true)
+  lakes::Vector{LakeInput} = LakeInput[]
+  potential_lake_pixel_mask::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[ 0 0 0 0  0 0 0 0  0 0 0 0
+           0 0 0 0  0 1 1 0  0 0 0 0
+           0 0 0 0  0 1 1 0  0 0 0 0
+           0 0 0 0  0 1 1 0  0 0 0 0
+
+           0 0 0 0  0 1 0 0  0 0 0 0
+           0 1 1 1  1 1 1 1  1 1 1 0
+           0 1 1 1  0 1 0 0  1 1 1 0
+           0 0 0 0  0 1 0 0  0 0 0 0
+
+           0 0 0 0  0 1 1 0  0 0 0 0
+           0 0 0 0  0 1 1 0  0 0 0 0
+           0 0 0 0  0 1 1 0  0 0 0 0
+           0 0 0 0  0 0 0 0  0 0 0 0 ])
+
+  lake_pixel_mask::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[ 0 0 0 0  0 0 0 0  0 0 0 0
+           0 0 0 0  0 1 1 0  0 0 0 0
+           0 0 0 0  0 1 1 0  0 0 0 0
+           0 0 0 0  0 1 1 0  0 0 0 0
+
+           0 0 0 0  0 1 0 0  0 0 0 0
+           0 1 1 1  1 1 1 1  1 1 1 0
+           0 1 1 1  0 1 0 0  1 1 1 0
+           0 0 0 0  0 1 0 0  0 0 0 0
+
+           0 0 0 0  0 1 1 0  0 0 0 0
+           0 0 0 0  0 1 1 0  0 0 0 0
+           0 0 0 0  0 1 1 0  0 0 0 0
+           0 0 0 0  0 0 0 0  0 0 0 0 ])
+  cell_pixel_counts::Field{Int64} = LatLonField{Int64}(surface_grid,
+    Int64[ 16 16 16
+           16 16 16
+           16 16 16 ])
+  corresponding_surface_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[ 1 1 1 1  1 1 1 1  1 1 1 1
+           1 1 1 1  1 1 1 1  1 1 1 1
+           1 1 1 1  1 1 1 1  1 1 1 1
+           1 1 1 1  1 1 1 1  1 1 1 1
+
+           2 2 2 2  2 2 2 2  2 2 2 2
+           2 2 2 2  2 2 2 2  2 2 2 2
+           2 2 2 2  2 2 2 2  2 2 2 2
+           2 2 2 2  2 2 2 2  2 2 2 2
+
+           3 3 3 3  3 3 3 3  3 3 3 3
+           3 3 3 3  3 3 3 3  3 3 3 3
+           3 3 3 3  3 3 3 3  3 3 3 3
+           3 3 3 3  3 3 3 3  3 3 3 3 ])
+  corresponding_surface_cell_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[ 1 1 1 1  2 2 2 2  3 3 3 3
+           1 1 1 1  2 2 2 2  3 3 3 3
+           1 1 1 1  2 2 2 2  3 3 3 3
+           1 1 1 1  2 2 2 2  3 3 3 3
+
+           1 1 1 1  2 2 2 2  3 3 3 3
+           1 1 1 1  2 2 2 2  3 3 3 3
+           1 1 1 1  2 2 2 2  3 3 3 3
+           1 1 1 1  2 2 2 2  3 3 3 3
+
+           1 1 1 1  2 2 2 2  3 3 3 3
+           1 1 1 1  2 2 2 2  3 3 3 3
+           1 1 1 1  2 2 2 2  3 3 3 3
+           1 1 1 1  2 2 2 2  3 3 3 3 ])
+  expected_lake_pixel_counts_field::Field{Int64} = LatLonField{Int64}(surface_grid,
+    Int64[ 0 6 0
+           6 7 6
+           0 6 0 ])
+  expected_lake_fractions_field::Field{Float64} = LatLonField{Float64}(surface_grid,
+    Float64[ 0.0 6.0/16.0 0.0
+             6.0/16.0 7.0/16.0 6.0/16.0
+             0.0 6.0/16.0 0.0 ])
+  expected_binary_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,
+    Bool[ false false false
+          false false false
+          false false false ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,
+    Bool[ false true false
+           true true true
+          false true false ])
+  grid_specific_lake_model_parameters::LatLonLakeModelParameters =
+    LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
+                              corresponding_surface_cell_lon_index)
+  for lake_number::Int64=1:1
+    lake_pixel_coords_list::Vector{CartesianIndex} = findall(x -> x == lake_number,
+                                                             lake_pixel_mask.data)
+    potential_lake_pixel_coords_list::Vector{CartesianIndex} = findall(x -> x == lake_number,
+                                                               potential_lake_pixel_mask.data)
+    cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
+    for pixel in potential_lake_pixel_coords_list
+      cell_coords::CartesianIndex =
+        get_corresponding_surface_model_grid_cell(pixel,
+                                                  grid_specific_lake_model_parameters)
+      set!(cell_mask,cell_coords,true)
+    end
+    cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
+    input = LakeInput(lake_number,
+                      lake_pixel_coords_list,
+                      potential_lake_pixel_coords_list,
+                      cell_coords_list)
+    push!(lakes,input)
+  end
+  lake_pixel_counts_field::Field{Int64},
+    lake_fractions_field::Field{Float64},
+    binary_lake_mask::Field{Bool} =
+    calculate_lake_fractions(lakes,
+                             cell_pixel_counts,
+                             non_lake_mask,
+                             grid_specific_lake_model_parameters,
+                             lake_grid,
+                             surface_grid)
+  @test lake_pixel_counts_field == expected_lake_pixel_counts_field
+  @test lake_fractions_field == expected_lake_fractions_field
+  @test binary_lake_mask == expected_binary_lake_mask
+end
+
+@testset "Lake Fraction Calculation Test 25" begin
+  #Multiple non-lake points blocking binary mask but with
+  #one possible cell
+  lake_grid::Grid = LatLonGrid(12,12,true)
+  surface_grid::Grid = LatLonGrid(3,3,true)
+  lakes::Vector{LakeInput} = LakeInput[]
+  potential_lake_pixel_mask::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[ 0 0 0 0  0 0 0 0  0 0 0 0
+           0 0 0 0  0 1 1 0  0 0 0 0
+           0 0 0 0  0 1 1 1  1 0 0 0
+           0 0 0 0  0 1 1 0  0 0 0 0
+
+           0 0 0 0  0 1 0 0  0 0 0 0
+           0 1 1 1  1 1 1 1  1 1 1 0
+           0 1 1 1  0 1 0 0  1 1 1 0
+           0 0 0 0  0 1 0 0  0 0 0 0
+
+           0 0 0 0  0 1 1 0  0 0 0 0
+           0 0 0 0  0 1 1 0  0 0 0 0
+           0 0 0 0  0 1 1 0  0 0 0 0
+           0 0 0 0  0 0 0 0  0 0 0 0 ])
+
+  lake_pixel_mask::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[ 0 0 0 0  0 0 0 0  0 0 0 0
+           0 0 0 0  0 1 1 0  0 0 0 0
+           0 0 0 0  0 1 1 1  0 0 0 0
+           0 0 0 0  0 1 1 0  0 0 0 0
+
+           0 0 0 0  0 1 0 0  0 0 0 0
+           0 1 1 1  1 1 1 1  1 1 1 0
+           0 1 1 1  0 1 0 0  1 1 1 0
+           0 0 0 0  0 1 0 0  0 0 0 0
+
+           0 0 0 0  0 1 1 0  0 0 0 0
+           0 0 0 0  0 1 1 0  0 0 0 0
+           0 0 0 0  0 1 1 0  0 0 0 0
+           0 0 0 0  0 0 0 0  0 0 0 0 ])
+  cell_pixel_counts::Field{Int64} = LatLonField{Int64}(surface_grid,
+    Int64[ 16 16 16
+           16 16 16
+           16 16 16 ])
+  corresponding_surface_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[ 1 1 1 1  1 1 1 1  1 1 1 1
+           1 1 1 1  1 1 1 1  1 1 1 1
+           1 1 1 1  1 1 1 1  1 1 1 1
+           1 1 1 1  1 1 1 1  1 1 1 1
+
+           2 2 2 2  2 2 2 2  2 2 2 2
+           2 2 2 2  2 2 2 2  2 2 2 2
+           2 2 2 2  2 2 2 2  2 2 2 2
+           2 2 2 2  2 2 2 2  2 2 2 2
+
+           3 3 3 3  3 3 3 3  3 3 3 3
+           3 3 3 3  3 3 3 3  3 3 3 3
+           3 3 3 3  3 3 3 3  3 3 3 3
+           3 3 3 3  3 3 3 3  3 3 3 3 ])
+  corresponding_surface_cell_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[ 1 1 1 1  2 2 2 2  3 3 3 3
+           1 1 1 1  2 2 2 2  3 3 3 3
+           1 1 1 1  2 2 2 2  3 3 3 3
+           1 1 1 1  2 2 2 2  3 3 3 3
+
+           1 1 1 1  2 2 2 2  3 3 3 3
+           1 1 1 1  2 2 2 2  3 3 3 3
+           1 1 1 1  2 2 2 2  3 3 3 3
+           1 1 1 1  2 2 2 2  3 3 3 3
+
+           1 1 1 1  2 2 2 2  3 3 3 3
+           1 1 1 1  2 2 2 2  3 3 3 3
+           1 1 1 1  2 2 2 2  3 3 3 3
+           1 1 1 1  2 2 2 2  3 3 3 3 ])
+  expected_lake_pixel_counts_field::Field{Int64} = LatLonField{Int64}(surface_grid,
+    Int64[ 0 7 16
+           6 3 0
+           0 0 0 ])
+  expected_lake_fractions_field::Field{Float64} = LatLonField{Float64}(surface_grid,
+    Float64[ 0.0 7.0/16.0 1.0
+             6.0/16.0 3.0/16.0 0.0
+             0.0 0.0 0.0 ])
+  expected_binary_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,
+    Bool[ false false  true
+          false false false
+          false false false ])
+  non_lake_mask::Field{Bool} = LatLonField{Bool}(surface_grid,
+    Bool[ false true false
+           true true true
+          false true false ])
+  grid_specific_lake_model_parameters::LatLonLakeModelParameters =
+    LatLonLakeModelParameters(corresponding_surface_cell_lat_index,
+                              corresponding_surface_cell_lon_index)
+  for lake_number::Int64=1:1
+    lake_pixel_coords_list::Vector{CartesianIndex} = findall(x -> x == lake_number,
+                                                             lake_pixel_mask.data)
+    potential_lake_pixel_coords_list::Vector{CartesianIndex} = findall(x -> x == lake_number,
+                                                               potential_lake_pixel_mask.data)
+    cell_mask::Field{Bool} = LatLonField{Bool}(lake_grid,false)
+    for pixel in potential_lake_pixel_coords_list
+      cell_coords::CartesianIndex =
+        get_corresponding_surface_model_grid_cell(pixel,
+                                                  grid_specific_lake_model_parameters)
+      set!(cell_mask,cell_coords,true)
+    end
+    cell_coords_list::Vector{CartesianIndex} = findall(cell_mask.data)
+    input = LakeInput(lake_number,
+                      lake_pixel_coords_list,
+                      potential_lake_pixel_coords_list,
+                      cell_coords_list)
+    push!(lakes,input)
+  end
+  lake_pixel_counts_field::Field{Int64},
+    lake_fractions_field::Field{Float64},
+    binary_lake_mask::Field{Bool} =
+    calculate_lake_fractions(lakes,
+                             cell_pixel_counts,
+                             non_lake_mask,
+                             grid_specific_lake_model_parameters,
+                             lake_grid,
+                             surface_grid)
+  @test lake_pixel_counts_field == expected_lake_pixel_counts_field
+  @test lake_fractions_field == expected_lake_fractions_field
+  @test binary_lake_mask == expected_binary_lake_mask
+end
+
 
 end
