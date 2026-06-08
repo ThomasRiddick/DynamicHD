@@ -39,15 +39,15 @@ get_grid_dimensions(obj::T) where {T <: Grid} =
 
 struct CommonParameters
   minimum_height_threshold::Float64
-  default_height_change::Float64
+  default_vsau::Float64
   alpha::Float64
   C::Float64
   function CommonParameters()
     minimum_height_threshold::Float64 = 0.00000001
-    default_height_change::Float64 = 0.1
+    default_vsau::Float64 = 0.1
     alpha::Float64 = 0.1
     C::Float64 = 2.0
-    new(minimum_height_threshold,default_height_change,
+    new(minimum_height_threshold,default_vsau,
         alpha,C)
   end
 end
@@ -228,13 +228,7 @@ end
 function calculate_height_change(i::CartesianIndex,input_data::InputData,grid::Grid)
   next_cell::CartesianIndex =
     get_next_cell_coords(i,input_data,grid)
-  println("-------")
-  println(next_cell)
-  println(i)
-  println(input_data.orography[i])
-  println(input_data.orography[next_cell])
   height_change = input_data.orography[i] - input_data.orography[next_cell]
-  println(height_change)
   return height_change
 end
 
@@ -263,15 +257,14 @@ function calculate_distance(i::CartesianIndex,input_data::InputData,
     lon_index_change = 0
   end
   distance::Float64 = sqrt((lat_index_change*grid.dlat)^2+
-                           (lon_index_change*grid.dlon[i[2]])^2)
-  println(grid.dlat)
-  println(grid.dlon[i[2]])
+                           (lon_index_change*grid.dlon[i[1]])^2)
   return distance
 end
 
 function calculate_distance(i::CartesianIndex,input_data::InputData,
                             grid::UnstructuredGrid)
   earth_radius::Float64 = 6371000.0
+  j = get_next_cell_coords(i,input_data,grid)
   working_dlat::Float64 = abs(grid.clon(j) - grid.clon(i))
   if working_dlat > 300
     working_dlat = abs(working_dlat - 360)
@@ -280,7 +273,7 @@ function calculate_distance(i::CartesianIndex,input_data::InputData,
   earths_radius::Float64 = 6371000.0
   dlon::Float64 = working_dlat*pi_factor*
                   cos(pi_factor*(grid.clat(j)+grid.clat(i))/2)*earths_radius
-  dlat::Float64 = abs(grid.clat(j)+grid.clat(i))*pi_factor*earths_radius
+  dlat::Float64 = abs(grid.clat(j)-grid.clat(i))*pi_factor*earths_radius
   distance::Float64 = sqrt(dlat^2+dlon^2)
   return distance
 end
@@ -333,7 +326,6 @@ end
 function generate_riverflow_parameters(i::CartesianIndex,formula::RiverFlowSausen,
                                        distance::Float64,height_change::Float64,
                                        grid::Grid)
-  println("generate riverflow parameters")
   local number_of_riverflow_reservoirs::Float64
   if isa(grid,LatLonGrid)
     number_of_riverflow_reservoirs = 5.478720
@@ -341,16 +333,17 @@ function generate_riverflow_parameters(i::CartesianIndex,formula::RiverFlowSause
     number_of_riverflow_reservoirs = 5.0
   end
   if height_change < formula.common_parameters.minimum_height_threshold
-    height_change = formula.common_parameters.default_height_change
+    if height_change <= 0.0
+      vsau = 0.65
+    else
+      vsau = formula.common_parameters.default_vsau
+    end
+  else
+    vsau = formula.common_parameters.C*
+             ((height_change/distance)^formula.common_parameters.alpha)
   end
-  println(height_change)
-  println(distance)
-  vsau = formula.common_parameters.C*
-           ((height_change/distance)^formula.common_parameters.alpha)
-  println(vsau)
   riverflow_retention_coefficient = (formula.riverflow_k0*distance/
                                     formula.riverflow_dx)*(formula.riverflow_v0/vsau)
-  println(riverflow_retention_coefficient)
   return number_of_riverflow_reservoirs,riverflow_retention_coefficient
 end
 
@@ -362,22 +355,28 @@ function generate_overlandflow_parameters(i::CartesianIndex,formula::OverlandFlo
   else
     number_of_overlandflow_reservoirs = 1.0
   end
-  if height_change < formula.common_parameters.minimum_height_threshold
-    height_change = formula.common_parameters.default_height_change
-  end
-  if input_data.innerslope[i] > 0
+  if input_data.innerslope[i] > 0.0
     if isa(grid,LatLonGrid)
-      dx0 = sqrt(grid.dlat^2 + grid.dlon[i[2]]^2)
+      #Note this formula for distance does not accout for flow direction
+      dx0 = sqrt(grid.dlat^2 + grid.dlon[i[1]]^2)
     else
-      dx0 = distance
+    dx0 = distance
     end
     vso = formula.common_parameters.C*
           (input_data.innerslope[i]^formula.common_parameters.alpha)
     overlandflow_retention_coefficient = (formula.overlandflow_k0*dx0/
                                           formula.overlandflow_dx)*(formula.overlandflow_v0/vso)
   else
-    vsau = formula.common_parameters.C*
-           ((height_change/distance)^formula.common_parameters.alpha)
+    if height_change < formula.common_parameters.minimum_height_threshold
+      if height_change <= 0.0
+        vsau = 0.65
+      else
+        vsau = formula.common_parameters.default_vsau
+      end
+    else
+      vsau = formula.common_parameters.C*
+             ((height_change/distance)^formula.common_parameters.alpha)
+    end
     overlandflow_retention_coefficient = (formula.overlandflow_k0*distance/
                                           formula.overlandflow_dx)*(formula.overlandflow_v0/vsau)
   end
@@ -394,10 +393,11 @@ end
 function generate_baseflow_parameters(i::CartesianIndex,formula::BaseFlowDistanceAndOrography,
                                       distance::Float64,height_change::Float64,
                                       input_data::InputData,grid::Grid)
-  bb = (input_data.orography_variance[i] - 100.0)/(input_data.orography_variance[i] + 1000.0)
-  if bb < 0.01
-    bb = 0.01
-  end
+  orography_variance::Float64 = input_data.orography_variance[i]
+  orography_variance = orography_variance > 0.0 ?
+                       orography_variance : 0.1
+  bb = (orography_variance - 100.0)/(orography_variance + 1000.0)
+  bb = bb < 0.01 ? 0.01 : bb
   xib = 1.0 - bb + 0.01
   baseflow_retention_coefficient = (formula.baseflow_k0/xib)*
                                    (distance/formula.baseflow_d0)
