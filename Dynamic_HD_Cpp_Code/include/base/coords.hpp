@@ -143,7 +143,7 @@ public:
     // Check if this direction indicator object is equal to  a direction
     // given as a polymorphic pointer to an object of the correct type;
     // if it is return TRUE else return FALSE
-    virtual bool is_equal_to() = 0;
+    virtual bool is_equal_to(int value) = 0;
 };
 
 // A concrete subclass of direction indicator which holds a number based
@@ -152,7 +152,7 @@ public:
 // the direction from the centre of a numeric keyboard (the D9 method)
 // with 5 as a sink. However any other single number system is also
 // possible
-class dir_based_direction_indicator : direction_indicator {
+class dir_based_direction_indicator : public direction_indicator {
 protected:
     int direction;
 public:
@@ -165,7 +165,7 @@ public:
     bool is_equal_to(int value) { return (direction == value); };
 };
 
-class index_based_direction_indicator : direction_indicator {
+class index_based_direction_indicator : public direction_indicator {
 protected:
     int index;
 public:

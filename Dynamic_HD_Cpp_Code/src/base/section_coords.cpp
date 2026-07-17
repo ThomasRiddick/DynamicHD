@@ -9,6 +9,14 @@ latlon_section_coords::latlon_section_coords(int section_min_lat_in,int section_
                                              section_width_lon(section_width_lon_in),
                                              zero_line(zero_line_in) {}
 
+void latlon_section_coords::for_all_section(function<void(coords*)> func){
+    for (auto i = section_min_lat; i <= section_min_lat+section_width_lat; i++){
+        for (auto j = section_min_lon; j <= section_min_lon+section_width_lon; j++){
+            func(new latlon_coords(i,j));
+        }
+    }
+}
+
 irregular_latlon_section_coords::irregular_latlon_section_coords(int cell_number_in,
                                                                  int ncells,
                                                                  int* cell_numbers_in,
@@ -81,6 +89,12 @@ irregular_latlon_section_coords(vector<int>* list_of_cell_numbers_in,
     section_width_lon =
         section_max_lon + 1 - section_min_lon;
     zero_line = 0.0;
+}
+
+void generic_1d_section_coords::for_all_section(function<void(coords*)> func){
+    for (auto i = 0; i < num_points_subarray; i++) {
+        func(new generic_1d_coords(full_field_indices[subfield_indices[i]]));
+    }
 }
 
 generic_1d_section_coords::generic_1d_section_coords(int ncells,

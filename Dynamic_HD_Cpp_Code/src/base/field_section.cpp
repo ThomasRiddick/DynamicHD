@@ -1,70 +1,7 @@
-void latlon_set_data_array_element(lat,lon,value) {
-    class(latlon_field_section) :: this
-    class(*), pointer :: value
-    integer :: lat,lon
-    select type (value)
-    type is (integer)
-        select type (data=>this%data)
-            type is (integer)
-                data(lat,lon) = value
-            class default
-                stop 'trying to set array element with value of incorrect type'
-        end select
-    type is (logical)
-        select type (data => this%data)
-            type is (logical)
-                data(lat,lon) = value
-            class default
-                stop 'trying to set array element with value of incorrect type'
-        end select
-    type is (real)
-        select type (data => this%data)
-            type is (real)
-                data(lat,lon) = value
-            class default
-                stop 'trying to set array element with value of incorrect type'
-        end select
-    class default
-        stop 'trying to set array element with value of a unknown type'
-    end select
-}
+#include "base/field_section.hpp"
 
-void field_section::set_integer_value(coords* coords_in,int value) {
-    class(*), pointer :: pointer_to_value
-        allocate(pointer_to_value,source=value)
-        call this%set_generic_value(coords_in,pointer_to_value)
-        deallocate(pointer_to_value)
-}
-
-void set_real_value(coords_in,value) {
-    class(field_section) :: this
-    class(coords) :: coords_in
-    real :: value
-    class(*), pointer :: pointer_to_value
-        allocate(pointer_to_value,source=value)
-        call this%set_generic_value(coords_in,pointer_to_value)
-        deallocate(pointer_to_value)
-}
-
-void set_logical_value(coords_in,value) {
-    class(field_section) :: this
-    class(coords) :: coords_in
-    logical :: value
-    class(*), pointer :: pointer_to_value
-        allocate(pointer_to_value,source=value)
-        call this%set_generic_value(coords_in,pointer_to_value)
-        deallocate(pointer_to_value)
-}
-
-function latlon_field_section_constructor(data,section_coords) {
-    type(latlon_field_section), pointer :: constructor
-    class (*), dimension(:,:), pointer :: data
-    class(latlon_section_coords) :: section_coords
-        allocate(constructor)
-        call constructor%init_latlon_field_section(data,section_coords)
-}
-
-void init_latlon_field_section(data,section_coords,wrap_in) {
+template <typename field_type> latlon_field_section<field_type>::
+        latlon_field_section(data,section_coords,wrap_in) {
     class(latlon_field_section) :: this
     class(*), dimension(:,:), pointer :: data
     class(latlon_section_coords) section_coords
@@ -85,62 +22,6 @@ void init_latlon_field_section(data,section_coords,wrap_in) {
         this%wrap = wrap
 }
 
-pure function latlon_get_value(coords_in) result(value) {
-    class(latlon_field_section), intent(in) :: this
-    class(coords), intent(in) :: coords_in
-    class(*), pointer :: value
-    integer :: lat,lon
-        select type(coords_in)
-            type is (latlon_coords)
-            if ( this%nlat >= coords_in%lat .and. coords_in%lat > 0) then
-                lat = coords_in%lat
-            else if (this%nlat < coords_in%lat) then
-                lat = this%nlat
-            else
-                lat = 1
-            end if
-            if ( this%nlon >= coords_in%lon .and. coords_in%lon > 0) then
-                lon = coords_in%lon
-            else if (this%nlon < coords_in%lon) then
-                if (.not. this%wrap) then
-                    lon = this%nlon
-                else
-                    lon = coords_in%lon - this%nlon
-                end if
-            else
-                if (.not. this%wrap) then
-                    lon = 1
-                else
-                    lon = this%nlon + coords_in%lon
-                end if
-            end if
-        end select
-        allocate(value,source=this%data(lat,lon))
-}
-
-void latlon_set_generic_value(coords_in,value) {
-    class(latlon_field_section) :: this
-    class(coords), intent(in) :: coords_in
-    class(*), pointer, intent(in) :: value
-        select type (coords_in)
-        type is (latlon_coords)
-            if ( this%nlon >= coords_in%lon .and. coords_in%lon > 0) then
-                call this%set_data_array_element(coords_in%lat,coords_in%lon,value)
-            else if (this%nlon < coords_in%lon) then
-                if (.not. this%wrap) then
-                    stop 'Trying to write element outside of field boundries'
-                else
-                    call this%set_data_array_element(coords_in%lat,coords_in%lon - this%nlon,value)
-                end if
-            else
-                if (.not. this%wrap) then
-                    stop 'Trying to write element outside of field boundries'
-                else
-                    call this%set_data_array_element(coords_in%lat,this%nlon + coords_in%lon,value)
-                end if
-            end if
-        end select
-}
 
 void latlon_for_all_section(subroutine_in,calling_object) {
     class(latlon_field_section) :: this

@@ -417,18 +417,24 @@ class latlon_grid_params : public grid_params {
 	int nlat;
 	//Number of longitude points
 	int nlon;
+	double zero_line;
 public:
 	virtual ~latlon_grid_params() {};
 	///Class constructor
 	latlon_grid_params(int nlat_in,int nlon_in)
-	 	: grid_params(false),nlat(nlat_in), nlon(nlon_in){};
+	 	: grid_params(false),nlat(nlat_in), nlon(nlon_in), zero_line(0.0){};
 	///Class constructor
 	latlon_grid_params(int nlat_in,int nlon_in,bool nowrap_in)
-		: grid_params(nowrap_in), nlat(nlat_in), nlon(nlon_in) {};
+		: grid_params(nowrap_in), nlat(nlat_in), nlon(nlon_in), zero_line(0.0) {};
+	latlon_grid_params(int nlat_in,int nlon_in,bool nowrap_in, double zero_line_in)
+		: grid_params(nowrap_in), nlat(nlat_in), nlon(nlon_in),
+			zero_line(zero_line_in) {};
 	///Getter
 	const int get_nlat() { return nlat; }
 	///Getter
 	const int get_nlon() { return nlon; }
+	///Getter
+	const double get_zero_line() { return zero_line; }
 };
 
 /**

@@ -1,124 +1,94 @@
-type, public :: bounds
-  real(kind=double_precision) :: west_extreme_lon,east_extreme_lon
-  real(kind=double_precision) :: north_extreme_lat,south_extreme_lat
-end type
+#include "base/field.hpp"
+#include "base/section_coords.hpp"
+#include "base/field_section.hpp"
 
-type, public,abstract :: vertex_coords
-end type
+class bounds {
+  public:
+    double west_extreme_lon;
+    double east_extreme_lon;
+    double north_extreme_lat;
+    double south_extreme_lat;
+};
 
-type, public, extends(vertex_coords) :: unstructured_grid_vertex_coords
-  real(kind=double_precision), dimension(:), pointer :: vertex_lats
-  real(kind=double_precision), dimension(:), pointer :: vertex_lons
-end type
+class vertex_coords {};
 
-interface unstructured_grid_vertex_coords
-  procedure :: unstructured_grid_vertex_coords_constructor
-end interface unstructured_grid_vertex_coords
+class unstructured_grid_vertex_coords : public vertex_coords {
+  public:
+    unstructured_grid_vertex_coords(double* vertex_lats_in,
+                                    double* vertex_lons_in);
+    double* vertex_lats;
+    double* vertex_lons;
+};
 
-type, public, abstract :: non_coincident_grid_mapper
-  class(field_section), pointer  :: mask
-  class(field_section), pointer  :: cell_numbers
-  class(field_section), pointer  :: pixel_center_lats
-  class(field_section), pointer  :: pixel_center_lons
-  class(field_section), pointer  :: cell_vertex_coords
-  class(subfield), pointer  :: area_to_consider_mask
-  class(subfield), pointer  :: secondary_area_to_consider_mask
-  class(coords), pointer :: coarse_cell_coords
-  class(bounds), pointer :: cell_bounds
-  class(section_coords),pointer :: fine_grid_shape
-  integer, dimension(:), pointer :: section_min_lats
-  integer, dimension(:), pointer :: section_min_lons
-  integer, dimension(:), pointer :: section_max_lats
-  integer, dimension(:), pointer :: section_max_lons
-  logical :: display_progress  = .true.
-  contains
-    procedure :: set_cell_numbers
-    procedure :: generate_pixels_in_cell_mask
-    procedure :: check_if_pixel_is_in_cell
-    procedure :: generate_cell_numbers
-    procedure :: process_cell
-    procedure :: generate_limits
-    procedure :: offset_limits
-    procedure(process_pixel_for_limits), deferred :: process_pixel_for_limits
-    procedure(generate_cell_bounds), deferred :: generate_cell_bounds
-    procedure(generate_areas_to_consider), deferred :: generate_areas_to_consider
-    procedure(check_if_pixel_center_is_in_bounds), deferred :: &
-      check_if_pixel_center_is_in_bounds
-    procedure(create_new_mask), deferred :: create_new_mask
-    procedure(assign_cell_numbers), deferred :: assign_cell_numbers
-    procedure(print_progress), deferred :: print_progress
-end type
+typedef vertex_coords* vertex_coords_ptr;
 
-abstract interface
-  subroutine generate_cell_bounds(this)
-    import non_coincident_grid_mapper
-    implicit none
-    class(non_coincident_grid_mapper), intent(inout) :: this
-  end subroutine generate_cell_bounds
+class non_coincident_grid_mapper {
+  public:
+    field<int>* generate_cell_numbers();
+    void generate_limits();
+    void offset_limits(int lat_offset,
+                       int lon_offset);
+  protected:
+    field<bool>* mask = nullptr;
+    field<int>* cell_numbers = nullptr;
+    field<double>* pixel_center_lats = nullptr;
+    field<double>* pixel_center_lons = nullptr;
+    field<vertex_coords_ptr>* cell_vertex_coords;
+    section_coords* primary_area_to_consider = nullptr;
+    section_coords* secondary_area_to_consider = nullptr;
+    grid_params* fine_grid_params;
+    grid* fine_grid = nullptr;
+    grid* coarse_grid = nullptr;
+    coords* coarse_cell_coords = nullptr;
+    bounds* cell_bounds = nullptr;
+    field<int>* section_min_lats;
+    field<int>* section_min_lons;
+    field<int>* section_max_lats;
+    field<int>* section_max_lons;
+    bool display_progress = true;
+    void set_cell_numbers(int* cell_numbers_in);
+    void generate_pixels_in_cell_mask(coords* cell_coords);
+    void check_if_pixel_is_in_cell(coords* coords_in);
+    void process_cell(coords* coords_in);
+    virtual void process_pixel_for_limits(coords* coords_in) = 0;
+    virtual void generate_cell_bounds() = 0;
+    virtual void generate_areas_to_consider() = 0;
+    virtual section_coords* generate_area_to_consider(double area_min_lon,
+                                                      double area_max_lon) = 0;
+    virtual bool check_if_pixel_center_is_in_bounds(double pixel_center_lat,
+                                                    double pixel_center_lon) = 0;
+    virtual void create_new_mask() = 0;
+    virtual void assign_cell_numbers() = 0;
+    virtual void print_progress() = 0;
+};
 
-  subroutine generate_areas_to_consider(this)
-    import non_coincident_grid_mapper
-    implicit none
-    class(non_coincident_grid_mapper), intent(inout) :: this
-  end subroutine generate_areas_to_consider
-
-  function check_if_pixel_center_is_in_bounds(this,pixel_center_lat,pixel_center_lon) &
-      result(is_in_bounds)
-    import non_coincident_grid_mapper
-    import double_precision
-    implicit none
-    class(non_coincident_grid_mapper), intent(inout) :: this
-    real(kind=double_precision), intent(inout) :: pixel_center_lat, pixel_center_lon
-    logical :: is_in_bounds
-  end function check_if_pixel_center_is_in_bounds
-
-  subroutine create_new_mask(this)
-    import non_coincident_grid_mapper
-    implicit none
-    class(non_coincident_grid_mapper), intent(inout) :: this
-  end subroutine create_new_mask
-
-  subroutine assign_cell_numbers(this)
-    import non_coincident_grid_mapper
-    implicit none
-    class(non_coincident_grid_mapper), intent(inout) :: this
-  end subroutine
-
-  subroutine process_pixel_for_limits(this,coords_in)
-    import non_coincident_grid_mapper
-    import coords
-    implicit none
-    class(non_coincident_grid_mapper), intent(inout) :: this
-    class(coords), pointer, intent(inout) :: coords_in
-  end subroutine
-
-  subroutine print_progress(this)
-    import non_coincident_grid_mapper
-    implicit none
-    class(non_coincident_grid_mapper), intent(in) :: this
-  end subroutine print_progress
-end interface
-
-type, extends(non_coincident_grid_mapper), public :: &
-  icon_icosohedral_cell_latlon_pixel_ncg_mapper
-  logical :: longitudal_range_centered_on_zero
-contains
-  procedure :: icon_icosohedral_cell_get_vertex_coords
-  procedure :: latlon_pixel_generate_area_to_consider
-  procedure, nopass :: icon_icosohedral_cell_calculate_line
-  procedure :: generate_cell_bounds => icon_icosohedral_cell_generate_cell_bounds
-  procedure :: generate_areas_to_consider => latlon_pixel_generate_areas_to_consider
-  procedure :: check_if_pixel_center_is_in_bounds => &
-    icon_icosohedral_cell_check_if_pixel_center_is_in_bounds
-  procedure :: create_new_mask => latlon_pixel_create_new_mask
-  procedure :: assign_cell_numbers => &
-    icon_icosohedral_cell_latlon_pixel_assign_cell_numbers
-  procedure :: process_pixel_for_limits => latlon_process_pixel_for_limits
-  procedure :: init_icon_icosohedral_cell_latlon_pixel_ncg_mapper
-  procedure :: icon_icosohedral_cell_latlon_pixel_ncg_mapper_destructor
-  procedure :: print_progress => icon_icosohedral_cell_print_progress
-end type
-
-interface icon_icosohedral_cell_latlon_pixel_ncg_mapper
-    procedure icon_icosohedral_cell_latlon_pixel_ncg_mapper_constructor
-end interface icon_icosohedral_cell_latlon_pixel
+class icon_icosohedral_cell_latlon_pixel_ncg_mapper :
+    public non_coincident_grid_mapper {
+  public:
+    icon_icosohedral_cell_latlon_pixel_ncg_mapper(
+      field<double>* pixel_center_lats_in,
+      field<double>* pixel_center_lons_in,
+      field<vertex_coords_ptr>* cell_vertex_coords_in,
+      grid_params* coarse_grid_params_in,
+      grid_params* fine_grid_params_in,
+      bool longitudal_range_centered_on_zero_in = false);
+      tuple<field<int>*,field<int>*,field<int>*,field<int>*> get_limits();
+  protected:
+    bool longitudal_range_centered_on_zero;
+    double get_vertex_coords(coords* coords_in,
+                             int vertex_num_in,
+                             bool return_lat);
+    void generate_areas_to_consider();
+    section_coords* generate_area_to_consider(double area_min_lon,
+                                              double area_max_lon);
+    double calculate_line(double x,double x1,double x2,
+                          double y1,double y2);
+    void generate_cell_bounds();
+    bool check_if_pixel_center_is_in_bounds(double pixel_center_lat,
+                                            double pixel_center_lon);
+    void create_new_mask();
+    void assign_cell_numbers();
+    void process_pixel_for_limits(coords* coords_in);
+    void init_icon_icosohedral_cell_latlon_pixel_ncg_mapper();
+    void print_progress();
+};

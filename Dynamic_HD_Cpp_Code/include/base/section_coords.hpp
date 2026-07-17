@@ -1,14 +1,20 @@
-#include "base/coords.hpp"
+#ifndef INCLUDE_SECTION_COORDS_HPP_
+#define INCLUDE_SECTION_COORDS_HPP_
+
 #include "base/grid.hpp"
 
 // An abstract class for holding the coordinates of a subsection of a generic
 // grid
-class section_coords {};
+class section_coords {
+  public:
+    virtual ~section_coords(){}
+    virtual void for_all_section(function<void(coords*)> func) = 0;
+};
 
 // A concrete subclass of section coords for holding sections of a latitude
 // logitude grid
 class latlon_section_coords : public section_coords {
-protected:
+public:
     // The minimum latitude of the section
     int section_min_lat;
     // The minimum longitude of the section
@@ -19,16 +25,16 @@ protected:
     int section_width_lon;
     // The actual longitude of the zero line (i.e. vertical edge of the array)
     double zero_line;
-public:
   latlon_section_coords() {};
   latlon_section_coords(int section_min_lat_in,int section_min_lon_in,
                         int section_width_lat_in,int section_width_lon_in,
                         double zero_line_in=0.0);
+  void for_all_section(function<void(coords*)> func);
 };
 
 
 class irregular_latlon_section_coords : public latlon_section_coords {
-protected:
+public:
     int cell_number;
     vector<int>*  list_of_cell_numbers;
     int* cell_numbers;
@@ -36,7 +42,6 @@ protected:
     int* section_min_lons;
     int* section_max_lats;
     int* section_max_lons;
-public:
   irregular_latlon_section_coords(int cell_number_in,
                                     int ncells,
                                     int* cell_numbers_in,
@@ -77,4 +82,7 @@ public:
     vector<int>*  get_edge_cells();
     int* get_subfield_indices();
     int* get_full_field_indices();
+    void for_all_section(function<void(coords*)> func);
 };
+
+#endif /* INCLUDE_SECTION_COORDS_HPP_ */
