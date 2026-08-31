@@ -1,6 +1,7 @@
   cython_libraries += ['compute_catchments_wrapper',
                        'create_connected_lsmask_wrapper',
                        'create_orography_wrapper',
+                       'cross_grid_mapper_wrapper',
                        'determine_river_directions_wrapper',
                        'l2_evaluate_basins_wrapper',
                        'fill_sinks_wrapper',
