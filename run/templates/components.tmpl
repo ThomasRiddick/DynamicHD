@@ -166,15 +166,12 @@ fi
 true_sinks_filepath_default=${input_data_directory}/true_sinks_field_version_41.nc
 if ${use_true_sinks}; then
   true_sinks_filepath=${true_sinks_filepath:-${true_sinks_filepath_default}}
+else
+  true_sinks_filepath=${working_directory}/true_sinks_all_zero.nc
+fi
 {% if input.high_res %}
   true_sinks_on_icon_grid_filepath=${working_directory}/true_sinks_on_icon_grid.nc
 {% endif %}
-else
-  true_sinks_filepath=
-{% if input.high_res %}
-  true_sinks_on_icon_grid_filepath=
-{% endif %}
-fi
 
 {% if input.high_res %}
 if [[ -z ${use_existing_river_mouth_position_file} ]]; then
@@ -288,17 +285,19 @@ else
   exit 1
 fi
 
+if ! ${use_true_sinks}; then
+cdo -f nc4 --chname,const,true_sinks --const,0.0,${true_sinks_filepath_default} ${true_sinks_filepath}
+fi
+
 {% if input.high_res %}
 #Setup julia environment
 module load julia
 export JULIA_LOAD_PATH=${repository_path}/src/julia_src/bifurcated_rivermouth_identification_tool:${repository_path}/src/julia_src/cross_grid_true_sink_transfer_tool:${JULIA_LOAD_PATH}
 #Transfer true sinks to atmospheric icon grid
-if ${use_true_sinks}; then
 cmd="julia ${repository_path}/src/julia_src/cross_grid_true_sink_transfer_tool/TransferTrueSinksToIconGridDriver.jl -g ${icon_grid_filepath} -i ${true_sinks_filepath} -f true_sinks -o ${true_sinks_on_icon_grid_filepath}"
 echo "Running"
 echo ${cmd}
 eval ${cmd}
-fi
 {% else %}
 #Remap orography to icon grid
 cdo remapbil,${icon_grid_filepath} ${etop01_filepath} ${orography_filepath}
