@@ -26,6 +26,7 @@
 #include <unordered_set>
 #include <map>
 #include <stack>
+#include <limits>
 #include "algorithms/l2_basin_evaluation_algorithm.hpp"
 
 using namespace std;
