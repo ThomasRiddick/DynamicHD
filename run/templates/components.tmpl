@@ -73,8 +73,8 @@ if ! [[ ${fractional_lsmask_filepath##*.}  == "nc" ]]; then
 EOF
   exit 1
 fi
-cell_sea_land_mask_count=$(cdo showname ${fractional_lsmask_filepath} |
-                           grep -c -E "\scell_sea_land_mask(\s|$)")
+#cell_sea_land_mask_count=$(cdo showname ${fractional_lsmask_filepath} |
+#                           grep -c -E "\scell_sea_land_mask(\s|$)")
 if [[ ${cell_sea_land_mask_count} -ne 1 ]]; then
   cat << EOF
   Error - input fractional lsmask file:
@@ -100,8 +100,8 @@ if ! [[ ${orography_filepath##*.}  == "nc" ]]; then
 EOF
   exit 1
 fi
-elevation_count=$(cdo showname ${orography_filepath} |
-                  grep -c -E "\selevation(\s|$)")
+#elevation_count=$(cdo showname ${orography_filepath} |
+#                  grep -c -E "\selevation(\s|$)")
 if [[ ${elevation_count} -ne 1 ]]; then
   cat << EOF
   Error - orography file:
