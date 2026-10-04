@@ -39,6 +39,16 @@ class PlotScales(Enum):
     FINE = 2
     SUPERFINE = 3
 
+class CoordsAndHeight:
+
+    def __init__(self,lat,lon,original_height):
+        self.lat = lat
+        self.lon = lon
+        self.original_height = original_height
+
+    def get_stored_data(self):
+        return self.lat,self.lon,self.original_height
+
 class TimeSlicePlot():
 
     def __init__(self,ax):
@@ -1303,7 +1313,9 @@ class InteractiveTimeSlicePlots:
         self.fine_cutoff_scaling = self.zoom_settings.fine_scale_factor*self.zoom_settings.fine_scale_factor
         self.select_coords = False
         self.corrections_file = None
-        self.specify_coords_and_height_callback = None
+        self.coords_and_height_object = None
+        self.coords_and_height_callback = callback
+        self.tag = tag
         self.use_orog_one_for_original_height = True
         self.replot_required = False
         self.corrections = corrections
@@ -2205,6 +2217,10 @@ class InteractiveTimeSlicePlots:
         self.next_command_to_send = "zoom"
         self.step()
 
+    def set_coords_and_height_callback_and_tag(callback,tag):
+        self.coords_and_height_callback = callback
+        self.tag = tag
+
     def set_coords_and_height(self,eclick):
         if eclick.ydata is None or eclick.xdata is None:
             return
@@ -2218,16 +2234,20 @@ class InteractiveTimeSlicePlots:
             orography = (self.slice_data["orography_one_slice_zoomed"]
                          if self.use_orog_one_for_original_height else
                          self.slice_data["orography_two_slice_zoomed"])
-            self.specify_coords_and_height_callback(lat=
-                                                    round(eclick.ydata)+min_lat,
-                                                    lon=
-                                                    round(eclick.xdata)+min_lon,
-                                                    original_height=
-                                                    orography[round(eclick.ydata),
-                                                              round(eclick.xdata)])
+            self.coords_and_height_object = CoordsAndHeight(lat=
+                                                            round(eclick.ydata)+min_lat,
+                                                            lon=
+                                                            round(eclick.xdata)+min_lon,
+                                                            original_height=
+                                                            orography[round(eclick.ydata),
+                                                                      round(eclick.xdata)])
+            self.coords_and_height_callback(self.coords_and_height_object.lat,
+                                            self.coords_and_height_object.lon,
+                                            self.coords_and_height_object.original_height,
+                                            self.tag)
 
     def write_correction(self,new_height,corr_until_date):
-        lat,lon,original_height = self.specify_coords_and_height_callback.get_stored_values()
+        lat,lon,original_height = self.coords_and_height_object.get_stored_data()
         original_height_plus_other_corrections = original_height
         for correction in self.corrections:
             if correction["lat"] == lat and correction["lon"] == lon:
@@ -2273,9 +2293,6 @@ class InteractiveTimeSlicePlots:
 
     def toggle_select_coords(self,value):
         self.select_coords = value
-
-    def set_specify_coords_and_height_callback(self,callback):
-        self.specify_coords_and_height_callback = callback
 
     def set_corrections_file(self,filepath):
         self.corrections_file = filepath

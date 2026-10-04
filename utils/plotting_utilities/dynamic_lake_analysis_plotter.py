@@ -14,7 +14,7 @@ from plotting_utilities.dynamic_lake_analysis_plotting_routines import TimeSeque
 from plotting_utilities.dynamic_lake_analysis_plotting_routines import TimeSequences
 from plotting_utilities.dynamic_lake_analysis_plotting_routines import DataConfiguration
 from plotting_utilities.color_palette import ColorPalette
-from plotting_utilities import dynamic_lake_analysis_gui as dla_gui
+from plotting_utilities import dynamic_lake_analysis_plots_gui as dlap_gui
 from plotting_utilities.lake_analysis_tools import LakeHeightAndVolumeExtractor
 from plotting_utilities.lake_analysis_tools import LakePointExtractor,OutflowBasinIdentifier
 from plotting_utilities.lake_analysis_tools import LakeAnalysisDebuggingPlots
@@ -333,10 +333,11 @@ class DynamicLakeAnalysisPlotter:
                                                                     "sequence_two_is_transient_run_data"],
                                                                 corrections=self.corrections)
 
-        build_dict = lambda figs,nums,prefix : { f'-{prefix}CANVAS{i}-':figure for i,figure in zip(nums,figs) }
-        figures = build_dict(self.interactive_plots.figs,[1,2,4,6],'GM')
+        build_dict = lambda figs,nums,prefix : { f'{prefix}_canvas_{i}':figure for i,figure in zip(nums,figs) }
+        figures = build_dict(self.interactive_plots.figs,[1,2,4,6],
+                             'global_maps')
         #Don't assume python 3.9 and the | syntax
-        figures = {**figures,**build_dict(self.interactive_lake_plots.figs,[1,2,4,6],"LM")}
+        figures = {**figures,**build_dict(self.interactive_lake_plots.figs,[1,2,4,6],"lake_maps")}
         self.interactive_spillway_plots = \
             InteractiveSpillwayPlots(self.colors,
                                      date_sequence=
@@ -359,7 +360,8 @@ class DynamicLakeAnalysisPlotter:
                                      lake_potential_spillway_heights_two_sequence=
                                      self.lake_stats_two["Agassiz"]\
                                      ["lake_spillway_height_profiles"],)
-        figures = {**figures,**build_dict(self.interactive_spillway_plots.figs,[1,2],"CS")}
+        figures = {**figures,**build_dict(self.interactive_spillway_plots.figs,[1,2],
+                                          "cross_sections")}
         self.interactive_timeseries_plots = \
             InteractiveTimeSeriesPlots(self.colors,
                                        self.data_configuration,
@@ -389,16 +391,20 @@ class DynamicLakeAnalysisPlotter:
                                        self.lake_stats_one["Agassiz"]["filled_lake_volumes"],
                                        filled_lake_volume_two_sequence=
                                        self.lake_stats_two["Agassiz"]["filled_lake_volumes"])
-        figures = {**figures,**build_dict(self.interactive_timeseries_plots.figs,[1,2,3,4],"TS")}
-        gui = dla_gui.DynamicLakeAnalysisGUI(list(self.interactive_plots.plot_types.keys()),
-                                             list(self.interactive_timeseries_plots.plot_types.keys()),
-                                             self.configuration,self.dbg_plts)
-        gui.run_main_event_loop(figures,self.interactive_timeseries_plots,
-                                self.interactive_plots,self.interactive_lake_plots,
-                                self.interactive_spillway_plots,
-                                self.data_configuration,
-                                self.setup_configuration,
-                                self.poll_io_worker_procs)
+        figures = {**figures,**build_dict(self.interactive_timeseries_plots.figs,[1,2,3,4],
+                                          "timeseries")}
+        gui = dlap_gui.LakeAnalysisPlotsGui(figures,
+                                            list(self.interactive_plots.plot_types.keys()),
+                                            list(self.interactive_timeseries_plots.plot_types.keys()),
+                                            self.configuration,self.setup_configuration,
+                                            self.interactive_timeseries_plots,
+                                            self.interactive_plots,
+                                            self.interactive_lake_plots,
+                                            self.interactive_spillway_plots,
+                                            self.data_configuration,
+                                            self.poll_io_worker_procs,
+                                            self.dbg_plts)
+        gui.run_gui()
 
     def poll_io_worker_procs(self):
         self.time_sequences.poll_io_worker_procs()

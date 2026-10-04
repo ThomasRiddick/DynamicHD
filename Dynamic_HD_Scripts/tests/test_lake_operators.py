@@ -13,7 +13,7 @@ from Dynamic_HD_Scripts.base import field
 from Dynamic_HD_Scripts.tools import dynamic_lake_operators
 import lake_operators_wrapper
 import fill_sinks_wrapper
-import evaluate_basins_wrapper
+#import evaluate_basins_wrapper
 
 class TestNarrowLakeFilter(unittest.TestCase):
 

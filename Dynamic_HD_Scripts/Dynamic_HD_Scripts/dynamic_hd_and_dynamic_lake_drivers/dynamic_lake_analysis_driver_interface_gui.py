@@ -67,22 +67,31 @@ class DynamicLakeAnalysisDriverInterfaceGUI:
     self.root = tk.Tk()
     self.root.rowconfigure(0,weight=1)
     self.root.columnconfigure(0,weight=1)
-    self.root.minsize(400,700)
+    self.root.columnconfigure(1,weight=40)
+    self.root.minsize(400,400)
     self.load_screen_tl = None
     self.widget_variables = {}
     self.setup_var_widgets = []
-    self.root.geometry('800x725+100+100')
+    self.root.geometry('900x725+100+100')
     self.root.title("Dynamic Lake Analysis Driver Setup")
+    self.scrollbar = ttk.Scrollbar(self.root,orient=tk.VERTICAL)
+    self.canvas = tk.Canvas(self.root,
+                            yscrollcommand=self.scrollbar.set)
+    self.scrollbar.config(command=self.canvas.yview)
+    self.scrollbar.grid(column=0,row=0,sticky="nsew")
+    self.canvas.grid(column=1,row=0,sticky="nsew")
     #Required to display correctly on some systems
-    self.main_panel = ttk.Frame(self.root)
-    self.main_panel.grid(column=0,row=0,sticky="nsew",
-                         padx=5,pady=5)
-    self.main_panel.columnconfigure(0,weight=1)
+    self.main_panel = ttk.Frame(self.canvas)
+    self.main_panel.bind("<Configure>",
+                         lambda event :
+                         self.canvas.config(scrollregion=self.canvas.bbox("all")))
+    self.canvas_window = \
+      self.canvas.create_window(0,0,anchor="nw",window=self.main_panel)
+    frame = ttk.Frame(self.main_panel)
     #Setup required fields
     self.reset_row_count()
     self.setup_filepath_field("base_directory"),
     self.setup_boolean_field("setup_directory_structure",False,command=self.toggle_setup)
-    frame = ttk.Frame(self.main_panel)
     frame.grid(column=0,row=self.get_next_row(),sticky='w')
     self.edit_analysis_config_flag = tk.BooleanVar(value=False)
     self.old_edit_analysis_config_flag = False
