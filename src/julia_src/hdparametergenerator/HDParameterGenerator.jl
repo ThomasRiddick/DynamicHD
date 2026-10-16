@@ -29,7 +29,7 @@ struct UnstructuredGrid <: Grid
   clon_bounds::Array{Float64,2}
   grid_dimensions::Tuple{Int64}
   function UnstructuredGrid(ncells,clat,clon,clat_bounds,clon_bounds)
-    grid_dimensions::Tuple{Int64} = (ncells)
+    grid_dimensions::Tuple{Int64} = (ncells,)
     new(ncells,clat,clon,clat_bounds,clon_bounds,grid_dimensions)
   end
 end
@@ -40,14 +40,27 @@ get_grid_dimensions(obj::T) where {T <: Grid} =
 struct CommonParameters
   minimum_height_threshold::Float64
   default_vsau::Float64
+  default_vsau_for_zero_or_negative_slope::Float64
   alpha::Float64
   C::Float64
-  function CommonParameters()
+  function CommonParameters(::LatLonGrid)
     minimum_height_threshold::Float64 = 0.00000001
     default_vsau::Float64 = 0.1
+    default_vsau_for_zero_or_negative_slope::Float64 = 0.65
     alpha::Float64 = 0.1
     C::Float64 = 2.0
     new(minimum_height_threshold,default_vsau,
+        default_vsau_for_zero_or_negative_slope,
+        alpha,C)
+  end
+  function CommonParameters(::UnstructuredGrid)
+    minimum_height_threshold::Float64 = 0.0
+    default_vsau::Float64 = 0.1
+    default_vsau_for_zero_or_negative_slope::Float64 = 0.1
+    alpha::Float64 = 0.1
+    C::Float64 = 2.0
+    new(minimum_height_threshold,default_vsau,
+        default_vsau_for_zero_or_negative_slope,
         alpha,C)
   end
 end
@@ -60,14 +73,17 @@ struct RiverFlowSausen <: RiverFlowFormula
   riverflow_dx::Float64
   riverflow_v0::Float64
   riverflow_k0::Float64
+  riverflow_number_of_reservoirs::Float64
   common_parameters::CommonParameters
-  function RiverFlowSausen()
-  riverflow_dx::Float64 = 228000.0
-  riverflow_v0::Float64 = 1.0039
-  riverflow_k0::Float64 = 0.4112
-  common_parameters::CommonParameters = CommonParameters()
-    new(riverflow_dx,riverflow_v0,
-        riverflow_k0,common_parameters)
+  function RiverFlowSausen(grid::Grid)
+    riverflow_dx::Float64 = 228000.0
+    riverflow_v0::Float64 = 1.0039
+    riverflow_k0::Float64 = 0.4112
+    riverflow_number_of_reservoirs::Float64 = 5.478720
+    common_parameters::CommonParameters = CommonParameters(grid)
+      new(riverflow_dx,riverflow_v0,
+          riverflow_k0,riverflow_number_of_reservoirs,
+          common_parameters)
   end
 end
 
@@ -78,16 +94,18 @@ struct OverlandFlowSausen <: OverlandFlowFormula
   overlandflow_v0::Float64
   overlandflow_k0::Float64
   overlandflow_torneaelven_k_multiplier::Float64
+  overlandflow_number_of_reservoirs::Float64
   common_parameters::CommonParameters
-  function OverlandFlowSausen()
+  function OverlandFlowSausen(grid::Grid)
     overlandflow_dx::Float64 = 171000.0
     overlandflow_v0::Float64 = 1.0885
     overlandflow_k0::Float64 = 16.8522
     overlandflow_torneaelven_k_multiplier::Float64 = 3.0
-    common_parameters::CommonParameters = CommonParameters()
+    overlandflow_number_of_reservoirs::Float64 = 1.1107
+    common_parameters::CommonParameters = CommonParameters(grid)
     new(overlandflow_dx,overlandflow_v0,
         overlandflow_k0,overlandflow_torneaelven_k_multiplier,
-        common_parameters)
+        overlandflow_number_of_reservoirs,common_parameters)
   end
 end
 
@@ -265,15 +283,15 @@ function calculate_distance(i::CartesianIndex,input_data::InputData,
                             grid::UnstructuredGrid)
   earth_radius::Float64 = 6371000.0
   j = get_next_cell_coords(i,input_data,grid)
-  working_dlat::Float64 = abs(grid.clon(j) - grid.clon(i))
-  if working_dlat > 300
-    working_dlat = abs(working_dlat - 360)
+  working_dlon::Float64 = abs(grid.clon[j] - grid.clon[i])
+  if working_dlon > 300
+    working_dlon = abs(working_dlon - 360)
   end
   pi_factor::Float64 = pi/180.0
   earths_radius::Float64 = 6371000.0
-  dlon::Float64 = working_dlat*pi_factor*
-                  cos(pi_factor*(grid.clat(j)+grid.clat(i))/2)*earths_radius
-  dlat::Float64 = abs(grid.clat(j)-grid.clat(i))*pi_factor*earths_radius
+  dlon::Float64 = working_dlon*pi_factor*
+                  cos(pi_factor*(grid.clat[j]+grid.clat[i])/2)*earths_radius
+  dlat::Float64 = abs(grid.clat[j]-grid.clat[i])*pi_factor*earths_radius
   distance::Float64 = sqrt(dlat^2+dlon^2)
   return distance
 end
@@ -327,60 +345,72 @@ function generate_riverflow_parameters(i::CartesianIndex,formula::RiverFlowSause
                                        distance::Float64,height_change::Float64,
                                        grid::Grid)
   local number_of_riverflow_reservoirs::Float64
+  local working_height_change::Float64
   if isa(grid,LatLonGrid)
-    number_of_riverflow_reservoirs = 5.478720
+    number_of_riverflow_reservoirs = formula.riverflow_number_of_reservoirs
+    working_height_change = height_change
   else
     number_of_riverflow_reservoirs = 5.0
+    working_height_change = abs(height_change)
   end
-  if height_change < formula.common_parameters.minimum_height_threshold
-    if height_change <= 0.0
-      vsau = 0.65
+  if working_height_change <= formula.common_parameters.minimum_height_threshold
+    if working_height_change <= 0.0
+      vsau = formula.common_parameters.default_vsau_for_zero_or_negative_slope
     else
       vsau = formula.common_parameters.default_vsau
     end
   else
     vsau = formula.common_parameters.C*
-             ((height_change/distance)^formula.common_parameters.alpha)
+             ((working_height_change/distance)^formula.common_parameters.alpha)
   end
   riverflow_retention_coefficient = (formula.riverflow_k0*distance/
                                     formula.riverflow_dx)*(formula.riverflow_v0/vsau)
+  if ! isa(grid,LatLonGrid)
+    riverflow_retention_coefficient *= formula.riverflow_number_of_reservoirs/5.0
+  end
   return number_of_riverflow_reservoirs,riverflow_retention_coefficient
 end
 
 function generate_overlandflow_parameters(i::CartesianIndex,formula::OverlandFlowSausen,
                                           distance::Float64,height_change::Float64,
                                           input_data::InputData,grid::Grid)
+  local working_height_change::Float64
   if isa(grid,LatLonGrid)
-    number_of_overlandflow_reservoirs = 1.1107
+    number_of_overlandflow_reservoirs = formula.overlandflow_number_of_reservoirs
+    working_height_change = height_change
   else
     number_of_overlandflow_reservoirs = 1.0
+    working_height_change = abs(height_change)
   end
   if input_data.innerslope[i] > 0.0
     if isa(grid,LatLonGrid)
       #Note this formula for distance does not accout for flow direction
       dx0 = sqrt(grid.dlat^2 + grid.dlon[i[1]]^2)
     else
-    dx0 = distance
+      dx0 = distance
     end
     vso = formula.common_parameters.C*
           (input_data.innerslope[i]^formula.common_parameters.alpha)
     overlandflow_retention_coefficient = (formula.overlandflow_k0*dx0/
                                           formula.overlandflow_dx)*(formula.overlandflow_v0/vso)
   else
-    if height_change < formula.common_parameters.minimum_height_threshold
-      if height_change <= 0.0
-        vsau = 0.65
+    if working_height_change <= formula.common_parameters.minimum_height_threshold
+      if working_height_change <= 0.0
+        vsau = formula.common_parameters.default_vsau_for_zero_or_negative_slope
       else
         vsau = formula.common_parameters.default_vsau
       end
     else
       vsau = formula.common_parameters.C*
-             ((height_change/distance)^formula.common_parameters.alpha)
+             ((working_height_change/distance)^formula.common_parameters.alpha)
     end
     overlandflow_retention_coefficient = (formula.overlandflow_k0*distance/
                                           formula.overlandflow_dx)*(formula.overlandflow_v0/vsau)
   end
   overlandflow_retention_coefficient *= formula.overlandflow_torneaelven_k_multiplier
+  if ! isa(grid,LatLonGrid)
+    overlandflow_retention_coefficient *= formula.overlandflow_number_of_reservoirs
+  end
   return number_of_overlandflow_reservoirs,overlandflow_retention_coefficient
 end
 
