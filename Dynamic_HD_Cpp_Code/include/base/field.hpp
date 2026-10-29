@@ -82,7 +82,7 @@ public:
 	///check if two field are almost equal to within a tolerance
 	bool almost_equal(const field<field_type>&, double = 1.0e-12) const;
 	//Turn off deleting the data in destruction
-	void switch_data_deletion_off() {data_passed_in=false;}
+	void switch_data_deletion_off() {data_passed_in=true;}
 	//Get the maximum value in the field
 	field_type get_max_element(){return *max_element(array,array+_grid->get_total_size());}
 	///Overload the output stream operator to print out the values of all the entries in the field

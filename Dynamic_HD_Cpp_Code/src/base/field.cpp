@@ -35,6 +35,7 @@ ostream& operator<< (ostream& out,const field<field_type>& field_object){
     if (is_same<field_type,bool>::value) width = 2;
     if (end_of_line) out << endl;
     out <<  setw(width) << setprecision(2) << field_object(coords);
+    delete coords;
   });
   return out;
 }

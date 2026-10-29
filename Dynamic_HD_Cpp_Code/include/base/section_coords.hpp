@@ -1,7 +1,9 @@
 #ifndef INCLUDE_SECTION_COORDS_HPP_
 #define INCLUDE_SECTION_COORDS_HPP_
 
+#include <iostream>
 #include "base/grid.hpp"
+using namespace std;
 
 // An abstract class for holding the coordinates of a subsection of a generic
 // grid
@@ -9,6 +11,12 @@ class section_coords {
   public:
     virtual ~section_coords(){}
     virtual void for_all_section(function<void(coords*)> func) = 0;
+    friend ostream& operator<< (ostream& out, section_coords& field_object) {
+      field_object.print(out);
+      return out;
+    };
+  protected:
+    virtual void print(ostream& out) const = 0;
 };
 
 // A concrete subclass of section coords for holding sections of a latitude
@@ -30,34 +38,42 @@ public:
                         int section_width_lat_in,int section_width_lon_in,
                         double zero_line_in=0.0);
   void for_all_section(function<void(coords*)> func);
+protected:
+  void print(ostream& out) const{
+    out << section_min_lat << " " << section_min_lon << " "
+        << section_width_lat << " " << section_width_lon << " "
+        << zero_line << endl;
+  }
 };
 
 
 class irregular_latlon_section_coords : public latlon_section_coords {
 public:
     int cell_number;
+    int ncells;
     vector<int>*  list_of_cell_numbers;
     int* cell_numbers;
     int* section_min_lats;
     int* section_min_lons;
     int* section_max_lats;
     int* section_max_lons;
-  irregular_latlon_section_coords(int cell_number_in,
-                                    int ncells,
+    irregular_latlon_section_coords(int ncells,
+                                    int cell_number_in,
                                     int* cell_numbers_in,
                                     int* section_min_lats_in,
                                     int* section_min_lons_in,
                                     int* section_max_lats_in,
                                     int* section_max_lons_in,
                                     int lat_offset_in = 0);
-  irregular_latlon_section_coords(vector<int>* list_of_cell_numbers_in,
-                                    int ncells,
+    irregular_latlon_section_coords(int ncells,
+                                    vector<int>* list_of_cell_numbers_in,
                                     int* cell_numbers_in,
                                     int* section_min_lats_in,
                                     int* section_min_lons_in,
                                     int* section_max_lats_in,
                                     int* section_max_lons_in);
     ~irregular_latlon_section_coords();
+    void print(ostream& out) const{};
 };
 
 class generic_1d_section_coords : public section_coords {
@@ -83,6 +99,8 @@ public:
     int* get_subfield_indices();
     int* get_full_field_indices();
     void for_all_section(function<void(coords*)> func);
+protected:
+    void print(ostream& out) const{};
 };
 
 #endif /* INCLUDE_SECTION_COORDS_HPP_ */

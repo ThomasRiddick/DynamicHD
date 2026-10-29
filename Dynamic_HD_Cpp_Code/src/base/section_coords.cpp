@@ -10,15 +10,15 @@ latlon_section_coords::latlon_section_coords(int section_min_lat_in,int section_
                                              zero_line(zero_line_in) {}
 
 void latlon_section_coords::for_all_section(function<void(coords*)> func){
-    for (auto i = section_min_lat; i <= section_min_lat+section_width_lat; i++){
-        for (auto j = section_min_lon; j <= section_min_lon+section_width_lon; j++){
+    for (auto i = section_min_lat; i < section_min_lat+section_width_lat; i++){
+        for (auto j = section_min_lon; j < section_min_lon+section_width_lon; j++){
             func(new latlon_coords(i,j));
         }
     }
 }
 
-irregular_latlon_section_coords::irregular_latlon_section_coords(int cell_number_in,
-                                                                 int ncells,
+irregular_latlon_section_coords::irregular_latlon_section_coords(int ncells_in,
+                                                                 int cell_number_in,
                                                                  int* cell_numbers_in,
                                                                  int* section_min_lats_in,
                                                                  int* section_min_lons_in,
@@ -26,34 +26,34 @@ irregular_latlon_section_coords::irregular_latlon_section_coords(int cell_number
                                                                  int* section_max_lons_in,
                                                                  int lat_offset_in) :
         section_max_lons(section_max_lons_in), section_min_lons(section_min_lons_in),
-        cell_numbers(cell_numbers_in), cell_number(cell_number_in) {
+        cell_numbers(cell_numbers_in), cell_number(cell_number_in), ncells(ncells_in),
+        list_of_cell_numbers(nullptr) {
     section_max_lats = new int[ncells];
     section_min_lats = new int[ncells];
     for (int i = 0; i < ncells; i++) {
         section_max_lats[i] = section_max_lats_in[i] + lat_offset_in;
         section_min_lats[i] = section_min_lats_in[i] + lat_offset_in;
     }
-    list_of_cell_numbers = nullptr;
-    section_min_lat = section_min_lats[cell_number_in];
-    section_min_lon = section_min_lons[cell_number_in];
+    section_min_lat = section_min_lats[cell_number_in - 1];
+    section_min_lon = section_min_lons[cell_number_in - 1];
     section_width_lat =
-        section_max_lats[cell_number_in] + 1 -
-            section_min_lats[cell_number_in];
+        section_max_lats[cell_number_in - 1] + 1 -
+            section_min_lats[cell_number_in - 1];
     section_width_lon =
-        section_max_lons[cell_number_in] + 1 -
-            section_min_lons[cell_number_in];
+        section_max_lons[cell_number_in - 1] + 1 -
+            section_min_lons[cell_number_in - 1];
     zero_line = 0.0;
 }
 
 irregular_latlon_section_coords::
 ~irregular_latlon_section_coords() {
-    delete section_max_lats;
-    delete section_min_lats;
+    delete[] section_max_lats;
+    delete[] section_min_lats;
 }
 
 irregular_latlon_section_coords::
-irregular_latlon_section_coords(vector<int>* list_of_cell_numbers_in,
-                                int ncells,
+irregular_latlon_section_coords(int ncells_in,
+                                vector<int>* list_of_cell_numbers_in,
                                 int* cell_numbers_in,
                                 int* section_min_lats_in,
                                 int* section_min_lons_in,
@@ -61,27 +61,26 @@ irregular_latlon_section_coords(vector<int>* list_of_cell_numbers_in,
                                 int* section_max_lons_in) :
         section_min_lons(section_min_lons_in),
         section_max_lons(section_max_lons_in),
-        section_min_lats(section_min_lats_in),
-        section_max_lats(section_max_lats_in),
         cell_numbers(cell_numbers_in),
-        list_of_cell_numbers(list_of_cell_numbers_in) {
+        list_of_cell_numbers(list_of_cell_numbers_in),
+        ncells(ncells_in) {
     section_min_lats = new int[ncells];
     section_max_lats = new int[ncells];
     cell_number = 0;
     int working_cell_number = (*list_of_cell_numbers_in)[0];
-    section_min_lat = section_min_lats_in[working_cell_number];
-    section_min_lon = section_min_lons_in[working_cell_number];
-    int section_max_lat = section_max_lats_in[working_cell_number];
-    int section_max_lon = section_max_lons_in[working_cell_number];
+    section_min_lat = section_min_lats_in[working_cell_number - 1];
+    section_min_lon = section_min_lons_in[working_cell_number - 1];
+    int section_max_lat = section_max_lats_in[working_cell_number - 1];
+    int section_max_lon = section_max_lons_in[working_cell_number - 1];
     for (int i = 1; i < ncells; i++) {
         working_cell_number = (*list_of_cell_numbers_in)[i];
-        section_min_lat = min(section_min_lats_in[working_cell_number],
+        section_min_lat = min(section_min_lats_in[working_cell_number - 1],
                               section_min_lat);
-        section_min_lon = min(section_min_lons_in[working_cell_number],
+        section_min_lon = min(section_min_lons_in[working_cell_number - 1],
                               section_min_lon);
-        section_max_lat = max(section_max_lats_in[working_cell_number],
+        section_max_lat = max(section_max_lats_in[working_cell_number - 1],
                               section_max_lat);
-        section_max_lon = max(section_max_lons_in[working_cell_number],
+        section_max_lon = max(section_max_lons_in[working_cell_number - 1],
                               section_max_lon);
     }
     section_width_lat =
@@ -93,7 +92,7 @@ irregular_latlon_section_coords(vector<int>* list_of_cell_numbers_in,
 
 void generic_1d_section_coords::for_all_section(function<void(coords*)> func){
     for (auto i = 0; i < num_points_subarray; i++) {
-        func(new generic_1d_coords(full_field_indices[subfield_indices[i]]));
+        func(new generic_1d_coords(full_field_indices[subfield_indices[i] - 1]));
     }
 }
 
@@ -122,7 +121,7 @@ generic_1d_section_coords::generic_1d_section_coords(int ncells,
 }
 
 generic_1d_section_coords::~generic_1d_section_coords() {
-    delete mask;
+    delete[] mask;
 }
 
 int* generic_1d_section_coords::get_cell_neighbors() {

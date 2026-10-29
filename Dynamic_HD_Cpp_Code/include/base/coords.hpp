@@ -16,14 +16,15 @@ using namespace std;
  * Generic coordinates within a grid
  */
 
+///Enumeration of subclass names
+enum coords_types {latlon,generic_1d};
+
 class coords {
 public:
 	///Destructor
 	virtual ~coords(){};
 	///Produce clone
 	coords* clone();
-	///Enumeration of subclass names
-	enum coords_types {latlon,generic_1d};
 	///Type of coordinate this coordinate instance is
 	coords_types coords_type;
 	//Overload equals operator
@@ -55,11 +56,19 @@ public:
 	///Destructor
 	~latlon_coords(){};
 	///Constructor
+	latlon_coords() :
+		lat(0),lon(0) {coords_type = coords_types::latlon; };
+	///Constructor
 	latlon_coords(int lat_in, int lon_in) :
 		lat(lat_in),lon(lon_in) {coords_type = coords_types::latlon; };
 	///Constructor
 	latlon_coords(const latlon_coords& coords_in) :
 		lat(coords_in.lat), lon(coords_in.lon) {coords_type = coords_types::latlon; };
+	///Setter
+	void set_coords(int lat_in, int lon_in) {
+		lat = lat_in;
+		lon = lon_in;
+	};
 	///Getter
 	const int get_lat() const { return lat;};
 	///Getter
@@ -135,15 +144,32 @@ inline coords* coords::clone(){
 	}
 }
 
+///Enumeration of subclass names
+enum direction_indicator_types {dir_based,index_based};
+
+
 // An abstract class holding a generic indicator of cell that
 // a given cell flows to; this could be implemented as a direction
 // or as the coordinates/index of the next cell
 class direction_indicator {
 public:
+	///Produce clone
+	direction_indicator* clone();
     // Check if this direction indicator object is equal to  a direction
     // given as a polymorphic pointer to an object of the correct type;
     // if it is return TRUE else return FALSE
     virtual bool is_equal_to(int value) = 0;
+    virtual ~direction_indicator() {};
+    bool operator== (const direction_indicator& rhs){
+		return this->equals(rhs);
+	};
+	///Overload not equals
+	bool operator!= (const direction_indicator& rhs){
+		return ! (*this==rhs);
+	};
+protected:
+	virtual bool equals(const direction_indicator& rhs) = 0;
+	direction_indicator_types direction_indicator_type;
 };
 
 // A concrete subclass of direction indicator which holds a number based
@@ -155,27 +181,70 @@ public:
 class dir_based_direction_indicator : public direction_indicator {
 protected:
     int direction;
+    bool equals(const direction_indicator& rhs){
+		const dir_based_direction_indicator* latlon_rhs =
+			dynamic_cast<const dir_based_direction_indicator*>(&rhs);
+		if(latlon_rhs) return *this == *latlon_rhs;
+		else return false;
+	};
 public:
-	dir_based_direction_indicator(int direction_in) : direction(direction_in) {};
+	dir_based_direction_indicator() : direction(0)
+		{direction_indicator_type = direction_indicator_types::dir_based; };
+	dir_based_direction_indicator(int direction_in) : direction(direction_in)
+		{direction_indicator_type = direction_indicator_types::dir_based; };
     // Getter for the direction indicator integer value
-    int get_direction() { return direction; };
+    const int get_direction() const { return direction; };
+    // Setter for the direction indicator integer value
+    void set_direction(int direction_in) { direction = direction_in; };
     // Check if this direction indicator object is equal to a given value
     // where the value is supplied as a polymorphic pointer to an integer
     // if it is return TRUE else return FALSE
     bool is_equal_to(int value) { return (direction == value); };
+    bool operator== (const dir_based_direction_indicator& rhs) const
+			{ return direction == rhs.get_direction(); };
 };
 
 class index_based_direction_indicator : public direction_indicator {
 protected:
     int index;
+    bool equals(const direction_indicator& rhs){
+		const index_based_direction_indicator* latlon_rhs =
+			dynamic_cast<const index_based_direction_indicator*>(&rhs);
+		if(latlon_rhs) return *this == *latlon_rhs;
+		else return false;
+	};
 public:
-    index_based_direction_indicator(int index_in) : index(index_in) {};
+	index_based_direction_indicator() : index(0)
+		{direction_indicator_type = direction_indicator_types::index_based; };
+    index_based_direction_indicator(int index_in) : index(index_in)
+		{direction_indicator_type = direction_indicator_types::index_based; };
     // Getter for the direction indicator integer value
-    int get_index() { return index; };
+    const int get_index() const { return index; };
+    // Setter for direction indicator integer value
+    void set_index(int index_in) { index = index_in; };
     // Check if this direction indicator object is equal to a given value
     // where the value is supplied as a polymorphic pointer to an integer
     // if it is return TRUE else return FALSE
     bool is_equal_to(int value) { return (index == value); };
+    bool operator== (const index_based_direction_indicator& rhs) const
+			{ return index == rhs.get_index(); };
 };
+
+/**
+ * The clone class uses dynamic casting and a hand keyed switch to make
+ * it possible to in-line the clone statement
+ */
+inline direction_indicator* direction_indicator::clone(){
+	switch(direction_indicator_type){
+		case dir_based:
+			return new dir_based_direction_indicator(
+			    *static_cast<dir_based_direction_indicator*>(this));
+		case index_based:
+			return new index_based_direction_indicator(
+			    *static_cast<index_based_direction_indicator*>(this));
+		default:
+			throw runtime_error("Undefined direction indicator type.. need to add it to clone");
+	}
+}
 
 #endif /* INCLUDE_COORDS_HPP_ */
