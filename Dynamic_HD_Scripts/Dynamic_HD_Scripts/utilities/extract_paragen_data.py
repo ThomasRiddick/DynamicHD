@@ -2,8 +2,6 @@ from os import path
 from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.base import iohelper
 from Dynamic_HD_Scripts.base.field import Field
-from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers \
-    import dynamic_hd_driver
 
 class Paragen_Data_Extractor(object):
 
