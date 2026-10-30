@@ -145,32 +145,32 @@ function load_input_data(input_filepaths::Dict)
   ndims::Int64 = size(grid.grid_dimensions)
 
   println("Loading: " * input_filepaths["orography_variance_filepath"])
-  orography_variance_file_handle::NcFile = NetCDF.open(input_filepaths["orography_variance_filepath"]
+  orography_variance_file_handle::NcFile = NetCDF.open(input_filepaths["orography_variance_filepath"])
   orography_variance::Array{Float64,ndims} = load_field(orography_variance_file_handle,grid,
-                          input_filepaths["orography_variance__fieldname",Float64)
+                          input_filepaths["orography_variance__fieldname"],Float64)
   println("Loading: " * input_filepaths["innerslope_filepath"])
-  innerslope_file_handle::NcFile = NetCDF.open(input_filepaths["innerslope_filepath"]
+  innerslope_file_handle::NcFile = NetCDF.open(input_filepaths["innerslope_filepath"])
   innerslope::Array{Float64,ndims} = load_field(innerslope_file_handle,grid,
-             input_filepaths["innerslope_fieldname",Float64)
+             input_filepaths["innerslope_fieldname"],Float64)
   println("Loading: " * input_filepaths["orography_filepath"])
-  orography_file_handle::NcFile = NetCDF.open(input_filepaths["orography_filepath"]
+  orography_file_handle::NcFile = NetCDF.open(input_filepaths["orography_filepath"])
   orography::Array{Float64,ndims} = load_field(orography_file_handle,grid,
-                                               input_filepaths["orography_fieldname",
+                                               input_filepaths["orography_fieldname"],
                                                Float64)
   println("Loading: " * input_filepaths["glacier_mask_filepath"])
-  glacier_mask_file_handle::NcFile = NetCDF.open(input_filepaths["glacier_mask_filepath"]
+  glacier_mask_file_handle::NcFile = NetCDF.open(input_filepaths["glacier_mask_filepath"])
   glacier_mask::Array{Bool,ndims} = iszero.(load_field(glacier_mask_file_handle,grid,
-                                               input_filepaths["glacier_mask_fieldname",
+                                               input_filepaths["glacier_mask_fieldname"],
                                                Int64))
   println("Loading: " * input_filepaths["landsea_mask_filepath"])
-  landsea_mask_file_handle::NcFile = NetCDF.open(input_filepaths["landsea_mask_filepath"]
-  landsea_mask::Array{Bool,ndims) = iszero.(load_field(landsea_mask_file_handle,grid,
-                                            input_filepaths["landsea_mask_fieldname",Float64))
+  landsea_mask_file_handle::NcFile = NetCDF.open(input_filepaths["landsea_mask_filepath"])
+  landsea_mask::Array{Bool,ndims} = iszero.(load_field(landsea_mask_file_handle,grid,
+                                            input_filepaths["landsea_mask_fieldname"],Float64))
   println("Loading: " * input_filepaths["cell_areas_filepath"])
-  cell_areas_file_handle::NcFile = NetCDF.open(input_filepaths["cell_areas_filepath"]
+  cell_areas_file_handle::NcFile = NetCDF.open(input_filepaths["cell_areas_filepath"])
   cell_areas::Array{Float64,ndims} = load_field(cell_areas_file_handle,grid,
-                                                input_filepaths["cell_areas_fieldname",
-                                                Float64))
+                                                input_filepaths["cell_areas_fieldname"],
+                                                Float64)
   input_data = InputData(landsea_mask,glacier_mask,orography,
                          innerslope,orography_variance,
                          river_directions,cell_areas,grid)
