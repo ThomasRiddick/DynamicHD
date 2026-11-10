@@ -333,7 +333,7 @@ class DynamicLakeAnalysisPlotter:
                                                                     "sequence_two_is_transient_run_data"],
                                                                 corrections=self.corrections)
 
-        build_dict = lambda figs,nums,prefix : { f'{prefix}_canvas_{i}':figure for i,figure in zip(nums,figs) }
+        build_dict = lambda figs,nums,prefix : { f'{prefix}_{i}':figure for i,figure in zip(nums,figs) }
         figures = build_dict(self.interactive_plots.figs,[1,2,4,6],
                              'global_maps')
         #Don't assume python 3.9 and the | syntax

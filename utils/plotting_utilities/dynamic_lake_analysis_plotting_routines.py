@@ -771,14 +771,14 @@ class InteractiveSpillwayPlots:
         self.setup_sequences(**kwargs)
         self.spillway_plot_axes = []
         self.figs = []
-        fig = plt.figure(figsize=(9,4),facecolor="#E3F2FD",dpi=200)
+        fig = plt.figure(figsize=(9,4),facecolor="#E4E4E4",dpi=200)
         self.figs.append(fig)
         gs=gridspec.GridSpec(nrows=1,ncols=1,width_ratios=[1],
                              height_ratios=[1],
                              hspace=0.1,
                              wspace=0.1)
         self.spillway_plot_axes.append(fig.add_subplot(gs[0,0]))
-        fig = plt.figure(figsize=(9,4),facecolor="#E3F2FD",dpi=200)
+        fig = plt.figure(figsize=(9,4),facecolor="#E4E4E4",dpi=200)
         self.figs.append(fig)
         gs=gridspec.GridSpec(nrows=2,ncols=1,width_ratios=[1],
                              height_ratios=[1,1],
@@ -906,14 +906,14 @@ class InteractiveTimeSeriesPlots():
         self.data_configuration = data_configuration
         self.figs = []
         self.timeseries_plots = []
-        fig = plt.figure(figsize=(9,4),facecolor="#E3F2FD",dpi=200)
+        fig = plt.figure(figsize=(9,4),facecolor="#E4E4E4",dpi=200)
         self.figs.append(fig)
         gs=gridspec.GridSpec(nrows=1,ncols=1,width_ratios=[1],
                              height_ratios=[1],
                              hspace=0.1,
                              wspace=0.1)
         self.timeseries_plots.append(TimeSeriesPlot(fig.add_subplot(gs[0,0])))
-        fig = plt.figure(figsize=(9,4),facecolor="#E3F2FD",dpi=200)
+        fig = plt.figure(figsize=(9,4),facecolor="#E4E4E4",dpi=200)
         self.figs.append(fig)
         gs=gridspec.GridSpec(nrows=2,ncols=1,width_ratios=[1],
                              height_ratios=[1,1],
@@ -921,7 +921,7 @@ class InteractiveTimeSeriesPlots():
                              wspace=0.1)
         self.timeseries_plots.append(TimeSeriesPlot(fig.add_subplot(gs[0,0])))
         self.timeseries_plots.append(TimeSeriesPlot(fig.add_subplot(gs[1,0])))
-        fig = plt.figure(figsize=(9,4),facecolor="#E3F2FD",dpi=200)
+        fig = plt.figure(figsize=(9,4),facecolor="#E4E4E4",dpi=200)
         self.figs.append(fig)
         gs=gridspec.GridSpec(nrows=3,ncols=1,width_ratios=[1],
                              height_ratios=[1,1,1],
@@ -930,7 +930,7 @@ class InteractiveTimeSeriesPlots():
         self.timeseries_plots.append(TimeSeriesPlot(fig.add_subplot(gs[0,0])))
         self.timeseries_plots.append(TimeSeriesPlot(fig.add_subplot(gs[1,0])))
         self.timeseries_plots.append(TimeSeriesPlot(fig.add_subplot(gs[2,0])))
-        fig = plt.figure(figsize=(9,4),facecolor="#E3F2FD",dpi=200)
+        fig = plt.figure(figsize=(9,4),facecolor="#E4E4E4",dpi=200)
         self.figs.append(fig)
         gs=gridspec.GridSpec(nrows=4,ncols=1,width_ratios=[1],
                              height_ratios=[1,1,1,1],
@@ -1004,7 +1004,7 @@ class InteractiveTimeSeriesPlots():
         self.plot_types[plot_type](plot_index)
 
     def no_plot(self,index):
-        self.timeslice_plots[index].ax.set_visible(False)
+        self.timeseries_plots[index].ax.set_visible(False)
 
     def lake_height_plot_base(self,index,lake_height_sequence):
         self.timeseries_plots[index].ax.clear()
@@ -1314,8 +1314,8 @@ class InteractiveTimeSlicePlots:
         self.select_coords = False
         self.corrections_file = None
         self.coords_and_height_object = None
-        self.coords_and_height_callback = callback
-        self.tag = tag
+        self.coords_and_height_callback = None
+        self.tag = None
         self.use_orog_one_for_original_height = True
         self.replot_required = False
         self.corrections = corrections
@@ -1331,14 +1331,14 @@ class InteractiveTimeSlicePlots:
             self.lake_flowpath_masks_two = len(self.lake_points_two)*[None]
         self.time_index = 0
         self.figs = []
-        fig = plt.figure(figsize=(9,4),facecolor="#E3F2FD",dpi=200)
+        fig = plt.figure(figsize=(9,4),facecolor="#E4E4E4",dpi=200)
         self.figs.append(fig)
         gs=gridspec.GridSpec(nrows=1,ncols=1,width_ratios=[1],
                              height_ratios=[1],
                              hspace=0.1,
                              wspace=0.1)
         self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[0,0])))
-        fig = plt.figure(figsize=(9,4),facecolor="#E3F2FD",dpi=200)
+        fig = plt.figure(figsize=(9,4),facecolor="#E4E4E4",dpi=200)
         self.figs.append(fig)
         gs=gridspec.GridSpec(nrows=2,ncols=1,width_ratios=[1],
                              height_ratios=[1,1],
@@ -1346,7 +1346,7 @@ class InteractiveTimeSlicePlots:
                              wspace=0.1)
         self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[0,0])))
         self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[1,0])))
-        fig = plt.figure(figsize=(9,4),facecolor="#E3F2FD",dpi=200)
+        fig = plt.figure(figsize=(9,4),facecolor="#E4E4E4",dpi=200)
         self.figs.append(fig)
         gs=gridspec.GridSpec(nrows=2,ncols=2,width_ratios=[1,1],
                              height_ratios=[1,1],
@@ -1356,7 +1356,7 @@ class InteractiveTimeSlicePlots:
         self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[0,1])))
         self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[1,0])))
         self.timeslice_plots.append(TimeSlicePlot(fig.add_subplot(gs[1,1])))
-        fig = plt.figure(figsize=(9,4),facecolor="#E3F2FD",dpi=200)
+        fig = plt.figure(figsize=(9,4),facecolor="#E4E4E4",dpi=200)
         self.figs.append(fig)
         gs=gridspec.GridSpec(nrows=3,ncols=2,width_ratios=[1,1],
                              height_ratios=[1,1,1],
@@ -1638,6 +1638,7 @@ class InteractiveTimeSlicePlots:
         self.cflow_plot_base(index,False)
 
     def cflow_plot_base(self,index,use_first_sequence_set):
+        self.timeslice_plots[index].scale = PlotScales.NORMAL
         color_codes_cflow = np.zeros(self.slice_data["lsmask_one_slice_zoomed"].shape if
                                      use_first_sequence_set else
                                      self.slice_data["lsmask_two_slice_zoomed"].shape)
@@ -1669,7 +1670,7 @@ class InteractiveTimeSlicePlots:
                                      if use_first_sequence_set
                                      else self.slice_data["fine_river_flow_two_slice_zoomed"].shape)
         color_codes_cflow[:,:] = 1
-        river_flow_slice = (self.slice_data["self.fine_river_flow_one_slice_zoomed"]
+        river_flow_slice = (self.slice_data["fine_river_flow_one_slice_zoomed"]
                             if use_first_sequence_set
                             else self.slice_data["fine_river_flow_two_slice_zoomed"])
         color_codes_cflow[river_flow_slice >= self.minflowcutoff*self.fine_cutoff_scaling] = 2
@@ -2217,7 +2218,7 @@ class InteractiveTimeSlicePlots:
         self.next_command_to_send = "zoom"
         self.step()
 
-    def set_coords_and_height_callback_and_tag(callback,tag):
+    def set_coords_and_height_callback_and_tag(self,callback,tag):
         self.coords_and_height_callback = callback
         self.tag = tag
 
