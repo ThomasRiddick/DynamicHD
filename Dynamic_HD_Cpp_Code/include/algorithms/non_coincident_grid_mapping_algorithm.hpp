@@ -24,10 +24,17 @@ typedef vertex_coords* vertex_coords_ptr;
 
 class non_coincident_grid_mapper {
   public:
+    virtual ~non_coincident_grid_mapper();
     field<int>* generate_cell_numbers();
     void generate_limits();
     void offset_limits(int lat_offset,
                        int lon_offset);
+    field<int>* get_section_min_lats() { return section_min_lats; };
+    field<int>* get_section_min_lons() { return section_min_lons; };
+    field<int>* get_section_max_lats() { return section_max_lats; };
+    field<int>* get_section_max_lons() { return section_max_lons; };
+    void set_cell_numbers(int* cell_numbers_in);
+    field<int>* get_cell_numbers();
   protected:
     field<bool>* mask = nullptr;
     field<int>* cell_numbers = nullptr;
@@ -46,7 +53,6 @@ class non_coincident_grid_mapper {
     field<int>* section_max_lats;
     field<int>* section_max_lons;
     bool display_progress = true;
-    void set_cell_numbers(int* cell_numbers_in);
     void generate_pixels_in_cell_mask(coords* cell_coords);
     void check_if_pixel_is_in_cell(coords* coords_in);
     void process_cell(coords* coords_in);
@@ -73,6 +79,7 @@ class icon_icosohedral_cell_latlon_pixel_ncg_mapper :
       grid_params* fine_grid_params_in,
       bool longitudal_range_centered_on_zero_in = false);
       tuple<field<int>*,field<int>*,field<int>*,field<int>*> get_limits();
+    ~icon_icosohedral_cell_latlon_pixel_ncg_mapper() {};
   protected:
     bool longitudal_range_centered_on_zero;
     double get_vertex_coords(coords* coords_in,

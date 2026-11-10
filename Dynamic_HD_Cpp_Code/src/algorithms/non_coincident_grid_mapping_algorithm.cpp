@@ -1,11 +1,24 @@
 #include "algorithms/non_coincident_grid_mapping_algorithm.hpp"
 #include "base/grid.hpp"
+#include <cmath>
+
+using namespace std;
+
 
 unstructured_grid_vertex_coords::
   unstructured_grid_vertex_coords(double* vertex_lats_in,
                                   double* vertex_lons_in) {
   vertex_lats = vertex_lats_in;
   vertex_lons = vertex_lons_in;
+}
+
+non_coincident_grid_mapper::~non_coincident_grid_mapper(){
+  delete section_min_lats;
+  delete section_min_lons;
+  delete section_max_lats;
+  delete section_max_lons;
+  delete fine_grid;
+  delete coarse_grid;
 }
 
 void non_coincident_grid_mapper::generate_pixels_in_cell_mask(coords* cell_coords) {
@@ -15,10 +28,12 @@ void non_coincident_grid_mapper::generate_pixels_in_cell_mask(coords* cell_coord
   generate_areas_to_consider();
   primary_area_to_consider->for_all_section([&](coords* coords_in) {
     check_if_pixel_is_in_cell(coords_in);
+    delete coords_in;
   });
   if (secondary_area_to_consider) {
     secondary_area_to_consider->for_all_section([&](coords* coords_in) {
       check_if_pixel_is_in_cell(coords_in);
+      delete coords_in;
     });
   }
   if (display_progress) print_progress();
@@ -29,7 +44,6 @@ void non_coincident_grid_mapper::check_if_pixel_is_in_cell(coords* coords_in) {
   double pixel_center_lon = (*pixel_center_lons)(coords_in);
   (*mask)(coords_in) = check_if_pixel_center_is_in_bounds(pixel_center_lat,
                                                           pixel_center_lon);
-  delete coords_in;
 }
 
 field<int>* non_coincident_grid_mapper::generate_cell_numbers() {
@@ -37,12 +51,17 @@ field<int>* non_coincident_grid_mapper::generate_cell_numbers() {
   cell_numbers->set_all(0);
   coarse_grid->for_all([&](coords* coords_in) {
     process_cell(coords_in);
+    delete coords_in;
   });
   return cell_numbers;
 }
 
 void non_coincident_grid_mapper::set_cell_numbers(int* cell_numbers_in) {
     cell_numbers = new field<int>(cell_numbers_in,fine_grid_params);
+}
+
+field<int>* non_coincident_grid_mapper::get_cell_numbers() {
+    return cell_numbers;
 }
 
 void non_coincident_grid_mapper::process_cell(coords* coords_in) {
@@ -54,7 +73,6 @@ void non_coincident_grid_mapper::process_cell(coords* coords_in) {
     if (secondary_area_to_consider) {
       delete secondary_area_to_consider;
     }
-    delete coords_in;
 }
 
 void non_coincident_grid_mapper::generate_limits() {
@@ -147,10 +165,10 @@ section_coords* icon_icosohedral_cell_latlon_pixel_ncg_mapper::
     generate_area_to_consider(double area_min_lon,
                               double area_max_lon) {
   section_coords* area_to_consider;
-  int area_min_lat_index = 0;
-  int area_max_lat_index = 0;
-  int area_min_lon_index = 0;
-  int area_max_lon_index = 0;
+  int area_min_lat_index = -1;
+  int area_max_lat_index = -1;
+  int area_min_lon_index = -1;
+  int area_max_lon_index = -1;
   double working_min_lon = 99999.0;
   double working_max_lon = -99999.0;
   latlon_grid_params* latlon_fine_grid_params =
@@ -206,7 +224,7 @@ void icon_icosohedral_cell_latlon_pixel_ncg_mapper::print_progress() {
   if (generic_1d_coarse_cell_coords->get_index()%
       coarse_grid->get_total_size()/10 == 0) {
     cout << 100*generic_1d_coarse_cell_coords->get_index()/
-    coarse_grid->get_total_size() << endl;
+    coarse_grid->get_total_size() << " % complete" << endl;
   }
 }
 
@@ -261,6 +279,7 @@ bool icon_icosohedral_cell_latlon_pixel_ncg_mapper::
       get_vertex_coords(coarse_cell_coords,3,true);
     double vertex_three_lon =
       get_vertex_coords(coarse_cell_coords,3,false);
+
     if (vertex_two_lon - vertex_one_lon > 180.0) {
       vertex_two_lon = vertex_two_lon - 360.0;
     } else if(vertex_two_lon - vertex_one_lon < -180.0) {
@@ -308,7 +327,7 @@ bool icon_icosohedral_cell_latlon_pixel_ncg_mapper::
           calculate_line(vertex_three_lon, vertex_one_lon,
                          vertex_two_lon, vertex_one_lat,
                          vertex_two_lat);
-        if (abs(lat_difference_at_pixel_center_lon) < 1.0e-15) {
+        if (abs(lat_difference_at_pixel_center_lon) < 5.0e-15) {
           is_in_bounds = is_in_bounds &&
                          (lat_difference_at_vertex_three_lon >= 0);
         } else {

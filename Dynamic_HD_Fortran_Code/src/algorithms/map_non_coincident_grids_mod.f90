@@ -127,6 +127,7 @@ contains
   procedure :: init_icon_icosohedral_cell_latlon_pixel_ncg_mapper
   procedure :: icon_icosohedral_cell_latlon_pixel_ncg_mapper_destructor
   procedure :: print_progress => icon_icosohedral_cell_print_progress
+  procedure :: icon_icosohedral_cell_latlon_pixel_get_limits
 end type
 
 interface icon_icosohedral_cell_latlon_pixel_ncg_mapper
@@ -714,5 +715,21 @@ contains
                                                                                 fine_grid_shape,&
                                                                                 longitudal_range_centered_on_zero)
   end function icon_icosohedral_cell_latlon_pixel_ncg_mapper_constructor
+
+  subroutine icon_icosohedral_cell_latlon_pixel_get_limits(this, &
+                                                           section_min_lats, &
+                                                           section_min_lons, &
+                                                           section_max_lats, &
+                                                           section_max_lons)
+    class(icon_icosohedral_cell_latlon_pixel_ncg_mapper), intent(inout) :: this
+    integer, dimension(:), pointer, intent(out) :: section_min_lats
+    integer, dimension(:), pointer, intent(out) :: section_min_lons
+    integer, dimension(:), pointer, intent(out) :: section_max_lats
+    integer, dimension(:), pointer, intent(out) :: section_max_lons
+      section_min_lats => this%section_min_lats
+      section_max_lats => this%section_max_lats
+      section_min_lons => this%section_min_lons
+      section_max_lons => this%section_max_lons
+  end subroutine icon_icosohedral_cell_latlon_pixel_get_limits
 
 end module map_non_coincident_grids_mod
