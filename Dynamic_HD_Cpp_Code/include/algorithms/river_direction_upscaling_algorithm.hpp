@@ -1,8 +1,10 @@
-use coords_mod
-use subfield_mod
-use field_section_mod
-use cotat_parameters_mod, only: MUFP, area_threshold, run_check_for_sinks, &
-                                yamazaki_max_range, yamazaki_wrap
+#include "base/coords.hpp"
+#include "base/section_coords.hpp"
+#include "base/field_section.hpp"
+#include "base/subfield.hpp"
+#include "base/grid.hpp"
+#include <forward_list>
+#include <list>
 
 // This file contains comments using a special markup for doxygen
 
@@ -10,118 +12,186 @@ use cotat_parameters_mod, only: MUFP, area_threshold, run_check_for_sinks, &
 // the underlying grid of pixel and (mostly virtual) operator this grid section and the various
 // field sections for it.
 
+class rdir_upscaling_parameters {
+    public:
+        rdir_upscaling_parameters(double MUFP_in = 1.5,
+                                  int area_threshold_in = 9,
+                                  bool run_check_for_sinks_in = true) :
+            MUFP(MUFP_in), area_threshold(area_threshold_in),
+            run_check_for_sinks(run_check_for_sinks_in),
+            flow_max_range(9),
+            flow_wrap(true),
+            upscale_k_parameters(false) {}
+        //! Given with default values
+        //! The minimum upstream flow path; the minimum distance through the cell that the
+        //! highest flow path leading to a given exit pixel must have passed through
+        double MUFP = 1.5;
+        //! The miminum additional area a downstream pixel must have gathered before
+        //! the cell it is in can be chosen as the downstream cell of a given centre cell
+        int area_threshold = 9;
+        //! Check for sinks within a cell; this can be turned off for the sake of efficiency
+        //! when using a set of fine river directions known not to contain sinks
+        bool run_check_for_sinks = true;
+        //! The maximum number of cells to let a path go for between outlet pixels for the
+        //! FLOW algorithm
+        int flow_max_range = 9;
+        //! Wrap the grid when using the flow algorithm?
+        bool flow_wrap = true;
+        bool upscale_k_parameters;
+};
+
 class area {
     protected:
+        grid_params* _grid_params;
         //! A section of a field of pixel level river direction
-        ?? field_section* river_directions => nullptr;
+        field_section<int>* river_directions;
         //! A section of a field of pixel level total cumulative flow
-        ?? field_section* total_cumulative_flow => nullptr;
-        //! A section of a field used only by the yamazaki style algorithm to mark
+        field_section<int>* total_cumulative_flow;
+        //! A section of a field used only by the flow style algorithm to mark
         //! pixels as outlet pixels
-        ?? field_section* yamazaki_outlet_pixels => nullptr;
-        //The following variables are only used by latlon based area's
-        //(Have to insert here due to lack of multiple inheritance)
-        //! The minimum latitude defining the section's lower edge (only for
-        //! latitude-longitude grids - here due to lack of multiple inheritance
-        //! in Fortran)
-        int section_min_lat;
-        //! The minimum longitude defining the section's left edge (only for
-        //! latitude-longitude grids - here due to lack of multiple inheritance
-        //! in Fortran)
-        int section_min_lon;
-        //! The maximum latitude defining the section's upper edge (only for
-        //! latitude-longitude grids - here due to lack of multiple inheritance
-        //! in Fortran)
-        int section_max_lat;
-        //! The maximum longitude defining the section's right edge (only for
-        //! latitude-longitude grids - here due to lack of multiple inheritance
-        //! in Fortran)
-        int section_max_lon;
-        //! Yamazaki style algorithm code for a normal outlet pixel
-        int yamazaki_normal_outlet = 1;
-        //! Yamazaki style algorithm code for the outlet pixel of a cell
-        //! where the outlet is not the LCDA (and thus a cell that won't
-        //! receive inflow from other cells; any cells flows entering it
-        //! will pass through and look for suitable outlets in the cell
-        //! beyond; this is because this cells own flow needs to exit via
-        //! a pixel that is not its outlet pixel
-        int yamazaki_source_cell_outlet = 2;
-        //! Yamazaki style algorithm code for a sink outlet pixel
-        int yamazaki_sink_outlet = -1;
-        //! Yamazaki style algorithm code for a river mouth pixel
-        int yamazaki_rmouth_outlet = -2;
+        field_section<pixel_type>* flow_outlet_pixels;
+
+        // //! FLOW algorithm code for a normal outlet pixel
+        // int flow_normal_outlet = 1;
+        // //! FLOW algorithm code for the outlet pixel of a cell
+        // //! where the outlet is not the LCDA (and thus a cell that won't
+        // //! receive inflow from other cells; any cells flows entering it
+        // //! will pass through and look for suitable outlets in the cell
+        // //! beyond; this is because this cells own flow needs to exit via
+        // //! a pixel that is not its outlet pixel
+        // int flow_source_cell_outlet = 2;
+        // //! FLOW algorithm code for a sink outlet pixel
+        // int flow_sink_outlet = -1;
+        // //! FLOW algorithm code for a river mouth pixel
+        // int flow_rmouth_outlet = -2;
+        //! Object containing cotat/flow parameters to use
+        rdir_upscaling_parameters* parameters;
+        bool delete_parameters_on_exit;
         //! Subroutine to find the next pixel upstream from a given pixel and return it via the
         //! input coordinate object; also return a flag if path has left the section and optionally
-        //! if an outlet pixel has been found for the yamazaki-style algorithm
-        find_next_pixel_upstream
+        //! if an outlet pixel has been found for the flow-style algorithm
+        void find_next_pixel_upstream(coords*& coords_inout,
+                                      bool& coords_not_in_area);
         //! Return a list of neighbours that upstream of the pixel located at the input coordinates
-        virtual vector<coords*>* find_upstream_neighbors(coords* coords_in);
+        virtual list<coords*>* find_upstream_neighbors(coords* coords_in) = 0;
         //! Check if a given set of coordinates are within the bounds of this area
-        virtual bool check_if_coords_are_in_area(coords* coords_in);
+        virtual bool check_if_coords_are_in_area(coords* coords_in) = 0;
         //! Check if neighbor at a given coordinates flows to a pixel which lies in a given
         //! direction from that neighbor (this direction being expressed in reverse, i.e. pointing
         //! from the pixel to the neighbor)
         virtual bool neighbor_flows_to_pixel(coords* coords_in,
-                                             direction_indicator* flipped_direction_from_neighbor);
+                                             direction_indicator* flipped_direction_from_neighbor) = 0;
         //! Subroutine to find the next pixel downstream from the input pixel and returns it
-        //! via the same variable as used for input. Also flag if the cell next coords would
-        //! be outside the area and for the yamazaki style algorithm if the next pixel is an
-        //! outflow pixel (this is an optional intent OUT argument).
-        virtual void find_next_pixel_downstream(coords* coords_inout,
-                                                bool coords_not_in_area,
-                                                bool outflow_pixel_reached=true);
+        //! Also flag if the cell next coords would be outside the area and for the flow style
+        //! algorithm if the next pixel is an outflow pixel (this is an optional intent OUT argument).
+        virtual coords* find_next_pixel_downstream(coords* coords_in,
+                                                   bool& coords_not_in_area,
+                                                   bool& outflow_pixel_reached) = 0;
         //! Work out the length of a path through this pixel but looking up its flow direction
-        virtual double calculate_length_through_pixel(coords* coords_in);
+        virtual double calculate_length_through_pixel(coords* coords_in) = 0;
         //! Check if the pixel at the input coordinates is a diagonal or not by looking up its flow direction
-        virtual bool is_diagonal(coords* coords_in);
+        virtual bool is_diagonal(coords* coords_in) = 0;
+    public:
+        ~area();
+        //virtual void print_area();
+};
+
+class latlon_area : public virtual area {
+    public:
+        virtual ~latlon_area() {};
+    protected:
+        //! The minimum latitude defining the section's lower edge
+        int section_min_lat;
+        //! The minimum longitude defining the section's left edge
+        int section_min_lon;
+        //! The maximum latitude defining the section's upper edge
+        int section_max_lat;
+        //! The maximum longitude defining the section's right edge
+        int section_max_lon;
+        double calculate_length_through_pixel(coords* coords_in);
+        bool check_if_coords_are_in_area(coords* coords_in);
+        //void print_area();
+        bool is_diagonal(coords* coords_in);
+        list<coords*>* find_upstream_neighbors(coords* coords_in);
+};
+
+class irregular_latlon_area : public virtual latlon_area {
+    public:
+        virtual ~irregular_latlon_area() {};
+
+};
+
+class icon_single_index_area : public virtual area {
+    public:
+        virtual ~icon_single_index_area() {}
+    protected:
+        int ncells;
+        double calculate_length_through_pixel(coords* coords_in) { return 1.0; };
+        bool check_if_coords_are_in_area(coords* coords_in) { return true; };
+        //void print_area();
+        bool is_diagonal(coords* coords_in) { return false; };
+        list<coords*>* find_upstream_neighbors(coords* coords_in) { return nullptr; };
+};
+
+class extended_area : virtual public area {
+public:
+        virtual ~extended_area();
+    protected:
+        // Cells that will require to be reprocessed because of loops
+        field<bool>* cells_to_reprocess;
+        bool check_cell_for_localized_loops(coords* coords_in);
+        public:
+        virtual bool* check_area_for_localized_loops() = 0;
 };
 
 //! A neighbourhood includes a centre cell and a number of cells surrounding it
 //! and it contains functions that need to run over that entire neighborhood for the
-//! COTAT+ and yamazaki-style upscaling algorithms
+//! COTAT+ and flow-style upscaling algorithms
 
-class neighborhood : public area {
+class neighborhood : public virtual area {
     protected:
+        section_coords* neighborhood_section_coords;
         int center_cell_id;
         //! Find the downstream cell for the COTAT+ algorithm from a given starting pixel
         //! returns an integer indicating the downstream cell found
-        procedure :: find_downstream_cell
+    public:
+        virtual ~neighborhood();
+        int find_downstream_cell(coords* initial_outlet_pixel);
         //! Trace the path from this cell upstream to see if it re-enters the centre
         //! cell before exiting this neighborhood. Returns a flag indicating if this
         //! occurs
-        procedure :: path_reenters_region
+        bool path_reenters_region(coords*& coords_inout);
         //! Check if the cell specified by the input cell id is the centre cell
-        procedure :: is_center_cell
-        //! Find the downstream cell for the Yamazaki
-        procedure :: yamazaki_find_downstream_cell
+        bool is_center_cell(int cell_id);
+        //! Find the downstream cell for the FLOW algorithm
+        coords* flow_find_downstream_cell(coords* initial_outlet_pixel);
         //! Calculate an appropriate direction indicator from the id of the downstream cell
-        virtual direction_indicator* calculate_direction_indicator(int downstream_cell);
+        virtual direction_indicator* calculate_direction_indicator(int downstream_cell) = 0;
         //! Calculate which cell a given pixel is in; return an integer identifying that cell
         //! from those in the neighborhood
-        virtual int in_which_cell(coords* pixel);
+        virtual int in_which_cell(coords* pixel) = 0;
         //! Get the coordinates of the cell that the input pixel lies in
-        virtual coords* yamazaki_get_cell_coords(coords* pixel_coords);
+        virtual coords* flow_get_cell_coords(coords* pixel_coords) = 0;
         //! Subroutine that wraps a set of input pixel coordinates round the international date
-        //! line if required; return the wrapped coordinates via the same variable as used for
-        //! inputting them
-        virtual void yamazaki_wrap_coordinates(coords* pixel_coords);
-}
+        //! line if required
+        virtual coords* flow_wrap_coordinates(coords* pixel_coords) = 0;
+};
 
 //! An object to contain the fine field sections corresponding to a single cell of the
 //! coarse grid; also includes the necessary functions that act on that cell to
-//! produce upscaled COTAT+ and yamazaki style upscalings. Each cell contains a
+//! produce upscaled COTAT+ and flow style upscalings. Each cell contains a
 //! neighborhood object that contains both it and its surrounding cells.
 
-class cell : public area {
+class cell : public virtual area {
     protected:
         //! An array marking pixels that have already been rejected as the
         //! outlet pixel of this cell
-        class(subfield), pointer :: rejected_pixels => nullptr;
+        subfield<bool>* rejected_pixels;
         //! An array containing the cumulative flow calculated across this
         //! cell only (and thus not counting pixels external to this cell)
-        class(subfield), pointer :: cell_cumulative_flow => nullptr;
+        subfield<int>* cell_cumulative_flow;
         //! A neighborhood object containing the neighborhood of this cell
-        class(neighborhood), allocatable :: cell_neighborhood
+        neighborhood* cell_neighborhood;
         //! The number of pixels that lie along the edge of this cell
         int number_of_edge_pixels;
         //! Flag if this cell contains river mouth on the fine grid
@@ -130,104 +200,122 @@ class cell : public area {
         //! all marked sea in the land sea mask
         bool ocean_cell;
         //! The coordinates of the edges of this section within the wider fine fields
-        class(section_coords), allocatable :: cell_section_coords
+        section_coords* cell_section_coords;
+    public:
+        virtual ~cell();
         //! Process the cell represented by this cell object to produce a river direction
-        procedure, public :: process_cell
-        //! Find and mark the outlet pixel of this cell for the yamazaki style algorithm;
+        direction_indicator* process_cell();
+        //! Find and mark the outlet pixel of this cell for the flow style algorithm;
         //! an input flag indicates if the LCDA criterion is being used
-        procedure, public :: yamazaki_mark_cell_outlet_pixel
+        void flow_mark_cell_outlet_pixel(bool use_LCDA_criterion);
         //! Setter for the logical variable contain_river_mouths
-        procedure, public :: set_contains_river_mouths
+        void set_contains_river_mouths(bool value);
         //! Print details of this cell and neighborhoods
-        procedure, public :: print_cell_and_neighborhood
+        //virtual void print_cell_and_neighborhood();
         //! Find and return the position of the outlet pixel for this cell. Also returns
         //! via an argument a flag to indicate if there was no remaining outlet pixels and
         //! takes a flag whether we should LCDA or not and optionally returns a
         //! flag indicating if this is the LCDA or not
-        procedure :: find_outlet_pixel
+        coords* find_outlet_pixel(bool& no_remaining_outlets,
+                                  bool use_LCDA_criterion,
+                                  bool& outlet_is_LCDA);
+        void calculate_k_parameters(coords* outlet_pixel_coords);
         //! Subroutine to check if either the sum of the flows to sinks or the sum of the
         //! flows to river mouths is greater than the outflow at the choosen normal outlet
         //! for the cell. Takes as arguments the position of the current normal outlet and
         //! a flag to indicate if there were no remaining outlets (and a default was used)
         //! return two flags indicating whether cell should be marked a sink or a river
         //! mouth outflow. Note only one (or zero) of the flags can be true at a time
-        procedure :: check_for_sinks_and_rmouth_outflows
+        void check_for_sinks_and_rmouth_outflows(coords*& outlet_pixel_coords,
+                                                 bool no_remaining_outlets,
+                                                 bool& mark_sink,
+                                                 bool& mark_outflow);
         //! Find the downstream cell for the COTAT+ algorithm and calculate the direction
         //! to it. Takes the position of the outlet pixel and a flag to indicate if
         //! no valid outlets were found and a default is being used. Returns the flow
         //! direction
-        procedure :: find_cell_flow_direction
+        direction_indicator* find_cell_flow_direction(coords*& outlet_pixel_coords,
+                                                      bool& no_remaining_outlets);
         //! Find the next non-rejected pixel with the Largest Upstream Drainage Area
         //! and return its coordinates. If there is no remaining valid LUDA then return
         //! a default position along the cell's edge and indicate this through the
         //! no remaning outlets flag that is also returned.
-        procedure :: find_pixel_with_LUDA
+        coords* find_pixel_with_LUDA(bool& no_remaining_outlets);
         //! Find the pixel with the Largest Cell Drainage Area; the pixel that drains the
         //! largest area of the cell itself and return its coordinates.
-        procedure :: find_pixel_with_LCDA
+        coords* find_pixel_with_LCDA();
         //! Measure the upstream path length through the cell of an outlet pixel at the supplied
         //! coordinates. Return the path length as a double
-        procedure :: measure_upstream_path
+        double measure_upstream_path(coords* outlet_pixel_coords);
         //! Check if a given outlet pixel either meets the minimum upstream flow path threshold
         //! or if the outlet pixel is the LCDA. If one of these checks is passed return true
         //! otherwise returns false. Must supply the position of the outlet pixel - the current
         //! LUDA - via the first argument and the position of the LCDA via the second. An optional
         //! third argument can be used to output a flag indicating whether the LUCA is the
         //! LCDA or not.
-        procedure :: check_MUFP
+        bool check_MUFP(coords* LUDA_pixel_coords,
+                        coords* LCDA_pixel_coords,
+                        bool& LUDA_is_LCDA);
         //! Test generating cumulative flow field for this cell. Has no arguments (apart from this)
         //! and returns an array containing the cumulative flow field generated.
-        procedure, public :: test_generate_cell_cumulative_flow
-        //! Test finding a downstream cell for the yamazaki style algorithm using the location
+        int* test_generate_cell_cumulative_flow();
+        //! Test finding a downstream cell for the flow style algorithm using the location
         //! of a given initial outlet pixel; returns the location of the downstream cell found.
-        procedure, public :: yamazaki_test_find_downstream_cell
+        coords* flow_test_find_downstream_cell(coords* initial_outlet_pixel);
         //! Generates the cumulative flow for the section of fine orography river directions
         //! covered by this cell. Takes no arguments other than this; returns nothing (except
         //! via modifications to this - i.e. by filling in the cumulative flow array for this
         //! cell object).
-        procedure :: generate_cell_cumulative_flow
+        void generate_cell_cumulative_flow();
         //! Function that retrieves a previously marked outlet pixel in this cell and returns
         //! its location. Also returns the outlet pixels type using a intent OUT argument.
-        procedure :: yamazaki_retrieve_initial_outlet_pixel
+        coords* flow_retrieve_initial_outlet_pixel(pixel_type& outlet_pixel_type);
         //! Find and return a list of the location of all the pixels along the edges of this
         //! cell
-        virtual vector<coords*>* find_edge_pixels();
+        virtual forward_list<coords*>* find_edge_pixels() = 0;
         //! Initialize a subfield object to zero to hold the cell cumulative flow.Takes no
         //! arguments other than this; returns nothing (except via modifications to this)
-        virtual void initialize_cell_cumulative_flow_subfield();
+        virtual void initialize_cell_cumulative_flow_subfield() = 0;
         //! Initialize a subfield object to false to hold the rejected pixels flow.Takes no
         //! arguments other than this; returns nothing (except via modifications to this)
-        virtual void initialize_rejected_pixels_subfield();
+        virtual void initialize_rejected_pixels_subfield() = 0;
         //! Returns a list of the position of the pixels in the cell; takes no arguments
         //! except this
-        virtual vector<coords*>* generate_list_of_pixels_in_cell();
+        virtual list<coords*>* generate_list_of_pixels_in_cell() = 0;
         //! Return the appropriate direction indicator for a sink
-        virtual direction_indicator* get_flow_direction_for_sink(bool is_for_cell=true);
+        virtual direction_indicator* get_flow_direction_for_sink(bool is_for_cell=false) = 0;
         //! Return the appropriate direction indicator for an outflow
-        virtual direction_indicator* get_flow_direction_for_outflow(bool is_for_cell=true);
+        virtual direction_indicator* get_flow_direction_for_outflow(bool is_for_cell=false) = 0;
         //! Return the appropriate direction indicator for an ocean point
-        virtual direction_indicator* get_flow_direction_for_ocean_point(bool is_for_cell=true);
+        virtual direction_indicator* get_flow_direction_for_ocean_point(bool is_for_cell=false) = 0;
         //! Function to calculate the combined cumulative flow into all the sinks in this
         //! cell and return it; takes no arguments other than this
-        virtual int get_sink_combined_cumulative_flow(coords* main_sink_coords = nullptr);
+        virtual int get_sink_combined_cumulative_flow(coords*& main_sink_coords) = 0;
         //! Function to calculate the combined cumulative flow from all the river mouth in this
         //! cell and return it; takes no arguments other than this
-        virtual int get_rmouth_outflow_combined_cumulative_flow(main_outflow_coords = nullptr);
+        virtual int get_rmouth_outflow_combined_cumulative_flow(coords*& main_outflow_coords) = 0;
         //! Subroutine that set the contains river mouths and ocean cell flags by scanning over
         //! the cell. If no none sea points are found it is marked as an ocean cell. If one or
         //! more river mouths are found then the contains river mouths flag is set to TRUE
-        virtual void mark_ocean_and_river_mouth_points();
-        //! Subroutine to calculate the river direction as set of indices for the yamazaki
+        virtual void mark_ocean_and_river_mouth_points() = 0;
+        //! Subroutine to calculate the river direction as set of indices for the flow
         //! style algorithm and mark it in array of indices pointing to the next cell which
         //! is both given and returned via an argument with intent INOUT.
-        virtual void yamazaki_calculate_river_directions_as_indices(
-                        int* coarse_river_direction_indices,
-                        section_coords* required_coarse_section_coords = nullptr);
-}
+        // virtual void flow_calculate_river_directions_as_indices(
+        //                 int* coarse_river_direction_indices,
+        //                 section_coords* required_coarse_section_coords = nullptr) = 0;
+};
 
 //! An abstract implementation of the neighborhood class for latitude longitude grids
 
-class latlon_neighborhood : public neighborhood {
+class latlon_neighborhood : public virtual neighborhood,latlon_area {
+    public:
+        latlon_neighborhood(section_coords* center_cell_section_coords,
+                            grid_params* grid_params_in,
+                            int* river_directions_in,
+                            int* total_cumulative_flow_in,
+                            rdir_upscaling_parameters* parameters_in=nullptr);
+        virtual ~latlon_neighborhood() {};
     protected:
         //! The bottom row of pixels that are within the center cell this neighborhood
         //! is centered on
@@ -242,201 +330,105 @@ class latlon_neighborhood : public neighborhood {
         //! is centered on
         int center_cell_max_lon;
         //! For convience keep the latitudinal width of a cell in the neighborhood
-        //! for the yamazaki-style algorithm
-        int yamazaki_cell_width_lat;
+        //! for the flow-style algorithm
+        int flow_cell_width_lat;
         //! For convience keep the longitudinal width of a cell in the neighborhood
-        //! for the yamazaki-style algorithm
-        int yamazaki_cell_width_lon;
-        //! Initialize a latitude longitude neighborhood object. Arguments are a set of
-        //! coordinates of the bounds of the neighborhood's center cell (the center cell's
-        //! section coordinates) and a fine river direction field and a fine cumulative flow
-        //! field
-        procedure :: init_latlon_neighborhood
-        //! Initalize a latitude longitude neighborhood object for the the yamazaki-style
+        //! for the flow-style algorithm
+        int flow_cell_width_lon;
+        //! Initalize a latitude longitude neighborhood object for the the flow-style
         //! algorithm. First three arguments (after the this argument) are the same as for
         //! init_latlon_neighborhood but has two additional arguments at end of argument
         //! list; one is array of the outlet pixels; second is the coordinates of the edges
-        //! of the neighborhood as a whole - as yamazaki-style algorithm is non-local this
+        //! of the neighborhood as a whole - as flow-style algorithm is non-local this
         //! is more than direct neighbors - can be the whole grid or a wider subsection of it
-        procedure :: yamazaki_init_latlon_neighborhood
-        //! Function that given the coordinates of a pixel returns a number indicating which
-        //! cell of the neighborhood it is in. This works only for the COTAT+ algorithm
-        procedure :: in_which_cell => latlon_in_which_cell
-        //! Function that given a the coordinates of a pixel (on the fine grid) returns the
-        //! coordinates of the cell that pixel is in on the coarse grid
-        procedure :: yamazaki_get_cell_coords => yamazaki_latlon_get_cell_coords
-        //! Subroutine to wrap pixel coords around globe for the yamazaki-style
-        //! algorithm; takes the pixels location as an argument and returns the
-        //! wrapped version of the pixels through the same arguement.
-        procedure :: yamazaki_wrap_coordinates => yamazaki_latlon_wrap_coordinates
-        //! These next four functions are all shared with various other subclasses as a workaround
-        //! for Fortran 2003's lack of multiple inheritance.
-        //! Function that given the location of a pixel return the length of the river path
-        //! through it
-        procedure, nopass :: calculate_length_through_pixel => latlon_calculate_length_through_pixel
-        //! Function that given the location of a pixel returns a list of the locations of its
-        //! those of it neighbors that are upstream of it.
-        procedure, nopass :: find_upstream_neighbors => latlon_find_upstream_neighbors
-        //! Function that returns boolean to indicate if a given coordinate is within the neighborhood
-        //! (TRUE) or not (FALSE)
-        procedure, nopass :: check_if_coords_are_in_area => latlon_check_if_coords_are_in_area
-        //! Print information about this neighborhood object out
-        procedure, nopass :: print_area => latlon_print_area
-}
+        // void flow_init_latlon_neighborhood();
+        int in_which_cell(coords* pixel);
+        coords* flow_get_cell_coords(coords* pixel_coords);
+        coords* flow_wrap_coordinates(coords* pixel_coords);
+};
 
-class irregular_latlon_neighborhood : public neighborhood {
+class irregular_latlon_neighborhood : public neighborhood, public latlon_area {
+    public:
+    irregular_latlon_neighborhood(section_coords* center_cell_section_coords,
+                                  grid_params* grid_params_in,
+                                  int* coarse_cell_neighbors,
+                                  int* river_directions,
+                                  int* total_cumulative_flow,
+                                  int max_nneigh_coarse,
+                                  rdir_upscaling_parameters* parameters_in=nullptr);
+        virtual ~irregular_latlon_neighborhood();
     protected:
-        class(latlon_field_section),pointer :: cell_numbers
-        type(doubly_linked_list),pointer :: list_of_cells_in_neighborhood
-        procedure :: init_irregular_latlon_neighborhood
-        procedure :: in_which_cell => irregular_latlon_in_which_cell
-        procedure, nopass :: check_if_coords_are_in_area => generic_check_if_coords_are_in_area
-        procedure, nopass :: print_area => latlon_print_area
-        procedure, nopass :: calculate_length_through_pixel => latlon_calculate_length_through_pixel
-        procedure, nopass :: find_upstream_neighbors => latlon_find_upstream_neighbors
-        procedure :: yamazaki_get_cell_coords => yamazaki_irregular_latlon_get_cell_coords_dummy
-        procedure :: yamazaki_wrap_coordinates => yamazaki_irregular_latlon_wrap_coordinates_dummy
-}
+        field_section<int>* cell_numbers;
+        list<int> list_of_cells_in_neighborhood;
+        bool check_if_coords_are_in_area(coords* coords_in);
+        int in_which_cell(coords* pixel);
+        coords* flow_get_cell_coords(coords* pixel_coords);
+        coords* flow_wrap_coordinates(coords* pixel_coords) { return nullptr; };
+};
 
 //! An abstract implementation of the cell class for latitude longitude grids
-class latlon_cell :: public cell {
+class latlon_cell : public cell, public virtual latlon_area {
+    public:
+        //! Initialize a latitude longitude cell object. Arguments are a set of
+        //! coordinates of the bounds of the cell and a fine river direction field
+        //! and fine cumulative flow field
+        latlon_cell(latlon_section_coords* cell_section_coords_in,
+                    grid_params* _grid_params_in,
+                    int* river_directions_in,
+                    int* total_cumulative_flow_in,
+                    rdir_upscaling_parameters* parameters_in=nullptr);
+        latlon_cell();
+        virtual ~latlon_cell() {};
     protected:
         //! Latitudinal width of the cell in pixels
         int section_width_lat;
         //! Longitudinal width of the cell in pixels
         int section_width_lon;
-        //! Initialize a latitude longitude cell object. Arguments are a set of
-        //! coordinates of the bounds of the cell and a fine river direction field
-        //! and fine cumulative flow field
-        procedure :: init_latlon_cell
-        //! Initialize a latitude longitude cell object for the yamazaki-style algorithm.
+
+        void init_latlon_cell();
+        //! Initialize a latitude longitude cell object for the flow-style algorithm.
         //! The first three arguements (after the this argument) are the same as
         //! init_latlon_cell. The last argument is an array of outlet pixels.
-        procedure :: yamazaki_init_latlon_cell
-        //! Function to produce a list of the coordinates of edge pixels of this cell. Takes no
-        //! arguments; returns a list of coordinates.
-        procedure :: find_edge_pixels => latlon_find_edge_pixels
-        //! Function that given the location of a pixel return the length of the river path
-        //! through it
-        procedure, nopass :: calculate_length_through_pixel => latlon_calculate_length_through_pixel
-        //! Function that returns boolean to indicate if a given coordinate is within the cell
-        //! (TRUE) or not (FALSE)
-        procedure, nopass :: check_if_coords_are_in_area => latlon_check_if_coords_are_in_area
-        //! Function that given the location of a pixel returns a list of the locations of its
-        //! those of it neighbors that are upstream of it.
-        procedure, nopass :: find_upstream_neighbors => latlon_find_upstream_neighbors
-        //! Subroutine to initialize the cell cumulative flow subfield to zero. The only
-        //! argument is this with intent INOUT. Returns this with the subfield initialized.
-        procedure :: initialize_cell_cumulative_flow_subfield => &
-            latlon_initialize_cell_cumulative_flow_subfield
-        //! Subroutine to initialize the rejected pixels subfield to FALSE. The only argument
-        //! is this with intent INOUT. Return this with the subfield initialized.
-        procedure :: initialize_rejected_pixels_subfield => latlon_initialize_rejected_pixels_subfield
-        //! Returns a list of the position of the pixels in the cell; takes no arguments other than
-        //! this
-        procedure :: generate_list_of_pixels_in_cell => latlon_generate_list_of_pixels_in_cell
-        //! Function to calculate the combined cumulative flow into all the sinks in this
-        //! cell and return it; takes no arguments other than this
-        procedure :: get_sink_combined_cumulative_flow => latlon_get_sink_combined_cumulative_flow
-        //! Function to calculate the combined cumulative flow from all the river mouth in this
-        //! cell and return it; takes no arguments other than this
-        procedure :: get_rmouth_outflow_combined_cumulative_flow => &
-            latlon_get_rmouth_outflow_combined_cumulative_flow
-        //! Print information about this cell object out
-        procedure, nopass :: print_area => latlon_print_area
-        //! Subroutine to calculate the river direction as set of indices for the yamazaki
-        //! style algorithm and mark it in array of indices pointing to the next cell which
-        //! is both given and returned via an argument with intent INOUT.
-        procedure, public :: yamazaki_calculate_river_directions_as_indices => &
-            yamazaki_latlon_calculate_river_directions_as_indices
-}
+        void flow_init_latlon_cell();
+        virtual forward_list<coords*>* find_edge_pixels();
+        void initialize_cell_cumulative_flow_subfield();
+        void initialize_rejected_pixels_subfield();
+        virtual list<coords*>* generate_list_of_pixels_in_cell();
+        virtual int get_sink_combined_cumulative_flow(coords*& main_sink_coords);
+        virtual int get_rmouth_outflow_combined_cumulative_flow(
+                        coords*& main_outflow_coords);
+        // virtual void flow_calculate_river_directions_as_indices(
+        //                 int* coarse_river_direction_indices,
+        //                 section_coords* required_coarse_section_coords = nullptr);
+        //void print_cell_and_neighborhood();
+};
 
 //! An abstract implementation of the cell class for latitude longitude grids
-class irregular_latlon_cell : public latlon_cell {
-    class(latlon_field_section),pointer :: cell_numbers
-        protected:
-            int cell_number;
-            //! Function to produce a list of the coordinates of edge pixels of this cell. Takes no
-            //! arguments; returns a list of coordinates.
-            procedure :: find_edge_pixels => irregular_latlon_find_edge_pixels
-            //! Function that given the location of a pixel return the length of the river path
-            //! through it
-            procedure, nopass :: check_if_coords_are_in_area => generic_check_if_coords_are_in_area
-            //! Returns a list of the position of the pixels in the cell; takes no arguments other than
-            //! this
-            procedure :: generate_list_of_pixels_in_cell => &
-                         irregular_latlon_generate_list_of_pixels_in_cell
-            //! Function to calculate the combined cumulative flow into all the sinks in this
-            //! cell and return it; takes no arguments other than this
-            procedure :: get_sink_combined_cumulative_flow => &
-                irregular_latlon_get_sink_combined_cumulative_flow
-            //! Function to calculate the combined cumulative flow from all the river mouth in this
-            //! cell and return it; takes no arguments other than this
-            procedure :: get_rmouth_outflow_combined_cumulative_flow => &
-                irregular_latlon_get_rmouth_outflow_combined_cumulative_flow
-            procedure ::  init_irregular_latlon_cell
-}
-
-//! A concerte subclass of latitude longitude field that uses direction (i.e. a 1-9
-//! direction code like a keypad) indicators to specify river directions
-class latlon_dir_based_rdirs_field : public latlon_field {
+class irregular_latlon_cell : public latlon_cell, public irregular_latlon_area {
+    public:
+        irregular_latlon_cell(irregular_latlon_section_coords* cell_section_coords,
+                              grid_params* _grid_params_in,
+                              int* river_directions,
+                              int* total_cumulative_flow,
+                              rdir_upscaling_parameters* parameters_in=nullptr);
+        int cell_number;
+        virtual ~irregular_latlon_cell();
     protected:
-        //! Subroutine to find the next pixel downstream from the input pixel and returns it
-        //! via the same variable as used for input. Also flag if the cell next coords would
-        //! be outside the area and for the yamazaki style algorithm if the next pixel is an
-        //! outflow pixel (this is an optional intent OUT argument).
-        procedure, nopass :: find_next_pixel_downstream => latlon_dir_based_rdirs_find_next_pixel_downstream
-        //! Check if neighbor at a given coordinates flows to a pixel which lies in a given
-        //! direction from that neighbor (this direction being expressed in reverse, i.e. pointing
-        //! from the pixel to the neighbor)
-        procedure, nopass :: neighbor_flows_to_pixel => latlon_dir_based_rdirs_neighbor_flows_to_pixel
-        //! Check if the pixel at the input coordinates is a diagonal or not by looking up its flow direction
-        procedure, nopass :: is_diagonal => dir_based_rdirs_is_diagonal
-}
+        int cell_flow_direction_for_sink = -5;
+        int cell_flow_direction_for_outflow = -1;
+        int cell_flow_direction_for_ocean_point = -2;
+        field_section<int>* cell_numbers;
+        forward_list<coords*>* find_edge_pixels();
+        list<coords*>* generate_list_of_pixels_in_cell();
+        bool check_if_coords_are_in_area(coords* coords_in);
+        int get_sink_combined_cumulative_flow(coords*& main_sink_coords);
+        int get_rmouth_outflow_combined_cumulative_flow(coords*& main_outflow_coords);
+        // void flow_calculate_river_directions_as_indices(
+        //                 int* coarse_river_direction_indices,
+        //                 section_coords* required_coarse_section_coords = nullptr){};
+};
 
-//! A concerte subclass of icosohedral field that uses an index to specify river directions
-class icon_single_index_index_based_rdirs_field : public icon_single_index_field {
-    protected:
-        int index_for_sink = -5;
-        int index_for_outflow = -1;
-        int index_for_ocean_point = -2;
-        //! Subroutine to find the next pixel downstream from the input pixel and returns it
-        //! via the same variable as used for input. Also flag if the cell next coords would
-        //! be outside the area and for the yamazaki style algorithm if the next pixel is an
-        //! outflow pixel (this is an optional intent OUT argument).
-        procedure, nopass :: find_next_pixel_downstream => &
-            icon_single_index_index_based_rdirs_find_next_pixel_downstream
-        //! Check if neighbor at a given coordinates flows to a pixel which lies in a given
-        //! direction from that neighbor (this direction being expressed in reverse, i.e. pointing
-        //! from the pixel to the neighbor)
-        procedure, nopass :: neighbor_flows_to_pixel => &
-            icon_si_index_based_rdirs_neighbor_flows_to_pixel_dummy
-        //! Check if the pixel at the input coordinates is a diagonal or not by looking up its flow direction
-        procedure, nopass :: is_diagonal => icon_si_index_based_rdirs_is_diagonal_dummy
-}
-
-//! A concrete subclass of latitude longitude neighborhood that uses direction
-//! (i.e. a 1-9 direction code like a keypad) indicators to specify river directions
-class latlon_dir_based_rdirs_neighborhood : public latlon_neighborhood {
-    protected:
-        //! Check if the pixel at the input coordinates is a diagonal or not by looking up its flow direction
-        procedure, nopass :: is_diagonal => dir_based_rdirs_is_diagonal
-        //! Subroutine to find the next pixel downstream from the input pixel and returns it
-        //! via the same variable as used for input. Also flag if the cell next coords would
-        //! be outside the area and for the yamazaki style algorithm if the next pixel is an
-        //! outflow pixel (this is an optional intent OUT argument).
-        procedure, nopass :: find_next_pixel_downstream => latlon_dir_based_rdirs_find_next_pixel_downstream
-        //! Check if neighbor at a given coordinates flows to a pixel which lies in a given
-        //! direction from that neighbor (this direction being expressed in reverse, i.e. pointing
-        //! from the pixel to the neighbor)
-        procedure, nopass :: neighbor_flows_to_pixel => latlon_dir_based_rdirs_neighbor_flows_to_pixel
-        //! Calculate a river dierction (1-9 numeric keypad style) from the id of the downstream cell
-        procedure :: calculate_direction_indicator => dir_based_rdirs_calculate_direction_indicator
-}
-
-//! A concrete subclass of latitude longitude cell that uses direction (i.e a 1-9
-//! direction code like a keypad) indicators to specify river directions
-class latlon_dir_based_rdirs_cell : public latlon_cell {
+class dir_based_rdirs_area : public virtual area {
     protected:
         //! Flow direction to use for a sink point
         int flow_direction_for_sink = 5;
@@ -444,67 +436,117 @@ class latlon_dir_based_rdirs_cell : public latlon_cell {
         int flow_direction_for_outflow = 0;
         //! Flow direction to use for a (non-outflow) ocean point
         int flow_direction_for_ocean_point = -1;
-        //! Check if the pixel at the input coordinates is a diagonal or not by looking up its flow direction
-        procedure, nopass :: is_diagonal => dir_based_rdirs_is_diagonal
-        //! Check if neighbor at a given coordinates flows to a pixel which lies in a given
-        //! direction from that neighbor (this direction being expressed in reverse, i.e. pointing
-        //! from the pixel to the neighbor)
-        procedure, nopass :: neighbor_flows_to_pixel => &
-            latlon_dir_based_rdirs_neighbor_flows_to_pixel
-        //! Initialize a direction based latitude longitude cell object. Arguments are
-        //! a set of coordinates of the bounds of the cell and a fine river direction
-        //! field and fine cumulative flow field
-        procedure :: init_dir_based_rdirs_latlon_cell
-        //! Initialize a latitude longitude cell object for the yamazaki-style algorithm.
-        //! The first three arguements (after the this argument) are the same as
-        //! init_latlon_cell. The fourth argument is an array of outlet pixels. The last
-        //! argument is the section coordinates of the neighborhood the cell is going to
-        //! be placed in.
-        procedure :: yamazaki_init_dir_based_rdirs_latlon_cell
-        //! Get the direction code for an sink point
-        procedure :: get_flow_direction_for_sink => latlon_dir_based_rdirs_get_flow_direction_for_sink
-        //! Get the direction code for an outflow point
-        procedure :: get_flow_direction_for_outflow => latlon_dir_based_rdirs_get_flow_direction_for_outflow
-        //! Get the direction code for an ocean point
-        procedure :: get_flow_direction_for_ocean_point => latlon_dir_based_rdirs_get_flow_direction_for_ocean_point
-        //! Subroutine to find the next pixel downstream from the input pixel and returns it
-        //! via the same variable as used for input. Also flag if the cell next coords would
-        //! be outside the area and for the yamazaki style algorithm if the next pixel is an
-        //! outflow pixel (this is an optional intent OUT argument).
-        procedure, nopass :: find_next_pixel_downstream => latlon_dir_based_rdirs_find_next_pixel_downstream
-        //! Subroutine that set the contains river mouths and ocean cell flags by scanning over
-        //! the cell. If no none sea points are found it is marked as an ocean cell. If one or
-        //! more river mouths are found then the contains river mouths flag is set to TRUE
-        procedure, public :: mark_ocean_and_river_mouth_points => latlon_dir_based_rdirs_mark_ocean_and_river_mouth_points
-}
+        bool neighbor_flows_to_pixel(coords* coords_in,
+                                     direction_indicator*
+                                     flipped_direction_from_neighbor);
 
-class irregular_latlon_dir_based_rdirs_neighborhood : public irregular_latlon_neighborhood {
-    private:
-        procedure, nopass :: is_diagonal => dir_based_rdirs_is_diagonal
-        procedure, nopass :: find_next_pixel_downstream => latlon_dir_based_rdirs_find_next_pixel_downstream
-        procedure, nopass :: neighbor_flows_to_pixel => latlon_dir_based_rdirs_neighbor_flows_to_pixel
-        procedure :: calculate_direction_indicator => irregular_latlon_calculate_direction_indicator
-}
+        coords* find_next_pixel_downstream(coords* coords_in,
+                                       bool& coords_not_in_area,
+                                       bool& outflow_pixel_reached);
+};
 
-class irregular_latlon_dir_based_rdirs_cell : public irregular_latlon_cell {
-    private:
-        int flow_direction_for_sink = 5;
-        int flow_direction_for_outflow = 0;
-        int flow_direction_for_ocean_point = -1;
-        int cell_flow_direction_for_sink = -5;
-        int cell_flow_direction_for_outflow = -1;
-        int cell_flow_direction_for_ocean_point = -2;
-        procedure :: init_irregular_latlon_dir_based_rdirs_cell
-        procedure, nopass :: is_diagonal => dir_based_rdirs_is_diagonal
-        procedure, nopass :: neighbor_flows_to_pixel => &
-            latlon_dir_based_rdirs_neighbor_flows_to_pixel
-        procedure :: get_flow_direction_for_sink => &
-            irregular_latlon_dir_based_rdirs_get_flow_direction_for_sink
-        procedure :: get_flow_direction_for_outflow => &
-            irregular_latlon_dir_based_rdirs_get_flow_direction_for_outflow
-        procedure :: get_flow_direction_for_ocean_point => &
-            irregular_latlon_dir_based_rdirs_get_flow_direction_for_o_point
-        procedure, nopass :: find_next_pixel_downstream => latlon_dir_based_rdirs_find_next_pixel_downstream
-        procedure, public :: mark_ocean_and_river_mouth_points => &
-            irregular_latlon_dir_based_rdirs_mark_o_and_rm_points
-}
+class index_based_rdirs_area : public virtual area {
+    protected:
+        //! Flow direction to use for a sink point
+        int index_for_sink = -5;
+        //! Flow direction to use for an outflow point
+        int index_for_outflow = -1;
+        //! Flow direction to use for a (non-outflow) ocean point
+        int index_for_ocean_point = -2;
+        bool neighbor_flows_to_pixel(coords* coords_in,
+                                     direction_indicator*
+                                     flipped_direction_from_neighbor);
+        coords* find_next_pixel_downstream(coords* coords_in,
+                                           bool& coords_not_in_area,
+                                           bool& outflow_pixel_reached);
+};
+
+class dir_based_rdirs_latlon_neighborhood : public latlon_neighborhood,
+                                            public dir_based_rdirs_area {
+    public:
+        direction_indicator* calculate_direction_indicator(int downstream_cell);
+        dir_based_rdirs_latlon_neighborhood(latlon_section_coords* cell_section_coords_in,
+                                            grid_params* grid_params_in,
+                                            int* river_directions_in,
+                                            int* total_cumulative_flow_in,
+                                            rdir_upscaling_parameters*
+                                            parameters_in=nullptr);
+        ~dir_based_rdirs_latlon_neighborhood() {};
+};
+
+class dir_based_rdirs_latlon_cell : public latlon_cell,
+                                    public dir_based_rdirs_area {
+    public:
+        dir_based_rdirs_latlon_cell(latlon_section_coords* cell_section_coords_in,
+                                    grid_params* grid_params_in,
+                                    int* river_directions_in,
+                                    int* total_cumulative_flow_in,
+                                    rdir_upscaling_parameters* parameters_in=nullptr);
+        void mark_ocean_and_river_mouth_points();
+        ~dir_based_rdirs_latlon_cell() {};
+    protected:
+        //! Return the appropriate direction indicator for a sink
+        direction_indicator* get_flow_direction_for_sink(bool is_for_cell=false);
+        //! Return the appropriate direction indicator for an outflow
+        direction_indicator* get_flow_direction_for_outflow(bool is_for_cell=false);
+        //! Return the appropriate direction indicator for an ocean point
+        direction_indicator* get_flow_direction_for_ocean_point(bool is_for_cell=false);
+
+};
+
+class dir_based_rdirs_irregular_latlon_cell : public irregular_latlon_cell,
+                                              public dir_based_rdirs_area {
+    public:
+        dir_based_rdirs_irregular_latlon_cell(irregular_latlon_section_coords* cell_section_coords_in,
+                                              grid_params* grid_params_in,
+                                              int* coarse_cell_neighbors_in,
+                                              int* river_directions_in,
+                                              int* total_cumulative_flow_in,
+                                              int max_nneigh_coarse_in,
+                                              rdir_upscaling_parameters* parameters_in=nullptr);
+        ~dir_based_rdirs_irregular_latlon_cell() {};
+        void mark_ocean_and_river_mouth_points();
+    protected:
+        //! Return the appropriate direction indicator for a sink
+        direction_indicator* get_flow_direction_for_sink(bool is_for_cell=false);
+        //! Return the appropriate direction indicator for an outflow
+        direction_indicator* get_flow_direction_for_outflow(bool is_for_cell=false);
+        //! Return the appropriate direction indicator for an ocean point
+        direction_indicator* get_flow_direction_for_ocean_point(bool is_for_cell=false);
+};
+
+class dir_based_rdirs_irregular_latlon_neighborhood :
+        public irregular_latlon_neighborhood,
+        public dir_based_rdirs_area {
+    public:
+        dir_based_rdirs_irregular_latlon_neighborhood(latlon_section_coords* cell_section_coords_in,
+                                                      grid_params* grid_params_in,
+                                                      int* coarse_cell_neighbors_in,
+                                                      int* river_directions_in,
+                                                      int* total_cumulative_flow_in,
+                                                      int max_nneigh_coarse_in,
+                                                      rdir_upscaling_parameters*
+                                                      parameters_in=nullptr);
+        ~dir_based_rdirs_irregular_latlon_neighborhood() {};
+        direction_indicator* calculate_direction_indicator(int downstream_cell);
+};
+
+class latlon_extended_area : public extended_area, public latlon_area,
+                             public dir_based_rdirs_area {
+    public:
+        latlon_extended_area(section_coords* area_section_coords_in,
+                             grid_params* area_grid_params_in,
+                             int* river_directions_in);
+        ~latlon_extended_area() {};
+        bool* check_area_for_localized_loops();
+};
+
+class icon_single_index_extended_area : public extended_area, public icon_single_index_area,
+                                        public index_based_rdirs_area {
+    public:
+        icon_single_index_extended_area(section_coords* area_section_coords_in,
+                                        grid_params* area_grid_params_in,
+                                        int* river_directions_in);
+        ~icon_single_index_extended_area() {};
+        bool* check_area_for_localized_loops();
+};
