@@ -62,12 +62,12 @@ void store_to_array::add_number(int number_in){
 void store_to_array::add_coords(coords* coords_in, int array_offset,
                                 int additional_lat_offset){
     if (coords_in->coords_type ==
-        coords_in->coords_types::generic_1d) {
+        coords_types::generic_1d) {
         generic_1d_coords* generic_1d_coords_in =
             static_cast<generic_1d_coords*>(coords_in);
         working_object->push_back((double)generic_1d_coords_in->get_index()+array_offset);
     } else if (coords_in->coords_type ==
-               coords_in->coords_types::latlon) {
+               coords_types::latlon) {
         latlon_coords* latlon_coords_in =
             static_cast<latlon_coords*>(coords_in);
         working_object->push_back((double)latlon_coords_in->get_lat()+array_offset+

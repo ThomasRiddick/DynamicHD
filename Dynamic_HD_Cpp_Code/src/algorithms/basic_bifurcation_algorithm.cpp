@@ -6,6 +6,7 @@
  */
 
 #include "algorithms/basic_bifurcation_algorithm.hpp"
+#include <limits>
 
 void basic_bifurcation_algorithm::push_cell(coords* cell_coords){
       q.push(new landsea_cell(cell_coords));
